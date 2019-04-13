@@ -31,7 +31,7 @@ class Builder:
             'AvgPoolLayer': Builder.__avgpool_layer_from_dict,
             'FlattenLayer': Builder.__flatten_layer_from_dict,
             'DropoutLayer': Builder.__dropout_layer_from_dict,
-            'Activation': Builder.__activation_layer_from_dict
+            'ActivationLayer': Builder.__activation_layer_from_dict
         }
         return uni_dict[layer_dict['type']](params)
     
