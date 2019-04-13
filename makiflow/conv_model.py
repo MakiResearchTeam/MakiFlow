@@ -123,7 +123,7 @@ class ConvModel(object):
             layers_dict['layers'].append(layer.to_dict())
             
         model_dict.update(layers_dict)
-        model_json = json.dumps(model_dict)
+        model_json = json.dumps(model_dict, indent=1)
         json_file = open(path, mode='w')
         json_file.write(model_json)
         json_file.close()

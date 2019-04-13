@@ -51,4 +51,5 @@ class Trainer:
             model.save_weights(self.path_where_to_save+'/'+model.name+'.ckpt')
             info_frame = pd.DataFrame(train_info).to_csv(self.path_where_to_save+'/'+model.name+'.csv')
             session.close()
+            tf.reset_default_graph()
             print('Success, start next training iteration.')
