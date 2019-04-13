@@ -127,6 +127,7 @@ class ConvModel(object):
         json_file = open(path, mode='w')
         json_file.write(model_json)
         json_file.close()
+        print("Model's architecture is saved to {}.".format(path))
         
             
             

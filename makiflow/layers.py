@@ -252,7 +252,7 @@ class BatchNormLayer(Layer):
         op4 = self.beta.assign(beta)
         self.session.run((op1, op2, op3, op4))
         
-    def to_dict():
+    def to_dict(self):
         return {
             'type': 'BatchNormLayer',
             'params': {
