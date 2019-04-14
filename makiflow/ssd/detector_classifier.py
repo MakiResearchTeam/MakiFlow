@@ -33,19 +33,19 @@ class DetectorClassifier():
         self.class_number = class_number
         self.dboxes = dboxes
         out_f = len(dboxes)*(class_number+4)
-        self.core = ConvLayer(kw, kh, in_f, out_f, activation=None, name='DetectorClassifier'=str(name))
+        self.core = ConvLayer(kw, kh, in_f, out_f, activation=None, name='DetectorClassifier'+str(name))
     
     
     def forward(self, X):
         """ Returns a list of PredictionHolder objects contain information about the prediction. """
         conv_out = self.core.forward(X)
-        step = class_number+4
+        step = self.class_number+4
         predictions = []
         for i in range(len(self.dboxes)):
             conf_loc = conv_out[:, :, :, i*step: (i+1)*step]
-            conf = conf_loc[:, :, :, :class_number]
-            loc = conf_loc[:, :, :, class_number:]
-            predictions.append(PredictionHolder(conv, loc, self.dboxes[i]))
+            conf = conf_loc[:, :, :, :self.class_number]
+            loc = conf_loc[:, :, :, self.class_number:]
+            predictions.append(PredictionHolder(conf, loc, self.dboxes[i]))
         return predictions
     
     

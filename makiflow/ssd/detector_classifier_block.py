@@ -4,10 +4,19 @@ class DetectorClassifierBlock():
         self.layers = layers
         self.detector_classifier = detector_classifier
         
+        self.params = []
+        for layer in self.layers:
+            self.params += layer.get_params()
+        self.params += self.detector_classifier.get_params()
+        
         
     def forward(self, X):
         """ Returns list with two values: convolution out and DetectorClassifier out. """
         for layer in self.layers:
-            X = layer.forward(out)
+            X = layer.forward(X)
         
         return [X, self.detector_classifier.forward(X)]
+    
+    
+    def get_params(self):
+        return self.params
