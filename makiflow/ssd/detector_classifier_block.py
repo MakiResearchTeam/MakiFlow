@@ -18,5 +18,9 @@ class DetectorClassifierBlock():
         return [X, self.detector_classifier.forward(X)]
     
     
+    def get_dboxes(self):
+        return self.detector_classifier.get_dboxes()
+    
+    
     def get_params(self):
         return self.params
