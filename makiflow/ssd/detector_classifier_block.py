@@ -10,10 +10,10 @@ class DetectorClassifierBlock():
         self.params += self.detector_classifier.get_params()
         
         
-    def forward(self, X):
+    def forward(self, X, is_training=False):
         """ Returns list with two values: convolution out and DetectorClassifier out. """
         for layer in self.layers:
-            X = layer.forward(X)
+            X = layer.forward(X, is_training)
         
         return [X, self.detector_classifier.forward(X)]
     

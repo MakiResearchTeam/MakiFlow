@@ -34,6 +34,7 @@ class SSDModel:
             self.default_boxes.append(default_boxes)
             
         self.default_boxes = np.vstack(self.default_boxes)
+        self.total_predictions = len(self.default_boxes)
     
     def __default_box_generator(self, image_width, image_height, width, height, dboxes):
         """
@@ -103,3 +104,14 @@ class SSDModel:
             self.predictions,
             feed_dict={self.X: X}
         )
+    
+    
+    def fit(self, images, loc_masks, labels):
+        # Define necessary vatiables
+        confidences, localizations = self.predictions
+        
+        input_labels = tf.placeholder(tf.int32, shape=[self.input_shape[0], self.total_predictions])
+        input_loc_loss_masks = tf.placeholder(tf.int32, shape=[self.input_shape[0], self.total_predictions])
+        
+        confidence_loss = tf.sparce_softmax_crossentropy(logits=confidences, labels=input_labels)
+        
