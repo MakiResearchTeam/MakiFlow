@@ -1,5 +1,7 @@
 import tensorflow as tf
 import numpy as np
+from sklearn.utils import shuffle
+from tqdm import tqdm
 
 
 class SSDModel:
@@ -8,6 +10,7 @@ class SSDModel:
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.input_shape = input_shape
+        self.batch_sz = input_shape[0]
         
         # Collecting trainable params
         self.params = []
@@ -105,13 +108,82 @@ class SSDModel:
             feed_dict={self.X: X}
         )
     
+    def __smooth_L1_loss(x, alpha):
+        return tf.where(tf.abs(x) < 1, x*x*0.5, 1/tf.abs(x) - 0.5)
     
-    def fit(self, images, loc_masks, labels):
+    
+    def fit(self, images, loc_masks, labels, gt_locs, loss_weigth=1, optimizer=None, epochs=1, test_period=1):
+        assert(optimizer is not None)
+        assert(self.session is not None)
+        """
+        images - image array for training the SSD.
+        loc_masks - masks represent which default box matches ground truth box.
+        labels - sparse(not one-hot encoded!) labels for classification loss.
+        gt_locs - array with differences between ground truth boxes and default boxes: gbox - dbox.
+        loss_weigth - means how much localization loss influences total loss:
+                    loss = confidence_loss + loss_weigth*localization_loss
+        """
         # Define necessary vatiables
         confidences, localizations = self.predictions
         
-        input_labels = tf.placeholder(tf.int32, shape=[self.input_shape[0], self.total_predictions])
-        input_loc_loss_masks = tf.placeholder(tf.int32, shape=[self.input_shape[0], self.total_predictions])
+        input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
+        input_loc_loss_masks = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
+        input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
         
-        confidence_loss = tf.sparce_softmax_crossentropy(logits=confidences, labels=input_labels)
+        confidence_loss = tf.sparse_softmax_crossentropy(logits=confidences, labels=input_labels)
+        #confidence_loss = input_loc_loss_masks * confidence_loss
+        confidence_loss = tf.reduce_mean(confidence_loss)
         
+        diff = localizations - input_loc
+        
+        # Defince smooth L1 loss
+        loc_loss_l2 = 0.5 * (diff**2.0)
+        loc_loss_l1 = tf.abs(diff) - 0.5
+        smooth_l1_condition = tf.less(tf.abs(diff), 1.0)
+        loc_loss = tf.select(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
+        loc_loss = input_loc_loss_masks * loc_loss
+        loc_loss = tf.reduce_mean(loc_loss)
+        
+        loss = confidence_loss + loss_weigth*loc_loss
+        train_op = optimizer.minimize(loss)
+        # Initilize optimizer's variables
+        self.session.run(tf.variables_initializer(optimizer.variables()))
+        
+        n_batches = len(images)/self.batch_sz
+        
+        train_loc_losses = []
+        train_conf_losses = []
+        
+        for i in range(epochs):
+            images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
+            train_loc_loss = np.float32(0)
+            train_conf_loss = np.float32(0)
+            for j in tqdm(range(n_batches)):
+                img_batch = images[j*self.batch_sz:(j+1)*self.batch_sz]
+                loc_mask_batch = loc_masks[j*self.batch_sz:(j+1)*self.batch_sz]
+                labels_batch = labels[j*self.batch_sz:(j+1)*self.batch_sz]
+                gt_locs_batch = gt_locs[j*self.batch_sz:(j+1)*self.batch_sz]
+                
+                
+                
+                loc_loss_batch, confidence_loss_batch, _ = self.session.run(
+                    [loc_loss, confidence_loss, train_op],
+                    feed_dict={
+                        self.X: img_batch,
+                        input_labels: labels_batch,
+                        input_loc_loss_masks: loc_mask_batch,
+                        input_loc: gt_locs_batch
+                    })
+                
+                
+                # Calculate losses using exponetial decay
+                train_loc_loss = 0.9*train_loc_loss + 0.1*loc_loss_batch
+                train_conf_loss = 0.9*train_conf_loss + 0.1*confidence_loss_batch
+            
+            train_loc_losses.append(train_loc_loss)
+            train_conf_losses.append(train_conf_loss)
+            print('Epoch:', i, "Conf loss:", train_conf_loss, 'Loc loss:', train_loc_loss)
+            
+        return {'train loc losses': train_loc_losses,
+                'train conf losses': train_conf_losses}
+    

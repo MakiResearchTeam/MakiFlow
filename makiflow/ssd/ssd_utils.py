@@ -1,5 +1,7 @@
 import tensorflow as tf
 import numpy as np
+# For drawing predicted bounding boxes
+import cv2
 
 def jaccard_index(box_a, box_b):
     """
@@ -58,6 +60,8 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
     """
     loc_mask = np.zeros(len(dboxes))
     labels = np.zeros(len(dboxes))
+    # Difference between ground true box and default box. Need it for the later loss calculation.
+    locs = np.zeros((len(dboxes), 4))
     i = 0
     for gbox in image_info['bboxes']:
         j = 0
@@ -65,10 +69,33 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
             if jaccard_index(gbox, dbox) > iou_trashhold:
                 mask[j] = 1
                 labels[j] = image_info['classes'][i] # set the of current gbox
+                locs[j] = gbox - dbox
             j += 1
         i += 1
     
     return {'loc_mask': loc_mask,
-            'labels': labels }
+            'labels': labels,
+            'gt_locs': locs}
 
-             
+
+def draw_bounding_boxes(image, bboxes_with_classes):
+    """ Draw bounding boxes on the image.
+    image - image the bboxes will be drawn on.
+    bboxes_with_classes - dictionary with bboxes and predicted classes. Example:
+        {'bboxes':  [
+                    [x1, y1, x2, y2],
+                    [x1, y1, x2, y2]
+                    ]
+        'classes': ['class1', 'class2']
+        }
+        
+    Returns image with drawn bounding box on it.
+    """
+    prediction_num = len(bboxes_with_classes['bboxes'])
+    for i in range(prediction_num):
+        box_coords = bboxes_with_classes['bboxes'][i]
+        
+        image = cv2.rectangle(image, tuple(box_coords[:2]), tuple(box_coords[2:]), (0,255,0))
+        label_str = bboxes_with_classes['classes'][i]
+        image = cv2.putText(image, label_str, (box_coords[0], box_coords[1]), 0, 0.5, (0,255,0), 1, cv2.LINE_AA)
+    return image
