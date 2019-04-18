@@ -6,7 +6,7 @@ import cv2
 from copy import copy
 from tqdm import tqdm
 
-def jaccard_index(box_a, box_b):
+def jaccard_index(boxes_a, boxes_b):
     """
     Calculates Jaccard Index for pairs of bounding boxes.
     Argumnets:
@@ -80,7 +80,7 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
     iou_trashhold - Jaccard index dbox must exceed to be marked as positive.
     """
     num_predictions = len(dboxes)
-    loc_mask = np.zeros(num_predictions)
+    loc_mask = np.array([0]*num_predictions)
     labels = np.zeros(num_predictions)
     # Difference between ground true box and default box. Need it for the later loss calculation.
     locs = np.zeros((num_predictions, 4))
@@ -88,13 +88,12 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
     for gbox in image_info['bboxes']:
         j = 0
         gbox_stack = np.vstack([gbox]*num_predictions)
-        jaccard_indeces = jaccard_index(gbox_stack, dboxes)
-        for dbox in dboxes:
-            if jaccard_index(gbox, dbox) > iou_trashhold:
-                loc_mask[j] = 1
-                labels[j] = image_info['classes'][i] # set the class of current gbox
-                locs[j] = gbox - dbox
-            j += 1
+        jaccard_indexes = jaccard_index(gbox_stack, dboxes)
+        # Use logic "or"
+        jaccard_boolean = jaccard_indexes > iou_trashhold
+        loc_mask = jaccard_boolean | loc_mask
+        labels[jaccard_boolean] = image_info['classes'][i]
+        locs[jaccard_boolean] = gbox - dboxes[jaccard_boolean]
         i += 1
     
     return {'loc_mask': loc_mask,
@@ -166,13 +165,71 @@ def resize_images_and_bboxes(image_array, bboxes_array, new_size):
     return new_image_array, new_bboxes_array
 
 
-def nms(pred_bboxes, pred_confs, conf_trash_hold):
-    """ Performs Non-Maximum Supression on predicted bboxes.
+def nms(pred_bboxes, pred_confs, conf_trash_hold=0.4, iou_trashhold=0.1, background_class=0):
+    """ Performs Non-Maximum Suppression on predicted bboxes.
     Arguments:
-    pred_bboxes - list of predicted bboxes.
-    pred_confs - list of predicted confidences.
+    pred_bboxes - list of predicted bboxes. Numpy array of shape [num_predictions, 4].
+    pred_confs - list of predicted confidences. Numpy array of shape [num_predictions, num_classes].
     conf_trash_hold - used for filtering bboxes
-    
+    background_class - index of the background class.
     Returns final predicted bboxes and confidences
     """
-    pass
+    pred_conf_values = np.max(pred_confs, axis=1)
+    
+    # Take predicted boxes with confidence higher than conf_trash_hold
+    filtered_pred_boxes = pred_bboxes[pred_conf_values > conf_trash_hold]
+    filtered_pred_confs = pred_confs[pred_conf_values > conf_trash_hold]
+    
+    # Get classes in order get rid of background class
+    pred_conf_classes = np.argmax(filtered_pred_confs, axis=1)
+    
+    # Get rid of background class boxes
+    back_ground_class_mask = pred_conf_classes != 0
+    filtered_pred_boxes = filtered_pred_boxes[back_ground_class_mask]
+    filtered_pred_confs = filtered_pred_confs[back_ground_class_mask]
+    
+    # Create array with indexes of bboxes for easier navigation later
+    indexes = np.arange(filtered_pred_confs.shape[0])
+    
+    pred_conf_classes = np.argmax(filtered_pred_confs, axis=1)
+    pred_conf_values = np.max(filtered_pred_confs, axis=1)
+    
+    usage_mask = pred_conf_values > conf_trash_hold
+    final_boxes = []
+    final_conf_classes = []
+    final_conf_values = []
+    while(True):
+        # Step 1: Choose the most confident box if possible
+        bboxes = filtered_pred_boxes[usage_mask]
+        conf_values = pred_conf_values[usage_mask]
+        conf_classes = pred_conf_classes[usage_mask]
+        unused_indexes = indexes[usage_mask]
+        if bboxes.shape[0] == 0:
+            break
+            
+        id_most_confident = np.argmax(conf_values)
+        most_confident_box = bboxes[id_most_confident]
+        
+        # Step 2: Mark the box as used in the mask, add to final predictions
+        usage_mask[ unused_indexes[id_most_confident] ] = False
+        final_boxes.append(most_confident_box)
+        final_conf_classes.append(conf_classes[id_most_confident])
+        final_conf_values.append(conf_values[id_most_confident])
+        
+        # Step 3: Calculate Jaccard Index for the boxes with the same class
+        
+        # Pick boxes with the same class
+        boxes_same_class = bboxes[conf_classes == conf_classes[id_most_confident]]
+        # Save indexes of these boxes
+        indexes_same_class = unused_indexes[conf_classes == conf_classes[id_most_confident]]
+        # Stack current boxes for the Jaccard Index calucaltion
+        most_confident_box_stack = np.vstack([most_confident_box]*len(boxes_same_class))
+        ious = jaccard_index(most_confident_box_stack, boxes_same_class)
+        
+        # Step 4: Mark boxes as used which iou is greater than 0.1
+        boxes_to_mark = indexes_same_class[ious > iou_trashhold]
+        for box in boxes_to_mark:
+            usage_mask[box] = False
+        
+    return final_boxes, final_conf_classes, final_conf_values
+    

@@ -18,9 +18,9 @@ class SSDModel:
         for dc_block in dc_blocks:
             self.params += dc_block.get_params()
 
-        self.X = tf.placeholder(tf.float32, shape=input_shape)
-        self.predictions = self.forward(self.X)
         
+        
+        self.X = tf.placeholder(tf.float32, shape=input_shape)
         # Generating default boxes
         self.default_boxes_wh = []
         out = self.X
@@ -53,6 +53,12 @@ class SSDModel:
             
             
         self.total_predictions = len(self.default_boxes)
+        
+        # For final predicting
+        confidences_ish, localization_reg = self.forward(self.X)
+        confidences = tf.nn.softmax(confidences_ish)
+        predicted_boxes = localization_reg + self.default_boxes
+        self.predictions = [confidences, predicted_boxes]
     
     def __default_box_generator(self, image_width, image_height, width, height, dboxes):
         """
@@ -142,11 +148,11 @@ class SSDModel:
         confidences, localizations = self.predictions
         
         input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
-        input_loc_loss_masks = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
+        input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
         input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
         
-        confidence_loss = tf.sparse_softmax_crossentropy(logits=confidences, labels=input_labels)
-        #confidence_loss = input_loc_loss_masks * confidence_loss
+        confidence_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=confidences, labels=input_labels)
+        confidence_loss = input_loc_loss_masks * confidence_loss
         confidence_loss = tf.reduce_mean(confidence_loss)
         
         diff = localizations - input_loc
@@ -155,16 +161,25 @@ class SSDModel:
         loc_loss_l2 = 0.5 * (diff**2.0)
         loc_loss_l1 = tf.abs(diff) - 0.5
         smooth_l1_condition = tf.less(tf.abs(diff), 1.0)
-        loc_loss = tf.select(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
-        loc_loss = input_loc_loss_masks * loc_loss
+        loc_loss = tf.where(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
+        
+        
+        loc_loss_mask = tf.stack([input_loc_loss_masks] * 4, axis=2)
+        loc_loss = loc_loss_mask * loc_loss
         loc_loss = tf.reduce_mean(loc_loss)
         
-        loss = confidence_loss + loss_weigth*loc_loss
+        
+        loss_factor_mask_sum = tf.reduce_sum(input_loc_loss_masks)
+        loss_factor_one = 1.0
+        loss_factor_codition = tf.less(loss_factor_mask_sum, 1.0)
+        loss_factor = tf.where(loss_factor_codition, loss_factor_one, loss_factor_mask_sum)
+        
+        loss = (confidence_loss + loss_weigth*loc_loss) / loss_factor
         train_op = optimizer.minimize(loss)
         # Initilize optimizer's variables
-        self.session.run(tf.variables_initializer(optimizer.variables()))
+        self.session.run(tf.variables_initializer(optimizer.variables())) 
         
-        n_batches = len(images)/self.batch_sz
+        n_batches = len(images) // self.batch_sz
         
         train_loc_losses = []
         train_conf_losses = []
