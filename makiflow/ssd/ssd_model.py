@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from sklearn.utils import shuffle
+from copy import copy
 from tqdm import tqdm
 
 
@@ -21,7 +22,7 @@ class SSDModel:
         self.predictions = self.forward(self.X)
         
         # Generating default boxes
-        self.default_boxes = []
+        self.default_boxes_wh = []
         out = self.X
         for dc_block in dc_blocks:
             out = dc_block.forward(out)
@@ -34,9 +35,23 @@ class SSDModel:
             dboxes = dc_block.get_dboxes()
             default_boxes = self.__default_box_generator(input_shape[1], input_shape[2],
                                                          width, height, dboxes)
-            self.default_boxes.append(default_boxes)
+            self.default_boxes_wh.append(default_boxes)
             
-        self.default_boxes = np.vstack(self.default_boxes)
+        self.default_boxes_wh = np.vstack(self.default_boxes_wh)
+        # Converting default boxes to another format:
+        # (x, y, w, h) -----> (x1, y1, x2, y2)
+        
+        self.default_boxes = copy(self.default_boxes_wh)
+        # For navigation in self.default_boxes
+        i = 0
+        for dbox in self.default_boxes_wh:
+            self.default_boxes[i] = [dbox[0] - dbox[2] / 2,  # upper left x
+                                     dbox[1] - dbox[3] / 2,  # upper left y
+                                     dbox[0] + dbox[2] / 2,  # bottom right x
+                                     dbox[1] + dbox[3] / 2]  # bottom right y
+            i += 1
+            
+            
         self.total_predictions = len(self.default_boxes)
     
     def __default_box_generator(self, image_width, image_height, width, height, dboxes):

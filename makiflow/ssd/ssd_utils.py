@@ -4,46 +4,65 @@ import numpy as np
 import cv2
 # For resizing images and bboxes
 from copy import copy
+from tqdm import tqdm
 
 def jaccard_index(box_a, box_b):
     """
-    Calculates Jaccard Index for two bounding boxes.
+    Calculates Jaccard Index for pairs of bounding boxes.
     Argumnets:
-    box_a - [x_center, y_center, width, height] of the box A.
-    box_a - [x_center, y_center, width, height] of the box B.
-
-    Returns number represents Jaccard Index of the aforementioned bboxes.
-    Example: 0.7
-
-
-    Code has taken from:
-    https://github.com/georgesung/ssd_tensorflow_traffic_sign_detection/blob/master/data_prep.py
+    box_a - list of "first" bboxes. Example:
+    [
+        [x1, y1, 2, y2],
+        [x1, y1, 2, y2]
+    ]
+    box_a - list of "second" bboxes. Example:
+    [
+        [x1, y1, 2, y2],
+        [x1, y1, 2, y2]
+    ]
+    Returns a list of Jaccard indeces for each bbox pair.
+    Example: [jaccard_index1, jaccard_index2]
 
     """
-    box_a = [box_a[0] - box_a[2] / 2,  # upper left x
-             box_a[1] - box_a[3] / 2,  # upper left y
-             box_a[0] + box_a[2] / 2,  # bottom right x
-             box_a[1] + box_a[3] / 2]  # bottom right y
+    #box_a = [box_a[0] - box_a[2] / 2,  # upper left x
+    #         box_a[1] - box_a[3] / 2,  # upper left y
+    #         box_a[0] + box_a[2] / 2,  # bottom right x
+    #         box_a[1] + box_a[3] / 2]  # bottom right y
 
-    box_b = [box_b[0] - box_b[2] / 2,  # upper left x
-             box_b[1] - box_b[3] / 2,  # upper left y
-             box_b[0] + box_b[2] / 2,  # bottom right x
-             box_b[1] + box_b[3] / 2]  # bottom right y
+    #box_b = [box_b[0] - box_b[2] / 2,  # upper left x
+    #         box_b[1] - box_b[3] / 2,  # upper left y
+    #         box_b[0] + box_b[2] / 2,  # bottom right x
+    #         box_b[1] + box_b[3] / 2]  # bottom right y
              
     # Calculate intersection, i.e. area of overlap between the 2 boxes (could be 0)
     # http://math.stackexchange.com/a/99576
-    x_overlap = max(0, min(box_a[2], box_b[2]) - max(box_a[0], box_b[0]))
-    y_overlap = max(0, min(box_a[3], box_b[3]) - max(box_a[1], box_b[1]))
-    intersection = x_overlap * y_overlap
+    def np_min(a, b):
+        ab = np.vstack([a, b])
+        return np.min(ab, axis=0)
 
+    def np_max(a, b):
+        ab = np.vstack([a, b])
+        return np.max(ab, axis=0)
+    
+    zeros = np.zeros(len(boxes_a))
+    
+    x_overlap_prev = np_min(boxes_a[:,2], boxes_b[:,2]) - np_max(boxes_a[:,0], boxes_b[:,0])
+    x_overlap_prev = np.vstack([zeros, x_overlap_prev])
+    x_overlap = np.max(x_overlap_prev, axis=0)
+    
+    y_overlap_prev = np_min(boxes_a[:,3], boxes_b[:,3]) - np_max(boxes_a[:,1], boxes_b[:,1])
+    y_overlap_prev = np.vstack([zeros, y_overlap_prev])
+    y_overlap = np.max(y_overlap_prev, axis=0)
+    
+    intersection = x_overlap * y_overlap
+    
     # Calculate union
-    area_box_a = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
-    area_box_b = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
+    area_box_a = (boxes_a[:,2] - boxes_a[:,0]) * (boxes_a[:,3] - boxes_a[:,1])
+    area_box_b = (boxes_b[:,2] - boxes_b[:,0]) * (boxes_b[:,3] - boxes_b[:,1])
     union = area_box_a + area_box_b - intersection
 
     iou = intersection / union
     return iou
-             
              
              
 def prepare_data(image_info, dboxes, iou_trashhold=0.5):
@@ -51,26 +70,29 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
     Arguments:
     image_ingo - dictionary contains info about ground truth bounding boxes and each class assigned to them.
     Example: { 'bboxes': [
-                        [x1, y1, w1, h1],
-                        [x2, y2, w2, h2],
-                        [x3, y3, w3, h3]
+                        [x1, y1, x2, y2],
+                        [x1, y1, x2, y2],
+                        [x1, y1, x2, y2]
                         ],
                 'classes': [class1, class2, class3]
                 }
     dboxes - default boxes array has taken from the SSD.
     iou_trashhold - Jaccard index dbox must exceed to be marked as positive.
     """
-    loc_mask = np.zeros(len(dboxes))
-    labels = np.zeros(len(dboxes))
+    num_predictions = len(dboxes)
+    loc_mask = np.zeros(num_predictions)
+    labels = np.zeros(num_predictions)
     # Difference between ground true box and default box. Need it for the later loss calculation.
-    locs = np.zeros((len(dboxes), 4))
+    locs = np.zeros((num_predictions, 4))
     i = 0
     for gbox in image_info['bboxes']:
         j = 0
+        gbox_stack = np.vstack([gbox]*num_predictions)
+        jaccard_indeces = jaccard_index(gbox_stack, dboxes)
         for dbox in dboxes:
             if jaccard_index(gbox, dbox) > iou_trashhold:
-                mask[j] = 1
-                labels[j] = image_info['classes'][i] # set the of current gbox
+                loc_mask[j] = 1
+                labels[j] = image_info['classes'][i] # set the class of current gbox
                 locs[j] = gbox - dbox
             j += 1
         i += 1
@@ -96,6 +118,7 @@ def draw_bounding_boxes(image, bboxes_with_classes):
     prediction_num = len(bboxes_with_classes['bboxes'])
     for i in range(prediction_num):
         box_coords = bboxes_with_classes['bboxes'][i]
+        box_coords = [int(coord) for coord in box_coords]
         
         image = cv2.rectangle(image, tuple(box_coords[:2]), tuple(box_coords[2:]), (0,255,0))
         label_str = bboxes_with_classes['classes'][i]
@@ -125,7 +148,7 @@ def resize_images_and_bboxes(image_array, bboxes_array, new_size):
     new_bboxes_array = copy(bboxes_array)
     # For navigation in new_image_array and new_bboxes_array
     i = 0
-    for image, bboxes in zip(image_array, bboxes_array):
+    for image, bboxes in tqdm(zip(image_array, bboxes_array)):
         image_dims = image.shape[:2]
         width_ratio = new_size[0] / image_dims[1]
         height_ratio = new_size[1] / image_dims[0]
@@ -141,3 +164,15 @@ def resize_images_and_bboxes(image_array, bboxes_array, new_size):
         i += 1
         
     return new_image_array, new_bboxes_array
+
+
+def nms(pred_bboxes, pred_confs, conf_trash_hold):
+    """ Performs Non-Maximum Supression on predicted bboxes.
+    Arguments:
+    pred_bboxes - list of predicted bboxes.
+    pred_confs - list of predicted confidences.
+    conf_trash_hold - used for filtering bboxes
+    
+    Returns final predicted bboxes and confidences
+    """
+    pass

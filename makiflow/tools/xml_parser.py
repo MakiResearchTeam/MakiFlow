@@ -41,8 +41,8 @@ class XmlParser:
         objects = root.xpath('object')
         for obj in objects:
             name = obj.xpath('name')[0].text
-            box = (int(obj.xpath('bndbox/xmin')[0].text), int(obj.xpath('bndbox/ymin')[0].text),
-                   int(obj.xpath('bndbox/xmax')[0].text), int(obj.xpath('bndbox/ymax')[0].text))
+            box = [float(obj.xpath('bndbox/xmin')[0].text), float(obj.xpath('bndbox/ymin')[0].text),
+                   float(obj.xpath('bndbox/xmax')[0].text), float(obj.xpath('bndbox/ymax')[0].text)]
             object_list.append({
                 'name': name,
                 'box': box
