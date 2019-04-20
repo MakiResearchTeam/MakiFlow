@@ -6,20 +6,24 @@ from tqdm import tqdm
 
 
 class SSDModel:
-    def __init__(self, dc_blocks, input_shape, num_classes):
+    def __init__(self, dc_blocks, input_shape, num_classes, name='MakiSSD'):
         self.dc_blocks = dc_blocks
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.input_shape = input_shape
         self.batch_sz = input_shape[0]
+        self.name = str(name)
         
         # Collecting trainable params
         self.params = []
         for dc_block in dc_blocks:
             self.params += dc_block.get_params()
+        
+        # Get params and store them into python dictionary in order to save and load them correctly later
+        self.named_params_dict = {}
+        for dc_block in self.dc_blocks:
+            self.named_params_dict.update(dc_block.get_params_dict())
 
-        
-        
         self.X = tf.placeholder(tf.float32, shape=input_shape)
         # Generating default boxes
         self.default_boxes_wh = []
@@ -102,6 +106,52 @@ class SSDModel:
         init_op = tf.variables_initializer(self.params)
         session.run(init_op)
         
+        
+    def save_weights(self, path):
+        """
+        This function uses default TensorFlow's way for saving models - checkpoint files.
+        path - full path+name of the model. 
+        Example: '/home/student401/my_model/model.ckpt'
+        """
+        assert(self.session is not None)
+        saver = tf.train.Saver(self.named_params_dict)
+        save_path = saver.save(self.session, path)
+        print('Model saved to %s' % save_path)
+    
+    
+    def load_weights(self, path):
+        """
+        This function uses default TensorFlow's way for restoring models - checkpoint files.
+        path - full path+name of the model. 
+        Example: '/home/student401/my_model/model.ckpt'
+        """
+        assert(self.session is not None)
+        saver = tf.train.Saver(self.named_params_dict)
+        saver.restore(self.session, path)
+        print('Model restored')
+        
+    
+    def to_json():
+        model_dict = {
+            'name': self.name,
+            'input_shape': self.input_shape,
+            'num_classes': self.num_classes,
+        }
+        
+        dc_blocks_dict = {
+            'dc_blocks': []
+        }
+        for dc_block in self.dc_blocks:
+            dc_blocks_dict['dc_blocks'].append(dc_block.to_dict())
+        
+        model_dict.update(dc_blocks_dict)
+        model_json = json.dumps(model_dict, indent=1)
+        json_file = open(path, mode='w')
+        json_file.write(model_json)
+        json_file.close()
+        print("Model's architecture is saved to {}.".format(path))
+        
+        
     
     def forward(self, X):
         """ Returns a list of PredictionHolder objects contain information about the prediction. """
@@ -133,7 +183,7 @@ class SSDModel:
         return tf.where(tf.abs(x) < 1, x*x*0.5, 1/tf.abs(x) - 0.5)
     
     
-    def fit(self, images, loc_masks, labels, gt_locs, loss_weigth=1, optimizer=None, epochs=1, test_period=1):
+    def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1, optimizer=None, epochs=1, test_period=1):
         assert(optimizer is not None)
         assert(self.session is not None)
         """
@@ -142,20 +192,28 @@ class SSDModel:
         labels - sparse(not one-hot encoded!) labels for classification loss.
         gt_locs - array with differences between ground truth boxes and default boxes: gbox - dbox.
         loss_weigth - means how much localization loss influences total loss:
-                    loss = confidence_loss + loss_weigth*localization_loss
+                    loss = confidence_loss + loss_weight*localization_loss
         """
         # Define necessary vatiables
-        confidences, localizations = self.predictions
+        confidences, localizations = self.forward(self.X)
         
         input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
         input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
         input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
         
         confidence_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=confidences, labels=input_labels)
-        confidence_loss = input_loc_loss_masks * confidence_loss
-        confidence_loss = tf.reduce_mean(confidence_loss)
+        # Calculate confidence loss for positive bboxes
+        positive_confidence_loss = input_loc_loss_masks * confidence_loss
+        positive_confidence_loss = tf.reduce_mean(confidence_loss)
+        # Calculate confidence loss for part of negative bboxes e.g. Hard Negative Mining
+        num_positives = tf.reduce_sum(input_loc_loss_masks)
+        negative_confidence_loss = tf.reshape(confidence_loss, shape=[self.batch_sz*self.total_predictions])
+        negative_confidence_loss, indices = tf.nn.top_k(negative_confidence_loss, k=tf.cast(num_positives*tf.constant(3.5), dtype=tf.int32))
+        negative_confidence_loss = tf.reduce_sum(negative_confidence_loss) / np.float32(self.total_predictions)
         
-        diff = localizations - input_loc
+        final_confidence_loss = positive_confidence_loss + negative_confidence_loss
+        
+        diff = input_loc - localizations
         
         # Defince smooth L1 loss
         loc_loss_l2 = 0.5 * (diff**2.0)
@@ -170,11 +228,10 @@ class SSDModel:
         
         
         loss_factor_mask_sum = tf.reduce_sum(input_loc_loss_masks)
-        loss_factor_one = 1.0
         loss_factor_codition = tf.less(loss_factor_mask_sum, 1.0)
-        loss_factor = tf.where(loss_factor_codition, loss_factor_one, loss_factor_mask_sum)
+        loss_factor = tf.where(loss_factor_codition, loss_factor_mask_sum, 1.0 / loss_factor_mask_sum)
         
-        loss = (confidence_loss + loss_weigth*loc_loss) / loss_factor
+        loss = (final_confidence_loss + loc_loss_weigth*loc_loss) * loss_factor
         train_op = optimizer.minimize(loss)
         # Initilize optimizer's variables
         self.session.run(tf.variables_initializer(optimizer.variables())) 
@@ -194,16 +251,18 @@ class SSDModel:
                 labels_batch = labels[j*self.batch_sz:(j+1)*self.batch_sz]
                 gt_locs_batch = gt_locs[j*self.batch_sz:(j+1)*self.batch_sz]
                 
-                
-                
-                loc_loss_batch, confidence_loss_batch, _ = self.session.run(
-                    [loc_loss, confidence_loss, train_op],
-                    feed_dict={
-                        self.X: img_batch,
-                        input_labels: labels_batch,
-                        input_loc_loss_masks: loc_mask_batch,
-                        input_loc: gt_locs_batch
-                    })
+                # Don't know how to fix it yet.
+                try:
+                    loc_loss_batch, confidence_loss_batch, _ = self.session.run(
+                        [loc_loss, final_confidence_loss, train_op],
+                        feed_dict={
+                            self.X: img_batch,
+                            input_labels: labels_batch,
+                            input_loc_loss_masks: loc_mask_batch,
+                            input_loc: gt_locs_batch
+                        })
+                except:
+                    continue
                 
                 
                 # Calculate losses using exponetial decay

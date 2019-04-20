@@ -115,14 +115,15 @@ def draw_bounding_boxes(image, bboxes_with_classes):
     Returns image with drawn bounding box on it.
     """
     prediction_num = len(bboxes_with_classes['bboxes'])
+    image_copy = copy(image)
     for i in range(prediction_num):
         box_coords = bboxes_with_classes['bboxes'][i]
         box_coords = [int(coord) for coord in box_coords]
         
-        image = cv2.rectangle(image, tuple(box_coords[:2]), tuple(box_coords[2:]), (0,255,0))
+        image_copy = cv2.rectangle(image_copy, tuple(box_coords[:2]), tuple(box_coords[2:]), (0,255,0))
         label_str = bboxes_with_classes['classes'][i]
-        image = cv2.putText(image, label_str, (box_coords[0], box_coords[1]), 0, 0.5, (0,255,0), 1, cv2.LINE_AA)
-    return image
+        image_copy = cv2.putText(image_copy, label_str, (box_coords[0], box_coords[1]), 0, 0.5, (0,255,0), 1, cv2.LINE_AA)
+    return image_copy
 
 
 def resize_images_and_bboxes(image_array, bboxes_array, new_size):

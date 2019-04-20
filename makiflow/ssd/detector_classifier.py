@@ -3,20 +3,7 @@ from __future__ import absolute_import
 from makiflow.layers import ConvLayer, FlattenLayer
 import tensorflow as tf
 
-class PredictionHolder:
-    """ Helper class for organizing values predicted by SSD. It holds confidences and localization regression values for
-    a particular type of default box."""
-    def __init__(self, conf, loc, dbox):
-        """
-        conf - tensor with confidences for the dbox.
-        loc - regressed value for localization e.g. default box correction.
-        dbox - tuple with default box characteristics (width, height). Example: (1, 1).
-        """
-        self.conv = conf
-        self.loc = loc
-        self.dbox = dbox
 
-        
 class DetectorClassifier():
     """ This class represents a part of SSD algorithm. It consists of several parts:
     conv layers -> detector -> confidences + localization regression.
@@ -41,6 +28,14 @@ class DetectorClassifier():
                                     activation=None, name='Classifier'+str(name))
         self.detector = ConvLayer(kw, kh, in_f, self.detector_out_f,
                                   activation=None, name='Detector'+str(name))
+        
+        self.classifier_shape = self.classifier.shape
+        self.detector_shape = self.detector.shape
+        
+        # Collect params and store them into python dictionary in order save and load correctly in the future
+        self.named_params_dict = {}
+        self.named_params_dict.update(self.classifier.get_params_dict())
+        self.named_params_dict.update(self.detector.get_params_dict())
         
     
     def get_dboxes(self):
@@ -71,7 +66,21 @@ class DetectorClassifier():
     
     
     def get_params_dict(self):
-        return self.core.get_params_dict()
+        return self.named_params_dict
+    
+    
+    def to_dict(self):
+        return {
+            'type': 'DecectorClassifier',
+            'params': {
+                'name': self.name,
+                'class_number': self.class_number,
+                'dboxes': self.dboxes,
+                'classifier_shape': list(self.classifier_shape),
+                'detector_shape': list(self.detector_shape)
+            }
+        }
+                
         
     
         
