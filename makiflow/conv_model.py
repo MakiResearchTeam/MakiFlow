@@ -8,6 +8,7 @@ from tqdm import tqdm
 # For saving the architecture
 import json
 
+# For testing and evaluating the model
 EPSILON = np.float32(1e-37)
 
 class ConvModel(object):

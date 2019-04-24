@@ -71,7 +71,7 @@ class DetectorClassifier():
     
     def to_dict(self):
         return {
-            'type': 'DecectorClassifier',
+            'type': 'DetectorClassifier',
             'params': {
                 'name': self.name,
                 'class_number': self.class_number,

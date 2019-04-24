@@ -4,6 +4,9 @@ from sklearn.utils import shuffle
 from copy import copy
 from tqdm import tqdm
 
+# For saving the architecture
+import json
+
 
 class SSDModel:
     def __init__(self, dc_blocks, input_shape, num_classes, name='MakiSSD'):
@@ -131,7 +134,11 @@ class SSDModel:
         print('Model restored')
         
     
-    def to_json():
+    def to_json(self, path):
+        """
+        Convert model's architecture to json file and save it.
+        path - path to file to save in.
+        """
         model_dict = {
             'name': self.name,
             'input_shape': self.input_shape,
@@ -153,13 +160,13 @@ class SSDModel:
         
         
     
-    def forward(self, X):
+    def forward(self, X, is_training=False):
         """ Returns a list of PredictionHolder objects contain information about the prediction. """
         confidences = []
         localizations = []
         
         for dc_block in self.dc_blocks:
-            dcb_out = dc_block.forward(X)
+            dcb_out = dc_block.forward(X, is_training)
             X = dcb_out[0]
             confidences.append(dcb_out[1][0])
             localizations.append(dcb_out[1][1])
@@ -195,7 +202,7 @@ class SSDModel:
                     loss = confidence_loss + loss_weight*localization_loss
         """
         # Define necessary vatiables
-        confidences, localizations = self.forward(self.X)
+        confidences, localizations = self.forward(self.X, is_training=True)
         
         input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
         input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
@@ -242,7 +249,9 @@ class SSDModel:
         train_conf_losses = []
         
         for i in range(epochs):
+            print('Start shuffling...')
             images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
+            print('Finished shuffling.')
             train_loc_loss = np.float32(0)
             train_conf_loss = np.float32(0)
             for j in tqdm(range(n_batches)):

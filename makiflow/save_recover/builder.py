@@ -2,11 +2,15 @@ from __future__ import absolute_import
 from makiflow.layers import *
 from makiflow.conv_model import ConvModel
 from makiflow.save_recover.activation_converter import ActivationConverter
+from makiflow.ssd.ssd_model import SSDModel
+from makiflow.ssd.detector_classifier_block import DetectorClassifierBlock
+from makiflow.ssd.detector_classifier import DetectorClassifier
 # For loading model architecture
 import json
 
 class Builder:
     def convmodel_from_json(json_path):
+        """Creates and returns ConvModel from json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
@@ -18,10 +22,60 @@ class Builder:
         for layer_dict in architecture_dict['layers']:
             layers.append(Builder.__layer_from_dict(layer_dict))
         
+        print('Model is recovered.')
+        
         return ConvModel(layers=layers, input_shape=input_shape, output_shape=output_shape, name=name)
+    
+    
+    def ssd_from_json(json_path):
+        """Creates and returns SSDModel from json file contains its architecture"""
+        json_file = open(json_path)
+        json_value = json_file.read()
+        architecture_dict = json.loads(json_value)
+        name = architecture_dict['name']
+        input_shape = architecture_dict['input_shape']
+        num_classes = architecture_dict['num_classes']
+        
+        dc_blocks = []
+        for dc_block_dict in architecture_dict['dc_blocks']:
+            dc_blocks.append(Builder.__dc_block_from_dict(dc_block_dict))
+            
+        print('Model is recovered.')
+            
+        return SSDModel(dc_blocks=dc_blocks, input_shape=input_shape, num_classes=num_classes, name=name)
+    
+    
+    def __dc_block_from_dict(dc_block_dict):
+        """Creates and returns DetectorClassifierBlock from dictionary"""
+        # Create layers for the dc_block
+        layers = []
+        for layer_dict in dc_block_dict['layers']:
+            layers.append(Builder.__layer_from_dict(layer_dict))
+        
+        # Create detector classifier for dc_block
+        detector_classifier = Builder.__detector_classifier_from_dict(dc_block_dict['detector_classifier'])
+        return DetectorClassifierBlock(layers=layers, detector_classifier=detector_classifier)
+    
+    
+    def __detector_classifier_from_dict(dc_dict):
+        """Creates and returns DetectorClassifier from dictionary"""
+        params = dc_dict['params']
+        
+        name = params['name']
+        class_number = params['class_number']
+        dboxes = params['dboxes']
+        kw = params['classifier_shape'][0]
+        kh = params['classifier_shape'][1]
+        in_f = params['classifier_shape'][2]
+        
+        return DetectorClassifier(kw=kw, kh=kh, in_f=in_f, class_number=class_number, dboxes=dboxes, name=name)
+        
+        
         
             
+            
     def __layer_from_dict(layer_dict):
+        """Creates and returns Layer from dictionary"""
         params = layer_dict['params']
         uni_dict = {
             'ConvLayer': Builder.__conv_layer_from_dict,
