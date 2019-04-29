@@ -5,6 +5,9 @@ import tensorflow as tf
 from sklearn.utils import shuffle
 from tqdm import tqdm
 
+# For saving the architecture
+import json
+
 
 class SSDModel:
     def __init__(self, dc_blocks, input_shape, num_classes, name='MakiSSD'):
@@ -44,9 +47,10 @@ class SSDModel:
             self.default_boxes_wh.append(default_boxes)
 
         self.default_boxes_wh = np.vstack(self.default_boxes_wh)
+        
+        
         # Converting default boxes to another format:
         # (x, y, w, h) -----> (x1, y1, x2, y2)
-
         self.default_boxes = copy(self.default_boxes_wh)
         # For navigation in self.default_boxes
         i = 0
@@ -57,6 +61,9 @@ class SSDModel:
                                      dbox[1] + dbox[3] / 2]  # bottom right y
             i += 1
 
+        # Adjusting dboxes
+        self.__correct_default_boxes(self.default_boxes)
+            
         self.total_predictions = len(self.default_boxes)
 
         # For final predicting
@@ -65,6 +72,18 @@ class SSDModel:
         predicted_boxes = localization_reg + self.default_boxes
         self.predictions = [confidences, predicted_boxes]
 
+    def __correct_default_boxes(self, dboxes):
+        max_x = self.input_shape[1]
+        max_y = self.input_shape[2]
+        
+        for i in range(len(dboxes)):
+            # Check top left point
+            dboxes[i][0] = max(0, dboxes[i][0])
+            dboxes[i][1] = max(0, dboxes[i][1])
+            # Check bottom right point
+            dboxes[i][2] = min(max_x, dboxes[i][2])
+            dboxes[i][3] = min(max_y, dboxes[i][3])
+        
     def __default_box_generator(self, image_width, image_height, width, height, dboxes):
         """
         :param image_width - width of the input image.
@@ -126,8 +145,12 @@ class SSDModel:
         saver.restore(self.session, path)
         print('Model restored')
 
-    def to_json(self):
-        # TODO: Этот метод не работает, не инициализирована переменная path
+    def to_json(self, path):
+        """
+        Convert model's architecture to json file and save it.
+        path - path to file to save in.
+        """
+
         model_dict = {
             'name': self.name,
             'input_shape': self.input_shape,
@@ -147,7 +170,7 @@ class SSDModel:
         json_file.close()
         print("Model's architecture is saved to {}.".format(path))
 
-    def forward(self, X):
+    def forward(self, X, is_training=False):
         """
         Returns a list of PredictionHolder objects contain information about the prediction.
         """
@@ -155,7 +178,7 @@ class SSDModel:
         localizations = []
 
         for dc_block in self.dc_blocks:
-            dcb_out = dc_block.forward(X)
+            dcb_out = dc_block.forward(X, is_training)
             X = dcb_out[0]
             confidences.append(dcb_out[1][0])
             localizations.append(dcb_out[1][1])
@@ -174,11 +197,9 @@ class SSDModel:
             feed_dict={self.X: X}
         )
 
-    def __smooth_L1_loss(x, alpha):
-        # TODO alpha не используется
-        return tf.where(tf.abs(x) < 1, x * x * 0.5, 1 / tf.abs(x) - 0.5)
-
-    def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1, optimizer=None, epochs=1, test_period=1):
+    def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1, neg_samples_ration=3.5, optimizer=None, epochs=1, test_period=1):
+        assert(optimizer is not None)
+        assert(self.session is not None)
         """
         :param images - image array for training the SSD.
         :param loc_masks - masks represent which default box matches ground truth box.
@@ -186,13 +207,13 @@ class SSDModel:
         :param gt_locs - array with differences between ground truth boxes and default boxes: gbox - dbox.
         :param loss_weigth - means how much localization loss influences total loss:
                     loss = confidence_loss + loss_weight*localization_loss
+        neg_samples_ratio - affect amount of negative samples taken for calculation confidence loss.
         """
         # TODO test_period - не используется
         assert (optimizer is not None)
         assert (self.session is not None)
         # Define necessary vatiables
-        confidences, localizations = self.forward(self.X)
-
+        confidences, localizations = self.forward(self.X, is_training=True)
         input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
         input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
         input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
@@ -203,9 +224,8 @@ class SSDModel:
         positive_confidence_loss = tf.reduce_mean(confidence_loss)
         # Calculate confidence loss for part of negative bboxes e.g. Hard Negative Mining
         num_positives = tf.reduce_sum(input_loc_loss_masks)
-        negative_confidence_loss = tf.reshape(confidence_loss, shape=[self.batch_sz * self.total_predictions])
-        negative_confidence_loss, indices = tf.nn.top_k(negative_confidence_loss,
-                                                        k=tf.cast(num_positives * tf.constant(3.5), dtype=tf.int32))
+        negative_confidence_loss = tf.reshape(confidence_loss, shape=[self.batch_sz*self.total_predictions])
+        negative_confidence_loss, indices = tf.nn.top_k(negative_confidence_loss, k=tf.cast(num_positives*tf.constant(neg_samples_ration), dtype=tf.int32))
         negative_confidence_loss = tf.reduce_sum(negative_confidence_loss) / np.float32(self.total_predictions)
 
         final_confidence_loss = positive_confidence_loss + negative_confidence_loss
@@ -237,7 +257,9 @@ class SSDModel:
         train_conf_losses = []
 
         for i in range(epochs):
+            print('Start shuffling...')
             images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
+            print('Finished shuffling.')
             train_loc_loss = np.float32(0)
             train_conf_loss = np.float32(0)
             for j in tqdm(range(n_batches)):

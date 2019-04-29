@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from .utils import error_rate, sparse_cross_entropy
 
+# For testing and evaluating the model
 EPSILON = np.float32(1e-37)
 
 

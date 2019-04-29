@@ -37,15 +37,12 @@ class DetectorClassifierBlock():
     def to_dict(self):
         block_dict = {
             'type': 'DetectorClassifierBlock',
-            'params': {
-                'layers': [],
-                'detector_classifier': self.detector_classifier.to_dict()
-            }
+            'layers': [],
+            'detector_classifier': self.detector_classifier.to_dict()
         }
 
         for layer in self.layers:
-            block_dict['params']['layers'].append(layer.to_dict())
-
+            block_dict['layers'].append(layer.to_dict())
         return block_dict
 
     def get_params_dict(self):
