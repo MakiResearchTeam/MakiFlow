@@ -45,9 +45,10 @@ class SSDModel:
             self.default_boxes_wh.append(default_boxes)
             
         self.default_boxes_wh = np.vstack(self.default_boxes_wh)
+        
+        
         # Converting default boxes to another format:
         # (x, y, w, h) -----> (x1, y1, x2, y2)
-        
         self.default_boxes = copy(self.default_boxes_wh)
         # For navigation in self.default_boxes
         i = 0
@@ -57,6 +58,8 @@ class SSDModel:
                                      dbox[0] + dbox[2] / 2,  # bottom right x
                                      dbox[1] + dbox[3] / 2]  # bottom right y
             i += 1
+        # Adjusting dboxes
+        self.__correct_default_boxes(self.default_boxes)
             
             
         self.total_predictions = len(self.default_boxes)
@@ -66,6 +69,20 @@ class SSDModel:
         confidences = tf.nn.softmax(confidences_ish)
         predicted_boxes = localization_reg + self.default_boxes
         self.predictions = [confidences, predicted_boxes]
+        
+        
+    def __correct_default_boxes(self, dboxes):
+        max_x = self.input_shape[1]
+        max_y = self.input_shape[2]
+        
+        for i in range(len(dboxes)):
+            # Check top left point
+            dboxes[i][0] = max(0, dboxes[i][0])
+            dboxes[i][1] = max(0, dboxes[i][1])
+            # Check bottom right point
+            dboxes[i][2] = min(max_x, dboxes[i][2])
+            dboxes[i][3] = min(max_y, dboxes[i][3])
+        
     
     def __default_box_generator(self, image_width, image_height, width, height, dboxes):
         """
@@ -190,7 +207,7 @@ class SSDModel:
         return tf.where(tf.abs(x) < 1, x*x*0.5, 1/tf.abs(x) - 0.5)
     
     
-    def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1, optimizer=None, epochs=1, test_period=1):
+    def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1, neg_samples_ration=3.5, optimizer=None, epochs=1, test_period=1):
         assert(optimizer is not None)
         assert(self.session is not None)
         """
@@ -200,6 +217,7 @@ class SSDModel:
         gt_locs - array with differences between ground truth boxes and default boxes: gbox - dbox.
         loss_weigth - means how much localization loss influences total loss:
                     loss = confidence_loss + loss_weight*localization_loss
+        neg_samples_ratio - affect amount of negative samples taken for calculation confidence loss.
         """
         # Define necessary vatiables
         confidences, localizations = self.forward(self.X, is_training=True)
@@ -215,7 +233,7 @@ class SSDModel:
         # Calculate confidence loss for part of negative bboxes e.g. Hard Negative Mining
         num_positives = tf.reduce_sum(input_loc_loss_masks)
         negative_confidence_loss = tf.reshape(confidence_loss, shape=[self.batch_sz*self.total_predictions])
-        negative_confidence_loss, indices = tf.nn.top_k(negative_confidence_loss, k=tf.cast(num_positives*tf.constant(3.5), dtype=tf.int32))
+        negative_confidence_loss, indices = tf.nn.top_k(negative_confidence_loss, k=tf.cast(num_positives*tf.constant(neg_samples_ration), dtype=tf.int32))
         negative_confidence_loss = tf.reduce_sum(negative_confidence_loss) / np.float32(self.total_predictions)
         
         final_confidence_loss = positive_confidence_loss + negative_confidence_loss

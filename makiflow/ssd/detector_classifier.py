@@ -46,16 +46,16 @@ class DetectorClassifier():
         """ Returns list with "flattened" predicted confidences and regressed localization offsets for each dbox.
         Example: [confidences np_array, offsets np_array]"""
         confidences = self.classifier.forward(X)
-        confidences_w = confidences.shape[1]    # width
-        confidences_h = confidences.shape[2]    # height
+        confidences_w = confidences.shape[1]    # width of the tensor
+        confidences_h = confidences.shape[2]    # height of the tensor
         confidences = tf.reshape(confidences,[-1, 
                                               confidences_w*confidences_h*self.dboxes_count, self.class_number])
         
         offsets = self.detector.forward(X)
-        offsets_w = offsets.shape[1]            # width
-        offsets_h = offsets.shape[2]            # height
+        offsets_w = offsets.shape[1]            # width of the tensor
+        offsets_h = offsets.shape[2]            # height of the tensor
         offsets = tf.reshape(offsets, [-1, 
-                                       offsets_w*offsets_h*self.dboxes_count, 4]) # 4 is for four offsets: [x, y, width, height]
+                                       offsets_w*offsets_h*self.dboxes_count, 4]) # 4 is for four offsets: [x1, y1, x2, y2]
         
         return [confidences, offsets]
     
