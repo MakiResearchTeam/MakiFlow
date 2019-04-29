@@ -4,18 +4,18 @@ from lxml import etree
 
 
 class XmlParser:
-    """ Used for taking data from VOC dataset. Make sure you have the same data format
+    """ Used for taking data from Pascal dataset xml. Make sure you have the same data format
     in case you want to use it.
     """
     def __init__(self):
         self.result_list = list()
 
     def parse_all_in_dict(self, source_path):
-        '''
+        """
         Parse all files in directory
         :param source_path: path to folder, what contains the target xml files
         :return: list of dictionaries with params of xml
-        '''
+        """
         self.result_list = list()
         for root_dir, _, files in os.walk(source_path):
             for file in files:
@@ -24,11 +24,11 @@ class XmlParser:
         return self.result_list
 
     def parse_xml(self, to_xml_path):
-        '''
+        """
         Parse the single xml file
         :param to_xml_path: path to xml file
         :return: dict with params of xml
-        '''
+        """
         result = dict()
         with open(to_xml_path) as xml_file:
             xml = xml_file.read()
