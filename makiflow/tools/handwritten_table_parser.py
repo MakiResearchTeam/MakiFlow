@@ -182,7 +182,7 @@ class TableParser:
                 for _, _, current_file_list in os.walk(current_path):
                     for current_file in current_file_list:
                         img = cv2.imread(os.path.join(current_path, current_file), 0)
-                        box, img = parser.image_alignment(img)
+                        box, img = self.image_alignment(img)
                         table_img = img[box[0][1]:box[1][1], box[0][0]:box[2][0]]
                         cv2.imwrite(os.path.join(f'{dst}', f'{dir}', f'{current_file}'), table_img)
 

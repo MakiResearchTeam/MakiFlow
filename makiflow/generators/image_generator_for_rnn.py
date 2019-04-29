@@ -8,7 +8,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 
-class ImageFactory:
+class ImageFactoryForRNN:
     """
     This class must create threads for all set of options
     """
@@ -62,13 +62,13 @@ class ImageFactory:
         :return:
         """
         table_name = 'result/tables/' + f'{file_name.split("/")[-1]}.' + str(font_path.split('/')[-1]) + str(font_size)
-        new_thread = ImageGenerator(file_name, self.image_w, self.image_h, self.line_len, font_path, font_size,
-                                    table_name, dst=self.dst)
+        new_thread = ImageGeneratorForRNN(file_name, self.image_w, self.image_h, self.line_len, font_path, font_size,
+                                          table_name, dst=self.dst)
         new_thread.start()
         pass
 
 
-class ImageGenerator(Thread):
+class ImageGeneratorForRNN(Thread):
     """
     imageGenerator extends the Thread, for improve speed
     """
