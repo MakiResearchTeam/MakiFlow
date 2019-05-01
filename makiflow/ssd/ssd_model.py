@@ -72,6 +72,7 @@ class SSDModel:
         predicted_boxes = localization_reg + self.default_boxes
         self.predictions = [confidences, predicted_boxes]
 
+        
     def __correct_default_boxes(self, dboxes):
         max_x = self.input_shape[1]
         max_y = self.input_shape[2]
@@ -83,6 +84,7 @@ class SSDModel:
             # Check bottom right point
             dboxes[i][2] = min(max_x, dboxes[i][2])
             dboxes[i][3] = min(max_y, dboxes[i][3])
+        
         
     def __default_box_generator(self, image_width, image_height, width, height, dboxes):
         """
@@ -118,11 +120,13 @@ class SSDModel:
 
         return np.vstack(boxes_list)
 
+    
     def set_session(self, session):
         self.session = session
         init_op = tf.variables_initializer(self.params)
         session.run(init_op)
 
+        
     def save_weights(self, path):
         """
         This function uses default TensorFlow's way for saving models - checkpoint files.
@@ -134,6 +138,7 @@ class SSDModel:
         save_path = saver.save(self.session, path)
         print('Model saved to %s' % save_path)
 
+        
     def load_weights(self, path):
         """
         This function uses default TensorFlow's way for restoring models - checkpoint files.
@@ -145,6 +150,7 @@ class SSDModel:
         saver.restore(self.session, path)
         print('Model restored')
 
+        
     def to_json(self, path):
         """
         Convert model's architecture to json file and save it.
@@ -170,6 +176,7 @@ class SSDModel:
         json_file.close()
         print("Model's architecture is saved to {}.".format(path))
 
+        
     def forward(self, X, is_training=False):
         """
         Returns a list of PredictionHolder objects contain information about the prediction.
@@ -190,6 +197,7 @@ class SSDModel:
         # [bat
         return [confidences, localizations]
 
+    
     def predict(self, X):
         assert (self.session is not None)
         return self.session.run(
@@ -197,6 +205,7 @@ class SSDModel:
             feed_dict={self.X: X}
         )
 
+    
     def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1, neg_samples_ration=3.5, optimizer=None, epochs=1, test_period=1):
         """
         Function for training the SSD.

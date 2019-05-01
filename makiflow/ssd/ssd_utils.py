@@ -170,7 +170,7 @@ def resize_images_and_bboxes(image_array, bboxes_array, new_size):
     return new_image_array, new_bboxes_array
 
 
-def nms(pred_bboxes, pred_confs, conf_trash_hold=0.4, iou_trashhold=0.1, background_class=0):
+def nms(pred_bboxes, pred_confs, conf_trashhold=0.4, iou_trashhold=0.1, background_class=0):
     """
     Performs Non-Maximum Suppression on predicted bboxes.
     :param pred_bboxes - list of predicted bboxes. Numpy array of shape [num_predictions, 4].
@@ -184,8 +184,8 @@ def nms(pred_bboxes, pred_confs, conf_trash_hold=0.4, iou_trashhold=0.1, backgro
     pred_conf_values = np.max(pred_confs, axis=1)
 
     # Take predicted boxes with confidence higher than conf_trash_hold
-    filtered_pred_boxes = pred_bboxes[pred_conf_values > conf_trash_hold]
-    filtered_pred_confs = pred_confs[pred_conf_values > conf_trash_hold]
+    filtered_pred_boxes = pred_bboxes[pred_conf_values > conf_trashhold]
+    filtered_pred_confs = pred_confs[pred_conf_values > conf_trashhold]
 
     # Get classes in order get rid of background class
     pred_conf_classes = np.argmax(filtered_pred_confs, axis=1)
@@ -201,7 +201,7 @@ def nms(pred_bboxes, pred_confs, conf_trash_hold=0.4, iou_trashhold=0.1, backgro
     pred_conf_classes = np.argmax(filtered_pred_confs, axis=1)
     pred_conf_values = np.max(filtered_pred_confs, axis=1)
 
-    usage_mask = pred_conf_values > conf_trash_hold
+    usage_mask = pred_conf_values > conf_trashhold
     final_boxes = []
     final_conf_classes = []
     final_conf_values = []

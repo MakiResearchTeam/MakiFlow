@@ -12,7 +12,7 @@ class ODEvaluator:
         
     def mean_average_precision(self, detected_bboxes, gt_bboxes, num_classes, iou_trashhold=0.5):
         """
-        Function for calculating mAP for a particular object category.
+        Function for calculating mAP over all object categories.
         
         Parameters
         ----------
@@ -20,7 +20,8 @@ class ODEvaluator:
             Contains following values for each bouding box: [image_name, class, confidence, [x1, y1, x2, y2]]. 
             Namely `detected_boxes` is a list of lists contain aforementiond values.
         gt_bboxes : list
-            The same as `detected_boxes` but for the ground truth boxes.
+            Contains following values for each bouding box: [image_name, class, [x1, y1, x2, y2]]. 
+            Namely `gt_bboxes` is a list of lists contain aforementiond values.
         
         Returns
         -------
@@ -32,10 +33,12 @@ class ODEvaluator:
         aps = []
         for i in range(num_classes):
             detected_boxes_c = [[bbox[0], bbox[2], bbox[3]] for bbox in detected_bboxes if bbox[1] == i]
-            gt_bboxes_c = [[bbox[0], bbox[2], bbox[3]] for bbox in gt_bboxes if bbox[1] == i]
-            
-            self.executor.submit(average_precision, (detected_boxes_c, gt_bboxes_c, iou_trashhold, aps))
-        
+            gt_bboxes_c = [[bbox[0], bbox[2]] for bbox in gt_bboxes if bbox[1] == i]
+            aps.append(ODEvaluator.average_precision( 
+                                 detected_bboxes=detected_boxes_c, 
+                                 gt_bboxes=gt_bboxes_c,
+                                 iou_trashhold=iou_trashhold))
+
         av_pres = [e[0] for e in aps]
         av_pres = np.array(av_pres)
         mean_average_precision = np.mean(av_pres)
@@ -45,7 +48,7 @@ class ODEvaluator:
         
     
     @staticmethod
-    def average_precision(detected_bboxes, gt_bboxes, iou_trashhold=0.5, container=None):
+    def average_precision(detected_bboxes, gt_bboxes, iou_trashhold=0.5):
         """
         Function for calculating average precision for a particular object category.
         
@@ -55,10 +58,8 @@ class ODEvaluator:
             Contains following values for each bouding box: [image_name, confidence, [x1, y1, x2, y2]]. 
             Namely `detected_boxes` is a list of lists contain aforementiond values.
         gt_bboxes : list
-            The same as `detected_boxes` but for the ground truth boxes.
-        container : list
-            Used as a placeholder for the multithread calculations. If container is not None then calculated
-            average precision will be stored in this container.
+            Contains following values for each bouding box: [image_name, [x1, y1, x2, y2]]. 
+            Namely `gt_bboxes` is a list of lists contain aforementiond values.
         
         Returns
         -------
@@ -66,7 +67,7 @@ class ODEvaluator:
             [average precision value, recall values, precision values]
         """
         # Sort all the detections in descending order
-        detections = sort(detected_boxes, key=lambda det: det[1], reverse=True)
+        detections = sorted(detected_bboxes, key=lambda det: det[1], reverse=True)
         # True Positives
         TP = np.zeros(len(detections))
         # False Negatives
@@ -75,9 +76,9 @@ class ODEvaluator:
         gt_seen = np.zeros(len(gt_bboxes))
         
         for i in range(len(detections)):
-            box = np.array([detections[i]])
-            for j in range(len(gt_boxes)):
-                gt_box = np.array([gt_bboxes[j]])
+            box = np.array([detections[i][2]])
+            for j in range(len(gt_bboxes)):
+                gt_box = np.array([gt_bboxes[j][1]])
                 # Check if detected box and gt box are from the same image
                 if detections[i][0] != gt_bboxes[j][0]:
                     continue
@@ -94,8 +95,8 @@ class ODEvaluator:
         # Compute precision and recall
         acc_TP = np.cumsum(TP)
         acc_FP = np.cumsum(FP)
-        recall = acc_TP / len(gt_boxes)
-        precision = np.divide(acc_TP / (acc_TP + acc_FP))
+        recall = acc_TP / len(gt_bboxes)
+        precision = np.divide(acc_TP, (acc_TP + acc_FP))
         
         # COMPUTE AVERAGE PRECISION
         # This code is taken from https://github.com/rafaelpadilla/Object-Detection-Metrics/blob/master/lib/Evaluator.py
@@ -118,10 +119,8 @@ class ODEvaluator:
             for i in ii:
                 ap = ap + np.sum((mrec[i] - mrec[i - 1]) * mpre[i])
             return ap
-        if container is not None:
-            container.append([CalculateAveragePrecision(recall, precision), recall, precision])
-        else
-            return [CalculateAveragePrecision(recall, precision), recall, precision]
+
+        return [CalculateAveragePrecision(recall, precision), recall, precision]
     
     
             
