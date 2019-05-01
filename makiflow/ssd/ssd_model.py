@@ -266,14 +266,15 @@ class SSDModel:
         n_batches = len(images) // self.batch_sz
 
         train_loc_losses = []
-        train_conf_losses = []
-
+        train_pos_conf_losses = []
+        train_neg_conf_losses = []
         for i in range(epochs):
             print('Start shuffling...')
             images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
             print('Finished shuffling.')
             train_loc_loss = np.float32(0)
-            train_conf_loss = np.float32(0)
+            train_pos_conf_loss = np.float32(0)
+            train_neg_conf_loss = np.float32(0)
             for j in tqdm(range(n_batches)):
                 img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
                 loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
@@ -282,8 +283,8 @@ class SSDModel:
 
                 # Don't know how to fix it yet.
                 try:
-                    loc_loss_batch, confidence_loss_batch, _ = self.session.run(
-                        [loc_loss, final_confidence_loss, train_op],
+                    loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self.session.run(
+                        [loc_loss, positive_confidence_loss, negative_confidence_loss, train_op],
                         feed_dict={
                             self.X: img_batch,
                             input_labels: labels_batch,
@@ -295,11 +296,17 @@ class SSDModel:
 
                 # Calculate losses using exponetial decay
                 train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
-                train_conf_loss = 0.9 * train_conf_loss + 0.1 * confidence_loss_batch
+                train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
+                train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
 
             train_loc_losses.append(train_loc_loss)
-            train_conf_losses.append(train_conf_loss)
-            print('Epoch:', i, "Conf loss:", train_conf_loss, 'Loc loss:', train_loc_loss)
+            train_pos_conf_losses.append(train_pos_conf_loss)
+            train_neg_conf_losses.append(train_neg_conf_loss)
+            print('Epoch:', i, "Positive conf loss:", train_pos_conf_loss, 
+                  "Negative conf loss:", train_neg_conf_loss,
+                  'Loc loss:', train_loc_loss)
 
-        return {'train loc losses': train_loc_losses,
-                'train conf losses': train_conf_losses}
+        return {'train pos conf losses': train_pos_conf_losses,
+                'train neg cong losses': train_neg_conf_losses,
+                'train loc losses': train_loc_losses,
+                }

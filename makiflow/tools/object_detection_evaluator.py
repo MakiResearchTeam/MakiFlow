@@ -10,7 +10,7 @@ class ODEvaluator:
         self.executor = ThreadPoolExecutor(num_threads)
         
         
-    def mean_average_precision(self, detected_bboxes, gt_bboxes, num_classes, iou_trashhold=0.5):
+    def mean_average_precision(self, detected_bboxes, gt_bboxes, num_classes, iou_trashhold=0.5, verbose=False):
         """
         Function for calculating mAP over all object categories.
         
@@ -35,9 +35,10 @@ class ODEvaluator:
             detected_boxes_c = [[bbox[0], bbox[2], bbox[3]] for bbox in detected_bboxes if bbox[1] == i]
             gt_bboxes_c = [[bbox[0], bbox[2]] for bbox in gt_bboxes if bbox[1] == i]
             aps.append(ODEvaluator.average_precision( 
-                                 detected_bboxes=detected_boxes_c, 
-                                 gt_bboxes=gt_bboxes_c,
-                                 iou_trashhold=iou_trashhold))
+                        detected_bboxes=detected_boxes_c, 
+                        gt_bboxes=gt_bboxes_c,
+                        iou_trashhold=iou_trashhold,
+                        verbose=verbose))
 
         av_pres = [e[0] for e in aps]
         av_pres = np.array(av_pres)
@@ -48,7 +49,7 @@ class ODEvaluator:
         
     
     @staticmethod
-    def average_precision(detected_bboxes, gt_bboxes, iou_trashhold=0.5):
+    def average_precision(detected_bboxes, gt_bboxes, iou_trashhold=0.5, verbose=False):
         """
         Function for calculating average precision for a particular object category.
         
@@ -119,8 +120,10 @@ class ODEvaluator:
             for i in ii:
                 ap = ap + np.sum((mrec[i] - mrec[i - 1]) * mpre[i])
             return ap
-
-        return [CalculateAveragePrecision(recall, precision), recall, precision]
+        if verbose:
+            return [CalculateAveragePrecision(recall, precision), recall, precision]
+        else:
+            return [CalculateAveragePrecision(recall, precision)]
     
     
             
