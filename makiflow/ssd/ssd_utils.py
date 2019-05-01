@@ -12,13 +12,13 @@ def jaccard_index(boxes_a, boxes_b):
     Calculates Jaccard Index for pairs of bounding boxes.
     :param boxes_a - list of "first" bboxes. Example:
     [
-        [x1, y1, 2, y2],
-        [x1, y1, 2, y2]
+        [x1, y1, x2, y2],
+        [x1, y1, x2, y2]
     ]
-    :param boxes_a - list of "second" bboxes. Example:
+    :param boxes_b - list of "second" bboxes. Example:
     [
-        [x1, y1, 2, y2],
-        [x1, y1, 2, y2]
+        [x1, y1, x2, y2],
+        [x1, y1, x2, y2]
     ]
     :return Returns a list of Jaccard indeces for each bbox pair.
     Example: [jaccard_index1, jaccard_index2]

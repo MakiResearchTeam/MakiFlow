@@ -198,17 +198,20 @@ class SSDModel:
         )
 
     def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1, neg_samples_ration=3.5, optimizer=None, epochs=1, test_period=1):
-        assert(optimizer is not None)
-        assert(self.session is not None)
         """
-        :param images - image array for training the SSD.
+        Function for training the SSD.
+        
+        :param images - array for training the SSD.
         :param loc_masks - masks represent which default box matches ground truth box.
         :param labels - sparse(not one-hot encoded!) labels for classification loss.
         :param gt_locs - array with differences between ground truth boxes and default boxes: gbox - dbox.
         :param loss_weigth - means how much localization loss influences total loss:
                     loss = confidence_loss + loss_weight*localization_loss
-        neg_samples_ratio - affect amount of negative samples taken for calculation confidence loss.
+        :param neg_samples_ratio - affects amount of negative samples taken for calculation confidence loss.
         """
+        assert(optimizer is not None)
+        assert(self.session is not None)
+        
         # TODO test_period - не используется
         assert (optimizer is not None)
         assert (self.session is not None)
