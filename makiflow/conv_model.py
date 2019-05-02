@@ -13,14 +13,19 @@ EPSILON = np.float32(1e-37)
 
 
 class ConvModel(object):
-    def __init__(self, layers, input_shape, output_shape, name='MakiModel'):
+    def __init__(self, layers, input_shape, num_classes, name='MakiModel'):
         """
-        :param layers - list of layers model consists of. Example:
-        [   ConvLayer(5, 5, 3, 32, stride=1, padding='valid'),
-            FlattenLayer(),
-            DenseLayer(...)
-        ]
-        :param input_shape - tuple represents input shape: (batch size, input width, input height, input depth).
+        Parameters
+        ----------
+        layers : list
+            List of layers the model consists of.
+            Example:
+            [   ConvLayer(5, 5, 3, 32, stride=1, padding='valid'),
+                FlattenLayer(),
+                DenseLayer(...)
+            ]
+        input_shape : list
+            List represents input shape: [batch size, input width, input height, input depth].
         Example: [64, 224, 224, 3]
         :param output_shape - tuple represents output shape: (batch size, number of classes)
         ATTENTION: DONT ADD SOFTMAX ACTIVATION FUNCTION AT THE END,
@@ -46,12 +51,13 @@ class ConvModel(object):
 
         # Used for training
         self.X = tf.placeholder(tf.float32, shape=input_shape)
-        self.sparse_out = tf.placeholder(tf.int32, shape=input_shape[0])
+        self.sparse_out = tf.placeholder(tf.int32, shape=self.batch_sz)
 
         # Used for actual running
-        self.input = tf.placeholder(tf.float32, shape=(None, *input_shape[1:]))
+        self.input = tf.placeholder(tf.float32, shape=(input_shape))
         self.output = tf.nn.softmax(self.forward(self.input))
 
+        
     def set_session(self, session):
         self.session = session
         # for layer in self.layers:
@@ -60,6 +66,7 @@ class ConvModel(object):
         init_op = tf.variables_initializer(self.params)
         self.session.run(init_op)
 
+        
     def predict(self, X):
         assert (self.session is not None)
         return self.session.run(
@@ -72,11 +79,13 @@ class ConvModel(object):
             X = layer.forward(X)
         return X
 
+    
     def forward_train(self, X):
         for layer in self.layers:
             X = layer.forward(X, is_training=True)
         return X
 
+    
     def save_weights(self, path):
         """
         This function uses default TensorFlow's way for saving models - checkpoint files.
@@ -88,6 +97,7 @@ class ConvModel(object):
         save_path = saver.save(self.session, path)
         print('Model saved to %s' % save_path)
 
+        
     def load_weights(self, path):
         """
         This function uses default TensorFlow's way for restoring models - checkpoint files.
@@ -99,6 +109,7 @@ class ConvModel(object):
         saver.restore(self.session, path)
         print('Model restored')
 
+        
     def to_json(self, path):
         """
         Convert model's architecture to json file and save it.
@@ -123,6 +134,7 @@ class ConvModel(object):
         json_file.close()
         print("Model's architecture is saved to {}.".format(path))
 
+        
     def evaluate(self, Xtest, Ytest):
         # TODO: n_batches is never used
         # Validating the network
@@ -147,13 +159,42 @@ class ConvModel(object):
         test_cost = test_cost / (len(Xtest) // self.batch_sz)
         print('Accuracy:', 1 - error, 'Cost:', test_cost)
 
+        
     def verbose_fit(self, Xtrain, Ytrain, Xtest, Ytest, optimizer=None, epochs=1, test_period=1):
+        """
+        Method for training the model. Works slower than `verbose_fit` method because
+        it computes error and cost both for train and test data. It produces most accurate
+        train error mesurement.
+        
+        Parameters
+        ----------
+            Xtrain : numpy array
+                Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
+            Ytrain : numpy array
+                Training label for each image in `Xtrain` array with shape (num_images).
+                IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
+            Xtest : numpy array
+                Same as `Xtrain` but for testing.
+            Ytest : numpy array
+                Same as `Ytrain` but for testing.
+            optimizer : tensorflow optimizer
+                Model uses tensorflow optimizers in order train itself.
+            epochs : int
+                Number of epochs.
+            test_period : int
+                Test begins each `test_period` epochs. You can set a larger number in order to
+                speed up training.
+            
+        Returns
+        -------
+            python dictionary
+                Dictionary with all testing data(train error, train cost, test error, test cost)
+                for each test period.
+        """
         assert (optimizer is not None)
         assert (self.session is not None)
         Xtrain = Xtrain.astype(np.float32)
-        Ytrain = Ytrain.argmax(axis=1)
         Xtest = Xtest.astype(np.float32)
-        Ytest = Ytest.argmax(axis=1)
 
         # For training
         Yish = self.forward_train(self.X)
@@ -201,6 +242,10 @@ class ConvModel(object):
                     train_cost += sparse_cross_entropy(Yish_train_done, Ytrainbatch)
                     train_predictions[k * self.batch_sz:(k + 1) * self.batch_sz] = np.argmax(Yish_train_done, axis=1)
 
+                # Normalize cost values so that we're able to compare them while training
+                test_cost =  test_cost / (len(Xtest) // self.batch_sz)
+                train_cost =  train_cost / (len(Xtrain) // self.batch_sz)
+                
                 test_error = error_rate(test_predictions, Ytest)
                 train_error = error_rate(train_predictions, Ytrain)
 
@@ -217,12 +262,41 @@ class ConvModel(object):
                 'test costs': test_costs, 'test errors': test_errors}
 
     def pure_fit(self, Xtrain, Ytrain, Xtest, Ytest, optimizer=None, epochs=1, test_period=1):
+        """
+        Method for training the model. Works faster than `verbose_fit` method because
+        it uses exponential decay in order to speed up training. It produces less accurate
+        train error mesurement.
+        
+        Parameters
+        ----------
+            Xtrain : numpy array
+                Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
+            Ytrain : numpy array
+                Training label for each image in `Xtrain` array with shape (num_images).
+                IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
+            Xtest : numpy array
+                Same as `Xtrain` but for testing.
+            Ytest : numpy array
+                Same as `Ytrain` but for testing.
+            optimizer : tensorflow optimizer
+                Model uses tensorflow optimizers in order train itself.
+            epochs : int
+                Number of epochs.
+            test_period : int
+                Test begins each `test_period` epochs. You can set a larger number in order to
+                speed up training.
+            
+        Returns
+        -------
+            python dictionary
+                Dictionary with all testing data(train error, train cost, test error, test cost)
+                for each test period.
+        """
+            
         assert (optimizer is not None)
         assert (self.session is not None)
         Xtrain = Xtrain.astype(np.float32)
-        Ytrain = Ytrain.argmax(axis=1)
         Xtest = Xtest.astype(np.float32)
-        Ytest = Ytest.argmax(axis=1)
 
         # For training
         Yish = self.forward_train(self.X)
@@ -256,7 +330,7 @@ class ConvModel(object):
                 train_error_batch = error_rate(np.argmax(y_ish, axis=1), Ybatch)
                 train_error = 0.99 * train_error + 0.01 * train_error_batch
 
-            # Validating the network on test and part of train data
+            # Validating the network on test data
             if i % test_period == 0:
                 # For test data
                 test_cost = np.float32(0)
