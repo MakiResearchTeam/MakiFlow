@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from makiflow.layers import *
+from makiflow.advanced_layers import *
 from makiflow.conv_model import ConvModel
 from makiflow.save_recover.activation_converter import ActivationConverter
 from makiflow.ssd.ssd_model import SSDModel
@@ -85,13 +86,22 @@ class Builder:
             'AvgPoolLayer': Builder.__avgpool_layer_from_dict,
             'FlattenLayer': Builder.__flatten_layer_from_dict,
             'DropoutLayer': Builder.__dropout_layer_from_dict,
-            'ActivationLayer': Builder.__activation_layer_from_dict
+            'ActivationLayer': Builder.__activation_layer_from_dict,
+            'ResnetIndentityBlock': Builder.__resnet_convblock_from_dict
         }
         return uni_dict[layer_dict['type']](params)
     
     
     def __flatten_layer_from_dict(params):
         return FlattenLayer()
+    
+    
+    def __resnet_convblock_from_dict(params):
+        name = params['name']
+        in_f1 = params['in_f1']
+        out_f1 = params['out_f1']
+        out_f2 = params['out_f2']
+        return ResnetIndentityBlock(in_f1=in_f1, out_f1=out_f1, out_f2=out_f2, name=name)
         
     
     def __conv_layer_from_dict(params):

@@ -72,6 +72,7 @@ class SSDModel:
         predicted_boxes = localization_reg + self.default_boxes
         self.predictions = [confidences, predicted_boxes]
 
+        
     def __correct_default_boxes(self, dboxes):
         max_x = self.input_shape[1]
         max_y = self.input_shape[2]
@@ -83,6 +84,7 @@ class SSDModel:
             # Check bottom right point
             dboxes[i][2] = min(max_x, dboxes[i][2])
             dboxes[i][3] = min(max_y, dboxes[i][3])
+        
         
     def __default_box_generator(self, image_width, image_height, width, height, dboxes):
         """
@@ -118,11 +120,13 @@ class SSDModel:
 
         return np.vstack(boxes_list)
 
+    
     def set_session(self, session):
         self.session = session
         init_op = tf.variables_initializer(self.params)
         session.run(init_op)
 
+        
     def save_weights(self, path):
         """
         This function uses default TensorFlow's way for saving models - checkpoint files.
@@ -134,6 +138,7 @@ class SSDModel:
         save_path = saver.save(self.session, path)
         print('Model saved to %s' % save_path)
 
+        
     def load_weights(self, path):
         """
         This function uses default TensorFlow's way for restoring models - checkpoint files.
@@ -145,6 +150,7 @@ class SSDModel:
         saver.restore(self.session, path)
         print('Model restored')
 
+        
     def to_json(self, path):
         """
         Convert model's architecture to json file and save it.
@@ -170,6 +176,7 @@ class SSDModel:
         json_file.close()
         print("Model's architecture is saved to {}.".format(path))
 
+        
     def forward(self, X, is_training=False):
         """
         Returns a list of PredictionHolder objects contain information about the prediction.
@@ -190,6 +197,7 @@ class SSDModel:
         # [bat
         return [confidences, localizations]
 
+    
     def predict(self, X):
         assert (self.session is not None)
         return self.session.run(
@@ -197,18 +205,22 @@ class SSDModel:
             feed_dict={self.X: X}
         )
 
+    
     def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1, neg_samples_ration=3.5, optimizer=None, epochs=1, test_period=1):
-        assert(optimizer is not None)
-        assert(self.session is not None)
         """
-        :param images - image array for training the SSD.
+        Function for training the SSD.
+        
+        :param images - array for training the SSD.
         :param loc_masks - masks represent which default box matches ground truth box.
         :param labels - sparse(not one-hot encoded!) labels for classification loss.
         :param gt_locs - array with differences between ground truth boxes and default boxes: gbox - dbox.
         :param loss_weigth - means how much localization loss influences total loss:
                     loss = confidence_loss + loss_weight*localization_loss
-        neg_samples_ratio - affect amount of negative samples taken for calculation confidence loss.
+        :param neg_samples_ratio - affects amount of negative samples taken for calculation confidence loss.
         """
+        assert(optimizer is not None)
+        assert(self.session is not None)
+        
         # TODO test_period - не используется
         assert (optimizer is not None)
         assert (self.session is not None)
@@ -254,14 +266,15 @@ class SSDModel:
         n_batches = len(images) // self.batch_sz
 
         train_loc_losses = []
-        train_conf_losses = []
-
+        train_pos_conf_losses = []
+        train_neg_conf_losses = []
         for i in range(epochs):
             print('Start shuffling...')
             images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
             print('Finished shuffling.')
             train_loc_loss = np.float32(0)
-            train_conf_loss = np.float32(0)
+            train_pos_conf_loss = np.float32(0)
+            train_neg_conf_loss = np.float32(0)
             for j in tqdm(range(n_batches)):
                 img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
                 loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
@@ -270,8 +283,8 @@ class SSDModel:
 
                 # Don't know how to fix it yet.
                 try:
-                    loc_loss_batch, confidence_loss_batch, _ = self.session.run(
-                        [loc_loss, final_confidence_loss, train_op],
+                    loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self.session.run(
+                        [loc_loss, positive_confidence_loss, negative_confidence_loss, train_op],
                         feed_dict={
                             self.X: img_batch,
                             input_labels: labels_batch,
@@ -283,11 +296,17 @@ class SSDModel:
 
                 # Calculate losses using exponetial decay
                 train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
-                train_conf_loss = 0.9 * train_conf_loss + 0.1 * confidence_loss_batch
+                train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
+                train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
 
             train_loc_losses.append(train_loc_loss)
-            train_conf_losses.append(train_conf_loss)
-            print('Epoch:', i, "Conf loss:", train_conf_loss, 'Loc loss:', train_loc_loss)
+            train_pos_conf_losses.append(train_pos_conf_loss)
+            train_neg_conf_losses.append(train_neg_conf_loss)
+            print('Epoch:', i, "Positive conf loss:", train_pos_conf_loss, 
+                  "Negative conf loss:", train_neg_conf_loss,
+                  'Loc loss:', train_loc_loss)
 
-        return {'train loc losses': train_loc_losses,
-                'train conf losses': train_conf_losses}
+        return {'train pos conf losses': train_pos_conf_losses,
+                'train neg cong losses': train_neg_conf_losses,
+                'train loc losses': train_loc_losses,
+                }
