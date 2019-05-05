@@ -36,6 +36,9 @@ class XmlParser:
         root = etree.fromstring(xml)
         filename = root.xpath('filename')
         result['filename'] = filename[0].text
+        
+        folder = root.xpath('folder')
+        result['folder'] = folder[0].text
 
         object_list = list()
         objects = root.xpath('object')

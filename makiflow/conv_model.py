@@ -34,7 +34,7 @@ class ConvModel(object):
 
         self.name = name
         self.input_shape = list(input_shape)
-        self.output_shape = list(output_shape)
+        self.num_classes = num_classes
 
         self.batch_sz = input_shape[0]
         self.layers = layers

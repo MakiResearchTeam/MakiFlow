@@ -105,16 +105,24 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
 def draw_bounding_boxes(image, bboxes_with_classes):
     """
     Draw bounding boxes on the image.
-    :param image - image the bboxes will be drawn on.
-    :param bboxes_with_classes - dictionary with bboxes and predicted classes. Example:
+    
+    Parameters
+    ----------
+    image : numpy ndarray
+        Image the bboxes will be drawn on. It is numpy array with shape [image_w, image_h, color_channels]
+    bboxes_with_classes : python dictionary
+        Dictionary with bboxes and predicted classes. Example:
         {'bboxes':  [
                     [x1, y1, x2, y2],
                     [x1, y1, x2, y2]
                     ]
         'classes': ['class1', 'class2']
         }
-        
-    :return Returns image with drawn bounding box on it.
+    
+    Returns
+    -------
+    numpy ndarray
+    Iimage with drawn bounding boxes on it.
     """
     prediction_num = len(bboxes_with_classes['bboxes'])
     image_copy = copy(image)

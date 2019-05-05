@@ -206,24 +206,33 @@ class SSDModel:
         )
 
     
-    def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1, neg_samples_ration=3.5, optimizer=None, epochs=1, test_period=1):
+    def fit(self, images, loc_masks, labels, gt_locs, loc_loss_weigth=1.0, neg_samples_ration=3.5, optimizer=None, epochs=1, test_period=1):
         """
         Function for training the SSD.
         
-        :param images - array for training the SSD.
-        :param loc_masks - masks represent which default box matches ground truth box.
-        :param labels - sparse(not one-hot encoded!) labels for classification loss.
-        :param gt_locs - array with differences between ground truth boxes and default boxes: gbox - dbox.
-        :param loss_weigth - means how much localization loss influences total loss:
+        Parameters
+        ----------
+        images : numpy ndarray
+            Numpy array contain images with shape [batch_sz, image_w, image_h, color_channels].
+        loc_masks : numpy array
+            Binary masks represent which default box matches ground truth box. In training loop it will be multiplied with confidence 
+            losses array in order to get only positive confidences.
+        labels : numpy array
+            Sparse(not one-hot encoded!) labels for classification loss. The array has a shape of [num_images].
+        gt_locs : numpy ndarray
+            Array with differences between ground truth boxes and default boxes coordinates: gbox - dbox.
+        loss_weigth : float
+            Means how much localization loss influences total loss:
                     loss = confidence_loss + loss_weight*localization_loss
-        :param neg_samples_ratio - affects amount of negative samples taken for calculation confidence loss.
+        neg_samples_ratio : float
+            Affects amount of negative samples taken for calculation confidence loss.
         """
         assert(optimizer is not None)
         assert(self.session is not None)
-        
-        # TODO test_period - не используется
-        assert (optimizer is not None)
-        assert (self.session is not None)
+        assert(optimizer is not None)
+        assert(self.session is not None)
+        assert(type(loc_loss_weigth) == float)
+        assert(type(neg_samples_ration) == float)
         # Define necessary vatiables
         confidences, localizations = self.forward(self.X, is_training=True)
         input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
