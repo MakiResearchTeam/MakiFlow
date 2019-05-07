@@ -1,17 +1,20 @@
 from __future__ import absolute_import
-from makiflow.layers import *
-from makiflow.advanced_layers import *
-from makiflow.conv_model import ConvModel
-from makiflow.save_recover.activation_converter import ActivationConverter
-from makiflow.ssd.ssd_model import SSDModel
-from makiflow.ssd.detector_classifier_block import DetectorClassifierBlock
-from makiflow.ssd.detector_classifier import DetectorClassifier
+
 # For loading model architecture
 import json
 
+from makiflow.advanced_layers import *
+from makiflow.conv_model import ConvModel
+from makiflow.layers import *
+from makiflow.save_recover.activation_converter import ActivationConverter
+from makiflow.ssd.detector_classifier import DetectorClassifier
+from makiflow.ssd.detector_classifier_block import DetectorClassifierBlock
+from makiflow.ssd.ssd_model import SSDModel
+
+
 class Builder:
     def convmodel_from_json(json_path):
-        """Creates and returns ConvModel from json file contains its architecture"""
+        """Creates and returns ConvModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
@@ -29,7 +32,7 @@ class Builder:
     
     
     def ssd_from_json(json_path):
-        """Creates and returns SSDModel from json file contains its architecture"""
+        """Creates and returns SSDModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
