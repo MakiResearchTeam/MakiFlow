@@ -25,7 +25,7 @@ class Layer(object):
 
     def to_dict(self):
         """
-        This data is used for converting the model's architecture to json file.
+        This data is used for converting the model's architecture to json.json file.
         """
         pass
 

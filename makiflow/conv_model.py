@@ -112,7 +112,7 @@ class ConvModel(object):
         
     def to_json(self, path):
         """
-        Convert model's architecture to json file and save it.
+        Convert model's architecture to json.json file and save it.
         path - path to file to save in.
         """
 

@@ -1,12 +1,11 @@
+# For saving the architecture
+import json
 from copy import copy
 
 import numpy as np
 import tensorflow as tf
 from sklearn.utils import shuffle
 from tqdm import tqdm
-
-# For saving the architecture
-import json
 
 
 class SSDModel:
@@ -153,7 +152,7 @@ class SSDModel:
         
     def to_json(self, path):
         """
-        Convert model's architecture to json file and save it.
+        Convert model's architecture to json.json file and save it.
         path - path to file to save in.
         """
 

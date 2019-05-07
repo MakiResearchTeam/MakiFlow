@@ -1,4 +1,11 @@
 ```python
+parser = JsonParser()
+parser.parse_coco_json('sample/instances_val2014.json')
+```
+
+
+# Пример использования tableParsera
+```python
 from makiflow.tools import TableParser
 import os
 import cv2
