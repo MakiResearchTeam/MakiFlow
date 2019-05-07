@@ -7,7 +7,7 @@ import tensorflow as tf
 from makiflow.save_recover.builder import Builder
 
 
-class Trainer:
+class ConvModelTrainer:
     """
     This class is made for training and testing multiple models.
     Trainer creates his own Sessions, be aware of that, it can cause RESOURCE_EXHAUSTED
@@ -56,3 +56,41 @@ class Trainer:
             session.close()
             tf.reset_default_graph()
             print('Success, start next training iteration.')
+            
+
+class SSDModelTrainer:
+    def __init__(self, json_path_list, where_save_results):
+        """
+        Parameters
+        ----------
+        
+        json_path_list : list
+            List of strings represent paths to jsons contain SSDs' architectures.
+        where_save_results : string
+            String represent path to the folder where all the test info will be saved.
+        """
+        self.json_path_list = json_path_list
+        self.where_save_results = where_save_results
+        
+        
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
