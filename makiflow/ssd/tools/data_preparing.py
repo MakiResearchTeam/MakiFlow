@@ -1,11 +1,23 @@
 from __future__ import absolute_import
 from makiflow.ssd.ssd_utils import resize_images_and_bboxes, prepare_data
 from tqdm import tqdm
+import cv2
+import numpy as np
 
 
 
+"""
+Helper class for fast and convenient data preparation for the SSDModel training.
+
+Tip - use the following order to prepare your data:
+1) Get annotations for your data
+2) Create DataPreparator instance
+3) preparator.load_images()
+4) preparator.resize_images_and_bboxes((width, height))
+5) preparator.generate_masks_labels_locs(defalut_boxes)
+"""
 class DataPreparator:
-    def __init__(self, annotations, class_name_to_num, path_to_data):
+    def __init__(self, annotation_dict, class_name_to_num, path_to_data):
         """
         Parameters
         ----------
@@ -25,41 +37,43 @@ class DataPreparator:
         num_files : int
             Number of annotations (and images) to load later. Leave it None if you want to load all the data.
         """
-        self.annotations = annotations
-        self.class_name_to_num = class_name_to_num
-        self.path_to_data = path_to_data
-        self.num_files = num_files
+        self.__annotation_dict = annotation_dict
+        self.__class_name_to_num = class_name_to_num
+        self.__path_to_data = path_to_data
+        
         
     
     def load_images(self):
         print('Loading images, bboxes and labels...')
-        self.images = []
-        self.bboxes = []
-        self.labels = []
+        self.__images = []
+        self.__bboxes = []
+        self.__labels = []
+        # For later usage in normalizing method
+        self.__images_normalized = False
         
-        for annotation in tqdm(self.annotation_dict):
-            image = cv2.imread(self.path_to_data+'{}'.format(annotation['filename']))
+        for annotation in tqdm(self.__annotation_dict):
+            image = cv2.imread(self.__path_to_data+'{}'.format(annotation['filename']))
             bboxes = []
             labels = []
             
             for gt_object in annotation['objects']:
                 bboxes.append(gt_object['box'])
-                labels.append( self.class_name_to_num[gt_object['name']] )
+                labels.append( self.__class_name_to_num[gt_object['name']] )
                 
-            self.images.append(image)
-            self.bboxes.append(bboxes)
-            self.labels.append(labels)
+            self.__images.append(image)
+            self.__bboxes.append(bboxes)
+            self.__labels.append(labels)
         print('Images, bboxes and labels are loaded.')
         
         
     def __collect_image_info(self):
-        self.images_info = []  # Used in prepare_data function
-        for labels, bboxes in zip(self.labels, self.bboxes):
+        self.__images_info = []  # Used in prepare_data function
+        for labels, bboxes in zip(self.__labels, self.__bboxes):
             image_info = {
                 'bboxes': bboxes,
                 'classes': labels
             }
-            self.images_info.append(image_info)
+            self.__images_info.append(image_info)
         
         
     def resize_images_and_bboxes(self, new_size):
@@ -71,11 +85,11 @@ class DataPreparator:
         new_size : tuple
             Contains new width and height. Example: (300, 300).
         """
-        images, bboxes = resize_images_and_bboxes(self.image_array, self.bboxes_array, (300, 300))
-        del self.images
-        del self.bboxes
-        self.images = images
-        self.bboxes = bboxes
+        images, bboxes = resize_images_and_bboxes(self.__images, self.__bboxes, (300, 300))
+        del self.__images
+        del self.__bboxes
+        self.__images = images
+        self.__bboxes = bboxes
         self.__collect_image_info()
     
     
@@ -105,20 +119,20 @@ class DataPreparator:
         labels = []
         loc_masks = []
         gt_locs = []
-        for image_info in tqdm(self.images_info):
-            prepared_data = ssd_utils.prepare_data(image_info, default_boxes, iou_trashhold=0.5)
+        for image_info in tqdm(self.__images_info):
+            prepared_data = prepare_data(image_info, default_boxes, iou_trashhold)
             labels.append(prepared_data['labels'])
             loc_masks.append(prepared_data['loc_mask'])
             gt_locs.append(prepared_data['gt_locs'])
         
-        self.last_labels = np.array(labels, dtype=np.int32)
-        self.last_loc_masks = np.array(loc_masks, dtype=np.float32)
-        self.last_gt_locs = np.array(gt_locs, dtype=np.float32)
-        return self.last_labels, self.last_loc_masks, self.last_gt_locs
+        self.__last_labels = np.array(labels, dtype=np.int32)
+        self.__last_loc_masks = np.array(loc_masks, dtype=np.float32)
+        self.__last_gt_locs = np.array(gt_locs, dtype=np.float32)
+        return self.__last_labels, self.__last_loc_masks, self.__last_gt_locs
     
     
     def get_last_masks_labels_locs(self):
-        return self.last_labels, self.last_loc_masks, self.last_gt_locs
+        return self.__last_labels, self.__last_loc_masks, self.__last_gt_locs
     
     
     def normalize_images(self):
@@ -130,9 +144,20 @@ class DataPreparator:
         list
             Contains normalized images.
         """
-        for i in range(len(self.images)):
-            self.images[i] = np.array(self.images[i], dtype=np.float32) / 255
-        return self.images
+        if self.__images_normalized:
+            raise Exception("Images are already normalized!")
+            
+        self.__images_normalized = True
+        for i in range(len(self.__images)):
+            self.__images[i] = np.array(self.__images[i], dtype=np.float32) / 255
+        return self.__images
+    
+    
+    def get_images(self):
+        if not self.__images_normalized:
+            print('Be careful, images are not normalized.')
+        
+        return self.__images
 
         
         
