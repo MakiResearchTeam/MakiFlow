@@ -14,7 +14,8 @@ Tip - use the following order to prepare your data:
 2) Create DataPreparator instance
 3) preparator.load_images()
 4) preparator.resize_images_and_bboxes((width, height))
-5) preparator.generate_masks_labels_locs(defalut_boxes)
+5) preparator.normalize_images()
+6) preparator.generate_masks_labels_locs(defalut_boxes)
 """
 class DataPreparator:
     def __init__(self, annotation_dict, class_name_to_num, path_to_data):
