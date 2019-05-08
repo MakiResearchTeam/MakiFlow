@@ -92,7 +92,7 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
     dictionary
         Contains `loc_mask` masks for localization loss, (sparse) `labels` vector with class labels and
         `locs` vector contain differences in coordinates between ground truth boxes and default boxes which
-        will be used for the calcalution of the localization loss.
+        will be used for the calculation of the localization loss.
         Example: {  'loc_mask': ...,
                     'labels'  : ...,
                     'gt_locs' : ...  }
@@ -139,7 +139,7 @@ def draw_bounding_boxes(image, bboxes_with_classes):
     Returns
     -------
     numpy ndarray
-    Iimage with drawn bounding boxes on it.
+        Image with drawn bounding boxes on it.
     """
     prediction_num = len(bboxes_with_classes['bboxes'])
     image_copy = copy(image)
