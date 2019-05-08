@@ -69,16 +69,33 @@ def jaccard_index(boxes_a, boxes_b):
 def prepare_data(image_info, dboxes, iou_trashhold=0.5):
     """
     Converts training data to appropriate format for the training.
-    :param image_ingo - dictionary contains info about ground truth bounding boxes and each class assigned to them.
-    Example: { 'bboxes': [
-                        [x1, y1, x2, y2],
-                        [x1, y1, x2, y2],
-                        [x1, y1, x2, y2]
-                        ],
-                'classes': [class1, class2, class3]
-                }
-    :param dboxes - default boxes array has taken from the SSD.
-    :param iou_trashhold - Jaccard index dbox must exceed to be marked as positive.
+    
+    Parameters
+    ----------
+    image_info : dictionary
+        Contains info about ground truth bounding boxes and each class assigned to them.
+        Example: { 'bboxes': [
+                            [x1, y1, x2, y2],
+                            [x1, y1, x2, y2],
+                            [x1, y1, x2, y2]
+                            ],
+                    'classes': [class1, class2, class3]
+                    }, 
+        where class1, class2, class3 are ints.
+    dboxes : array like
+        Default boxes array has taken from the SSD.
+    iou_trashhold : float
+        Jaccard index dbox must exceed to be marked as positive.
+         
+    Returns
+    -------
+    dictionary
+        Contains `loc_mask` masks for localization loss, (sparse) `labels` vector with class labels and
+        `locs` vector contain differences in coordinates between ground truth boxes and default boxes which
+        will be used for the calcalution of the localization loss.
+        Example: {  'loc_mask': ...,
+                    'labels'  : ...,
+                    'gt_locs' : ...  }
     """
     num_predictions = len(dboxes)
     loc_mask = np.array([0] * num_predictions)

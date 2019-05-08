@@ -10,10 +10,11 @@ class XmlParser:
     def __init__(self):
         self.result_list = list()
 
-    def parse_all_in_dict(self, source_path):
+    def parse_all_in_dict(self, source_path, num_files=None):
         """
         Parse all files in directory
         :param source_path: path to folder, what contains the target xml files
+        :param num_files: TODO
         :return: list of dictionaries with params of xml
         """
         self.result_list = list()
