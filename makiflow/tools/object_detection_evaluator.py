@@ -27,14 +27,9 @@ class GTBHolder(Structure):
                 ('y2', c_double)]
 
 
-class ODEvaluator:
-    def __init__(self, num_processes=1):
-        self.num_processes = num_processes
-        self.executor = ProcessPoolExecutor(num_processes)
-        self.manager = Manager()
-        
-        
-    def mean_average_precision(self, detected_bboxes, gt_bboxes, num_classes, iou_trashhold=0.5, verbose=False):
+class ODEvaluator:   
+    @staticmethod
+    def mean_average_precision(detected_bboxes, gt_bboxes, num_classes, iou_trashhold=0.5, verbose=False):
         """
         Function for calculating mAP over all object categories.
         

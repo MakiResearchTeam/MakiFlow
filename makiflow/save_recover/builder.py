@@ -13,13 +13,15 @@ from makiflow.ssd.ssd_model import SSDModel
 
 
 class Builder:
-    def convmodel_from_json(json_path):
+    def convmodel_from_json(json_path, batch_size=None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
         name = architecture_dict['name']
         input_shape = architecture_dict['input_shape']
+        if batch_size is not None:
+            input_shape[0] = batch_size
         output_shape = architecture_dict['output_shape']
         
         layers = []
@@ -31,13 +33,15 @@ class Builder:
         return ConvModel(layers=layers, input_shape=input_shape, output_shape=output_shape, name=name)
     
     
-    def ssd_from_json(json_path):
+    def ssd_from_json(json_path, batch_size=None):
         """Creates and returns SSDModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
         name = architecture_dict['name']
         input_shape = architecture_dict['input_shape']
+        if batch_size is not None:
+            input_shape[0] = batch_size
         num_classes = architecture_dict['num_classes']
         
         dc_blocks = []

@@ -67,11 +67,75 @@ class SSDModelTrainer:
         json_path_list : list
             List of strings represent paths to jsons contain SSDs' architectures.
         where_save_results : string
-            String represent path to the folder where all the test info will be saved.
+            String represent FULL path to the folder where all the test info will be saved.
         """
-        self.json_path_list = json_path_list
-        self.where_save_results = where_save_results
+        self.__json_path_list = json_path_list
+        self.__where_save_results = where_save_results
         
+    def set_test_params(self, params_dict):
+        self.__training_params = params_dict
+    
+    def set_optimizer(self, tf_optimizer):
+        self.__tf_optimizer
+        
+    def set_train_dataset(self, train_images, train_masks, train_labels, train_locs):
+        self.__train_images = train_images
+        self__train_masks = train_masks
+        self.__train_labels = train_labels
+        self.__train_locs = train_locs
+    
+    def set_test_dataset(self, test_images, test_masks, test_labels, test_locs):
+        self.__test_images = test_images
+        self.__test_masks = test_masks
+        self.__test_labels = test_labels
+        self.__test_locs = test_locs
+    
+    def start_testing(self):
+        for architeture in self.__json_path_list:
+            test_number = 0
+            for lr in self.__training_params['learning rates']:
+                for batch_sz in self.__training_params['batch sizes']:
+                    for loc_loss_weight in self.__training_params['loc loss weights']:
+                        for neg_samples_ratio in self.__training_params['neg samples ratios']:
+                            self.__sub_testing()
+    
+    def __sub_testing(self, architeture, test_id, lr, batch_sz, loc_loss_weight, neg_samples_ration):
+        model = Builder.ssd_from_json(architeture, batch_sz)
+        # Get data for easier access
+        images = self.__train_images
+        masks = self.__train_masks
+        labels = self.__train_labels
+        locs = self.__train_locs
+        
+        optimizer = self.__tf_optimizer(lr)
+        epochs = self.__training_params['epochs']
+        test_period = self.__training_params['test period']
+        save_after_test = self.__training_params['save after test']  # Boolean
+        test_on_train_data = self.__training_params['test on train data']  # Boolean
+        
+        training_iterations = epochs // test_period
+        train_info = {}
+        for i in range(training_iterations):
+            # TRAINING PART
+            sub_train_info = model.fit(images=images, 
+                                          masks=masks, 
+                                          labels=labels, 
+                                          locs=locs, 
+                                          loc_loss_weigth=loc_loss_weight, 
+                                          neg_samples_ration=neg_samples_ration, 
+                                          optimizer=optimizer, 
+                                          epochs=test_period)
+            if save_after_test:
+                path = self.__where_save_results+model.name+'_test_'+str(test_)
+                model.save_weights(path)
+            
+            # TESTING PART
+            
+            
+            
+            
+                
+
         
     
         
