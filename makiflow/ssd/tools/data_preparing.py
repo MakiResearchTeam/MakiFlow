@@ -53,7 +53,7 @@ class DataPreparator:
         self.__images_normalized = False
         
         for annotation in tqdm(self.__annotation_dict):
-            image = cv2.imread(self.__path_to_data+'{}'.format(annotation['filename']))
+            image = cv2.imread(self.__path_to_data + annotation['filename'])
             bboxes = []
             labels = []
             
@@ -129,7 +129,7 @@ class DataPreparator:
         self.__last_labels = np.array(labels, dtype=np.int32)
         self.__last_loc_masks = np.array(loc_masks, dtype=np.float32)
         self.__last_gt_locs = np.array(gt_locs, dtype=np.float32)
-        return self.__last_labels, self.__last_loc_masks, self.__last_gt_locs
+        return self.__last_loc_masks, self.__last_labels, self.__last_gt_locs
     
     
     def get_last_masks_labels_locs(self):
