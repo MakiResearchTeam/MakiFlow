@@ -200,7 +200,15 @@ def nms(pred_bboxes, pred_confs, conf_trashhold=0.4, iou_trashhold=0.1, backgrou
     Performs Non-Maximum Suppression on predicted bboxes.
     :param pred_bboxes - list of predicted bboxes. Numpy array of shape [num_predictions, 4].
     :param pred_confs - list of predicted confidences. Numpy array of shape [num_predictions, num_classes].
-    :param conf_trash_hold - used for filtering bboxes
+    
+    conf_trashhold : float
+        All the predictions with the confidence less than `conf_trashhold` will be treated
+        as negatives.
+    iou_trashhold : float
+        Used for performing Non-Maximum Supression. NMS pickes the most confident detected
+        bounding box and deletes all the bounding boxes have IOU(Jaccard Index) more
+        than `iou_trashhold`. LESSER - LESS BBOXES LAST, MORE - MORE BBOXES LAST.
+        
     :param background_class - index of the background class.
     :return Returns final predicted bboxes and confidences
     """

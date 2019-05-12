@@ -5,6 +5,7 @@ import pandas as pd
 import tensorflow as tf
 
 from makiflow.save_recover.builder import Builder
+from makiflow.ssd.tools.testing import SSDTester
 
 
 class ConvModelTrainer:
@@ -72,23 +73,35 @@ class SSDModelTrainer:
         self.__json_path_list = json_path_list
         self.__where_save_results = where_save_results
         
-    def set_test_params(self, params_dict):
+    def set_test_params(self, params_dict, class_name_to_num):
         self.__training_params = params_dict
+        self.__class_name_to_num = class_name_to_num
+        
+        self.__test_tester = SSDTester()
+        self.__test_on_train_data = params_dict['test on train data']
+        if self.__test_on_train_data:
+            self.__train_tester = SSDTester()
     
     def set_optimizer(self, tf_optimizer):
         self.__tf_optimizer
         
-    def set_train_dataset(self, train_images, train_masks, train_labels, train_locs):
+    def set_train_dataset(self, train_images, train_masks, train_labels, train_locs, annotation_dict):
         self.__train_images = train_images
         self__train_masks = train_masks
         self.__train_labels = train_labels
         self.__train_locs = train_locs
+        self.__train_annotation_dict = annotation_dict
+        
+        if self.__test_on_train_data:
+            self.__train_tester.prepare_ground_truth_labels(annotation_dict, self.__class_name_to_num)
     
-    def set_test_dataset(self, test_images, test_masks, test_labels, test_locs):
+    def set_test_dataset(self, test_images, test_masks, test_labels, test_locs, annotation_dict):
         self.__test_images = test_images
         self.__test_masks = test_masks
         self.__test_labels = test_labels
         self.__test_locs = test_locs
+        self.__test_annotation_dict = annotation_dict
+        self.__test_tester.prepare_ground_truth_labels(annotation_dict, self.__class_name_to_num)
     
     def start_testing(self):
         for architeture in self.__json_path_list:
@@ -112,6 +125,9 @@ class SSDModelTrainer:
         test_period = self.__training_params['test period']
         save_after_test = self.__training_params['save after test']  # Boolean
         test_on_train_data = self.__training_params['test on train data']  # Boolean
+        # Get testing parameters
+        conf_trashholds = self.__training_params['testing confidence trashholds']
+        iou_trashholds = self.__training_params['testing ious']
         
         training_iterations = epochs // test_period
         train_info = {}
@@ -130,7 +146,14 @@ class SSDModelTrainer:
                 model.save_weights(path)
             
             # TESTING PART
-            
+            for conf_trashold in conf_trashholds:
+                for iou_trashhold in iou_trashholds:
+                    metrics = self.__test_tester.mean_average_precision(
+                        ssd=model,
+                        images=images,
+                        conf_trashhold=0.5,
+                        iou_trashhold=0.5
+                    )
             
             
             
