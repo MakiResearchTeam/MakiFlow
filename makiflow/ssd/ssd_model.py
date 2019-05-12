@@ -314,7 +314,7 @@ class SSDModel:
                   "Negative conf loss:", train_neg_conf_loss,
                   'Loc loss:', train_loc_loss)
 
-        return {'train pos conf losses': train_pos_conf_losses,
-                'train neg cong losses': train_neg_conf_losses,
-                'train loc losses': train_loc_losses,
+        return {'pos conf losses': train_pos_conf_losses,
+                'neg conf losses': train_neg_conf_losses,
+                'loc losses': train_loc_losses,
                 }
