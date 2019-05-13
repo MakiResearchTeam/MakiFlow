@@ -4,11 +4,34 @@ from lxml import etree
 
 
 class XmlCreator:
+    """
+    Class what can create xml in next formats:
+        PASCAL-VOC
+    """
 
     def __init__(self, dst):
+        """
+        Parameters
+            dst : string
+                output path
+        """
         self.dst = dst
+        pass
 
     def create_pascal_voc_xml(self, filename, template):
+        """
+        Parameters
+        ----------
+            filename : string
+                name of output file
+            template : dict
+                contains some static parameters (width, height, depth and etc)
+
+        Returns
+        -------
+            PascalVocXml
+                Object of PascalVocXml creator with filled template
+        """
         filename = os.path.join(self.dst, filename)
         return PascalVocXml(filename).fill_template(template)
 
@@ -16,6 +39,11 @@ class XmlCreator:
 class PascalVocXml:
 
     def __init__(self, filename):
+        """
+        Parameters
+        ----------
+            filename : string
+        """
         self.dst = filename
 
         self.root = etree.Element('annotation')
@@ -33,6 +61,7 @@ class PascalVocXml:
         self.annotation = etree.SubElement(self.source, 'annotation')
         self.database = etree.SubElement(self.source, 'database')
         self.image = etree.SubElement(self.source, 'image')
+        pass
 
     def fill_template(self, template: dict):
         self.filename.text = template['filename']
@@ -48,6 +77,14 @@ class PascalVocXml:
         return self
 
     def add_objects(self, objects: list):
+        """
+        Add in xml detected objects
+
+        Parameters
+        ----------
+            objects : list
+                list of detected objects with parameters
+        """
         for obj in objects:
             object_root = etree.SubElement(self.root, 'object')
 
@@ -65,9 +102,12 @@ class PascalVocXml:
 
             etree.SubElement(point, 'x')
             etree.SubElement(point, 'y')
+        pass
 
     def save(self):
+        """
+        Save file
+        """
         with open(self.dst + '.xml', 'wb') as f:
             f.write(etree.tostring(self.tree))
-        # outFile = open(self.dst + '.xml', 'w')
-        # self.tree.write(outFile)
+        pass

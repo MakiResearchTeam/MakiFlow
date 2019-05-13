@@ -5,7 +5,8 @@ from tqdm import tqdm
 
 
 class XmlParser:
-    """ Used for taking data from Pascal dataset xml. Make sure you have the same data format
+    """
+    Used for taking data from Pascal dataset xml. Make sure you have the same data format
     in case you want to use it.
     """
     def __init__(self):
@@ -16,9 +17,19 @@ class XmlParser:
     def parse_all_in_dict(self, source_path, num_files=None):
         """
         Parse all files in directory
-        :param source_path: path to folder, what contains the target xml files
-        :param num_files: TODO
-        :return: list of dictionaries with params of xml
+
+        Parameters
+        ----------
+
+            source_path : string
+                path to folder, what contains the target xml files
+            num_files : int
+                count of files what new to return
+
+        Returns
+        -------
+            list
+                list of dictionaries with params of xml
         """
         if num_files is not None:
             
@@ -46,8 +57,17 @@ class XmlParser:
     def parse_xml(self, to_xml_path):
         """
         Parse the single xml file
-        :param to_xml_path: path to xml file
-        :return: dict with params of xml
+
+        Parameters
+        ----------
+
+            to_xml_path : string
+                path to xml file
+
+        Returns
+        -------
+            dict
+                with params of xml
         """
         result = dict()
         with open(to_xml_path) as xml_file:
@@ -90,8 +110,3 @@ class XmlParser:
 
     def get_last_results(self):
         return self.result_list
-
-
-if __name__ == "__main__":
-    parser = XmlParser()
-    print(parser.parse_all_in_dict(source_path='xml_source'))

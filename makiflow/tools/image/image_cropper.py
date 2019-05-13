@@ -9,14 +9,23 @@ class ImageCropperExecutor:
     def crop_images(self, images, dst, sliding_window, step=None, resize_img=None, resize_crop=None):
         """
         This method will create threads pool that will create new images by cropping the input image
-        :param dst: output path
-        :param images: list of images that need to crop
-        :param sliding_window: tuple with two values: first - width of output image, second - height
-        :param step: tuple with two values: first - shift sliding_window left on x px for each iteration, second -
-        shift sliding_window down on x px for each iteration. If first or second value = zero, then step
-        = sliding_window
-        :param resize_img: if not None, initial image will be scaled by this param
-        :param resize_crop: if not None, resulted images will be scaled by this param
+
+        Parameters
+        ----------
+            dst : string
+                output path
+            images : list
+                list of images that need to crop
+            sliding_window : (int, int)
+                tuple with two values: first - width of output image, second - height
+            step : int
+                tuple with two values: first - shift sliding_window left on x px for each iteration, second -
+                shift sliding_window down on x px for each iteration. If first or second value = zero, then step
+                = sliding_window
+            resize_img : int
+                if not None, initial image will be scaled by this param
+            resize_crop: int
+                if not None, resulted images will be scaled by this param
         """
         threads_count = os.cpu_count()
         images_count = len(images)
@@ -36,7 +45,6 @@ class ImageCropperExecutor:
         cropper = ImageCropper(images_part, dst, sliding_window, step, resize_img, resize_crop)
         cropper.start()
         pass
-
     pass
 
 
@@ -99,5 +107,3 @@ class ImageCropper(Thread):
         for img in self.images:
             self.multiple_crop(img)
         pass
-
-    pass

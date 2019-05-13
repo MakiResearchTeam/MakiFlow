@@ -2,6 +2,11 @@ import ujson
 from tqdm import tqdm
 
 class JsonParser:
+    """
+    This class can parse json in some formats
+    supported formats:
+        COCO
+    """
 
     def __init__(self):
         self.result_list = []
@@ -11,9 +16,19 @@ class JsonParser:
     def parse_coco_json(self, to_json_path, channels=3, num_files=None):
         """
         Parse the single json file from CocoJson to [{file, [bboxes]}]
-        :param channels: count of channels in Image
-        :param to_json_path: path to json.json file
-        :return: dict with params of json.json
+
+        Parameters
+        ----------
+
+            channels : int
+                count of channels in Image
+            to_json_path : string
+                path to json.json file
+
+        Returns
+        -------
+            dict
+                dict with params of json.json
         """
         result_list = []
         result = dict()
@@ -77,7 +92,6 @@ class JsonParser:
             ii += 1
             if ii > num_iterations:
                 break
-            
             
         self.result_list = result_list
         return result_list

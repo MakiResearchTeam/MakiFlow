@@ -3,10 +3,11 @@ import random
 import re
 from threading import Thread
 
-import pandas as pd
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
+
+from makiflow.tools.xml.xml_creator import XmlCreator
 
 
 class ImageFactoryForSSD:
@@ -17,10 +18,18 @@ class ImageFactoryForSSD:
     def __init__(self, image_w, image_h, line_len, dst, font_sizes=None, path_to_fonts='example/fonts',
                  path_to_texts='example/text'):
         """
-        :param image_w: width of output image
-        :param image_h: height of output image
-        :param line_len: max count of chars in image
-        :param dst: path than image would be saves
+        Parameters
+        ----------
+
+
+            image_w : int
+                width of output image
+            image_h : int
+                height of output image
+            line_len : int
+                max count of chars in image
+            dst : string
+                path than image would be saves
         """
         if font_sizes is None:
             font_sizes = [28, 32, 34, 38, 42]
@@ -37,8 +46,13 @@ class ImageFactoryForSSD:
     def run_threads(self, file_name=None):
         """
         Run thread for each set of options (like source file, font name and font size)
-        :param file_name: name of source file if it's None, program will be create images from default texts. Source
-        file must be in the txt format (see example in readme on GitHub)
+
+        Parameters
+        ----------
+
+        file_name : string
+            name of source file if it's None, program will be create images from default texts. Source
+            file must be in the txt format (see example in readme on GitHub)
         """
         if file_name is None:
             for root, _, files in os.walk(self.path_to_texts):
@@ -60,10 +74,16 @@ class ImageFactoryForSSD:
     def thread_start(self, file_name, font_path, font_size):
         """
         Launch the tread for this options
-        :param file_name: the file where the text will be taken from
-        :param font_path: current font
-        :param font_size: current font size
-        :return:
+
+        Parameters
+        ----------
+
+        file_name : string
+            the file where the text will be taken from
+        font_path : string
+            current font
+        font_size : int
+            current font size
         """
         table_name = 'result/tables/' + f'{file_name.split("/")[-1]}.' + str(font_path.split('/')[-1]) + str(font_size)
         new_thread = ImageGeneratorForRNN(file_name, self.image_w, self.image_h, self.line_len, font_path, font_size,
@@ -80,16 +100,28 @@ class ImageGeneratorForRNN(Thread):
 
     def __init__(self, file_name, image_w, image_h, line_len, font_name, font_size, table_name, dst):
         """
-        :param file_name: the file where the text will be taken from
-        :param image_w: width of output image
-        :param image_h: height of output image
-        :param line_len: max count of chars in image
-        :param font_name: current font
-        :param font_size: current font size
-        :param table_name: name of file in which the tag table will be stored
-        :param dst: path than image would be saves
+        Parameters
+        ----------
+
+            file_name : string
+                the file where the text will be taken from
+            image_w : int
+                width of output image
+            image_h : int
+                height of output image
+            line_len : int
+                max count of chars in image
+            font_name : string
+                current font
+            font_size : int
+                current font size
+            table_name : string
+                name of file in which the tag table will be stored
+            dst : string
+                path than image would be saves
         """
         super().__init__()
+        self.daemon = False
         self.table = None
         self.counter = 1
         self.dst = dst
@@ -112,11 +144,11 @@ class ImageGeneratorForRNN(Thread):
 
     def run(self):
         self.parse_file()
-        # self.table.to_csv(self.table_name, index=False)
         pass
 
     def add_object_to_xml(self, xml, bbox):
-        if bbox[0][0] > 0 and bbox[0][1] > 0 and bbox[1][0] > 0 and bbox[1][1] > 0:
+        if -5 <= bbox[0][0] <= self.image_w and 0 <= bbox[1][0] <= self.image_w and \
+                0 <= bbox[0][1] <= self.image_h and 0 <= bbox[1][1] <= self.image_h:
             label = 'word'
         else:
             label = 'stump'
@@ -124,8 +156,8 @@ class ImageGeneratorForRNN(Thread):
             'name': label,
             'xmax': str(bbox[1][0]),
             'xmin': str(bbox[0][0]),
-            'ymax': str(bbox[0][1]),
-            'ymin': str(bbox[1][1])
+            'ymax': str(bbox[1][1]),
+            'ymin': str(bbox[0][1])
         }
         xml.add_objects([obj])
 
@@ -133,9 +165,7 @@ class ImageGeneratorForRNN(Thread):
         """
         This method can open the target file and read it, check words for match with regexp and send
          it into image generator method
-        :return:
         """
-        from makiflow.tools.xml_creator import XmlCreator
         xml_creator = XmlCreator(os.path.join(self.dst, 'pascalVocXml'))
 
         with open(self.file_name, 'r') as f:
@@ -163,19 +193,19 @@ class ImageGeneratorForRNN(Thread):
             left = self.get_tab_length()
 
             for line in f:
-                if count == 150:
+                if count == 45:
+                    print(f'{self.name} end his work')
                     break
 
                 if len(line) < 2:
                     continue
                 words = line.split(' ')
-                # TODO переключить на грейскейл
                 for word in words:
                     word = word.strip()
                     if self.regexp.fullmatch(word):
                         draw.text((left, top), word, 0, font=font)
                         box_shape = font.getsize(word)
-                        self.add_object_to_xml(xml, ((left, top), box_shape))
+                        self.add_object_to_xml(xml, ((left - 5, top + 2), (left + box_shape[0], top + box_shape[1])))
                         # draw.rectangle((left - 5, top + 2, left + box_shape[0], top + box_shape[1]),
                         #                outline=(1, 124, 0), width=2)
                         left += font.getsize(word)[0] + self.get_indent_between_word(with_noise=False)
@@ -187,19 +217,22 @@ class ImageGeneratorForRNN(Thread):
                                 path = f'{self.dist_path}{count}'
                                 img.save(f'{path}.png', 'PNG')
                                 xml.save()
+
+                                count += 1
+                                static_data['filename'] = f'{count}.png'
                                 xml = xml_creator. \
                                     create_pascal_voc_xml(f'{self.font_name.split("/")[-1]}-{self.font_size}-{count}',
                                                           static_data)
+
                                 img, draw, shift_h = self.draw_net_marking() if random.random() > 0.8 \
                                     else self.draw_line_marking()
 
                                 top = shift_h - font_h
                                 left = self.get_tab_length()
-                                count += 1
                                 break
 
                             left = self.get_tab_length()
-                pass
+            print('end')
             pass
         pass
 
@@ -247,16 +280,6 @@ class ImageGeneratorForRNN(Thread):
             draw.line(((0, i * line_h + shift_h), (self.image_w, i * line_h + shift_h)), fill=120, width=1)
         return img, draw, shift_h
 
-    def create_and_open_table(self):
-        table = pd.DataFrame({'path': [], 'feature': []})
-        table.columns = ['path', 'feature']
-        self.table = table
-        pass
-
-    def put_row(self, path, feature):
-        self.table.loc[len(self.table)] = {'path': path, 'feature': feature}
-        pass
-
     def create_image(self, line):
         """
         Method create image that contains the input line
@@ -280,13 +303,12 @@ class ImageGeneratorForRNN(Thread):
         self.counter += 1
         pass
 
+# if __name__ == "__main__":
+#     factory = ImageFactoryForSSD(500, 500, 0, 'result')
+#     factory.run_threads()
 
-if __name__ == "__main__":
-    factory = ImageFactoryForSSD(500, 500, 0, 'result')
-    factory.run_threads()
-
-    # img = Image.new('RGB', (100, 100), color='white')
-    # draw = ImageDraw.Draw(img)
-    # font = ImageFont.truetype('ofont.ru_ScriptS.ttf', 30)
-    # draw.text((0, -10), 'ttttttt', (0, 0, 0), font=font)
-    # img.show()
+# img = Image.new('RGB', (100, 100), color='white')
+# draw = ImageDraw.Draw(img)
+# font = ImageFont.truetype('ofont.ru_ScriptS.ttf', 30)
+# draw.text((0, -10), 'ttttttt', (0, 0, 0), font=font)
+# img.show()

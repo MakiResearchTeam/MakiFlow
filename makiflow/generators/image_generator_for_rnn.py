@@ -15,10 +15,17 @@ class ImageFactoryForRNN:
 
     def __init__(self, image_w, image_h, line_len, dst, font_sizes=None):
         """
-        :param image_w: width of output image
-        :param image_h: height of output image
-        :param line_len: max count of chars in image
-        :param dst: path than image would be saves
+        Parameters
+        ----------
+
+            image_w : int
+                width of output image
+            image_h : int
+                height of output image
+            line_len : int
+                max count of chars in image
+            dst : string
+                path than image would be saves
         """
         if font_sizes is None:
             font_sizes = [28, 32, 34, 38, 42]
@@ -33,8 +40,12 @@ class ImageFactoryForRNN:
     def run_threads(self, file_name=None):
         """
         Run thread for each set of options (like source file, font name and font size)
-        :param file_name: name of source file if it's None, program will be create images from default texts. Source
-        file must be in the txt format (see example in readme on GitHub)
+
+        Parameters
+
+            file_name : string
+                name of source file if it's None, program will be create images from default texts. Source
+                file must be in the txt format (see example in readme on GitHub)
         """
         if file_name is None:
             for root, _, files in os.walk('texts'):
@@ -56,10 +67,16 @@ class ImageFactoryForRNN:
     def thread_start(self, file_name, font_path, font_size):
         """
         Launch the tread for this options
-        :param file_name: the file where the text will be taken from
-        :param font_path: current font
-        :param font_size: current font size
-        :return:
+
+        Parameters
+        ----------
+
+            file_name : string
+                the file where the text will be taken from
+            font_path : string
+                current font
+            font_size : int
+                current font size
         """
         table_name = 'result/tables/' + f'{file_name.split("/")[-1]}.' + str(font_path.split('/')[-1]) + str(font_size)
         new_thread = ImageGeneratorForRNN(file_name, self.image_w, self.image_h, self.line_len, font_path, font_size,
@@ -75,14 +92,25 @@ class ImageGeneratorForRNN(Thread):
 
     def __init__(self, file_name, image_w, image_h, line_len, font_name, font_size, table_name, dst):
         """
-        :param file_name: the file where the text will be taken from
-        :param image_w: width of output image
-        :param image_h: height of output image
-        :param line_len: max count of chars in image
-        :param font_name: current font
-        :param font_size: current font size
-        :param table_name: name of file in which the tag table will be stored
-        :param dst: path than image would be saves
+        Parameters
+        ----------
+
+            file_name : string
+                the file where the text will be taken from
+            image_w : int
+                width of output image
+            image_h : int
+                height of output image
+            line_len : int
+                max count of chars in image
+            font_name : string
+                current font
+            font_size : int
+                current font size
+            table_name : string
+                name of file in which the tag table will be stored
+            dst : string
+                path than image would be saves
         """
         super().__init__()
         self.table = None
@@ -104,7 +132,7 @@ class ImageGeneratorForRNN(Thread):
             os.mkdir(os.path.join(dst, self.dist_path))
 
     def run(self):
-        self.create_and_open_table()
+        self.__create_and_open_table()
         self.parse_file()
         self.table.to_csv(self.table_name, index=False)
         pass
@@ -113,7 +141,6 @@ class ImageGeneratorForRNN(Thread):
         """
         This method can open the target file and read it, check words for match with regexp and send
          it into image generator method
-        :return:
         """
         with open(self.file_name, 'r') as f:
             for line in f:
@@ -136,21 +163,25 @@ class ImageGeneratorForRNN(Thread):
             pass
         pass
 
-    def create_and_open_table(self):
+    def __create_and_open_table(self):
         table = pd.DataFrame({'path': [], 'feature': []})
         table.columns = ['path', 'feature']
         self.table = table
         pass
 
-    def put_row(self, path, feature):
+    def __put_row(self, path, feature):
         self.table.loc[len(self.table)] = {'path': path, 'feature': feature}
         pass
 
     def create_image(self, line):
         """
         Method create image that contains the input line
-        :param line: input line
-        :return:
+
+        Parameters
+        ----------
+
+            line : string
+                input line
         """
         path = os.path.join(self.dst, f'{self.dist_path}', f'{self.counter}.png')
 
@@ -165,6 +196,6 @@ class ImageGeneratorForRNN(Thread):
 
         img.save(path, 'PNG')
 
-        self.put_row(f'{self.dist_path}' + f'{self.counter}.png', line)
+        self.__put_row(f'{self.dist_path}' + f'{self.counter}.png', line)
         self.counter += 1
         pass

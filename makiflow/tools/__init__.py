@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from makiflow.tools.handwritten_table_parser import TableParser
-from makiflow.tools.image_cropper import ImageCropperExecutor
-from makiflow.tools.xml_creator import XmlCreator
-from makiflow.tools.xml_parser import XmlParser
+import makiflow.tools.image
+import makiflow.tools.json
+import makiflow.tools.visualizators
+import makiflow.tools.xml
