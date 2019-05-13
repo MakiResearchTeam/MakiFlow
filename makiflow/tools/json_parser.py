@@ -1,12 +1,14 @@
-import json
-
+import ujson
+from tqdm import tqdm
 
 class JsonParser:
 
     def __init__(self):
         self.result_list = []
+        self.classes = set()
+        self.classes_count = {}
 
-    def parse_coco_json(self, to_json_path, channels=3):
+    def parse_coco_json(self, to_json_path, channels=3, num_files=None):
         """
         Parse the single json file from CocoJson to [{file, [bboxes]}]
         :param channels: count of channels in Image
@@ -15,10 +17,10 @@ class JsonParser:
         """
         result_list = []
         result = dict()
-        with open(to_json_path) as json_file:
-            json_str = json_file.read()
+        json_file = open(to_json_path)
 
-        json_str = json.loads(json_str)
+        json_str = ujson.load(json_file)
+        json_file.close()
 
         info_images = json_str['images']
         info_images = sorted(info_images, key=lambda image: image['id'])
@@ -30,8 +32,16 @@ class JsonParser:
         categories = {}
         for rc in raw_categories:
             categories[rc['id']] = rc['name']
-
-        for img in info_images:
+        
+        ii = 0
+        if num_files is not None:
+            num_iterations = num_files
+            print('OK')
+        else:
+            num_iterations = len(info_images)
+            print('NO OK')
+            
+        for img in tqdm(info_images):
             id = img['id']
             result['filename'] = img['file_name']
             result['size'] = (img['width'], img['height'], channels)
@@ -43,6 +53,14 @@ class JsonParser:
 
                 info_bbox = info_bboxes.pop(0)
                 name = categories[info_bbox['category_id']]
+                
+                # Add category to the set of classes
+                self.classes.add(name)
+                try:
+                    self.classes_count[name] += 1
+                except:
+                    self.classes_count[name] = 1
+                
                 x1 = info_bbox['bbox'][0]
                 y1 = info_bbox['bbox'][1]
                 x2 = x1 + info_bbox['bbox'][2]
@@ -54,6 +72,13 @@ class JsonParser:
                 })
             result['objects'] = objects_list
             result_list.append(result)
+            result = dict()
+            
+            ii += 1
+            if ii > num_iterations:
+                break
+            
+            
         self.result_list = result_list
         return result_list
 

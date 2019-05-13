@@ -69,16 +69,33 @@ def jaccard_index(boxes_a, boxes_b):
 def prepare_data(image_info, dboxes, iou_trashhold=0.5):
     """
     Converts training data to appropriate format for the training.
-    :param image_ingo - dictionary contains info about ground truth bounding boxes and each class assigned to them.
-    Example: { 'bboxes': [
-                        [x1, y1, x2, y2],
-                        [x1, y1, x2, y2],
-                        [x1, y1, x2, y2]
-                        ],
-                'classes': [class1, class2, class3]
-                }
-    :param dboxes - default boxes array has taken from the SSD.
-    :param iou_trashhold - Jaccard index dbox must exceed to be marked as positive.
+    
+    Parameters
+    ----------
+    image_info : dictionary
+        Contains info about ground truth bounding boxes and each class assigned to them.
+        Example: { 'bboxes': [
+                            [x1, y1, x2, y2],
+                            [x1, y1, x2, y2],
+                            [x1, y1, x2, y2]
+                            ],
+                    'classes': [class1, class2, class3]
+                    }, 
+        where class1, class2, class3 are ints.
+    dboxes : array like
+        Default boxes array has taken from the SSD.
+    iou_trashhold : float
+        Jaccard index dbox must exceed to be marked as positive.
+         
+    Returns
+    -------
+    dictionary
+        Contains `loc_mask` masks for localization loss, (sparse) `labels` vector with class labels and
+        `locs` vector contain differences in coordinates between ground truth boxes and default boxes which
+        will be used for the calculation of the localization loss.
+        Example: {  'loc_mask': ...,
+                    'labels'  : ...,
+                    'gt_locs' : ...  }
     """
     num_predictions = len(dboxes)
     loc_mask = np.array([0] * num_predictions)
@@ -105,16 +122,24 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
 def draw_bounding_boxes(image, bboxes_with_classes):
     """
     Draw bounding boxes on the image.
-    :param image - image the bboxes will be drawn on.
-    :param bboxes_with_classes - dictionary with bboxes and predicted classes. Example:
+    
+    Parameters
+    ----------
+    image : numpy ndarray
+        Image the bboxes will be drawn on. It is numpy array with shape [image_w, image_h, color_channels]
+    bboxes_with_classes : python dictionary
+        Dictionary with bboxes and predicted classes. Example:
         {'bboxes':  [
                     [x1, y1, x2, y2],
                     [x1, y1, x2, y2]
                     ]
         'classes': ['class1', 'class2']
         }
-        
-    :return Returns image with drawn bounding box on it.
+    
+    Returns
+    -------
+    numpy ndarray
+        Image with drawn bounding boxes on it.
     """
     prediction_num = len(bboxes_with_classes['bboxes'])
     image_copy = copy(image)
@@ -175,7 +200,15 @@ def nms(pred_bboxes, pred_confs, conf_trashhold=0.4, iou_trashhold=0.1, backgrou
     Performs Non-Maximum Suppression on predicted bboxes.
     :param pred_bboxes - list of predicted bboxes. Numpy array of shape [num_predictions, 4].
     :param pred_confs - list of predicted confidences. Numpy array of shape [num_predictions, num_classes].
-    :param conf_trash_hold - used for filtering bboxes
+    
+    conf_trashhold : float
+        All the predictions with the confidence less than `conf_trashhold` will be treated
+        as negatives.
+    iou_trashhold : float
+        Used for performing Non-Maximum Supression. NMS pickes the most confident detected
+        bounding box and deletes all the bounding boxes have IOU(Jaccard Index) more
+        than `iou_trashhold`. LESSER - LESS BBOXES LAST, MORE - MORE BBOXES LAST.
+        
     :param background_class - index of the background class.
     :return Returns final predicted bboxes and confidences
     """

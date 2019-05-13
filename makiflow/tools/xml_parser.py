@@ -1,6 +1,7 @@
 import os
 
 from lxml import etree
+from tqdm import tqdm
 
 
 class XmlParser:
@@ -9,19 +10,38 @@ class XmlParser:
     """
     def __init__(self):
         self.result_list = list()
+        self.classes = set()
+        self.classes_count = {}
 
-    def parse_all_in_dict(self, source_path):
+    def parse_all_in_dict(self, source_path, num_files=None):
         """
         Parse all files in directory
         :param source_path: path to folder, what contains the target xml files
+        :param num_files: TODO
         :return: list of dictionaries with params of xml
         """
-        self.result_list = list()
-        for root_dir, _, files in os.walk(source_path):
-            for file in files:
-                res = self.parse_xml(os.path.join(root_dir, file))
-                self.result_list.append(res)
-        return self.result_list
+        if num_files is not None:
+            
+            i = 0
+            self.result_list = list()
+            for root_dir, _, files in os.walk(source_path):
+                for file in tqdm(files):
+                    res = self.parse_xml(os.path.join(root_dir, file))
+                    self.result_list.append(res)
+                    i += 1
+                    if i > num_files:
+                        break
+            return self.result_list
+        
+        else:
+            
+            self.result_list = list()
+            for root_dir, _, files in os.walk(source_path):
+                for file in tqdm(files):
+                    res = self.parse_xml(os.path.join(root_dir, file))
+                    self.result_list.append(res)
+            return self.result_list
+            
 
     def parse_xml(self, to_xml_path):
         """
@@ -36,6 +56,9 @@ class XmlParser:
         root = etree.fromstring(xml)
         filename = root.xpath('filename')
         result['filename'] = filename[0].text
+        
+        folder = root.xpath('folder')
+        result['folder'] = folder[0].text
 
         object_list = list()
         objects = root.xpath('object')
@@ -43,6 +66,15 @@ class XmlParser:
             name = obj.xpath('name')[0].text
             box = [float(obj.xpath('bndbox/xmin')[0].text), float(obj.xpath('bndbox/ymin')[0].text),
                    float(obj.xpath('bndbox/xmax')[0].text), float(obj.xpath('bndbox/ymax')[0].text)]
+            
+            # Add category to the set of classes
+            self.classes.add(name)
+            try:
+                self.classes_count[name] += 1
+            except:
+                self.classes_count[name] = 1
+                    
+                    
             object_list.append({
                 'name': name,
                 'box': box
