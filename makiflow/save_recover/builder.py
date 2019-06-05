@@ -22,7 +22,7 @@ class Builder:
         input_shape = architecture_dict['input_shape']
         if batch_size is not None:
             input_shape[0] = batch_size
-        output_shape = architecture_dict['output_shape']
+        num_classes = architecture_dict['num_classes']
         
         layers = []
         for layer_dict in architecture_dict['layers']:
@@ -30,7 +30,7 @@ class Builder:
         
         print('Model is recovered.')
         
-        return ConvModel(layers=layers, input_shape=input_shape, output_shape=output_shape, name=name)
+        return ConvModel(layers=layers, input_shape=input_shape, num_classes=num_classes, name=name)
     
     
     def ssd_from_json(json_path, batch_size=None):
@@ -107,8 +107,7 @@ class Builder:
         name = params['name']
         in_f1 = params['in_f1']
         out_f1 = params['out_f1']
-        out_f2 = params['out_f2']
-        return ResnetIndentityBlock(in_f1=in_f1, out_f1=out_f1, out_f2=out_f2, name=name)
+        return ResnetIndentityBlock(in_f1=in_f1, out_f1=out_f1, name=name)
         
     
     def __conv_layer_from_dict(params):

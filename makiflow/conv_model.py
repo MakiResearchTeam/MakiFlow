@@ -1,6 +1,5 @@
 # For saving the architecture
 import json
-
 import numpy as np
 import tensorflow as tf
 from sklearn.utils import shuffle
@@ -119,7 +118,7 @@ class ConvModel(object):
         model_dict = {
             'name': self.name,
             'input_shape': self.input_shape,
-            'output_shape': self.output_shape
+            'num_classes': self.num_classes
         }
         layers_dict = {
             'layers': []
@@ -147,7 +146,7 @@ class ConvModel(object):
         # For train data
         test_cost = 0
         predictions = np.zeros(len(Xtest))
-        for k in tqdm(range(len(Xtest) // self.batch_sz)):
+        for k in tqdm(range(n_batches)):
             # Test data
             Xtestbatch = Xtest[k * self.batch_sz:(k + 1) * self.batch_sz]
             Ytestbatch = Ytest[k * self.batch_sz:(k + 1) * self.batch_sz]

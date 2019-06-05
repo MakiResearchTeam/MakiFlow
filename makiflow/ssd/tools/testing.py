@@ -107,6 +107,6 @@ class SSDTester:
                 bb_confidence = filtered_boxes[i][2][j]
                 detected_boxes.append([image_name, bb_class, bb_confidence, bb_coords])
         print('Number of the SSD detections:', len(detected_boxes))
-        return ODEvaluator.mean_average_precision(detected_boxes, self.gt_boxes, num_classes=ssd.num_classes)
+        return ODEvaluator.mean_average_precision(detected_boxes, self.gt_boxes, num_classes=ssd.num_classes-1)
 
         

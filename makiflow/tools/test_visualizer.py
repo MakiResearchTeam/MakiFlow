@@ -19,5 +19,5 @@ class TestVisualizer:
 
         if save_path is not None:
             fig.savefig(save_path)
-        
-        fig.show()
+        if save_path is None:
+            fig.show()

@@ -93,7 +93,7 @@ params = {
 }
 """
 class SSDModelTrainer:
-    def __init__(self, json_paths_list, where_save_results):
+    def __init__(self, json_path_list, where_save_results):
         """
         Parameters
         ----------
@@ -104,7 +104,7 @@ class SSDModelTrainer:
             String represent FULL path to the folder where all the test info will be saved.
             Example: 'my_folder/folder_for_tests/'
         """
-        self.__json_path_list = json_paths_list
+        self.__json_path_list = json_path_list
         self.__where_save_results = where_save_results
         
     def set_test_params(self, params_dict, class_name_to_num):
