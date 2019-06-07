@@ -73,7 +73,7 @@ class FilterVisualizer(object):
         grads = K.gradients(loss, img)[0]
         return grads
 
-    def generate_image(self, output_dim, layer_ind, filter_ind,
+    def generate_image(self, output_dim, color_channels, layer_ind, filter_ind,
                        epochs=25, upscaling_steps=9):
         """ 
         :param output_dim: tuple contains size of the output image. Example:  (512, 512)
@@ -81,15 +81,15 @@ class FilterVisualizer(object):
         :param filter_ind: - filter index which to visualize.
         """
         # TODO: upscaling_steps is never used
-
         upscaling_factor = 1.2
         upscaling_steps = 20
         intermediate_dim = tuple(
             int(x / (upscaling_factor ** upscaling_steps)) for x in output_dim)
+        print(intermediate_dim)
         input_img_data = np.random.random(
-            (1, intermediate_dim[0], intermediate_dim[1], 1)).astype(np.float32)
+            (1, intermediate_dim[0], intermediate_dim[1], color_channels)).astype(np.float32)
+        
         input_img_data = (input_img_data - 0.5) * 20 + 128
-
         img = tf.placeholder(tf.float32, shape=[1, None, None, None])
 
         loss = self.__activation_loss(layer_ind, filter_ind, img)
@@ -109,8 +109,9 @@ class FilterVisualizer(object):
             # Upscale
             img = self.__deprocess_image(input_img_data[0])
             img = np.array(cv2.resize(img, intermediate_dim))
-            img = img.reshape([*img.shape, 1])
-            input_img_data = [self.__process_image(img, input_img_data[0])]
+            img = img.reshape([1, *img.shape])
+            
+            input_img_data = self.__process_image(img, input_img_data[0])
 
         finale_img = self.__deprocess_image(input_img_data[0])
         print(loss_value)
