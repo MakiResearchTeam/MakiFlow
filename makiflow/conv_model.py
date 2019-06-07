@@ -294,66 +294,79 @@ class ConvModel(object):
             
         assert (optimizer is not None)
         assert (self.session is not None)
-        Xtrain = Xtrain.astype(np.float32)
-        Xtest = Xtest.astype(np.float32)
+        # This is for correct working of tqdm loop. After KeyboardInterrupt it breaks and
+        # starts to print progress bar each time it updates.
+        # In order to avoid this problem we handle KeyboardInterrupt exception and close
+        # the iterator tqdm iterates through manually. Yes, it's ugly, but necessary for
+        # convinient working with MakiFlow in Jupyter Notebook. Sometimes it's helpful
+        # even for console applications.
+        try:
+            Xtrain = Xtrain.astype(np.float32)
+            Xtest = Xtest.astype(np.float32)
 
-        # For training
-        Yish = self.forward_train(self.X)
-        cost = (
-            tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=Yish, labels=self.sparse_out)), Yish)
-        train_op = (cost, optimizer.minimize(cost[0]))
-        # Initialize optimizer's variables
-        self.session.run(tf.variables_initializer(optimizer.variables()))
+            # For training
+            Yish = self.forward_train(self.X)
+            cost = (
+                tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=Yish, labels=self.sparse_out)), Yish)
+            train_op = (cost, optimizer.minimize(cost[0]))
+            # Initialize optimizer's variables
+            self.session.run(tf.variables_initializer(optimizer.variables()))
 
-        # For testing
-        Yish_test = tf.nn.softmax(self.forward(self.X))
+            # For testing
+            Yish_test = tf.nn.softmax(self.forward(self.X))
 
-        n_batches = Xtrain.shape[0] // self.batch_sz
+            n_batches = Xtrain.shape[0] // self.batch_sz
 
-        train_costs = []
-        train_errors = []
-        test_costs = []
-        test_errors = []
-        for i in range(epochs):
-            Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
-            train_cost = np.float32(0)
-            train_error = np.float32(0)
-            for j in tqdm(range(n_batches)):
-                Xbatch = Xtrain[j * self.batch_sz:(j + 1) * self.batch_sz]
-                Ybatch = Ytrain[j * self.batch_sz:(j + 1) * self.batch_sz]
+            train_costs = []
+            train_errors = []
+            test_costs = []
+            test_errors = []
+            for i in range(epochs):
+                Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
+                train_cost = np.float32(0)
+                train_error = np.float32(0)
+                iterator = range(n_batches)
 
-                (train_cost_batch, y_ish), _ = self.session.run(train_op,
-                                                                feed_dict={self.X: Xbatch, self.sparse_out: Ybatch})
-                # Use exponential decay for calculating loss and error
-                train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
-                train_error_batch = error_rate(np.argmax(y_ish, axis=1), Ybatch)
-                train_error = 0.99 * train_error + 0.01 * train_error_batch
+                for j in tqdm(iterator):
+                    Xbatch = Xtrain[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    Ybatch = Ytrain[j * self.batch_sz:(j + 1) * self.batch_sz]
 
-            # Validating the network on test data
-            if i % test_period == 0:
-                # For test data
-                test_cost = np.float32(0)
-                test_predictions = np.zeros(len(Xtest))
+                    (train_cost_batch, y_ish), _ = self.session.run(train_op,
+                                                                    feed_dict={self.X: Xbatch, self.sparse_out: Ybatch})
+                    # Use exponential decay for calculating loss and error
+                    train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
+                    train_error_batch = error_rate(np.argmax(y_ish, axis=1), Ybatch)
+                    train_error = 0.99 * train_error + 0.01 * train_error_batch
 
-                for k in range(len(Xtest) // self.batch_sz):
-                    # Test data
-                    Xtestbatch = Xtest[k * self.batch_sz:(k + 1) * self.batch_sz]
-                    Ytestbatch = Ytest[k * self.batch_sz:(k + 1) * self.batch_sz]
-                    Yish_test_done = self.session.run(Yish_test, feed_dict={self.X: Xtestbatch}) + EPSILON
-                    test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
-                    test_predictions[k * self.batch_sz:(k + 1) * self.batch_sz] = np.argmax(Yish_test_done, axis=1)
+                # Validating the network on test data
+                if i % test_period == 0:
+                    # For test data
+                    test_cost = np.float32(0)
+                    test_predictions = np.zeros(len(Xtest))
 
-                # Collect and print data
-                test_cost = test_cost / (len(Xtest) // self.batch_sz)
-                test_error = error_rate(test_predictions, Ytest)
-                test_errors.append(test_error)
-                test_costs.append(test_cost)
+                    for k in range(len(Xtest) // self.batch_sz):
+                        # Test data
+                        Xtestbatch = Xtest[k * self.batch_sz:(k + 1) * self.batch_sz]
+                        Ytestbatch = Ytest[k * self.batch_sz:(k + 1) * self.batch_sz]
+                        Yish_test_done = self.session.run(Yish_test, feed_dict={self.X: Xtestbatch}) + EPSILON
+                        test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
+                        test_predictions[k * self.batch_sz:(k + 1) * self.batch_sz] = np.argmax(Yish_test_done, axis=1)
 
-                train_costs.append(train_cost)
-                train_errors.append(train_error)
+                    # Collect and print data
+                    test_cost = test_cost / (len(Xtest) // self.batch_sz)
+                    test_error = error_rate(test_predictions, Ytest)
+                    test_errors.append(test_error)
+                    test_costs.append(test_cost)
 
-                print('Epoch:', i, 'Train accuracy:', 1 - train_error, 'Train cost:', train_cost,
-                      'Test accuracy', 1 - test_error, 'Test cost', test_cost)
+                    train_costs.append(train_cost)
+                    train_errors.append(train_error)
 
-        return {'train costs': train_costs, 'train errors': train_errors,
+                    print('Epoch:', i, 'Train accuracy:', 1 - train_error, 'Train cost:', train_cost,
+                          'Test accuracy', 1 - test_error, 'Test cost', test_cost)
+        except KeyboardInterrupt:
+            iterator.close() 
+        finally:
+                  
+
+            return {'train costs': train_costs, 'train errors': train_errors,
                 'test costs': test_costs, 'test errors': test_errors}
