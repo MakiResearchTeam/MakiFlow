@@ -362,5 +362,3 @@ class DropoutLayer(Layer):
                 'p_keep': self.p_keep
             }
         }
-
-del ActivationConverter

@@ -110,40 +110,51 @@ class ConvModelTester:
         
         test_period = self.__params['test period']
         train_operations = self.__params['epochs'] // test_period
-        for i in range(train_operations):
-            info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=test_period)
-            train_costs += info['train costs']
-            train_errors += info['train errors']
-            test_costs += info['test costs']
-            test_errors += info['test errors']
-            
-            if save_after_test:
-                model.save_weights(
-                    test_folder_path+model.name+'_epoch_'+str((i+1)*test_period)+'.ckpt')
-            
-            # Check if the model better than previuos ones
-            if (1 - test_errors[-1]) > self.__best_params['accuracy']:
-                self.__best_params['architecture'] = model.name
-                self.__best_params['accuracy'] = 1 - test_errors[-1]
-                self.__best_params['test id'] = test_id
-                
-        # Free all taken resources
-        session.close()
-        tf.reset_default_graph()
-                
-        # Create graphs with cost and error values        
-        TestVisualizer.plot_test_values([train_costs, test_costs], ['train cost', 'test cost'],
-                                        x_label='epochs', y_label='cost',
-                                        save_path=test_folder_path+'train_test_costs.png')
-        TestVisualizer.plot_test_values([train_errors, test_errors], ['train errors', 'test error'],
-                                        x_label='epochs', y_label='error',
-                                        save_path=test_folder_path+'train_test_errors.png')
         
-        test_data = {'train costs': train_costs, 'train errors': train_errors,
-                'test costs': test_costs, 'test errors': test_errors}
-        test_data_df = pd.DataFrame(test_data)
-        test_data_df.to_csv(test_folder_path+'test_data.csv')
-        print('Test', test_id, 'is finished.')
+        # This is for correct working of tqdm loop. After KeyboardInterrupt it breaks and
+        # starts to print progress bar each time it updates.
+        # In order to avoid this problem we handle KeyboardInterrupt exception and close
+        # the iterator tqdm iterates through manually. Yes, it's ugly, but necessary for
+        # convinient working with MakiFlow in Jupyter Notebook. Sometimes it's helpful
+        # even for console applications.
+        try:
+            for i in range(train_operations):
+                info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=test_period)
+                train_costs += info['train costs']
+                train_errors += info['train errors']
+                test_costs += info['test costs']
+                test_errors += info['test errors']
+
+                if save_after_test:
+                    model.save_weights(
+                        test_folder_path+model.name+'_epoch_'+str((i+1)*test_period)+'.ckpt')
+
+                # Check if the model better than previuos ones
+                if (1 - test_errors[-1]) > self.__best_params['accuracy']:
+                    self.__best_params['architecture'] = model.name
+                    self.__best_params['accuracy'] = 1 - test_errors[-1]
+                    self.__best_params['test id'] = test_id
+
+            # Free all taken resources
+        except KeyboardInterrupt:
+            pass
+        finally:
+            session.close()
+            tf.reset_default_graph()
+
+            # Create graphs with cost and error values        
+            TestVisualizer.plot_test_values([train_costs, test_costs], ['train cost', 'test cost'],
+                                            x_label='epochs', y_label='cost',
+                                            save_path=test_folder_path+'train_test_costs.png')
+            TestVisualizer.plot_test_values([train_errors, test_errors], ['train errors', 'test error'],
+                                            x_label='epochs', y_label='error',
+                                            save_path=test_folder_path+'train_test_errors.png')
+
+            test_data = {'train costs': train_costs, 'train errors': train_errors,
+                    'test costs': test_costs, 'test errors': test_errors}
+            test_data_df = pd.DataFrame(test_data)
+            test_data_df.to_csv(test_folder_path+'test_data.csv')
+            print('Test', test_id, 'is finished.')
         
             
                 

@@ -8,7 +8,7 @@ class ActivationConverter:
     like tensorflow.nn.relu -> relu. This way we can then recover the model cause we
     know what activation function is used.
     """
-
+    @staticmethod
     def activation_to_str(activation):
         return {
             relu: 'relu',
@@ -19,6 +19,7 @@ class ActivationConverter:
             None: 'None'
         }[activation]
 
+    @staticmethod
     def str_to_activation(activation_name):
         return {
             'relu': relu,
