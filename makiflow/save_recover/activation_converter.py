@@ -1,4 +1,4 @@
-from tensorflow.nn import relu, sigmoid, tanh, softmax
+from tensorflow.nn import relu, sigmoid, tanh, softmax, leaky_relu
 
 
 class ActivationConverter:
@@ -15,6 +15,7 @@ class ActivationConverter:
             sigmoid: 'sigmoid',
             tanh: 'tanh',
             softmax: 'softmax',
+            leaky_relu: 'leaky_relu',
             None: 'None'
         }[activation]
 
@@ -24,5 +25,6 @@ class ActivationConverter:
             'sigmoid': sigmoid,
             'tanh': tanh,
             'softmax': softmax,
+            'leaky_relu': leaky_relu,
             'None': None
         }[activation_name]
