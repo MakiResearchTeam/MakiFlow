@@ -361,8 +361,8 @@ class ConvModel(object):
                     train_costs.append(train_cost)
                     train_errors.append(train_error)
 
-                    print('Epoch:', i, 'Train accuracy:', 1 - train_error, 'Train cost:', train_cost,
-                          'Test accuracy', 1 - test_error, 'Test cost', test_cost)
+                    print('Epoch:', i, 'Train accuracy: {:0.4f}'.format(1 - train_error), 'Train cost: {:0.4f}'.format(train_cost),
+                      'Test accuracy: {:0.4f}'.format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
         except KeyboardInterrupt:
             iterator.close() 
         finally:
