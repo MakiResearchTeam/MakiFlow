@@ -255,7 +255,7 @@ class ConvModel(object):
                 test_costs.append(test_cost)
 
                 print('Epoch:', i, 'Train accuracy: {:0.4f}'.format(1 - train_error), 'Train cost: {:0.4f}'.format(train_cost),
-                      'Test accuracy: {:0.4f}'format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
+                      'Test accuracy: {:0.4f}'.format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
 
         return {'train costs': train_costs, 'train errors': train_errors,
                 'test costs': test_costs, 'test errors': test_errors}
