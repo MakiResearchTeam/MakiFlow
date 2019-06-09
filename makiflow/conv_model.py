@@ -25,8 +25,10 @@ class ConvModel(object):
             ]
         input_shape : list
             List represents input shape: [batch size, input width, input height, input depth].
-        Example: [64, 224, 224, 3]
-        :param output_shape - tuple represents output shape: (batch size, number of classes)
+            Example: [64, 224, 224, 3]
+        num_classes : int
+            Number of classes to classify.
+
         ATTENTION: DONT ADD SOFTMAX ACTIVATION FUNCTION AT THE END,
         CONVMODEL DOES IT ITSELF. IT'S NEEDED FOR TRAINING OPERATION
         """
@@ -39,6 +41,7 @@ class ConvModel(object):
         self.layers = layers
         self.session = None
 
+        # Collect all the params for later initialization
         self.params = []
         for layer in self.layers:
             self.params += layer.get_params()
@@ -331,8 +334,9 @@ class ConvModel(object):
                     Xbatch = Xtrain[j * self.batch_sz:(j + 1) * self.batch_sz]
                     Ybatch = Ytrain[j * self.batch_sz:(j + 1) * self.batch_sz]
 
-                    (train_cost_batch, y_ish), _ = self.session.run(train_op,
-                                                                    feed_dict={self.X: Xbatch, self.sparse_out: Ybatch})
+                    (train_cost_batch, y_ish), _ = self.session.run(
+                        train_op,
+                        feed_dict={self.X: Xbatch, self.sparse_out: Ybatch})
                     # Use exponential decay for calculating loss and error
                     train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
                     train_error_batch = error_rate(np.argmax(y_ish, axis=1), Ybatch)

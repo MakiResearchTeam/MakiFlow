@@ -1,0 +1,180 @@
+from __future__ import absolute_import
+from makiflow.unsupervised.autoencoders.encoder import Encoder
+from makiflow.unsupervised.autoencoders.decoder import Decoder
+
+import tensorflow as tf
+import json
+import numpy as np
+from sklearn.utils import shuffle
+from tqdm import tqdm
+
+class AutoEncoder:
+    def __init__(self, encoder: Encoder, decoder: Decoder, name):
+        """
+        Parameters
+        ----------
+        layers : list
+            List of layers model consist of.
+            Example:
+            [
+                DenseLayer(300),
+                DenseLayer(100),
+                DenseLayer(300)
+            ]
+        input_shape : list
+            List of ints represent input shape: [batch_size, input_size].
+        name : str
+            Name of the model.
+        """
+        self.name = name
+        self.encoder = encoder
+        self.decoder = decoder
+        self.input_shape = self.encoder.input_shape
+        self.batch_sz = self.input_shape[0]
+
+        # Collect all the params for later initialization
+        self.params = []
+        self.params += encoder.get_params()
+        self.params += decoder.get_params()
+
+
+        # Get params and store them into python dictionary in order to save and load them correctly later
+        self.named_params_dict = {}
+        self.named_params_dict.update(encoder.get_named_params())
+        self.named_params_dict.update(decoder.get_named_params())
+
+
+        self.X = tf.placeholder(tf.float32, shape=self.input_shape)
+
+        # For training
+        self.encoder_out = encoder.forward_train(self.X)
+        self.decoder_out = decoder.forward_train(self.encoder_out)
+
+        # For testing
+        self.encoder_out_test = encoder.forward(self.X)
+        self.decoder_out_test = decoder.forward_train(self.encoder_out_test)
+
+    
+    def encode(self, X):
+        assert(self.session is not None)
+        n_batches = X.shape[0] // self.batch_sz
+        result = []
+        for i in tqdm(range(n_batches)):
+            Xbatch = X[i*self.batch_sz:(i+1)*self.batch_sz]
+            result.append(
+                self.session.run(
+                    self.encoder_out_test,
+                    feed_dict={self.X: Xbatch}
+                )
+            )
+        return np.vstack(result)
+
+    
+    def set_session(self, session):
+        self.session = session
+        init_op = tf.variables_initializer(self.params)
+        self.session.run(init_op)
+        self.encoder.session = session
+        self.decoder.session = session
+
+    
+    def save_weights(self, path):
+        """
+        This function uses default TensorFlow's way for saving models - checkpoint files.
+        :param path - full path+name of the model.
+        Example: '/home/student401/my_model/model.ckpt'
+        """
+        assert (self.session is not None)
+        saver = tf.train.Saver(self.named_params_dict)
+        save_path = saver.save(self.session, path)
+        print('Model saved to %s' % save_path)
+
+    
+    def load_weights(self, path):
+        """
+        This function uses default TensorFlow's way for restoring models - checkpoint files.
+        :param path - full path+name of the model.
+        Example: '/home/student401/my_model/model.ckpt'
+        """
+        assert (self.session is not None)
+        saver = tf.train.Saver(self.named_params_dict)
+        saver.restore(self.session, path)
+        print('Model restored')
+
+
+    def fit(self, Xtrain, Xtest, optimizer=None, epochs=1, test_period=1):
+        """
+        Method for training the model.
+
+        Parameters
+        ----------
+            Xtrain : numpy array
+                Training samples.
+            Xtest : numpy array
+                Testing samples.
+            optimizer : tensorflow optimizer
+                Model uses tensorflow optimizer in order to train itself.
+            epochs : int
+                Number of training epochs.
+            test_period : int
+                Test begins each `test_period` epochs. You can set a larger number in order to
+                speed up training.
+        
+        Returns
+        -------
+            python dictionary
+                Dictionary with all testing data: train and test losses.
+        """
+        assert (optimizer is not None)
+        assert (self.session is not None)
+
+        Xtrain = Xtrain.astype(np.float32)
+        Xtest = Xtest.astype(np.float32)
+        
+        loss = tf.reduce_mean( tf.losses.mean_squared_error(self.X, self.decoder_out) )
+        train_op = (loss, optimizer.minimize(loss))
+        # Initilize optimizer's variables
+        self.session.run(tf.variables_initializer(optimizer.variables()))
+
+        # For testing
+        test_loss = tf.reduce_mean( tf.losses.mean_squared_error(self.X, self.decoder_out_test) )
+
+        n_batches = Xtrain.shape[0] // self.batch_sz
+
+        train_losses = []
+        test_losses = []
+        for i in range(epochs):
+            Xtrain = shuffle(Xtrain)
+            train_loss = 0
+            iterator = range(n_batches)
+            
+            for j in tqdm(iterator):
+                Xbatch = Xtrain[j*self.batch_sz:(j+1)*self.batch_sz]
+
+                train_loss_batch, _ = self.session.run(
+                    train_op,
+                    feed_dict={self.X: Xbatch})
+                # Use exponential decay for calculating loss
+                train_loss = 0.99 * train_loss + 0.01 * train_loss_batch
+        
+            # Validation the network on test data
+            if (i % test_period) == 0:
+                test_loss_value = 0
+                test_n_batches = len(Xtest) // self.batch_sz
+                for j in range(test_n_batches):
+                    Xtestbatch = Xtest[j*self.batch_sz:(j+1)*self.batch_sz]
+                    test_loss_value += self.session.run(
+                        test_loss,
+                        feed_dict={self.X: Xtestbatch})
+
+                # Collect and print data
+                test_loss_value = test_loss_value / test_n_batches
+
+                train_losses.append(train_loss)
+                test_losses.append(test_loss_value)
+                print('Epoch:', i, 'Train cost: {:0.5f}'.format(train_loss),
+                    'Test cost: {:0.5f}'.format(test_loss_value))
+
+        return {'train losses': train_losses, 'test losess': test_losses}
+                
+
