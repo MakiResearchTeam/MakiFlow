@@ -367,10 +367,9 @@ class ConvModel(object):
 
                     print('Epoch:', i, 'Train accuracy: {:0.4f}'.format(1 - train_error), 'Train cost: {:0.4f}'.format(train_cost),
                       'Test accuracy: {:0.4f}'.format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
-        except KeyboardInterrupt:
+        except Exception as ex:
+            print(ex)
             iterator.close() 
         finally:
-                  
-
             return {'train costs': train_costs, 'train errors': train_errors,
                 'test costs': test_costs, 'test errors': test_errors}
