@@ -95,12 +95,14 @@ class ConvLayer(Layer):
 
 
 class DenseLayer(Layer):
-    def __init__(self, input_shape, output_shape, name, activation=tf.nn.relu,
+    def __init__(self, input_shape, output_shape, name, activation=tf.nn.relu, init_type='xavier',
                  W=None, b=None):
         """
         :param input_shape - number represents input shape. Example: 500.
         :param output_shape - number represents output shape. You can treat it as number of neurons. Example: 100.
         :param activation - activation function. Set None if you don't need activation.
+        :param init_type - name of the weights initialization way: `xavier` or `lasange`. For relu like activations
+            `xavier` initialization performs better.
         :param W - matrix weights. Used for initialisation dense weights with pretrained weights.
         :param b - bias weights. Used for initialisation dense bias with pretrained bias.
         """
@@ -112,7 +114,7 @@ class DenseLayer(Layer):
         if W is None:
             W = np.random.randn(input_shape, output_shape)
             # Perform Xavier initialization
-            if activation == tf.nn.relu:
+            if init_type == 'xavier':
                 W /= (input_shape + output_shape) / 2
             # Perform Lasange initialization
             else:
