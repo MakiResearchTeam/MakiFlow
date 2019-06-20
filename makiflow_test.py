@@ -10,26 +10,34 @@ from keras.datasets import cifar10
 
 def get_layers():
     layers = [
-            ConvLayer(kw=3, kh=3, in_f=3, out_f=64, name='input_layer'),
-            ConvLayer(kw=3, kh=3, in_f=64, out_f=64, name=2),
+            # 224x224
+            ConvLayer(kw=3, kh=3, in_f=3, out_f=64, name='block1_conv1'),
+            ConvLayer(kw=3, kh=3, in_f=64, out_f=64, name='block1_conv2'),
             MaxPoolLayer(),
-        
-            ConvLayer(kw=3, kh=3, in_f=64, out_f=128, name=4),
-            ResnetIndentityBlock(in_f1=128, out_f1=128, name=5),
+            # 112x112
+            ConvLayer(kw=3, kh=3, in_f=64, out_f=128, name='block2_conv1'),
+            ConvLayer(kw=3, kh=3, in_f=128, out_f=128, name='block2_conv2'),
             MaxPoolLayer(),
-        
-            ConvLayer(kw=3, kh=3, in_f=128, out_f=256, name=6),
-            ResnetIndentityBlock(in_f1=256, out_f1=256, name=7),
+            # 56x56
+            ConvLayer(kw=3, kh=3, in_f=128, out_f=256, name='block3_conv1'),
+            ConvLayer(kw=3, kh=3, in_f=256, out_f=256, name='block3_conv2'),
+            ConvLayer(kw=3, kh=3, in_f=256, out_f=256, name='block3_conv3'),
             MaxPoolLayer(),
-        
-            ConvLayer(kw=3, kh=3, in_f=256, out_f=512, name=8),
-            ResnetIndentityBlock(in_f1=512, out_f1=512, name=9),
+            #28x28
+            ConvLayer(kw=3, kh=3, in_f=256, out_f=512, name='block4_conv1'),
+            ConvLayer(kw=3, kh=3, in_f=512, out_f=512, name='block4_conv2'),
+            ConvLayer(kw=3, kh=3, in_f=512, out_f=512, name='block4_conv3'),
             MaxPoolLayer(),
-        
+            #14x14
+            ConvLayer(kw=3, kh=3, in_f=512, out_f=512, name='block5_conv1'),
+            ConvLayer(kw=3, kh=3, in_f=512, out_f=512, name='block5_conv2'),
+            ConvLayer(kw=3, kh=3, in_f=512, out_f=512, name='block5_conv3'),
+            MaxPoolLayer(),
+            #7x7
             FlattenLayer(),
-            DenseLayer(input_shape=2048, output_shape=1024, name=12),
-            DenseLayer(input_shape=1024, output_shape=1024, name=13),
-            DenseLayer(input_shape=1024, output_shape=10, activation=None, name='out_put_layer')
+            DenseLayer(input_shape=25088, output_shape=4096, name='fc1'),
+            DenseLayer(input_shape=1024, output_shape=4096, name='fc2'),
+            DenseLayer(input_shape=1024, output_shape=1000, activation=None, name='predictions')
         # The last layer always is gonna have no activation function! Just always pass None into 'activation' argument!
         ]
     return layers

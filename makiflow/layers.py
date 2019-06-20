@@ -134,7 +134,7 @@ class DenseLayer(Layer):
         out = tf.matmul(X, self.W) + self.b
         if self.f is None:
             return out
-        return out
+        return self.f(out)
 
     def copy_from_keras_layers(self, layer):
         W, b = layer.get_weights()
