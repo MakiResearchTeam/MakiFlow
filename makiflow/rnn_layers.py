@@ -204,6 +204,17 @@ class RNNBlock(Layer):
 
 class EmbeddingLayer(Layer):
     def __init__(self, num_embeddings, dim, name):
+        """
+        Parameters
+        ----------
+            num_embeddings : int
+                Number of embeddings in the embedding matrix(e.g. size of the vocabulary in case of word embedding).
+            dim : int
+                Dimensionality of the embedding.
+            name : string or anything convertable to string
+                Name of the layer.
+        """
+                
         self.num_embeddings = num_embeddings
         self.dim = dim
         self.name = 'Embedding_'+str(name)
