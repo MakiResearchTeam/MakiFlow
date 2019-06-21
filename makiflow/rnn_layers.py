@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import tensorflow as tf
+import numpy as np
 from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
@@ -200,6 +201,30 @@ class RNNBlock(Layer):
     def get_params_dict(self):
         return self.named_params_dict
     
+
+class EmbeddingLayer(Layer):
+    def __init__(self, num_embeddings, dim, name):
+        self.num_embeddings = num_embeddings
+        self.dim = dim
+        self.name = 'Embedding_'+str(name)
+        embed = np.random.randn(num_embeddings, dim) * np.sqrt(12 / (num_embeddings + dim))
+        self.embed = tf.Variable(embed, name=self.name, dtype=tf.float32)
+        
+        self.params = [self.embed]
+        self.named_params_dict = {self.name:self.embed}
+    
+    def forward(self, X, is_training=False):
+        return tf.nn.embedding_lookup(self.embed, X)
+    
+    def get_params(self):
+        return self.params
+
+    def get_params_dict(self):
+        return self.named_params_dict
+    
+
+
+
     
 
 
