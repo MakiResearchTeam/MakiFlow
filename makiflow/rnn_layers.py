@@ -5,6 +5,7 @@ from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
 from makiflow.layers import Layer
+from makiflow.save_recover.activation_converter import ActivationConverter
 
 class CellType:
     # Bidirectional dynamic
@@ -60,6 +61,9 @@ class GRULayer(Layer):
         self.num_cells = num_cells
         self.input_dim = input_dim
         self.seq_length = seq_length
+        self.dynamic = dynamic
+        self.bidirectional = bidirectional
+        self.f = activation
         self.cells = GRUCell(num_units=num_cells, activation=activation, dtype=tf.float32)
         # Responsible for being RNN whether bidirectional or vanilla
         self.cell_type = CellType.get_cell_type(bidirectional, dynamic)
@@ -85,6 +89,20 @@ class GRULayer(Layer):
     
     def get_params_dict(self):
         return self.named_params_dict
+    
+    def to_dict(self):
+        return {
+            'type': 'GRULayer',
+            'params': {
+                'num_cells': self.num_cells,
+                'input_dim': self.input_dim,
+                'seq_length': self.seq_length,
+                'name': self.name,
+                'dynamic': self.dynamic,
+                'bidirectional': self.bidirectional,
+                'activation': ActivationConverter.activation_to_str(self.f)
+            }
+        }
 
 
 class LSTMLayer(Layer):
@@ -117,6 +135,9 @@ class LSTMLayer(Layer):
         self.num_cells = num_cells
         self.input_dim = input_dim
         self.seq_length = seq_length
+        self.dynamic = dynamic
+        self.bidirectional = bidirectional
+        self.f = activation
         self.cells = LSTMCell(num_units=num_cells, activation=activation, dtype=tf.float32)
         # Responsible for being RNN whether bidirectional or vanilla
         self.cell_type = CellType.get_cell_type(bidirectional, dynamic)
@@ -144,9 +165,24 @@ class LSTMLayer(Layer):
     def get_params_dict(self):
         return self.named_params_dict
 
+    def to_dict(self):
+        return {
+            'type': 'LSTMLayer',
+            'params': {
+                'num_cells': self.num_cells,
+                'input_dim': self.input_dim,
+                'seq_length': self.seq_length,
+                'name': self.name,
+                'dynamic': self.dynamic,
+                'bidirectional': self.bidirectional,
+                'activation': ActivationConverter.activation_to_str(self.f)
+            }
+        }
+    
+
 
 class RNNBlock(Layer):
-    def __init__(self, rnn_layers, seq_length, name, activation=tf.nn.tanh, dynamic=False, bidirectional=False):
+    def __init__(self, rnn_layers, seq_length, dynamic=False, bidirectional=False):
         """
         Parameters
         ----------
@@ -154,8 +190,6 @@ class RNNBlock(Layer):
                 List of RNN layers to stack.
             seq_length : int
                 Max length of the input sequences.
-            activation : tensorflow function
-                Activation function of the layer.
             dynamic : boolean
                 Influences whether the layer will be working as dynamic RNN or static. The difference
                 between static and dynamic is that in case of static TensorFlow builds static graph and the RNN
@@ -171,6 +205,8 @@ class RNNBlock(Layer):
         for layer in rnn_layers:
             self.rnn_cells.append(layer.cells)
         self.seq_length = seq_length
+        self.dynamic = dynamic
+        self.bidirectional = bidirectional
         self.stacked_cells = MultiRNNCell(cells=self.rnn_cells)
         self.cell_type = CellType.get_cell_type(bidirectional, dynamic)
         
@@ -200,6 +236,25 @@ class RNNBlock(Layer):
     
     def get_params_dict(self):
         return self.named_params_dict
+    
+    def to_dict(self):
+        rnnblock_dict = {
+            'type': 'RNNBlock',
+            'params': {
+                'seq_length': self.seq_length,
+                'dynamic': self.dynamic,
+                'bidirectional': self.bidirectional,
+            }
+        }
+
+        rnn_layers_dict = {
+            'rnn_layers': []
+        }
+        for layer in self.rnn_layers:
+            rnn_layers_dict['rnn_layers'].append(layer.to_dict())
+
+        rnnblock_dict.update(rnn_layers_dict)
+        return rnnblock_dict
     
 
 class EmbeddingLayer(Layer):
@@ -232,6 +287,16 @@ class EmbeddingLayer(Layer):
 
     def get_params_dict(self):
         return self.named_params_dict
+    
+    def to_dict(self):
+        return {
+            'type': 'EmbeddingLayer',
+            'params': {
+                'num_embeddings': self.num_embeddings,
+                'dim': self.dim,
+                'name': self.name
+            }
+        }
     
 
 
