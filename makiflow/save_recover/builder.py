@@ -75,6 +75,10 @@ class Builder:
         rnn_layers = []
         for layer in architecture_dict['rnn_layers']:
             rnn_layers.append(Builder.__layer_from_dict(layer))
+
+        if batch_size is not None:
+            input_shape = [batch_size, *input_shape[1:]]
+            
         return TextRecognizer(
             cnn_layers=cnn_layers,
             rnn_layers=rnn_layers,
