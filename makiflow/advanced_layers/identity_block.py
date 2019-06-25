@@ -47,7 +47,7 @@ class IdentityBlock(Layer):
         
     def to_dict(self):
         desc =  {
-            'type':'ResnetIndentityBlock',
+            'type':'IdentityBlock',
             'params': {
                 'name': self.name,
                 'main_branch': []
@@ -55,7 +55,7 @@ class IdentityBlock(Layer):
         }
 
         for layer in self.main_branch:
-            desc['main_branch'].append(layer.to_dict())
+            desc['params']['main_branch'].append(layer.to_dict())
         
         return desc
                 

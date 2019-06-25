@@ -78,7 +78,7 @@ class Builder:
 
         if batch_size is not None:
             input_shape = [batch_size, *input_shape[1:]]
-            
+
         return TextRecognizer(
             cnn_layers=cnn_layers,
             rnn_layers=rnn_layers,
@@ -132,6 +132,7 @@ class Builder:
             'DropoutLayer': Builder.__dropout_layer_from_dict,
             'ActivationLayer': Builder.__activation_layer_from_dict,
             'ResnetIndentityBlock': Builder.__resnet_convblock_from_dict,
+            'IdentityBlock': Builder.__identityblock_from_dict,
             'GRULayer': Builder.__gru_layer_from_dict,
             'LSTMLayer': Builder.__lstm_layer_from_dict,
             'RNNBlock': Builder.__rnnblock_from_dict,
@@ -148,6 +149,17 @@ class Builder:
         in_f1 = params['in_f1']
         out_f1 = params['out_f1']
         return ResnetIndentityBlock(in_f1=in_f1, out_f1=out_f1, name=name)
+    
+    @staticmethod
+    def __identityblock_from_dict(params):
+        name = params['name']
+        main_branch = []
+        for layer in params['main_branch']:
+            main_branch.append(Builder.__layer_from_dict(layer))
+        return IdentityBlock(
+            main_branch=main_branch,
+            name=name
+            )
         
     @staticmethod
     def __conv_layer_from_dict(params):
