@@ -9,13 +9,13 @@ from makiflow.layers import Layer, ConvLayer, BatchNormLayer, ActivationLayer
 # 2) DON'T USE BATCHNORMALIZATION BEFORE THE BLOCK
 
 
-class IndentityBlock(Layer):
+class IdentityBlock(Layer):
     def __init__(self, main_branch, name):
         """
         Parameters
         ----------
         main_branch : list
-            list of different layers performed on the main branch. 
+            List of different layers performed on the main branch. 
             WARNING! OUTPUT TENSOR OF MAIN BRANCH MUST BE THE SAME SHAPE AS THE SKIP BRANCH!
         """
         Layer.__init__(self)

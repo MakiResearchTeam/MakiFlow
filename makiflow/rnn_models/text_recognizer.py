@@ -12,24 +12,29 @@ import json
 # IT WILL BE EITHER SEPARATE UTIL OR A CLASS METHOD LATER.
 # FIX IT IN THE FUTURE.
 def toSparse(texts, chars):
-    "put ground truth texts into sparse tensor for ctc_loss"
-    indices = []
-    values = []
-    shape = [len(texts), 0] # last entry must be max(labelList[i])
+	"put ground truth texts into sparse tensor for ctc_loss"
+	indices = []
+	values = []
+	shape = [len(texts), 0] # last entry must be max(labelList[i])
 
-    # go over all texts
-    for (batchElement, text) in enumerate(texts):
-        # convert to string of label (i.e. class-ids)
-        labelStr = [chars.index(c) for c in text]
-        # sparse tensor must have size of max. label-string
-        if len(labelStr) > shape[1]:
-            shape[1] = len(labelStr)
-        # put each label into sparse tensor
-        for (i, label) in enumerate(labelStr):
-            indices.append([batchElement, i])
-            values.append(label)
+	# go over all texts
+	for (batchElement, text) in enumerate(texts):
+		# convert to string of label (i.e. class-ids)
+		try:
+			labelStr = [chars.index(c) for c in text]
+		except Exception as ex:
+			print(ex)
+			print('problem text', text)
 
-    return (indices, values, shape)
+		# sparse tensor must have size of max. label-string
+		if len(labelStr) > shape[1]:
+			shape[1] = len(labelStr)
+		# put each label into sparse tensor
+		for (i, label) in enumerate(labelStr):
+			indices.append([batchElement, i])
+			values.append(label)
+
+	return (indices, values, shape)
 
 
 

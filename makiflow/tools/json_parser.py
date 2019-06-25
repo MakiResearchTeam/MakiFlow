@@ -40,8 +40,8 @@ class JsonParser:
         else:
             num_iterations = len(info_images)
             print('NO OK')
-            
-        for img in tqdm(info_images):
+        iterator = tqdm(info_images)
+        for img in iterator:
             id = img['id']
             result['filename'] = img['file_name']
             result['size'] = (img['width'], img['height'], channels)
@@ -76,6 +76,7 @@ class JsonParser:
             
             ii += 1
             if ii > num_iterations:
+                iterator.close()
                 break
             
             

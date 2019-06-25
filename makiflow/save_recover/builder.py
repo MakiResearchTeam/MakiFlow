@@ -11,6 +11,7 @@ from makiflow.save_recover.activation_converter import ActivationConverter
 from makiflow.ssd.detector_classifier import DetectorClassifier
 from makiflow.ssd.detector_classifier_block import DetectorClassifierBlock
 from makiflow.ssd.ssd_model import SSDModel
+from makiflow.rnn_models.text_recognizer import TextRecognizer
 
 
 class Builder:
@@ -60,12 +61,29 @@ class Builder:
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
+        name = architecture_dict['name']
         input_shape = architecture_dict['input_shape']
         if batch_size is not None:
             input_shape[0] = batch_size
         chars = architecture_dict['chars']
         max_seq_length = architecture_dict['max_seq_length']
         decoder_type = architecture_dict['decoder_type']
+
+        cnn_layers = []
+        for layer in architecture_dict['cnn_layers']:
+            cnn_layers.append(Builder.__layer_from_dict(layer))
+        rnn_layers = []
+        for layer in architecture_dict['rnn_layers']:
+            rnn_layers.append(Builder.__layer_from_dict(layer))
+        return TextRecognizer(
+            cnn_layers=cnn_layers,
+            rnn_layers=rnn_layers,
+            input_shape=input_shape,
+            chars=chars,
+            max_seq_length=max_seq_length,
+            decoder_type=decoder_type,
+            name=name
+        )
     
     @staticmethod
     def __dc_block_from_dict(dc_block_dict):
@@ -186,7 +204,7 @@ class Builder:
         name = params['name']
         dynamic = params['dynamic']
         bidirectional = params['bidirectional']
-        activation = params['activation']
+        activation = ActivationConverter.str_to_activation(params['activation'])
         return GRULayer(
             num_cells=num_cells,
             input_dim=input_dim,
@@ -206,7 +224,7 @@ class Builder:
         name = params['name']
         dynamic = params['dynamic']
         bidirectional = params['bidirectional']
-        activation = params['activation']
+        activation = ActivationConverter.str_to_activation(params['activation'])
         return LSTMLayer(
             num_cells=num_cells,
             input_dim=input_dim,

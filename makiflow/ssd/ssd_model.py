@@ -276,45 +276,51 @@ class SSDModel:
         train_loc_losses = []
         train_pos_conf_losses = []
         train_neg_conf_losses = []
-        for i in range(epochs):
-            print('Start shuffling...')
-            images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
-            print('Finished shuffling.')
-            train_loc_loss = np.float32(0)
-            train_pos_conf_loss = np.float32(0)
-            train_neg_conf_loss = np.float32(0)
-            for j in tqdm(range(n_batches)):
-                img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
-                loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
-                labels_batch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
-                gt_locs_batch = gt_locs[j * self.batch_sz:(j + 1) * self.batch_sz]
+        try:
+            for i in range(epochs):
+                print('Start shuffling...')
+                images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
+                print('Finished shuffling.')
+                train_loc_loss = np.float32(0)
+                train_pos_conf_loss = np.float32(0)
+                train_neg_conf_loss = np.float32(0)
+                iterator = tqdm(range(n_batches))
+                for j in iterator:
+                    img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    labels_batch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    gt_locs_batch = gt_locs[j * self.batch_sz:(j + 1) * self.batch_sz]
 
-                # Don't know how to fix it yet.
-                try:
-                    loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self.session.run(
-                        [loc_loss, positive_confidence_loss, negative_confidence_loss, train_op],
-                        feed_dict={
-                            self.X: img_batch,
-                            input_labels: labels_batch,
-                            input_loc_loss_masks: loc_mask_batch,
-                            input_loc: gt_locs_batch
-                        })
-                except:
-                    continue
+                    # Don't know how to fix it yet.
+                    try:
+                        loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self.session.run(
+                            [loc_loss, positive_confidence_loss, negative_confidence_loss, train_op],
+                            feed_dict={
+                                self.X: img_batch,
+                                input_labels: labels_batch,
+                                input_loc_loss_masks: loc_mask_batch,
+                                input_loc: gt_locs_batch
+                            })
+                    except:
+                        continue
 
-                # Calculate losses using exponetial decay
-                train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
-                train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
-                train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
+                    # Calculate losses using exponetial decay
+                    train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
+                    train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
+                    train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
 
-            train_loc_losses.append(train_loc_loss)
-            train_pos_conf_losses.append(train_pos_conf_loss)
-            train_neg_conf_losses.append(train_neg_conf_loss)
-            print('Epoch:', i, "Positive conf loss:", train_pos_conf_loss, 
-                  "Negative conf loss:", train_neg_conf_loss,
-                  'Loc loss:', train_loc_loss)
-
-        return {'pos conf losses': train_pos_conf_losses,
+                train_loc_losses.append(train_loc_loss)
+                train_pos_conf_losses.append(train_pos_conf_loss)
+                train_neg_conf_losses.append(train_neg_conf_loss)
+                print('Epoch:', i, "Positive conf loss:", train_pos_conf_loss, 
+                    "Negative conf loss:", train_neg_conf_loss,
+                    'Loc loss:', train_loc_loss)
+        except Exception as ex:
+            iterator.close()
+            print(ex)
+        finally:
+            return {
+                'pos conf losses': train_pos_conf_losses,
                 'neg conf losses': train_neg_conf_losses,
                 'loc losses': train_loc_losses,
-                }
+                    }
