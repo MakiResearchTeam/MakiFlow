@@ -1,0 +1,4 @@
+from __future__ import absolute_import
+
+from makiflow.combined_models.word_grabber import WordGrabber
+del absolute_import
