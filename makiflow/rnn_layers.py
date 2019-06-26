@@ -69,7 +69,8 @@ class GRULayer(Layer):
         self.cell_type = CellType.get_cell_type(bidirectional, dynamic)
         self.cells.build(inputs_shape=[None, tf.Dimension(self.input_dim)])
         self.params = self.cells.variables
-        self.named_params_dict = { (str(param)+'_'+self.name):param for param in self.params}
+        self.param_common_name = self.name+f'_{num_cells}_{input_dim}_{seq_length}'
+        self.named_params_dict = { (self.param_common_name+'_'+str(i)):param for i, param in enumerate(self.params)}
 
     
     def forward(self, X, is_training=False):
@@ -144,7 +145,8 @@ class LSTMLayer(Layer):
         
         self.cells.build(inputs_shape=[None, tf.Dimension(self.input_dim)])
         self.params = self.cells.variables
-        self.named_params_dict = { (str(param)+'_'+self.name):param for param in self.params}
+        self.param_common_name = self.name+f'_{num_cells}_{input_dim}_{seq_length}'
+        self.named_params_dict = { (self.param_common_name+'_'+str(i)):param for i, param in enumerate(self.params)}
 
     
     def forward(self, X, is_training=False):

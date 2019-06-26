@@ -32,6 +32,9 @@ class SSDModel:
         # Generating default boxes
         self.default_boxes_wh = []
         out = self.X
+        # Also collect feature map sizes for later easy access to
+        # particular bboxes
+        self.dc_block_feature_map_sizes = []
         for dc_block in dc_blocks:
             out = dc_block.forward(out)
             # out = [ convolution_output, detector_classifier_output ]
@@ -40,6 +43,7 @@ class SSDModel:
             # We need to convert shape to int because initially it's a Dimension object
             width = int(out.shape[1])
             height = int(out.shape[2])
+            self.dc_block_feature_map_sizes.append((width, height))
             dboxes = dc_block.get_dboxes()
             default_boxes = self.__default_box_generator(input_shape[1], input_shape[2],
                                                          width, height, dboxes)
@@ -70,6 +74,22 @@ class SSDModel:
         confidences = tf.nn.softmax(confidences_ish)
         predicted_boxes = localization_reg + self.default_boxes
         self.predictions = [confidences, predicted_boxes]
+    
+
+    def get_dbox(self, dc_block_ind, dbox_category, x_pos, y_pos):
+        dcblock_dboxes_to_pass = 0
+        for i in range(dc_block_ind):
+            dcblock_dboxes_to_pass += (
+                self.dc_block_feature_map_sizes[i][0]*self.dc_block_feature_map_sizes[i][1] * 
+                len(self.dc_blocks[i].get_dboxes())
+            )
+        for i in range(dbox_category):
+            dcblock_dboxes_to_pass += (
+                self.dc_block_feature_map_sizes[dc_block_ind][0]*self.dc_block_feature_map_sizes[dc_block_ind][1]
+            )
+        dcblock_dboxes_to_pass += self.dc_block_feature_map_sizes[dc_block_ind][0]*x_pos
+        dcblock_dboxes_to_pass += y_pos
+        return self.default_boxes[dcblock_dboxes_to_pass]
 
         
     def __correct_default_boxes(self, dboxes):
@@ -301,8 +321,11 @@ class SSDModel:
                                 input_loc_loss_masks: loc_mask_batch,
                                 input_loc: gt_locs_batch
                             })
-                    except:
-                        continue
+                    except Exception as ex:
+                        if ex is KeyboardInterrupt:
+                            raise Exception('You have raised KeyboardInterrupt exception.')
+                        else:
+                            continue
 
                     # Calculate losses using exponetial decay
                     train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
