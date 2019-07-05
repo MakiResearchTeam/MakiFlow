@@ -136,6 +136,7 @@ class Builder:
             'GRULayer': Builder.__gru_layer_from_dict,
             'LSTMLayer': Builder.__lstm_layer_from_dict,
             'RNNBlock': Builder.__rnnblock_from_dict,
+            'StemBlock':Builder.__stem_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
@@ -276,6 +277,21 @@ class Builder:
             dim=dim,
             name=name
         )
-        
+
+    @staticmethod
+    def __stem_from_dict(params):
+        name = params['name']
+        in_f = params['in_f']
+        out_f = params['out_f']
+        activation =  ActivationConverter.str_to_activation(params['activation'])
+        return StemBlock(in_f=in_f, out_f=out_f,activation=activation, name=name)
+
+    @staticmethod
+    def __inception_resnet_A_from_dict(params):
+        name = params['name']
+        in_f = params['in_f']
+        out_f = params['out_f']
+        activaion =  ActivationConverter.str_to_activation(params['activation'])
+        return Inception_A(in_f=in_f, out_f=out_f,activaion=activaion, name=name)  
 
         

@@ -2,4 +2,5 @@ from __future__ import absolute_import
 
 from makiflow.advanced_layers.resnet_identity_block import ResnetIndentityBlock
 from makiflow.advanced_layers.identity_block import IdentityBlock
+from makiflow.advanced_layers.stem import StemBlock
 del absolute_import
