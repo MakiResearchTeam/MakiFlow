@@ -35,7 +35,7 @@ def get_layers():
             BatchNormLayer(D=256,name='dsxa'),
             MaxPoolLayer(),#2
             Inception_C(in_f=256,out_f=[128,160,190,256],name='23123123'),
-            Inception_C(in_f=256,out_f=[128,160,190,256],name='31231231231231231'),
+            Inception_C(in_f=256,out_f=[128,160,190,256],name='312331'),
             AvgPoolLayer(),#1
 
             FlattenLayer(),
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 5
+    epochs = 1
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon,momentum=0.9)

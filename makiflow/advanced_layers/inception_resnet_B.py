@@ -51,6 +51,8 @@ class Inception_B:
 			self.conv1_R_1,self.conv1_R_2,self.conv1_R_3,
 			self.conv2_af_conn,
 		]
+		if self.f is not None:
+			self.layers.append(ActivationLayer(self.f))
 		self.named_params_dict = {}
 		for layer in self.layers:
 			self.named_params_dict.update(layer.get_params_dict())
