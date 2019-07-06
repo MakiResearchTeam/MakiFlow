@@ -37,20 +37,24 @@ class Inception_B:
 		self.out_f = out_f
 		self.f = activation
 		#left branch
-		self.conv1_L_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[2],activation=None,name='conv1_L_1')
+		self.conv1_L_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[2],activation=None,name=name+'conv1_L_1')
 		#right branch
-		self.conv1_R_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name='conv1_R_1')
-		self.conv1_R_2 = ConvLayer(kw=1,kh=7,in_f=out_f[0],out_f=out_f[1],activation=activation,name='conv1_R_2')
-		self.conv1_R_3 = ConvLayer(kw=7,kh=1,in_f=out_f[1],out_f=out_f[2],activation=activation,name='conv1_R_3')
+		self.conv1_R_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name=name+'conv1_R_1')
+		self.conv1_R_2 = ConvLayer(kw=1,kh=7,in_f=out_f[0],out_f=out_f[1],activation=activation,name=name+'conv1_R_2')
+		self.conv1_R_3 = ConvLayer(kw=7,kh=1,in_f=out_f[1],out_f=out_f[2],activation=activation,name=name+'conv1_R_3')
 
 		#after connect branches
-		self.conv2_af_conn = ConvLayer(kw=1,kh=1,in_f=out_f[2]*2,out_f=out_f[3],activation=None,name='conv2_af_conn')
+		self.conv2_af_conn = ConvLayer(kw=1,kh=1,in_f=out_f[2]*2,out_f=out_f[3],activation=None,name=name+'conv2_af_conn')
 		self.f = activation
 		self.layers=[
 			self.conv1_L_1,
 			self.conv1_R_1,self.conv1_R_2,self.conv1_R_3,
 			self.conv2_af_conn,
 		]
+		self.named_params_dict = {}
+		for layer in self.layers:
+			self.named_params_dict.update(layer.get_params_dict())
+
 
 	def forward(self,X,is_training=False):
 		FX = X
@@ -80,7 +84,11 @@ class Inception_B:
 		return params
 	
 	def get_params_dict(self):
-		return {'type':'Stem',
+		return self.named_params_dict
+
+
+	def to_dict(self):
+		return {'type':'Inception_resnet_B_block',
 			'params':{
 				'name': self.name,
 				'in_f':self.in_f,

@@ -23,8 +23,12 @@ def get_layers():
     layers = [#
             Reduction_A(in_f=3,out_f=[32,32,64,64],name='1'),
             Reduction_A(in_f=131,out_f=[32,32,64,64],name='13'),
+            Inception_B(in_f=259,out_f=[32,64,128,259],name='91'),
             Reduction_A(in_f=259,out_f=[32,32,64,64],name='11'),
+            BatchNormLayer(D=387,name='sas'),
+            Inception_B(in_f=387,out_f=[100,150,260,387],name='90'),
             Reduction_A(in_f=387,out_f=[32,32,64,64],name='19'),
+            Inception_B(in_f=515,out_f=[160,200,260,515],name='23'),
             BatchNormLayer(D=515,name='z'),
 
             AvgPoolLayer(),#
