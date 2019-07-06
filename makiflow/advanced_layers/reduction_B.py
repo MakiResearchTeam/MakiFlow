@@ -43,17 +43,17 @@ class Reduction_B:
 		self.maxPool_L_1 = MaxPoolLayer(ksize=[1,3,3,1],strides=[1,2,2,1],padding='VALID')
 
 		#Mid-Left branch
-		self.conv_ML_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name='conv_ML_1')
-		self.conv_ML_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[3],stride=2,padding='VALID',activation=activation,name='conv_ML_2')
+		self.conv_ML_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name=name+'conv_ML_1')
+		self.conv_ML_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[3],stride=2,padding='VALID',activation=activation,name=name+'conv_ML_2')
 
 		#Mid-Right branch
-		self.conv_MR_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name='conv_MR_1')
-		self.conv_MR_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],stride=2,padding='VALID',activation=activation,name='conv_MR_2')
+		self.conv_MR_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name=name+'conv_MR_1')
+		self.conv_MR_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],stride=2,padding='VALID',activation=activation,name=name+'conv_MR_2')
 
 		#Right branch
-		self.conv_R_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name='conv_R_1')
-		self.conv_R_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],activation=activation,name='conv_R_2')
-		self.conv_R_3 = ConvLayer(kw=3,kh=3,in_f=out_f[1],out_f=out_f[2],activation=activation,stride=2,padding='VALID',name='conv_R_3')
+		self.conv_R_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name=name+'conv_R_1')
+		self.conv_R_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],activation=activation,name=name+'conv_R_2')
+		self.conv_R_3 = ConvLayer(kw=3,kh=3,in_f=out_f[1],out_f=out_f[2],activation=activation,stride=2,padding='VALID',name=name+'conv_R_3')
 
 		self.layers = [
 			self.maxPool_L_1,

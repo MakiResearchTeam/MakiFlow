@@ -50,7 +50,11 @@ class Inception_C:
 			self.conv_R_1,self.conv_R_2,self.conv_R_3,
 			self.conv_after_conc,
 		]
-		
+		self.named_params_dict = {}
+		for layer in self.layers:
+			self.named_params_dict.update(layer.get_params_dict())
+
+
 
 	def forward(self,X,is_training=False):
 		FX = X
@@ -79,7 +83,12 @@ class Inception_C:
 		return params
 	
 	def get_params_dict(self):
-		return {'type':'Stem',
+		return self.named_params_dict
+
+
+
+	def to_dict(self):
+		return {'type':'Inception_resnet_C_block',
 			'params':{
 				'name': self.name,
 				'in_f':self.in_f,
