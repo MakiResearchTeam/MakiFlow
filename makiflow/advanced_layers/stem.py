@@ -47,7 +47,7 @@ class StemBlock:
 		#main branch
 		self.conv1 = ConvLayer(kw=3,kh=3,stride=2,in_f=in_f,out_f=out_f[0],padding='VALID',activation=activation,name=name+'_conv1')
 		self.conv2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[0],padding='VALID',activation=activation,name=name+'_conv2')
-		self.conv3 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],activation=activation,name='conv3')
+		self.conv3 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],activation=activation,name=name+'conv3')
 
 		#split 1
 			#part left  

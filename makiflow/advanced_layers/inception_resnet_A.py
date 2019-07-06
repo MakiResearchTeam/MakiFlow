@@ -36,18 +36,18 @@ class Inception_A:
 		self.out_f = out_f
 		self.f = activation
 		#left branch
-		self.conv1_L_1 = ConvLayer(kw=1,kh=1,in_f=out_f[3],out_f=out_f[0],activation=None,name='conv1_L_1')
+		self.conv1_L_1 = ConvLayer(kw=1,kh=1,in_f=out_f[3],out_f=out_f[0],activation=None,name=name+'conv1_L_1')
 		
 		#mid branch
-		self.conv1_M_1 = ConvLayer(kw=1,kh=1,in_f=out_f[3],out_f=out_f[0],activation=None,name='conv1_M_1')
-		self.conv1_M_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[0],activation=activation,name='conv1_M_2')
+		self.conv1_M_1 = ConvLayer(kw=1,kh=1,in_f=out_f[3],out_f=out_f[0],activation=None,name=name+'conv1_M_1')
+		self.conv1_M_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[0],activation=activation,name=name+'conv1_M_2')
 		#right branch
-		self.conv1_R_1 =  ConvLayer(kw=1,kh=1,in_f=out_f[3],out_f=out_f[0],activation=None,name='conv1_R_1')
-		self.conv1_R_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],activation=activation,name='conv1_R_2')
-		self.conv1_R_3 = ConvLayer(kw=3,kh=3,in_f=out_f[1],out_f=out_f[2],activation=activation,name='conv1_R_3')
+		self.conv1_R_1 =  ConvLayer(kw=1,kh=1,in_f=out_f[3],out_f=out_f[0],activation=None,name=name+'conv1_R_1')
+		self.conv1_R_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],activation=activation,name=name+'conv1_R_2')
+		self.conv1_R_3 = ConvLayer(kw=3,kh=3,in_f=out_f[1],out_f=out_f[2],activation=activation,name=name+'conv1_R_3')
 
 		#after connect three branch
-		self.conv2_connect = ConvLayer(kw=1,kh=1,in_f=out_f[0]*2+out_f[2],out_f=out_f[3],activation=None,name='conv2_connect')
+		self.conv2_connect = ConvLayer(kw=1,kh=1,in_f=out_f[0]*2+out_f[2],out_f=out_f[3],activation=None,name=name+'conv2_connect')
 		#activation after sum
 		self.f_activ_end = activation
 
@@ -57,6 +57,9 @@ class Inception_A:
 			self.conv1_R_1,self.conv1_R_2,self.conv1_R_3,
 			self.conv2_connect,
 		]
+		self.named_params_dict = {}
+		for layer in self.layers:
+			self.named_params_dict.update(layer.get_params_dict())
 	
 	def forward(self,X,is_training=False):
 		FX = X
@@ -101,8 +104,8 @@ class Inception_A:
 		return self.named_params_dict
 
 
-	def get_params_dict(self):
-		return {'type':'Stem',
+	def to_dict(self):
+		return {'type':'Inception_resnet_A_Block',
 			'params':{
 				'name': self.name,
 				'in_f':self.in_f,

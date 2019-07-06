@@ -23,11 +23,13 @@ def get_layers():
     layers = [#
             StemBlock(in_f=3,name='1'),#
             BatchNormLayer(D=384,name='3'),
-            ConvLayer(kw=3, kh=3, in_f=384, out_f=550, name='10'),
+            Inception_A(in_f=384,name='10'),
+            BatchNormLayer(D=384,name='21'),
+            Inception_A(in_f=384,name='13'),
             AvgPoolLayer(),#
 
             FlattenLayer(),
-            DenseLayer(input_shape=550,output_shape=160,name='2'),
+            DenseLayer(input_shape=384,output_shape=160,name='2'),
             BatchNormLayer(D=160,name='3'),
             DenseLayer(input_shape=160, output_shape=10, activation=None, name='predictions'),
         # The last layer always is gonna have no activation function! Just always pass None into 'activation' argument!
@@ -69,9 +71,23 @@ if __name__ == "__main__":
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon,momentum=0.9)
-    #info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
-
+    info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
+    model.evaluate(Xtest,Ytest)
     print('over! one')
+
+    model.to_json('T:/download/trash/mod.json')
+    model.save_weights('T:/download/trash/model.ckpt')
+
+    print('saved!')
+
+    new_model = Builder.convmodel_from_json('T:/download/trash/mod.json')
+    new_model.set_session(session)
+    new_model.load_weights('T:/download/trash/model.ckpt')
+
+
+    new_model.evaluate(Xtest,Ytest)
+    print('end!')
+
 
     
 
