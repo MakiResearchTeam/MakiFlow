@@ -21,18 +21,27 @@ from makiflow.advanced_layers.reduction_B import  Reduction_B
 
 def get_layers():
     layers = [#
-            Reduction_A(in_f=3,out_f=[32,32,64,64],name='1'),#131, 16x16
-            BatchNormLayer(D=131,name='sas'),
-            Reduction_B(in_f=131,out_f=[80,100,120,131],name='01'),#482 8x8
-            BatchNormLayer(D=482,name='z'),
-            Reduction_B(in_f=482,out_f=[200,260,360,482],name='71'),#4x4 1584 
-            Reduction_B(in_f=1584,out_f=[300,360,450,600],name='81'),#2994 2x2
-            AvgPoolLayer(),#
+            ConvLayer(kw=3,kh=3,in_f=3,out_f=64,name='1'),
+            MaxPoolLayer(),#16
+            Inception_C(in_f=64,out_f=[40,50,60,64],name='231'),
+            BatchNormLayer(D=64,name='nret'),
+            MaxPoolLayer(),#8
+            ConvLayer(kw=3,kh=3,in_f=64,out_f=128,name='124'),
+            Inception_C(in_f=128,out_f=[64,80,90,128],name='fds1'),
+            BatchNormLayer(D=128,name='tyr3'),
+            MaxPoolLayer(),#4
+            ConvLayer(kw=3,kh=3,in_f=128,out_f=256,name='532'),
+            Inception_C(in_f=256,out_f=[128,160,190,256],name='daw'),
+            BatchNormLayer(D=256,name='dsxa'),
+            MaxPoolLayer(),#2
+            Inception_C(in_f=256,out_f=[128,160,190,256],name='23123123'),
+            Inception_C(in_f=256,out_f=[128,160,190,256],name='31231231231231231'),
+            AvgPoolLayer(),#1
 
             FlattenLayer(),
-            DenseLayer(input_shape=2994,output_shape=256,name='2'),
-            BatchNormLayer(D=256,name='3'),
-            DenseLayer(input_shape=256, output_shape=10, activation=None, name='predictions'),
+            DenseLayer(input_shape=256,output_shape=128,name='2'),
+            BatchNormLayer(D=128,name='3'),
+            DenseLayer(input_shape=128, output_shape=10, activation=None, name='predictions'),
         # The last layer always is gonna have no activation function! Just always pass None into 'activation' argument!
         ]
     return layers
@@ -68,7 +77,7 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 1
+    epochs = 5
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon,momentum=0.9)

@@ -141,6 +141,7 @@ class Builder:
             'Reduction_A_block':Builder.__reduction_A_from_dict,
             'Inception_resnet_B_block':Builder.__inception_resnet_B_from_dict,
             'Reduction_B_block':Builder.__reduction_B_from_dict,
+            'Inception_resnet_C_block':Builder.__inception_resnet_C_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
@@ -321,6 +322,14 @@ class Builder:
         out_f = params['out_f']
         activation =  ActivationConverter.str_to_activation(params['activation'])
         return Reduction_B(in_f=in_f, out_f=out_f,activation=activation, name=name)  
+
+    @staticmethod
+    def __inception_resnet_C_from_dict(params):
+        name = params['name']
+        in_f = params['in_f']
+        out_f = params['out_f']
+        activation =  ActivationConverter.str_to_activation(params['activation'])
+        return Inception_C(in_f=in_f, out_f=out_f,activation=activation, name=name)  
       
     
 

@@ -7,4 +7,5 @@ from makiflow.advanced_layers.inception_resnet_A import Inception_A
 from makiflow.advanced_layers.reduction_A import Reduction_A
 from makiflow.advanced_layers.inception_resnet_B import Inception_B
 from makiflow.advanced_layers.reduction_B import Reduction_B
+from makiflow.advanced_layers.inception_resnet_C import Inception_C
 del absolute_import
