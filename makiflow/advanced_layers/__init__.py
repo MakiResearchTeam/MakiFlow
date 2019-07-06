@@ -4,4 +4,5 @@ from makiflow.advanced_layers.resnet_identity_block import ResnetIndentityBlock
 from makiflow.advanced_layers.identity_block import IdentityBlock
 from makiflow.advanced_layers.stem import StemBlock
 from makiflow.advanced_layers.inception_resnet_A import Inception_A
+from makiflow.advanced_layers.reduction_A import Reduction_A
 del absolute_import

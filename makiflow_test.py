@@ -21,15 +21,16 @@ from makiflow.advanced_layers.reduction_B import  Reduction_B
 
 def get_layers():
     layers = [#
-            StemBlock(in_f=3,name='1'),#
-            BatchNormLayer(D=384,name='3'),
-            Inception_A(in_f=384,name='10'),
-            BatchNormLayer(D=384,name='21'),
-            Inception_A(in_f=384,name='13'),
+            Reduction_A(in_f=3,out_f=[32,32,64,64],name='1'),
+            Reduction_A(in_f=131,out_f=[32,32,64,64],name='13'),
+            Reduction_A(in_f=259,out_f=[32,32,64,64],name='11'),
+            Reduction_A(in_f=387,out_f=[32,32,64,64],name='19'),
+            BatchNormLayer(D=515,name='z'),
+
             AvgPoolLayer(),#
 
             FlattenLayer(),
-            DenseLayer(input_shape=384,output_shape=160,name='2'),
+            DenseLayer(input_shape=515,output_shape=160,name='2'),
             BatchNormLayer(D=160,name='3'),
             DenseLayer(input_shape=160, output_shape=10, activation=None, name='predictions'),
         # The last layer always is gonna have no activation function! Just always pass None into 'activation' argument!
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 4
+    epochs = 2
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon,momentum=0.9)

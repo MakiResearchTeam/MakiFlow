@@ -40,18 +40,22 @@ class Reduction_A:
 		self.maxPool1_L_1 = MaxPoolLayer(ksize=[1,3,3,1],strides=[1,2,2,1],padding='VALID')
 
 		#mid branch
-		self.conv1_M_1 = ConvLayer(kw=3,kh=3,in_f=in_f,out_f=out_f[3],stride=2,padding='VALID',activation=activation,name='conv1_M_1')
+		self.conv1_M_1 = ConvLayer(kw=3,kh=3,in_f=in_f,out_f=out_f[3],stride=2,padding='VALID',activation=activation,name=name+'conv1_M_1')
 
 		#Right branch
-		self.conv1_R_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name='conv1_R_1')
-		self.conv1_R_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],activation=activation,name='conv1_R_2')
-		self.conv1_R_3 = ConvLayer(kw=3,kh=3,in_f=out_f[1],out_f=out_f[2],stride=2,padding='VALID',activation=activation,name='conv1_R_3')
+		self.conv1_R_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name=name+'conv1_R_1')
+		self.conv1_R_2 = ConvLayer(kw=3,kh=3,in_f=out_f[0],out_f=out_f[1],activation=activation,name=name+'conv1_R_2')
+		self.conv1_R_3 = ConvLayer(kw=3,kh=3,in_f=out_f[1],out_f=out_f[2],stride=2,padding='VALID',activation=activation,name=name+'conv1_R_3')
 
 		self.layers = [
 			self.maxPool1_L_1,
 			self.conv1_M_1,
 			self.conv1_R_1,self.conv1_R_2,self.conv1_R_3,
 		]
+		self.named_params_dict = {}
+		for layer in self.layers:
+			self.named_params_dict.update(layer.get_params_dict())
+
 	
 	def forward(self,X,is_training=False):
 		FX = X
@@ -71,6 +75,9 @@ class Reduction_A:
 
 		return FX
 
+	def get_params_dict(self):
+		return self.named_params_dict
+
 
 	def get_params(self):
 		params = []
@@ -78,8 +85,8 @@ class Reduction_A:
 			params += layer.get_params()
 		return params
 	
-	def get_params_dict(self):
-		return {'type':'Stem',
+	def to_dict(self):
+		return {'type':'Reduction_A_block',
 			'params':{
 				'name': self.name,
 				'in_f':self.in_f,
