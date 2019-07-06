@@ -62,6 +62,11 @@ class Reduction_B:
 			self.conv_R_1,self.conv_R_2,self.conv_R_3,
 		]
 
+		self.named_params_dict = {}
+		for layer in self.layers:
+			self.named_params_dict.update(layer.get_params_dict())
+
+
 	def forward(self,X,is_training=False):
 		FX = X
 
@@ -94,7 +99,10 @@ class Reduction_B:
 		return params
 	
 	def get_params_dict(self):
-		return {'type':'Stem',
+		return self.named_params_dict
+
+	def to_dict(self):
+		return {'type':'Reduction_B_block',
 			'params':{
 				'name': self.name,
 				'in_f':self.in_f,

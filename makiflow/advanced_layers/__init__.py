@@ -6,4 +6,5 @@ from makiflow.advanced_layers.stem import StemBlock
 from makiflow.advanced_layers.inception_resnet_A import Inception_A
 from makiflow.advanced_layers.reduction_A import Reduction_A
 from makiflow.advanced_layers.inception_resnet_B import Inception_B
+from makiflow.advanced_layers.reduction_B import Reduction_B
 del absolute_import

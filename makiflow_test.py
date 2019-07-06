@@ -21,22 +21,18 @@ from makiflow.advanced_layers.reduction_B import  Reduction_B
 
 def get_layers():
     layers = [#
-            Reduction_A(in_f=3,out_f=[32,32,64,64],name='1'),
-            Reduction_A(in_f=131,out_f=[32,32,64,64],name='13'),
-            Inception_B(in_f=259,out_f=[32,64,128,259],name='91'),
-            Reduction_A(in_f=259,out_f=[32,32,64,64],name='11'),
-            BatchNormLayer(D=387,name='sas'),
-            Inception_B(in_f=387,out_f=[100,150,260,387],name='90'),
-            Reduction_A(in_f=387,out_f=[32,32,64,64],name='19'),
-            Inception_B(in_f=515,out_f=[160,200,260,515],name='23'),
-            BatchNormLayer(D=515,name='z'),
-
+            Reduction_A(in_f=3,out_f=[32,32,64,64],name='1'),#131, 16x16
+            BatchNormLayer(D=131,name='sas'),
+            Reduction_B(in_f=131,out_f=[80,100,120,131],name='01'),#482 8x8
+            BatchNormLayer(D=482,name='z'),
+            Reduction_B(in_f=482,out_f=[200,260,360,482],name='71'),#4x4 1584 
+            Reduction_B(in_f=1584,out_f=[300,360,450,600],name='81'),#2994 2x2
             AvgPoolLayer(),#
 
             FlattenLayer(),
-            DenseLayer(input_shape=515,output_shape=160,name='2'),
-            BatchNormLayer(D=160,name='3'),
-            DenseLayer(input_shape=160, output_shape=10, activation=None, name='predictions'),
+            DenseLayer(input_shape=2994,output_shape=256,name='2'),
+            BatchNormLayer(D=256,name='3'),
+            DenseLayer(input_shape=256, output_shape=10, activation=None, name='predictions'),
         # The last layer always is gonna have no activation function! Just always pass None into 'activation' argument!
         ]
     return layers
@@ -72,7 +68,7 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 2
+    epochs = 1
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon,momentum=0.9)
