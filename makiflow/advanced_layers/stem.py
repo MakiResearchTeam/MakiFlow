@@ -37,7 +37,7 @@ class StemBlock:
 								   \Conv----->|		     \Conv(1x1)-->Conv-->Conv-->Conv|		   \MaxPool--->|
             
 			Where two branches are concate together:
-            final_output = out_f[2]*2, number of feature maps at the end.
+            final_output = out_f[2]*4, number of feature maps at the end.
 		"""
 		assert(len(out_f) == 3)
 		self.name = name
