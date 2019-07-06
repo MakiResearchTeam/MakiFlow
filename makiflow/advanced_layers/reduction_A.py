@@ -2,9 +2,11 @@ import tensorflow as tf
 import numpy as np
 from makiflow.layers import ConvLayer, ActivationLayer, MaxPoolLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
-#FM at the end will be out_f[2]*4
-#conv kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation'
-#pool ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'
+#FM at the end will be in_f + out_f[2] + out_f[3]
+
+#NOTICE! what where filter is 1x1, where no fun activation otherwise Conv have activation
+
+# Reference: https://arxiv.org/pdf/1602.07261.pdf
 
 class Reduction_A:
 								# k  l   m    n

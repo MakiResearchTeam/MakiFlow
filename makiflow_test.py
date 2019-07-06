@@ -77,7 +77,7 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 1
+    epochs = 5
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon,momentum=0.9)
