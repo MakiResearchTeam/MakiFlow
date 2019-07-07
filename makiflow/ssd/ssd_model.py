@@ -326,6 +326,7 @@ class SSDModel:
                             raise Exception('You have raised KeyboardInterrupt exception.')
                         else:
                             continue
+                            print(ex)
 
                     # Calculate losses using exponetial decay
                     train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch

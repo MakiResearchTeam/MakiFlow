@@ -21,27 +21,31 @@ from makiflow.advanced_layers.reduction_B import  Reduction_B
 
 def get_layers():
     layers = [#
-            ConvLayer(kw=3,kh=3,in_f=3,out_f=64,name='1'),
+            ConvLayer(kw=3,kh=3,in_f=3,out_f=64,name='qe'),
             MaxPoolLayer(),#16
-            Inception_C(in_f=64,out_f=[40,50,60,64],name='231'),
-            BatchNormLayer(D=64,name='nret'),
+            #Inception_A(in_f=64,out_f=[40,50,60,64],name='2'),
+            BatchNormLayer(D=64,name='qwr'),
             MaxPoolLayer(),#8
-            ConvLayer(kw=3,kh=3,in_f=64,out_f=128,name='124'),
-            Inception_C(in_f=128,out_f=[64,80,90,128],name='fds1'),
-            BatchNormLayer(D=128,name='tyr3'),
+            ConvLayer(kw=3,kh=3,in_f=64,out_f=128,name='qwfs'),
+            #Inception_A(in_f=128,out_f=[64,80,90,128],name='5'),
+            BatchNormLayer(D=128,name='safc'),
             MaxPoolLayer(),#4
-            ConvLayer(kw=3,kh=3,in_f=128,out_f=256,name='532'),
-            Inception_C(in_f=256,out_f=[128,160,190,256],name='daw'),
-            BatchNormLayer(D=256,name='dsxa'),
+            ConvLayer(kw=3,kh=3,in_f=128,out_f=256,name='xgrw'),
+            #ConvLayer(kw=3,kh=3,in_f=256,out_f=512,name='yttt'),
+            #Inception_A(in_f=256,out_f=[128,160,190,256],name='8'),
+            BatchNormLayer(D=256,name='greq'),
             MaxPoolLayer(),#2
-            Inception_C(in_f=256,out_f=[128,160,190,256],name='23123123'),
-            Inception_C(in_f=256,out_f=[128,160,190,256],name='312331'),
+            ConvLayer(kw=3,kh=3,in_f=256,out_f=512,name='reeee'),
+            #Inception_A(in_f=256,out_f=[128,160,190,256],name='10'),
             AvgPoolLayer(),#1
 
             FlattenLayer(),
-            DenseLayer(input_shape=256,output_shape=128,name='2'),
-            BatchNormLayer(D=128,name='3'),
-            DenseLayer(input_shape=128, output_shape=10, activation=None, name='predictions'),
+            DenseLayer(input_shape=512,output_shape=256,name='dwad'),
+            DropoutLayer(0.7),
+            DenseLayer(input_shape=256,output_shape=256,name='zxcgg'),
+            DropoutLayer(0.7),
+            #BatchNormLayer(D=128,name='dsaxz'),
+            DenseLayer(input_shape=256, output_shape=10, activation=None, name='predictions'),
         # The last layer always is gonna have no activation function! Just always pass None into 'activation' argument!
         ]
     return layers
@@ -77,26 +81,27 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 5
+    epochs = 2
     lr = 0.01
     epsilon = 1e-8
-    optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon,momentum=0.9)
+    optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)
     info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
     model.evaluate(Xtest,Ytest)
     print('over! one')
 
-    model.to_json('T:/download/trash/mod.json')
-    model.save_weights('T:/download/trash/model.ckpt')
+    model.to_json('T:/download/shiru/mod.json')
+    model.save_weights('T:/download/shiru/model.ckpt')
 
     print('saved!')
 
-    new_model = Builder.convmodel_from_json('T:/download/trash/mod.json')
+    new_model = Builder.convmodel_from_json('T:/download/shiru/mod.json')
     new_model.set_session(session)
-    new_model.load_weights('T:/download/trash/model.ckpt')
-
+    new_model.load_weights('T:/download/shiru/model.ckpt')
 
     new_model.evaluate(Xtest,Ytest)
     print('end!')
+
+
 
 
     
