@@ -206,7 +206,7 @@ class Builder:
         ksize = params['ksize']
         strides = params['strides']
         padding = params['padding']
-        return MaxPoolLayer(ksize=ksize, strides=strides, padding=padding)
+        return AvgPoolLayer(ksize=ksize, strides=strides, padding=padding)
     
     @staticmethod
     def __activation_layer_from_dict(params):
