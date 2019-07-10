@@ -2,8 +2,8 @@ from makiflow.layers import Layer, ConvLayer, BatchNormLayer, ActivationLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 import tensorflow as tf
 
-
-class ConvBlock_resnet:
+# ConvBlock 
+class ResnetConvBlock:
 
 	def __init__(self,in_f,out_f,activation=tf.nn.relu,name='convblock'):
 		"""
