@@ -97,3 +97,4 @@ class Inception_B:
 				'activation':ActivationConverter.activation_to_str(self.f),
 			}
 		}
+	
