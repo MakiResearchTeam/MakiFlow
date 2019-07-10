@@ -2,7 +2,7 @@ from makiflow.layers import Layer, ConvLayer, BatchNormLayer, ActivationLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 import tensorflow as tf
 
-# Reference: https://www.udemy.com/advanced-computer-vision/ 
+# Reference: https://www.udemy.com/advanced-computer-vision/ , ResNet (and Inception)
 
 # ConvBlock 
 class ResnetConvBlock(Layer):

@@ -3,7 +3,7 @@ import numpy as np
 from makiflow.layers import Layer,ConvLayer, ActivationLayer, MaxPoolLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 
-# Reference: https://arxiv.org/pdf/1602.07261.pdf
+# Reference: https://arxiv.org/pdf/1602.07261.pdf page 8, Figure 17
 
 class InceptionB(Layer):
 

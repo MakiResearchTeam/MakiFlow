@@ -13,12 +13,12 @@ import numpy as np
 import tensorflow.keras
 from tensorflow.keras.datasets import cifar10
 from makiflow.advanced_layers.stem import StemBlock
-from makiflow.advanced_layers.inception_resnet_A import Inception_A
-from makiflow.advanced_layers.inception_resnet_B import Inception_B
-from makiflow.advanced_layers.inception_resnet_C import Inception_C
-from makiflow.advanced_layers.reduction_A import  Reduction_A
-from makiflow.advanced_layers.reduction_B import  Reduction_B
-from makiflow.advanced_layers.convblock_resnet import ConvBlock_resnet
+from makiflow.advanced_layers.inception_resnet_A import InceptionA
+from makiflow.advanced_layers.inception_resnet_B import InceptionB
+from makiflow.advanced_layers.inception_resnet_C import InceptionC
+from makiflow.advanced_layers.reduction_A import  ReductionA
+from makiflow.advanced_layers.reduction_B import  ReductionB
+from makiflow.advanced_layers.convblock_resnet import ResnetConvBlock
 
 def get_layers():
     layers = [#
