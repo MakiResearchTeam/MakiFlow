@@ -63,15 +63,15 @@ class Reduction_A:
 		FX = X
 
 		#left branch
-		LX = self.maxPool1_L_1.forward(FX)
+		LX = self.maxPool1_L_1.forward(FX,is_training)
 
 		#Mid branch
-		MX = self.conv1_M_1.forward(FX)
+		MX = self.conv1_M_1.forward(FX,is_training)
 
 		#Right branch
-		RX = self.conv1_R_1.forward(FX)
-		RX = self.conv1_R_2.forward(RX)
-		RX = self.conv1_R_3.forward(RX)
+		RX = self.conv1_R_1.forward(FX,is_training)
+		RX = self.conv1_R_2.forward(RX,is_training)
+		RX = self.conv1_R_3.forward(RX,is_training)
 
 		FX = tf.concat([LX,MX,RX],axis=3)
 

@@ -73,20 +73,20 @@ class Reduction_B:
 		FX = X
 
 		#left branch
-		LX = self.maxPool_L_1.forward(FX)
+		LX = self.maxPool_L_1.forward(FX,is_training)
 
 		#Mid-Left branch
-		MLX = self.conv_ML_1.forward(FX)
-		MLX = self.conv_ML_2.forward(MLX)
+		MLX = self.conv_ML_1.forward(FX,is_training)
+		MLX = self.conv_ML_2.forward(MLX,is_training)
 
 		#Mid-Right branch
-		MRX = self.conv_MR_1.forward(FX)
-		MRX = self.conv_MR_2.forward(MRX)
+		MRX = self.conv_MR_1.forward(FX,is_training)
+		MRX = self.conv_MR_2.forward(MRX,is_training)
 
 		#Right branch
-		RX = self.conv_R_1.forward(FX)
-		RX = self.conv_R_2.forward(RX)
-		RX = self.conv_R_3.forward(RX)
+		RX = self.conv_R_1.forward(FX,is_training)
+		RX = self.conv_R_2.forward(RX,is_training)
+		RX = self.conv_R_3.forward(RX,is_training)
 
 		#concate branches
 

@@ -63,15 +63,15 @@ class Inception_C:
 		FX = X
 
 		#left
-		LX = self.conv_L_1.forward(FX)
+		LX = self.conv_L_1.forward(FX,is_training)
 		#right
-		RX = self.conv_R_1.forward(FX)
-		RX = self.conv_R_2.forward(RX)
-		RX = self.conv_R_3.forward(RX)
+		RX = self.conv_R_1.forward(FX,is_training)
+		RX = self.conv_R_2.forward(RX,is_training)
+		RX = self.conv_R_3.forward(RX,is_training)
 
 		#concate
 		FX = tf.concat([LX,RX],axis=3)
-		FX = self.conv_after_conc.forward(FX)
+		FX = self.conv_after_conc.forward(FX,is_training)
 
 		FX = FX + X 
 

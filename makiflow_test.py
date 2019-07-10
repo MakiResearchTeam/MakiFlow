@@ -18,28 +18,25 @@ from makiflow.advanced_layers.inception_resnet_B import Inception_B
 from makiflow.advanced_layers.inception_resnet_C import Inception_C
 from makiflow.advanced_layers.reduction_A import  Reduction_A
 from makiflow.advanced_layers.reduction_B import  Reduction_B
+from makiflow.advanced_layers.convblock_resnet import ConvBlock_resnet
 
 def get_layers():
     layers = [#
             ConvLayer(kw=3,kh=3,in_f=3,out_f=64,name='qe'),
             MaxPoolLayer(),#16
-            Inception_A(in_f=64,out_f=[40,50,60,64],name='2'),
             BatchNormLayer(D=64,name='qwr'),
             MaxPoolLayer(),#8
             ConvLayer(kw=3,kh=3,in_f=64,out_f=128,name='qwfs'),
-            Inception_A(in_f=128,out_f=[64,80,90,128],name='5'),
-            BatchNormLayer(D=128,name='safc'),
+            ConvBlock_resnet(in_f=128,out_f=[64,128,256],name='rar'),
             MaxPoolLayer(),#4
-            ConvLayer(kw=3,kh=3,in_f=128,out_f=256,name='xgrw'),
-            Inception_A(in_f=256,out_f=[128,160,190,256],name='8'),
-            BatchNormLayer(D=256,name='greq'),
+            ConvLayer(kw=3,kh=3,in_f=256,out_f=512,name='xgrw'),
+            BatchNormLayer(D=512,name='greq'),
             MaxPoolLayer(),#2
-            Inception_A(in_f=256,out_f=[180,200,230,256],name='10'),
-            ConvLayer(kw=3,kh=3,in_f=256,out_f=512,name='reeee'),
+            ConvBlock_resnet(in_f=512,out_f=[256,512,1024],name='rar'),
             AvgPoolLayer(),#1
 
             FlattenLayer(),
-            DenseLayer(input_shape=512,output_shape=64,name='dwad'),
+            DenseLayer(input_shape=1024,output_shape=64,name='dwad'),
             #DropoutLayer(0.7),
             #BatchNormLayer(D=64,name='dsaxz'),
             #DenseLayer(input_shape=64,output_shape=10,name='zxcgg'),
@@ -82,7 +79,7 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 1
+    epochs = 2
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)

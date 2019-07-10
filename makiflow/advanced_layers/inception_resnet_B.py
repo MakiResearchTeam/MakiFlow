@@ -60,16 +60,16 @@ class Inception_B:
 	def forward(self,X,is_training=False):
 		FX = X
 		#left branch
-		LX = self.conv1_L_1.forward(FX)
+		LX = self.conv1_L_1.forward(FX,is_training)
 		#right branch
-		RX = self.conv1_R_1.forward(FX)
-		RX = self.conv1_R_2.forward(RX)
-		RX = self.conv1_R_3.forward(RX)
+		RX = self.conv1_R_1.forward(FX,is_training)
+		RX = self.conv1_R_2.forward(RX,is_training)
+		RX = self.conv1_R_3.forward(RX,is_training)
 
 		#concate
 		FX = tf.concat([LX,RX],axis=3)
 
-		FX = self.conv2_af_conn.forward(FX)
+		FX = self.conv2_af_conn.forward(FX,is_training)
 
 		FX = FX + X 
 

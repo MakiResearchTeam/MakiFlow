@@ -64,16 +64,16 @@ class Inception_A:
 		FX = X
 
 		#Left branch
-		LX = self.conv1_L_1.forward(FX)
+		LX = self.conv1_L_1.forward(FX,is_training)
 
 		#Mid branch
-		MX = self.conv1_M_1.forward(FX)
-		MX = self.conv1_M_2.forward(MX)
+		MX = self.conv1_M_1.forward(FX,is_training)
+		MX = self.conv1_M_2.forward(MX,is_training)
 
 		#Right branch
-		RX = self.conv1_R_1.forward(FX)
-		RX = self.conv1_R_2.forward(RX)
-		RX = self.conv1_R_3.forward(RX)
+		RX = self.conv1_R_1.forward(FX,is_training)
+		RX = self.conv1_R_2.forward(RX,is_training)
+		RX = self.conv1_R_3.forward(RX,is_training)
 
 		#connect branches
 
@@ -81,7 +81,7 @@ class Inception_A:
 
 		#connect tree conv
 
-		FX = self.conv2_connect.forward(FX)
+		FX = self.conv2_connect.forward(FX,is_training)
 
 		#sum with skip connection
 
