@@ -2,4 +2,11 @@ from __future__ import absolute_import
 
 from makiflow.advanced_layers.resnet_identity_block import ResnetIndentityBlock
 from makiflow.advanced_layers.identity_block import IdentityBlock
+from makiflow.advanced_layers.stem import StemBlock
+from makiflow.advanced_layers.inception_resnet_A import Inception_A
+from makiflow.advanced_layers.reduction_A import Reduction_A
+from makiflow.advanced_layers.inception_resnet_B import Inception_B
+from makiflow.advanced_layers.reduction_B import Reduction_B
+from makiflow.advanced_layers.inception_resnet_C import Inception_C
+from makiflow.advanced_layers.convblock_resnet import ConvBlock_resnet
 del absolute_import

@@ -141,7 +141,6 @@ class ConvModel(object):
         # TODO: n_batches is never used
         # Validating the network
         Xtest = Xtest.astype(np.float32)
-        Ytest = Ytest.argmax(axis=1)
 
         Yish_test = tf.nn.softmax(self.forward(self.X))
         n_batches = Xtest.shape[0] // self.batch_sz

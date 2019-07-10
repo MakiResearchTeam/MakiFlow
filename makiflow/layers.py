@@ -71,9 +71,6 @@ class ConvLayer(Layer):
             return conv_out
         return self.f(conv_out)
 
-    def get_params(self):
-        return self.params
-
     def copy_from_keras_layers(self, layer):
         W, b = layer.get_weights()
         op1 = self.W.assign(W)
@@ -320,6 +317,8 @@ class AvgPoolLayer(Layer):
 class ActivationLayer(Layer):
     def __init__(self, activation=tf.nn.relu):
         Layer.__init__(self)
+        if activation is None:
+            raise WrongInput("Activation can't None")
         self.f = activation
 
     def forward(self, X, is_training=False):
