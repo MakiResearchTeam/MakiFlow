@@ -8,5 +8,5 @@ from makiflow.advanced_layers.reduction_A import ReductionA
 from makiflow.advanced_layers.inception_resnet_B import InceptionB
 from makiflow.advanced_layers.reduction_B import ReductionB
 from makiflow.advanced_layers.inception_resnet_C import InceptionC
-from makiflow.advanced_layers.convblock_resnet import ResnetConvBlock
+from makiflow.advanced_layers.resnet_conv_block import ResnetConvBlock
 del absolute_import
