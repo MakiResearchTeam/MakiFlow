@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from makiflow.layers import ConvLayer, MaxPoolLayer
+from makiflow.layers import Layer,ConvLayer, MaxPoolLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 
 # Reference: https://arxiv.org/pdf/1602.07261.pdf
@@ -20,7 +20,7 @@ class StemBlock(Layer):
 				Conv2,
 				Conv3,
 			]
-			Where ConvX*, have double number of feature maps 
+			Where ConvX*, have double number ConvX of feature maps 
 
 		Notes
 		-----
