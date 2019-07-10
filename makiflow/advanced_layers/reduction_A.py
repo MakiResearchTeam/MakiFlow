@@ -26,9 +26,9 @@ class ReductionA(Layer):
 		-----
 			Suggest what size of input picture is (W x H). After the passage through this block it have size as (W1 x H1), where W1=(W-3)/2 + 1, H1=(H-3)/2 + 1
 			Data flow scheme: 
-			(left)		 /------------->MaxPool-------->|
+			(left)       /------------->MaxPool-------->|
 			(mid)input->|-------------->Conv4---------->|+(concate)=final_output
-			(right)		 \-->Conv1(1x1)->Conv2->Conv3-->|
+			(right)      \-->Conv1(1x1)->Conv2->Conv3-->|
 			Where three branches are concate together:
 			final_output = in_f + out_f[2] + out_f[3].
 		"""
@@ -55,7 +55,7 @@ class ReductionA(Layer):
 			self.conv1_R_1,self.conv1_R_2,self.conv1_R_3,
 		]
 		self.named_params_dict = {}
-		
+
 		for layer in self.layers:
 			self.named_params_dict.update(layer.get_params_dict())
 

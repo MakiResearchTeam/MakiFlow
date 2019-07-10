@@ -25,7 +25,7 @@ class InceptionB(Layer):
 		-----
 			Data flow scheme: 
 			(left)  /->Conv3(1x1)------------------------->|
-			input--|									   |+(concate)->Conv(1x1)=last_conv_output
+			input--|                                       |+(concate)->Conv(1x1)=last_conv_output
 			(right) \->Conv1(1x1)->Conv2(1x7)->Conv3(7x1)->|
 			Where two branches are summed together:
 			final_output = input + last_conv_output.
@@ -54,7 +54,7 @@ class InceptionB(Layer):
 		]
 
 		self.named_params_dict = {}
-		
+
 		for layer in self.layers:
 			self.named_params_dict.update(layer.get_params_dict())
 

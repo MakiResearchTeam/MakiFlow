@@ -57,7 +57,7 @@ class ResnetConvBlock(Layer):
 			self.Conv0, self.Batch0,
 			self.Conv1,self.Batch1,self.Activ1, self.Conv2,self.Batch2,self.Activ2, self.Conv3,self.Batch3,
 		]
-		
+
 		self.named_params_dict = {}
 
 		for layer in self.layers:

@@ -26,11 +26,11 @@ class ReductionB(Layer):
 		-----
 			Suggest what size of input picture is (W x H). After the passage through this block it have size as (W1 x H1), where W1=(W-3)/2 + 1, H1=(H-3)/2 + 1
 			Data flow scheme: 
-			(left)		 /-------------->MaxPool------->|
+			(left)       /-------------->MaxPool------->|
 			(mid-left)  |/---->Conv1(1x1)---->Conv4---->|
-			input------>|							    |+(concate)=final_output
+			input------>|                               |+(concate)=final_output
 			(mid-right)	|\-->Conv1(1x1)->Conv2--------->|
-			(right)		 \-->Conv1(1x1)->Conv2->Conv3-->|
+			(right)      \-->Conv1(1x1)->Conv2->Conv3-->|
 			Where four branches are concate together:
 			final_output = in_f + out_f[3] + out_f[1] + out_f[2]
 
@@ -65,7 +65,7 @@ class ReductionB(Layer):
 		]
 
 		self.named_params_dict = {}
-		
+
 		for layer in self.layers:
 			self.named_params_dict.update(layer.get_params_dict())
 

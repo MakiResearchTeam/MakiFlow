@@ -32,9 +32,9 @@ class StemBlock(Layer):
 					H = int(( H - 3 ) /d) + 1 + ( (H - 3) % d)
 				return (W,H)
 			Data flow scheme: 
-								  /MaxPool->|		   /Conv2(1x1)------------>Conv3--------------->|		   /Conv3(*)-->|
-			Conv1-->Conv1-->Conv2| 		    |+(concat)| 						   	                |+(concat)| 		   |+(concat)-->output
-								  \Conv3--->|		   \Conv2(1x1)->Conv2(7x1)->Conv2(1x7)->Conv3-->|		   \MaxPool--->|
+			                      /MaxPool->|          /Conv2(1x1)------------>Conv3--------------->|          /Conv3(*)-->|
+			Conv1-->Conv1-->Conv2|          |+(concat)|                                             |+(concat)|            |+(concat)-->output
+			                      \Conv3--->|          \Conv2(1x1)->Conv2(7x1)->Conv2(1x7)->Conv3-->|          \MaxPool--->|
 			Where two branches are concate together:
 			final_output = out_f[2]*4, number of feature maps at the end.
 
@@ -90,7 +90,7 @@ class StemBlock(Layer):
 		]
 
 		self.named_params_dict = {}
-		
+
 		for layer in self.layers:
 			self.named_params_dict.update(layer.get_params_dict())
 
