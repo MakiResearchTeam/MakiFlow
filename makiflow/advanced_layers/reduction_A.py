@@ -96,3 +96,4 @@ class Reduction_A:
 				'activation':ActivationConverter.activation_to_str(self.f),
 			}
 		}
+	
