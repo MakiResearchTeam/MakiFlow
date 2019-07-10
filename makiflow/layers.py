@@ -318,7 +318,7 @@ class ActivationLayer(Layer):
     def __init__(self, activation=tf.nn.relu):
         Layer.__init__(self)
         if activation is None:
-            raise WrongInput('Activation must be not None')
+            raise WrongInput("Activation can't None")
         self.f = activation
 
     def forward(self, X, is_training=False):
