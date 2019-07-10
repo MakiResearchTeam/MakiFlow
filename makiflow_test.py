@@ -24,13 +24,11 @@ def get_layers():
     layers = [#
             ConvLayer(kw=3,kh=3,in_f=3,out_f=64,name='qe'),
             MaxPoolLayer(),#16
-            BatchNormLayer(D=64,name='qwr'),
             MaxPoolLayer(),#8
             ConvLayer(kw=3,kh=3,in_f=64,out_f=128,name='qwfs'),
             ConvBlock_resnet(in_f=128,out_f=[64,128,256],name='rar'),
             MaxPoolLayer(),#4
             ConvLayer(kw=3,kh=3,in_f=256,out_f=512,name='xgrw'),
-            BatchNormLayer(D=512,name='greq'),
             MaxPoolLayer(),#2
             ConvBlock_resnet(in_f=512,out_f=[256,512,1024],name='rar'),
             AvgPoolLayer(),#1
@@ -79,7 +77,7 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 2
+    epochs = 1
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)

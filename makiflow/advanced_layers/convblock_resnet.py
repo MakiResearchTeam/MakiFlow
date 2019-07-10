@@ -1,4 +1,5 @@
 from makiflow.layers import Layer, ConvLayer, BatchNormLayer, ActivationLayer
+from makiflow.save_recover.activation_converter import ActivationConverter
 import tensorflow as tf
 
 
@@ -26,7 +27,7 @@ class ConvBlock_resnet:
 		assert(len(out_f) == 3)
 		self.in_f = in_f
 		self.out_f = out_f
-		self.activation = activation
+		self.f = activation
 		self.name = name
 		
 		#Main branch
