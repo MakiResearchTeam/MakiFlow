@@ -17,7 +17,7 @@ class Inception_A:
         ----------
         in_f : int
             Number of the input feature maps relative to the first convolution in the block.
-		out_f : int
+		out_f : list of int
 			Number of the output feature maps of the convolution in the block.
 		
 		Notes
