@@ -143,6 +143,7 @@ class Builder:
             'ReductionBlockB':Builder.__reduction_B_from_dict,
             'ResnetInceptionBlockC':Builder.__inception_resnet_C_from_dict,
             'ResnetConvBlock':Builder.__convblock_resnet_from_dict,
+            'ConvBlock':Builder.__convblock_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
@@ -338,7 +339,20 @@ class Builder:
         in_f = params['in_f']
         out_f = params['out_f']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return ResnetConvBlock(in_f=in_f, out_f=out_f,activation=activation, name=name)  
+        return ResnetConvBlock(in_f=in_f, out_f=out_f,activation=activation, name=name) 
+
+    @staticmethod
+    def __convblock_from_dict(params):
+        name = params['name']
+        main_branch = []
+        for layer in params['main_branch']:
+            main_branch.append(Builder.__layer_from_dict(layer))
+        
+        skip_branch = []
+        for layer in params['skip_branch']:
+            skip_branch.append(Builder.__layer_from_dict(layer))
+
+        return ConvBlock(skip_branch=skip_branch,main_branch=main_branch,name=name)   
       
     
 

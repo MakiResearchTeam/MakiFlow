@@ -18,7 +18,8 @@ from makiflow.advanced_layers.inception_resnet_B import InceptionB
 from makiflow.advanced_layers.inception_resnet_C import InceptionC
 from makiflow.advanced_layers.reduction_A import  ReductionA
 from makiflow.advanced_layers.reduction_B import  ReductionB
-from makiflow.advanced_layers.convblock_resnet import ResnetConvBlock
+from makiflow.advanced_layers.resnet_conv_block import ResnetConvBlock
+from makiflow.advanced_layers.conv_block import ConvBlock
 
 def get_layers():
     layers = [#
@@ -26,15 +27,17 @@ def get_layers():
             MaxPoolLayer(),#16
             MaxPoolLayer(),#8
             ConvLayer(kw=3,kh=3,in_f=64,out_f=128,name='qwfs'),
-            ConvBlock_resnet(in_f=128,out_f=[64,128,256],name='rar'),
-            MaxPoolLayer(),#4
-            ConvLayer(kw=3,kh=3,in_f=256,out_f=512,name='xgrw'),
-            MaxPoolLayer(),#2
-            ConvBlock_resnet(in_f=512,out_f=[256,512,1024],name='rar'),
+            ConvBlock(skip_branch=[MaxPoolLayer(ksize=[1,3,3,1],padding='VALID')],
+                    main_branch=[ConvLayer(kw=3,kh=3,in_f=128,out_f=128,padding='VALID',stride=2,name='zxcv')],
+            ),#4
+            ConvBlock(skip_branch=[MaxPoolLayer(ksize=[1,3,3,1],padding='VALID')],
+                    main_branch=[ConvLayer(kw=3,kh=3,in_f=128,out_f=128,padding='VALID',stride=2,name='73g')],
+            ),#2
+            ResnetConvBlock(in_f=128,out_f=[64,128,256],name='rar'),
             AvgPoolLayer(),#1
 
             FlattenLayer(),
-            DenseLayer(input_shape=1024,output_shape=64,name='dwad'),
+            DenseLayer(input_shape=256,output_shape=64,name='dwad'),
             #DropoutLayer(0.7),
             #BatchNormLayer(D=64,name='dsaxz'),
             #DenseLayer(input_shape=64,output_shape=10,name='zxcgg'),
@@ -77,7 +80,7 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 1
+    epochs = 5
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)

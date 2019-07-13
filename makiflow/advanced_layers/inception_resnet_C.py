@@ -7,7 +7,7 @@ from makiflow.save_recover.activation_converter import ActivationConverter
 
 class InceptionC(Layer):
 
-	def __init__(self,in_f,out_f=[192,224,256,2144],activation=tf.nn.relu,name='inception_c'):
+	def __init__(self,in_f,out_f,activation=tf.nn.relu,name='inception_c'):
 		"""
 		Parameters
 		----------
