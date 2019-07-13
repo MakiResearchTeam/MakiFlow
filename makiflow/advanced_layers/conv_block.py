@@ -6,17 +6,18 @@ from makiflow.layers import Layer
 class ConvBlock(Layer):
 
 	def __init__(self,skip_branch,main_branch,name='ConvBlock_'):
-        """
-        Parameters
-        ----------
-        main_branch : list
-            List of different layers performed on the main branch.
+		"""
+		Parameters
+		----------
+		main_branch : list
+			List of different layers performed on the main branch.
 
-        skip_branch : list
-            List of different layers performed on the skip branch
-             
-            WARNING! OUTPUT TENSOR OF MAIN BRANCH MUST BE THE SAME SHAPE AS THE SKIP BRANCH!
-        """
+		skip_branch : list
+			List of different layers performed on the skip branch
+			 
+			WARNING! OUTPUT TENSOR OF MAIN BRANCH MUST BE THE SAME SHAPE AS THE SKIP BRANCH!
+			
+		"""
 		Layer.__init__(self)
 
 		self.skip_branch = skip_branch
