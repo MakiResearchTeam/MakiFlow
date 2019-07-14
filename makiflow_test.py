@@ -72,7 +72,7 @@ def get_train_test_data():
 
 if __name__ == "__main__":
     layers = get_layers()
-    model = ConvModel(layers=layers, input_shape=[32, 32, 32, 3], num_classes=10, name='My_MakiFlow_little_VGG')
+    model = ConvModel(layers=layers, input_shape=[50, 32, 32, 3], num_classes=10, name='My_MakiFlow_little_VGG')
     session = tf.Session()
     model.set_session(session)
 
@@ -80,44 +80,13 @@ if __name__ == "__main__":
     
     #(Xtrain, Ytrain), (Xtest, Ytest),ans = get_fruit360(count=20)
     
-    epochs = 5
+    epochs = 1
     lr = 0.01
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)
     info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
-    
-    in_mat = np.random.randn(1, 2, 2, 3).astype(np.float32)
 
-    #temp = None
-    #with session.as_default():
-    #print(model.named_params_dict)
-    #print(temp.shape)
-    model.to_json('T:/download/shiru/mod.json')
-    model.save_weights('T:/download/shiru/model.ckpt')
-    #tf.reset_default_graph()
-    print('saved!')
     
-    new_model = Builder.convmodel_from_json('T:/download/shiru/mod.json')
-    #new_ses = tf.Session()
-    new_model.set_session(tf.Session())
-    new_model.load_weights('T:/download/shiru/model.ckpt')
-
-    model.evaluate(Xtest,Ytest)
-    new_model.evaluate(Xtest,Ytest)
-    
-    #temp_one = None
-    #with new_ses.as_default():
-    print(model.predict(Xtrain[:32])[0])
-    print(new_model.predict(Xtrain[:32])[0])
-    print(len(model.named_params_dict))
-    print(len(new_model.named_params_dict))
-    
-    
-    #flag = True
-    #for i in range(len(temp_one)):
-    #    if temp_one[i] != temp[i]:
-    #        flag = False
-    #print(flag)
     print('end!')
 
 
