@@ -87,6 +87,11 @@ class ConvModel(object):
             X = layer.forward(X, is_training=True)
         return X
 
+    def certain_forward(self,X,layer_id=None):
+        assert(layer_id is None)
+        for layer in self.layers[:-1]:
+            X = layer.forward(X,is_training=False)
+        return X
     
     def save_weights(self, path):
         """
