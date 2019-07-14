@@ -88,8 +88,7 @@ class ConvModel(object):
         return X
 
     def certain_forward(self,X,layer_id=None):
-        assert(layer_id is None)
-        for layer in self.layers[:-1]:
+        for layer in self.layers[:layer_id+1]:
             X = layer.forward(X,is_training=False)
         return X
     
