@@ -29,7 +29,7 @@ class ReductionB(Layer):
 			(left)       /-------------->MaxPool------->|
 			(mid-left)  |/---->Conv1(1x1)---->Conv4---->|
 			input------>|                               |+(concate)=final_output
-			(mid-right)	|\-->Conv1(1x1)->Conv2--------->|
+			(mid-right) |\-->Conv1(1x1)->Conv2--------->|
 			(right)      \-->Conv1(1x1)->Conv2->Conv3-->|
 			Where four branches are concate together:
 			final_output = in_f + out_f[3] + out_f[1] + out_f[2]
