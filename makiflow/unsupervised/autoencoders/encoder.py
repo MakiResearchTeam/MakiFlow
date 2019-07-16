@@ -14,7 +14,6 @@ class Encoder:
             [
                 DenseLayer(300),
                 DenseLayer(100),
-                DenseLayer(300)
             ]
         input_shape : list
             List of ints represent input shape: [batch_size, input_size].
@@ -40,7 +39,7 @@ class Encoder:
 
 
         self.X = tf.placeholder(tf.float32, shape=input_shape)
-        self.out = self.forward(self.X)
+        self.out = self.forward(self.X,is_training=False)
 
     
     def get_params(self):
@@ -69,15 +68,9 @@ class Encoder:
         self.session.run(init_op)
 
 
-    def forward(self, X):
+    def forward(self, X,is_training=True):
         for layer in self.layers:
-            X = layer.forward(X)
-        return X
-    
-
-    def forward_train(self, X):
-        for layer in self.layers:
-            X = layer.forward(X, is_training=True)
+            X = layer.forward(X,is_training)
         return X
 
     def encode(self, X):

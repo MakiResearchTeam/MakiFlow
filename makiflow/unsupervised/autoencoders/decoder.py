@@ -3,7 +3,7 @@ import json
 
 
 class Decoder:
-    def __init__(self, input_shape, output_size, layers, name):
+    def __init__(self, input_shape, layers, name):
         """
         Parameters
         ----------
@@ -11,15 +11,11 @@ class Decoder:
             List of layers model consist of.
             Example:
             [
-                DenseLayer(300),
                 DenseLayer(100),
-                DenseLayer(300)
+                DenseLayer(300),
             ]
         input_shape : list
             List of ints represent input shape: [batch_size, input_size].
-        output_size : int
-            Size of the decoded input. You need to pass in the size of the original
-            input in the encoder.
         name : str
             Name of the model.
         """
@@ -42,7 +38,7 @@ class Decoder:
 
 
         self.X = tf.placeholder(tf.float32, shape=input_shape)
-        self.out = self.forward(self.X)
+        self.out = self.forward(self.X,is_training=False)
 
     
     def set_session(self, session):
@@ -70,15 +66,9 @@ class Decoder:
         return self.named_params_dict
 
 
-    def forward(self, X):
+    def forward(self, X,is_training=True):
         for layer in self.layers:
-            X = layer.forward(X)
-        return X
-    
-
-    def forward_train(self, X):
-        for layer in self.layers:
-            X = layer.forward(X, is_training=True)
+            X = layer.forward(X,is_training)
         return X
 
     def decode(self, X):
