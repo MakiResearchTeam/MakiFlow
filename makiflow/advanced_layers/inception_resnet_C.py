@@ -7,7 +7,7 @@ from makiflow.save_recover.activation_converter import ActivationConverter
 
 class InceptionC(Layer):
 
-	def __init__(self,in_f,out_f,activation=tf.nn.relu,name='inception_c'):
+	def __init__(self,in_f,out_f,activation=tf.nn.relu,name='inception_c',alpha=0.1):
 		"""
 		Parameters
 		----------
@@ -36,22 +36,37 @@ class InceptionC(Layer):
 		self.in_f = in_f
 		self.out_f = out_f
 		self.f = activation
+		self.alpha = alpha
+
+		self.layers = []
+
 		# Left branch
 		self.conv_L_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name=name+'conv_L_1')
+		self.batch_norm_L_1 = BatchNormLayer(D=out_f[0],name=name+'_batch_norm_L_1')
+		self.activ_L_1 = ActivationLayer(activation=activation)
+		self.layers += [self.conv_L_1,self.batch_norm_L_1,self.activ_L_1]
+
 		# Right branch
 		self.conv_R_1 = ConvLayer(kw=1,kh=1,in_f=in_f,out_f=out_f[0],activation=None,name=name+'conv_R_1')
-		self.conv_R_2 = ConvLayer(kw=1,kh=3,in_f=out_f[0],out_f=out_f[1],activation=activation,name=name+'conv_R_2')
-		self.conv_R_3 = ConvLayer(kw=3,kh=1,in_f=out_f[1],out_f=out_f[2],activation=activation,name=name+'conv_R_3')
+		self.batch_norm_R_1 = BatchNormLayer(D=out_f[0],name=name+'_batch_norm_R_1')
+		self.activ_R_1 = ActivationLayer(activation=activation)
+		self.layers += [self.conv_R_1,self.batch_norm_R_1,self.activ_R_1]
+
+		self.conv_R_2 = ConvLayer(kw=1,kh=3,in_f=out_f[0],out_f=out_f[1],activation=None,name=name+'conv_R_2')
+		self.batch_norm_R_2 = BatchNormLayer(D=out_f[1],name=name+'_batch_norm_R_2')
+		self.activ_R_2 = ActivationLayer(activation=activation)
+		self.layers += [self.conv_R_2,self.batch_norm_R_2,self.activ_R_2]
+		
+		self.conv_R_3 = ConvLayer(kw=3,kh=1,in_f=out_f[1],out_f=out_f[2],activation=None,name=name+'conv_R_3')
+		self.batch_norm_R_3 = BatchNormLayer(D=out_f[2],name=name+'_batch_norm_R_3')
+		self.activ_R_3 = ActivationLayer(activation=activation)
+		self.layers += [self.conv_R_3,self.batch_norm_R_3,self.activ_R_3]
+		
 
 		# Concate branch
 		self.conv_after_conc = ConvLayer(kw=1,kh=1,in_f=out_f[2] + out_f[0],out_f=in_f,activation=None,name=name+'conv_after_conc')
+		self.layers += [self.conv_after_conc]
 		
-		self.layers = [
-			self.conv_L_1,
-			self.conv_R_1,self.conv_R_2,self.conv_R_3,
-			self.conv_after_conc,
-		]
-
 		self.named_params_dict = {}
 
 		for layer in self.layers:
@@ -64,15 +79,29 @@ class InceptionC(Layer):
 
 		# Left
 		LX = self.conv_L_1.forward(FX,is_training)
+		LX = self.batch_norm_L_1.forward(LX,is_training)
+		LX = self.activ_L_1.forward(LX,is_training)
+
 		# Right
 		RX = self.conv_R_1.forward(FX,is_training)
+		RX = self.batch_norm_R_1.forward(RX,is_training)
+		RX = self.activ_R_1.forward(RX,is_training)
+
 		RX = self.conv_R_2.forward(RX,is_training)
+		RX = self.batch_norm_R_2.forward(RX,is_training)
+		RX = self.activ_R_2.forward(RX,is_training)
+
 		RX = self.conv_R_3.forward(RX,is_training)
+		RX = self.batch_norm_R_3.forward(RX,is_training)
+		RX = self.activ_R_3.forward(RX,is_training)
 
 		# Concate
 		FX = tf.concat([LX,RX],axis=3)
+
 		FX = self.conv_after_conc.forward(FX,is_training)
 		
+		FX = FX * self.alpha
+
 		return FX + X
 
 	def get_params(self):
@@ -84,8 +113,6 @@ class InceptionC(Layer):
 	def get_params_dict(self):
 		return self.named_params_dict
 
-
-
 	def to_dict(self):
 		return {
 			'type':'ResnetInceptionBlockC',
@@ -94,5 +121,6 @@ class InceptionC(Layer):
 				'in_f': self.in_f,
 				'out_f': self.out_f,
 				'activation': ActivationConverter.activation_to_str(self.f),
+				'alpha' : self.alpha,
 			}
 		}

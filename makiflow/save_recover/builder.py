@@ -298,8 +298,9 @@ class Builder:
         name = params['name']
         in_f = params['in_f']
         out_f = params['out_f']
+        alpha = params['alpha']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return InceptionA(in_f=in_f, out_f=out_f,activation=activation, name=name)  
+        return InceptionA(in_f=in_f, out_f=out_f,activation=activation, name=name,alpha=alpha)  
     
     @staticmethod
     def __reduction_A_from_dict(params):
@@ -314,8 +315,9 @@ class Builder:
         name = params['name']
         in_f = params['in_f']
         out_f = params['out_f']
+        alpha = params['alpha']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return InceptionB(in_f=in_f, out_f=out_f,activation=activation, name=name)
+        return InceptionB(in_f=in_f, out_f=out_f,activation=activation, name=name,alpha=alpha)
 
     @staticmethod
     def __reduction_B_from_dict(params):
@@ -330,8 +332,9 @@ class Builder:
         name = params['name']
         in_f = params['in_f']
         out_f = params['out_f']
+        alpha = params['alpha']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return InceptionC(in_f=in_f, out_f=out_f,activation=activation, name=name)  
+        return InceptionC(in_f=in_f, out_f=out_f,activation=activation, name=name,alpha=alpha)  
     
     @staticmethod
     def __convblock_resnet_from_dict(params):
