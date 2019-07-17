@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
-from makiflow.layers import Layer,ConvLayer, ActivationLayer
-from makiflow.save_recover.activation_converter import ActivationConverter, BatchNormLayer, ActivationLayer
+from makiflow.layers import Layer,ConvLayer, ActivationLayer, BatchNormLayer
+from makiflow.save_recover.activation_converter import ActivationConverter
 
 # Reference: https://arxiv.org/pdf/1602.07261.pdf page 8, Figure 16
 

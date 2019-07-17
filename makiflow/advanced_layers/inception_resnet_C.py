@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from makiflow.layers import Layer,ConvLayer, ActivationLayer, MaxPoolLayer
+from makiflow.layers import Layer,ConvLayer, ActivationLayer, MaxPoolLayer, BatchNormLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 
 # Reference: https://arxiv.org/pdf/1602.07261.pdf page 8, Figure 19
