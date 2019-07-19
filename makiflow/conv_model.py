@@ -321,7 +321,7 @@ class ConvModel(object):
 		# the iterator tqdm iterates through manually. Yes, it's ugly, but necessary for
 		# convinient working with MakiFlow in Jupyter Notebook. Sometimes it's helpful
 		# even for console applications.
-		iterator=None
+		iterator = None
 		try:
 			Xtrain = Xtrain.astype(np.float32)
 			Xtest = Xtest.astype(np.float32)
@@ -388,7 +388,6 @@ class ConvModel(object):
 					  'Test accuracy: {:0.4f}'.format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
 		except Exception as ex:
 			print(ex)
-			#iterator.close() 
 		finally:
 			iterator.close() 
 			return {'train costs': train_costs, 'train errors': train_errors,
