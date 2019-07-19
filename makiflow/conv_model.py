@@ -389,5 +389,6 @@ class ConvModel(object):
 			print(ex)
 			iterator.close() 
 		finally:
+			iterator.close() 
 			return {'train costs': train_costs, 'train errors': train_errors,
 				'test costs': test_costs, 'test errors': test_errors}
