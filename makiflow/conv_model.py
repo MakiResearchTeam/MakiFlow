@@ -346,9 +346,9 @@ class ConvModel(object):
 				Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
 				train_cost = np.float32(0)
 				train_error = np.float32(0)
-				iterator = range(n_batches)
+				iterator = tqdm(range(n_batches))
 
-				for j in tqdm(iterator):
+				for j in iterator:
 					Xbatch = Xtrain[j * self.batch_sz:(j + 1) * self.batch_sz]
 					Ybatch = Ytrain[j * self.batch_sz:(j + 1) * self.batch_sz]
 
@@ -389,6 +389,6 @@ class ConvModel(object):
 			print(ex)
 			iterator.close() 
 		finally:
-			iterator.close() 
+			#iterator.close() 
 			return {'train costs': train_costs, 'train errors': train_errors,
 				'test costs': test_costs, 'test errors': test_errors}
