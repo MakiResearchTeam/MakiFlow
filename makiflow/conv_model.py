@@ -389,6 +389,7 @@ class ConvModel(object):
 		except Exception as ex:
 			print(ex)
 		finally:
-			iterator.close() 
+			if iterator is not None:
+				iterator.close() 
 			return {'train costs': train_costs, 'train errors': train_errors,
 				'test costs': test_costs, 'test errors': test_errors}
