@@ -13,16 +13,10 @@ class AutoEncoder:
         """
         Parameters
         ----------
-        layers : list
-            List of layers model consist of.
-            Example:
-            [
-                DenseLayer(300),
-                DenseLayer(100),
-                DenseLayer(300)
-            ]
-        input_shape : list
-            List of ints represent input shape: [batch_size, input_size].
+        encoder : Encoder
+            pass
+        decoder : Decoder
+            pass
         name : str
             Name of the model.
         """
@@ -47,12 +41,12 @@ class AutoEncoder:
         self.X = tf.placeholder(tf.float32, shape=self.input_shape)
 
         # For training
-        self.encoder_out = encoder.forward_train(self.X)
-        self.decoder_out = decoder.forward_train(self.encoder_out)
+        self.encoder_out = encoder.forward(self.X)
+        self.decoder_out = decoder.forward(self.encoder_out)
 
         # For testing
-        self.encoder_out_test = encoder.forward(self.X)
-        self.decoder_out_test = decoder.forward_train(self.encoder_out_test)
+        self.encoder_out_test = encoder.forward(self.X,is_training=False)
+        self.decoder_out_test = decoder.forward(self.encoder_out_test,is_training=False)
 
     
     def encode(self, X):

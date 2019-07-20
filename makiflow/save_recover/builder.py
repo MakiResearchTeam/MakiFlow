@@ -137,12 +137,13 @@ class Builder:
             'LSTMLayer': Builder.__lstm_layer_from_dict,
             'RNNBlock': Builder.__rnnblock_from_dict,
             'StemBlock':Builder.__stem_from_dict,
-            'Inception_resnet_A_Block':Builder.__inception_resnet_A_from_dict,
-            'Reduction_A_block':Builder.__reduction_A_from_dict,
-            'Inception_resnet_B_block':Builder.__inception_resnet_B_from_dict,
-            'Reduction_B_block':Builder.__reduction_B_from_dict,
-            'Inception_resnet_C_block':Builder.__inception_resnet_C_from_dict,
-            'ConvBlock_resnet':Builder.__convblock_resnet_from_dict,
+            'ResnetInceptionBlockA':Builder.__inception_resnet_A_from_dict,
+            'ReductionBlockA':Builder.__reduction_A_from_dict,
+            'ResnetInceptionBlockB':Builder.__inception_resnet_B_from_dict,
+            'ReductionBlockB':Builder.__reduction_B_from_dict,
+            'ResnetInceptionBlockC':Builder.__inception_resnet_C_from_dict,
+            'ResnetConvBlock':Builder.__convblock_resnet_from_dict,
+            'ConvBlock':Builder.__convblock_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
@@ -297,8 +298,9 @@ class Builder:
         name = params['name']
         in_f = params['in_f']
         out_f = params['out_f']
+        alpha = params['alpha']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return Inception_A(in_f=in_f, out_f=out_f,activation=activation, name=name)  
+        return InceptionA(in_f=in_f, out_f=out_f,activation=activation, name=name,alpha=alpha)  
     
     @staticmethod
     def __reduction_A_from_dict(params):
@@ -306,15 +308,16 @@ class Builder:
         in_f = params['in_f']
         out_f = params['out_f']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return Reduction_A(in_f=in_f, out_f=out_f,activation=activation, name=name)  
+        return ReductionA(in_f=in_f, out_f=out_f,activation=activation, name=name)  
     
     @staticmethod
     def __inception_resnet_B_from_dict(params):
         name = params['name']
         in_f = params['in_f']
         out_f = params['out_f']
+        alpha = params['alpha']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return Inception_B(in_f=in_f, out_f=out_f,activation=activation, name=name)
+        return InceptionB(in_f=in_f, out_f=out_f,activation=activation, name=name,alpha=alpha)
 
     @staticmethod
     def __reduction_B_from_dict(params):
@@ -322,15 +325,16 @@ class Builder:
         in_f = params['in_f']
         out_f = params['out_f']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return Reduction_B(in_f=in_f, out_f=out_f,activation=activation, name=name)  
+        return ReductionB(in_f=in_f, out_f=out_f,activation=activation, name=name)  
 
     @staticmethod
     def __inception_resnet_C_from_dict(params):
         name = params['name']
         in_f = params['in_f']
         out_f = params['out_f']
+        alpha = params['alpha']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return Inception_C(in_f=in_f, out_f=out_f,activation=activation, name=name)  
+        return InceptionC(in_f=in_f, out_f=out_f,activation=activation, name=name,alpha=alpha)  
     
     @staticmethod
     def __convblock_resnet_from_dict(params):
@@ -338,7 +342,20 @@ class Builder:
         in_f = params['in_f']
         out_f = params['out_f']
         activation =  ActivationConverter.str_to_activation(params['activation'])
-        return ConvBlock_resnet(in_f=in_f, out_f=out_f,activation=activation, name=name)  
+        return ResnetConvBlock(in_f=in_f, out_f=out_f,activation=activation, name=name) 
+
+    @staticmethod
+    def __convblock_from_dict(params):
+        name = params['name']
+        main_branch = []
+        for layer in params['main_branch']:
+            main_branch.append(Builder.__layer_from_dict(layer))
+        
+        skip_branch = []
+        for layer in params['skip_branch']:
+            skip_branch.append(Builder.__layer_from_dict(layer))
+
+        return ConvBlock(skip_branch=skip_branch,main_branch=main_branch,name=name)   
       
     
 
