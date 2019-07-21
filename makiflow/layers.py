@@ -29,6 +29,9 @@ class Layer(object):
         """
         pass
 
+    def __call__(self, *args, **kwargs):
+        pass
+
 
 class ConvLayer(Layer):
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
