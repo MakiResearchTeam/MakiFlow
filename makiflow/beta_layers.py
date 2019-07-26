@@ -132,7 +132,7 @@ class InputLayer(MakiTensor):
         return self.params
     
     def get_params_dict(self):
-        return []
+        return {}
 
 
 class DenseLayer(Layer, MakiOperation):

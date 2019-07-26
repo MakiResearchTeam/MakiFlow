@@ -41,16 +41,57 @@ class Classificator:
 		self.output = output
 		self.labels = tf.placeholder(tf.int32, shape=self.batch_sz)
 		self.__collect_params_and_dict()
+		# For learning
+		self.names_trainble_variables = [name_var for name_var in self.all_named_params_dict]
+		self.names_untrainble_variables = []
+		self.Create_list_or_train_var()
 
 
 	def __collect_params_and_dict(self):
 		current_tensor = self.output
-		self.params = current_tensor.get_parent_layer().params
-		self.named_params_dict = current_tensor.get_parent_layer().named_params_dict
+		self.all_named_params_dict = {}
+		self.all_params = []
+
+		self.all_params = current_tensor.get_parent_layer().get_params()
+		# {LayerName: {params_name:values,...} }
+		self.all_named_params_dict[current_tensor.get_parent_layer().name] = current_tensor.get_parent_layer().get_params_dict()
 
 		for _,elem in (current_tensor.get_previous_tensors().items()):
-			self.params += elem.get_parent_layer().get_params()
-			self.named_params_dict.update(elem.get_parent_layer().get_params_dict())
+			self.all_params += elem.get_parent_layer().get_params()
+			self.all_named_params_dict[elem.get_parent_layer().name] = elem.get_parent_layer().get_params_dict()
+
+	def Add_train_variables(self,layer_names:list):
+		assert(self.session is not None)
+		# Check untrainble list
+		for name in layer_names:
+			if name not in self.names_untrainble_variables:
+				raise NameError(f'{name} layer do not exist in untrainble list')
+		
+		for name in layer_names:
+			self.names_untrainble_variables.remove(str(name))
+			self.names_trainble_variables.append(str(name))
+		
+		self.Create_list_or_train_var()
+			
+	
+	def Remove_from_train_variables(self,layer_names:list):
+		assert(self.session is not None)
+		# Check trainble list
+		for name in layer_names:
+			if name not in self.names_trainble_variables:
+				raise NameError(f'{name} layer do not exits in trainble list')
+
+		for name in layer_names:
+			self.names_trainble_variables.remove(str(name))
+			self.names_untrainble_variables.append(str(name))
+
+		self.Create_list_or_train_var()
+		
+	def Create_list_or_train_var(self):
+		self.trainble_var = []
+		for name_layer in self.names_trainble_variables:
+			cur_layer = self.all_named_params_dict[name_layer]
+			self.trainble_var += list(cur_layer.values())
 
 	def load_weights(self, path,names_of_load_layer=None):
 		"""
@@ -63,7 +104,7 @@ class Classificator:
 		load_params_dict = {}
 
 		if names_of_load_layer is None:
-			load_params_dict = self.named_params_dict
+			load_params_dict = dict(ChainMap(*self.all_named_params_dict.values()))
 		else:
 			# Get named params in form of dict
 			# Combine what before output and output tensor
@@ -87,7 +128,7 @@ class Classificator:
 		load_params_dict = {}
 
 		if names_of_save_layer is None:
-			load_params_dict = self.named_params_dict
+			load_params_dict = dict(ChainMap(*self.all_named_params_dict.values()))
 		else:
 			# Get named params in form of dict
 			# Combine what before output and output tensor
@@ -102,7 +143,7 @@ class Classificator:
 
 	def set_session(self, session: tf.Session):
 		self.session = session
-		init_op = tf.variables_initializer(self.params)
+		init_op = tf.variables_initializer(self.all_params)
 		self.session.run(init_op)
 
 	def evaluate(self, Xtest, Ytest):
@@ -173,11 +214,11 @@ class Classificator:
 		Xtrain = Xtrain.astype(np.float32)
 		Xtest = Xtest.astype(np.float32)
 
-		# For training
+		# For training	
 		cost = (
 			tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.output.get_data_tensor(), labels=self.labels)),
 			self.output.get_data_tensor())
-		train_op = (cost, optimizer.minimize(cost[0]))
+		train_op = (cost, optimizer.minimize(cost[0],var_list=self.trainble_var) )
 		# Initialize optimizer's variables
 		self.session.run(tf.variables_initializer(optimizer.variables()))
 
