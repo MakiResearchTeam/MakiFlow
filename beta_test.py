@@ -9,12 +9,6 @@ from tensorflow.python.keras.datasets import mnist
 def get_layers():
     in_x = InputLayer(input_shape=[64,784])
     x = DenseLayer(input_shape=784, output_shape=500, name='dense1')(in_x)
-    sex = DenseLayer(input_shape=784, output_shape=500, name='dense1_0')(in_x)
-    sez = DenseLayer(input_shape=784, output_shape=500, name='dense1_2')(in_x)
-    z = DenseLayer(input_shape=500, output_shape=300, name='dense1_we')(sez)
-    z = DenseLayer(input_shape=300, output_shape=500, name='dense1_y')(z)
-    seq = DenseLayer(input_shape=784, output_shape=500, name='dense1_z')(in_x)
-    x = SumLayer()([x,sex,z,seq])
     x = DenseLayer(input_shape=500, output_shape=200, name='dense2')(x)
     x = DenseLayer(input_shape=200, output_shape=10, activation=None, name='dense3')(x)
     return in_x, x
@@ -47,7 +41,13 @@ if __name__ == "__main__":
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)
     info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
 
-    model.evaluate(Xtest,Ytest)
+    model.save_weights('T:\download\shiru')
+
+    new_session = tf.Session()
+    new_model = Classificator(input=in_x,output=out,num_classes=10)
+    new_model.set_session(new_session)
+    new_model.load_weights('T:\download\shiru',names_of_load_layer=['dense1','dense2'])
+    new_model.evaluate(Xtest,Ytest)
 
 
 

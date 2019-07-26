@@ -1,11 +1,13 @@
-from_om __future__ import absolute_import
-from_om makiflow.beta_layers import MakiTensor, MakiOperation, InputLayer
+from __future__ import absolute_import
+from makiflow.beta_layers import MakiTensor, MakiOperation, InputLayer
 import tensorflow as tf
 import numpy as np
-from_om sklearn.utils import shuffle
-from_om tqdm import tqdm
-from_om makiflow.utils import error_rate, sparse_cross_entropy
-from_om copy import copy
+from sklearn.utils import shuffle
+from tqdm import tqdm
+from makiflow.utils import error_rate, sparse_cross_entropy
+from copy import copy
+
+from collections import ChainMap
 
 EPSILON = np.float32(1e-37)
 
@@ -18,15 +20,13 @@ class Classificator:
 		output_tensors = {}
 		def create_tensor(from_,is_training):
 			if used.get(from_.get_name()) is None:
-				layer = from_.get_binded_layer()
+				layer = from_.get_parent_layer()
 				used[layer.name] = True
 				X = copy(from_.get_data_tensor())
-				to = []
 				takes = []
 				# Check if we at the beginning of the computational graph, i.e. InputLayer
-				if from_.get_last_tensor_names() is not None:
-					to = [from_.get_previous_tensors().get(name_tens) for name_tens in from_.get_last_tensor_names()]
-					for elem in to: 
+				if from_.get_parent_tensor_names() is not None:
+					for elem in from_.get_parent_tensors(): 
 						takes += [create_tensor(elem,is_training)]
 						
 					X = layer.forward(takes[0] if len(takes) == 1 else takes,is_training)
@@ -40,24 +40,65 @@ class Classificator:
 		del used, output_tensors
 		self.output = output
 		self.labels = tf.placeholder(tf.int32, shape=self.batch_sz)
-		self.__collect_params()
+		self.__collect_params_and_dict()
 
-	def __collect_params(self):
+
+	def __collect_params_and_dict(self):
 		current_tensor = self.output
-		self.params = current_tensor.get_binded_layer().params
+		self.params = current_tensor.get_parent_layer().params
+		self.named_params_dict = current_tensor.get_parent_layer().named_params_dict
+
 		for _,elem in (current_tensor.get_previous_tensors().items()):
-			self.params += elem.get_binded_layer().params
-		#self.named_params_dict = {}
-		#
-		#layer = current_tensor.get_binded_layer()
-		#
-		#while layer is not None:
-		#    self.params += layer.get_params()
-		#    self.named_params_dict.update(layer.get_params_dict())
-		#    top_name = current_tensor.get_last_tensor_name()
-		#    tensors_dict = current_tensor.get_previous_tensors()
-		#    current_tensor = tensors_dict[top_name]
-		#    layer = current_tensor.get_binded_layer()
+			self.params += elem.get_parent_layer().get_params()
+			self.named_params_dict.update(elem.get_parent_layer().get_params_dict())
+
+	def load_weights(self, path,names_of_load_layer=None):
+		"""
+		This function uses default TensorFlow's way for restoring models - checkpoint files.
+		:param path - full path+name of the model.
+		Example: '/home/student401/my_model/model.ckpt'
+		"""
+		assert (self.session is not None)
+		# Store which params will be loaded
+		load_params_dict = {}
+
+		if names_of_load_layer is None:
+			load_params_dict = self.named_params_dict
+		else:
+			# Get named params in form of dict
+			# Combine what before output and output tensor
+			dict_of_all_tensors = dict(ChainMap(self.output.get_previous_tensors(),self.output.get_self_pair()))
+			
+			for name in names_of_load_layer:
+				load_params_dict.update(dict_of_all_tensors[name].get_parent_layer().get_params_dict())
+
+		saver = tf.train.Saver(load_params_dict)
+		saver.restore(self.session, path)
+		print('Model restored')
+
+	def save_weights(self, path,names_of_save_layer=None):
+		"""
+		This function uses default TensorFlow's way for saving models - checkpoint files.
+		:param path - full path+name of the model.
+		Example: '/home/student401/my_model/model.ckpt'
+		"""
+		assert (self.session is not None)
+		# Store which params will be loaded
+		load_params_dict = {}
+
+		if names_of_save_layer is None:
+			load_params_dict = self.named_params_dict
+		else:
+			# Get named params in form of dict
+			# Combine what before output and output tensor
+			dict_of_all_tensors = dict(ChainMap(self.output.get_previous_tensors(),self.output.get_self_pair()))
+			
+			for name in names_of_save_layer:
+				load_params_dict.update(dict_of_all_tensors[name].get_parent_layer().get_params_dict())
+
+		saver = tf.train.Saver(load_params_dict)
+		save_path = saver.save(self.session, path)
+		print('Model saved to %s' % save_path)
 
 	def set_session(self, session: tf.Session):
 		self.session = session

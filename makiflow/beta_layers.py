@@ -2,6 +2,7 @@ from abc import abstractmethod
 import tensorflow as tf
 import numpy as np
 from copy import copy
+# Merge dict
 from collections import ChainMap
 
 class Layer(object):
@@ -126,6 +127,12 @@ class InputLayer(MakiTensor):
 
     def get_shape(self):
         return self.__input_shape
+    
+    def get_params(self):
+        return self.params
+    
+    def get_params_dict(self):
+        return []
 
 
 class DenseLayer(Layer, MakiOperation):
