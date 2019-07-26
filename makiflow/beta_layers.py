@@ -2,6 +2,7 @@ from abc import abstractmethod
 import tensorflow as tf
 import numpy as np
 from copy import copy
+from collections import ChainMap
 
 class Layer(object):
     def __init__(self):
@@ -31,27 +32,54 @@ class Layer(object):
 
 
 class MakiTensor:
-    def __init__(self, data_tensor: tf.Tensor, binded_layer, last_tensor_name: str, previous_tensors: dict):
+    def __init__(self, data_tensor: tf.Tensor, parent_layer, parent_tensor_names: list, previous_tensors: dict):
         self.__data_tensor: tf.Tensor = data_tensor
-        self.__name: str = binded_layer.name
-        self.__last_tensor_name: str = last_tensor_name
-        self.__binded_layer = binded_layer
+        self.__name: str = parent_layer.name
+        self.__parent_tensor_names = parent_tensor_names
+        self.__parent_layer = parent_layer
         self.__previous_tensors: dict = previous_tensors
 
     def get_data_tensor(self):
         return self.__data_tensor
 
-    def get_binded_layer(self):
-        return self.__binded_layer
+    def get_parent_layer(self):
+        """
+        Returns
+        -------
+        Layer
+            Layer which produced current MakiTensor.
+        """
+        return self.__parent_layer
 
-    def get_last_tensor_name(self):
-        return self.__last_tensor_name
+    def get_parent_tensors(self)->list:
+        """
+        Returns
+        -------
+        list of MakiTensors
+            MakiTensors that were used for creating current MakiTensor.
+        """
+        parent_tensors = []
+        for name in self.__parent_tensor_names:
+            parent_tensors += [self.__previous_tensors[name]]
+        return parent_tensors
+
+    def get_parent_tensor_names(self):
+        return self.__parent_tensor_names
 
     def get_previous_tensors(self) -> dict:
+        """
+        Returns
+        -------
+        dict of MakiTensors
+            All the MakiTensors that appear earlier in the computational graph.
+        """
         return self.__previous_tensors
 
     def get_self_pair(self) -> dict:
         return {self.__name: self}
+    
+    def get_name(self):
+        return self.__name
 
 
 class MakiOperation:
@@ -59,18 +87,41 @@ class MakiOperation:
     def __call__(self, x: MakiTensor)-> MakiTensor:
         pass
 
+class SumLayer(Layer, MakiOperation):
+    def __init__(self,name='sum'):
+        Layer.__init__(self)
+        self.name = name
+    
+    def forward(self,X,is_training):
+        return sum(X)
+    
+    def __call__(self,x:list) -> MakiTensor :
+        data = [i.get_data_tensor() for i in x]
+        data = self.forward(data,is_training=True)
+        parent_tensor_names = [i.get_name() for i in x]
+        arr = [i.get_previous_tensors() for i in x] + [i.get_self_pair() for i in x]
+        previous_tensors = dict(ChainMap(*arr))
+        #previous_tensors.update([i.get_self_pair() for i in x])
+        maki_tensor = MakiTensor(
+            data_tensor=data,
+            parent_layer=self,
+            parent_tensor_names = parent_tensor_names,
+            previous_tensors=previous_tensors,
+        )
+        return maki_tensor
 
 class InputLayer(MakiTensor):
 
     def __init__(self, input_shape, name='Input'):
+        self.params = []
         self.name = str(name)
         self.__input_shape = input_shape
         self.input = tf.placeholder(tf.float32, shape=input_shape, name=self.name)
         super().__init__(
             data_tensor=self.input,
-            name=self.name,
-            binded_layer=self,
-            previous_tensors={}
+            parent_layer=self,
+            parent_tensor_names = None,
+            previous_tensors={},
         )
 
     def get_shape(self):
@@ -81,13 +132,14 @@ class DenseLayer(Layer, MakiOperation):
     def __call__(self, x: MakiTensor) -> MakiTensor:
         data = x.get_data_tensor()
         data = self.forward(data)
+        parent_tensor_names = [x.get_name()]
         previous_tensors = copy(x.get_previous_tensors())
         previous_tensors.update(x.get_self_pair())
         maki_tensor = MakiTensor(
             data_tensor=data,
-            name=self.name,
-            binded_layer=self,
-            previous_tensors=previous_tensors
+            parent_layer=self,
+            parent_tensor_names = parent_tensor_names,
+            previous_tensors=previous_tensors,
         )
         return maki_tensor
 
