@@ -6,13 +6,12 @@ from tensorflow.python.keras.datasets import mnist
 
 def get_layers():
     in_x = InputLayer(input_shape=[64,784])
-    x = DenseMakiLayer(input_shape=784, output_shape=5000, name='dense1')(in_x)
-    c = DenseMakiLayer(input_shape=784, output_shape=5000, name='dense1_0')(in_x)
-    z = DenseMakiLayer(input_shape=784, output_shape=1000, name='dense1_7')(in_x)
-    z = DenseMakiLayer(input_shape=1000, output_shape=5000, name='dense1_1')(z)
+    x = DenseMakiLayer(input_shape=784, output_shape=500, name='dense1')(in_x)
+    x = DenseMakiLayer(input_shape=500, output_shape=500, name='dense2')(in_x)
+    x = DenseMakiLayer(input_shape=500, output_shape=500, name='dense3')(in_x)
+    x = DenseMakiLayer(input_shape=500, output_shape=500, name='dense4')(in_x)
 
-    x = SumMakiLayer(name='summo')([x,c,z])
-    x = DenseMakiLayer(input_shape=5000, output_shape=10, activation=None, name='dense5')(x)
+    x = DenseMakiLayer(input_shape=500, output_shape=10, activation=None, name='dense_endo')(x)
     return in_x, x
 
 

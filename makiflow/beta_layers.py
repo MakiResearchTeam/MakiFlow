@@ -13,7 +13,6 @@ from makiflow.save_recover.activation_converter import ActivationConverter
 class SumMakiLayer(MakiLayer):
     def __init__(self,name='sum'):
         MakiLayer.__init__(self,name=name,params=[],named_params_dict={})
-        self.name = name
     
     def _training_forward(self,X):
         return sum(X)
@@ -31,6 +30,15 @@ class SumMakiLayer(MakiLayer):
             previous_tensors=previous_tensors,
         )
         return maki_tensor
+
+    def to_dict(self):
+    return {
+        'type': 'SumLayer',
+        'params': {
+            'name': self._name,
+            
+        }
+    }
 
 
 class InputLayer(MakiTensor):
