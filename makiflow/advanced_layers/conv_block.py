@@ -1,9 +1,9 @@
-from makiflow.layers import Layer
+from makiflow.layers import MakiLayer
 
 # Reference: https://eccv2018.org/openaccess/content_ECCV_2018/papers/Sanghyun_Woo_Convolutional_Block_Attention_ECCV_2018_paper.pdf
 
 
-class ConvBlock(Layer):
+class ConvBlock(MakiLayer):
 
 	def __init__(self,skip_branch,main_branch,name='ConvBlock_'):
 		"""
@@ -18,7 +18,7 @@ class ConvBlock(Layer):
 			WARNING! OUTPUT TENSOR OF MAIN BRANCH MUST BE THE SAME SHAPE AS THE SKIP BRANCH!
 			
 		"""
-		Layer.__init__(self)
+		MakiLayer.__init__(self)
 
 		self.skip_branch = skip_branch
 		self.main_branch = main_branch

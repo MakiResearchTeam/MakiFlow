@@ -1,11 +1,11 @@
 import tensorflow as tf
 import numpy as np
-from makiflow.layers import Layer,ConvLayer, ActivationLayer, MaxPoolLayer, BatchNormLayer
+from makiflow.layers import MakiLayer,ConvLayer, ActivationLayer, MaxPoolLayer, BatchNormLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 
 # Reference: https://arxiv.org/pdf/1602.07261.pdf page 8, Figure 18
 
-class ReductionB(Layer):
+class ReductionB(MakiLayer):
 
 	def __init__(self,in_f,out_f,activation=tf.nn.relu,name='reduction_b'):
 		"""
@@ -36,7 +36,7 @@ class ReductionB(Layer):
 
 		"""
 		assert(len(out_f) == 4)
-		Layer.__init__(self)
+		MakiLayer.__init__(self)
 		self.name = name
 		self.in_f = in_f
 		self.out_f = out_f

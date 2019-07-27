@@ -31,8 +31,8 @@ class SequencePredictor:
         self.embedding_size = self.embedding.num_embeddings
         self.last_out_dim = self.rnn_block.rnn_layers[-1].num_cells
         self.classification_layer = DenseLayer(
-            input_shape=self.last_out_dim,
-            output_shape=self.embedding_size,
+            in_d=self.last_out_dim,
+            out_d=self.embedding_size,
             name='classification_Layer',
             activation=None)
         self.params += [self.embedding]

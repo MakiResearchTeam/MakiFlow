@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from makiflow.ssd.ssd_utils import nms
+from makiflow.models.ssd.ssd_utils import nms
 from makiflow.tools.object_detection_evaluator import ODEvaluator
 from tqdm import tqdm
 import numpy as np

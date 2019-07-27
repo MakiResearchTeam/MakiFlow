@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from makiflow.layers import Layer, ConvLayer, BatchNormLayer, ActivationLayer
+from makiflow.layers import MakiLayer, ConvLayer, BatchNormLayer, ActivationLayer
 
 
 # Reference: https://arxiv.org/pdf/1603.05027v2.pdf
@@ -9,7 +9,7 @@ from makiflow.layers import Layer, ConvLayer, BatchNormLayer, ActivationLayer
 # 2) DON'T USE BATCHNORMALIZATION BEFORE THE BLOCK
 
 
-class IdentityBlock(Layer):
+class IdentityBlock(MakiLayer):
     def __init__(self, main_branch, name):
         """
         Parameters
@@ -18,7 +18,7 @@ class IdentityBlock(Layer):
             List of different layers performed on the main branch. 
             WARNING! OUTPUT TENSOR OF MAIN BRANCH MUST BE THE SAME SHAPE AS THE SKIP BRANCH!
         """
-        Layer.__init__(self)
+        MakiLayer.__init__(self)
         self.name = str(name)
         self.main_branch = main_branch
         # Collect trainable params

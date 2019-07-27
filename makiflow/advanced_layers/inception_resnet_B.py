@@ -1,11 +1,11 @@
 import tensorflow as tf
 import numpy as np
-from makiflow.layers import Layer,ConvLayer, ActivationLayer, MaxPoolLayer, BatchNormLayer
+from makiflow.layers import MakiLayer,ConvLayer, ActivationLayer, MaxPoolLayer, BatchNormLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 
 # Reference: https://arxiv.org/pdf/1602.07261.pdf page 8, Figure 17
 
-class InceptionB(Layer):
+class InceptionB(MakiLayer):
 
 	def __init__(self,in_f,out_f,activation=tf.nn.relu,name='inception_b',alpha=0.1):
 		"""
@@ -32,7 +32,7 @@ class InceptionB(Layer):
 
 		"""
 		assert(len(out_f) == 3)
-		Layer.__init__(self)
+		MakiLayer.__init__(self)
 		self.name = name
 		self.in_f = in_f
 		self.out_f = out_f

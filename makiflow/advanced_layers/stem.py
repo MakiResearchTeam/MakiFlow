@@ -1,11 +1,11 @@
 import tensorflow as tf
 import numpy as np
-from makiflow.layers import Layer,ConvLayer, MaxPoolLayer, BatchNormLayer, ActivationLayer
+from makiflow.layers import MakiLayer,ConvLayer, MaxPoolLayer, BatchNormLayer, ActivationLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 
 # Reference: https://arxiv.org/pdf/1602.07261.pdf page 3, Figure 3
 
-class StemBlock(Layer):
+class StemBlock(MakiLayer):
 
 	def __init__(self,in_f,out_f,activation=tf.nn.relu,name='stemblock'):
 		"""
@@ -40,7 +40,7 @@ class StemBlock(Layer):
 
 		"""
 		assert(len(out_f) == 3)
-		Layer.__init__(self)
+		MakiLayer.__init__(self)
 		self.name = name
 		self.in_f = in_f
 		self.out_f = out_f

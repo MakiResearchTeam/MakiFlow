@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from makiflow.save_recover.builder import Builder
 # NON-MAXIMUM SUPRESSION
-from makiflow.ssd.ssd_utils import nms
+from makiflow.models.ssd.ssd_utils import nms
 from makiflow.tools.image_cutter import ImageCutter
 import cv2
 # For cutting out pieces of images with text

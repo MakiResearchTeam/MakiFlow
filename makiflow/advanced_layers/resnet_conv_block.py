@@ -1,11 +1,11 @@
-from makiflow.layers import Layer, ConvLayer, BatchNormLayer, ActivationLayer
+from makiflow.layers import MakiLayer, ConvLayer, BatchNormLayer, ActivationLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 import tensorflow as tf
 
 # Reference: https://www.udemy.com/advanced-computer-vision/ , ResNet (and Inception)
 
 # ConvBlock 
-class ResnetConvBlock(Layer):
+class ResnetConvBlock(MakiLayer):
 
 	def __init__(self,in_f,out_f,activation=tf.nn.relu,name='convblock'):
 		"""
@@ -31,7 +31,7 @@ class ResnetConvBlock(Layer):
 			final_output = (skip connection) + (main branch).
 		"""
 		assert(len(out_f) == 3)
-		Layer.__init__(self)
+		MakiLayer.__init__(self)
 		self.in_f = in_f
 		self.out_f = out_f
 		self.f = activation

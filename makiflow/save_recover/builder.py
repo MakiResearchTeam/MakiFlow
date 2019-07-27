@@ -8,9 +8,9 @@ from makiflow.conv_model import ConvModel
 from makiflow.layers import *
 from makiflow.rnn_layers import *
 from makiflow.save_recover.activation_converter import ActivationConverter
-from makiflow.ssd.detector_classifier import DetectorClassifier
-from makiflow.ssd.detector_classifier_block import DetectorClassifierBlock
-from makiflow.ssd.ssd_model import SSDModel
+from makiflow.models.ssd import DetectorClassifier
+from makiflow.models.ssd import DetectorClassifierBlock
+from makiflow.models.ssd import SSDModel
 from makiflow.rnn_models.text_recognizer import TextRecognizer
 
 
@@ -188,7 +188,7 @@ class Builder:
         input_shape = params['input_shape']
         output_shape = params['output_shape']
         activation = ActivationConverter.str_to_activation(params['activation'])
-        return DenseLayer(input_shape=input_shape, output_shape=output_shape, activation=activation, name=name)
+        return DenseLayer(in_d=input_shape, out_d=output_shape, activation=activation, name=name)
     
     @staticmethod
     def __batchnorm_layer_from_dict(params):
