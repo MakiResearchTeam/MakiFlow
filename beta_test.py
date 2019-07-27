@@ -48,9 +48,10 @@ if __name__ == "__main__":
     model.set_session(session)
 
     (Xtrain, Ytrain), (Xtest, Ytest) = get_train_test_data()
-    epochs = 2
+    epochs = 1
     lr = 1e-3
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)
     info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
+    model.save_architecture('T:/download/shiru/shit.json')
 
