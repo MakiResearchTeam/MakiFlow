@@ -1,11 +1,9 @@
 from __future__ import absolute_import
-from multiprocessing import Pool
 import numpy as np
-from makiflow.ssd.ssd_utils import jaccard_index
-from concurrent.futures import ProcessPoolExecutor
+from makiflow.models.ssd.ssd_utils import jaccard_index
 # For shared memory usage
 from ctypes import Structure, c_char_p, c_int32, c_double
-from multiprocessing import Array, Manager
+
 
 class DBHolder(Structure):
     """ Class for using shared memory """

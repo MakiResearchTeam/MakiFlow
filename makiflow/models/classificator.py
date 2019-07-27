@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from makiflow.base import MakiModel, MakiTensor
-from makiflow.beta_layers import InputLayer
+from makiflow.layers import InputLayer
 import tensorflow as tf
 import numpy as np
 from sklearn.utils import shuffle

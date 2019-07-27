@@ -24,8 +24,8 @@ def get_layers():
         MaxPoolLayer(),
         # 1x1
         FlattenLayer(),
-        DenseLayer(input_shape=16, output_shape=32, name='1'),
-        DenseLayer(input_shape=32, output_shape=10, activation=None, name='1'),
+        DenseLayer(in_d=16, out_d=32, name='1'),
+        DenseLayer(in_d=32, out_d=10, activation=None, name='1'),
     ]
     return layers
 

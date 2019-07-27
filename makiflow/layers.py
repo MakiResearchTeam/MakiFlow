@@ -1,39 +1,70 @@
 from __future__ import absolute_import
-
+from abc import abstractmethod
 import numpy as np
 import tensorflow as tf
+from copy import copy
 
 from makiflow.save_recover.activation_converter import ActivationConverter
+from makiflow.base import MakiLayer, MakiTensor
 
 
-class Layer(object):
-    def __init__(self):
-        self.params = []
-        self.named_params_dict = {}
+class SimpleForwardLayer(MakiLayer):
+    def __call__(self, x):
+        data = x.get_data_tensor()
+        data = self._forward(data)
 
-    def forward(self, X, is_training=False):
+        parent_tensor_names = [x.get_name()]
+        previous_tensors = copy(x.get_previous_tensors())
+        previous_tensors.update(x.get_self_pair())
+        maki_tensor = MakiTensor(
+            data_tensor=data,
+            parent_layer=self,
+            parent_tensor_names=parent_tensor_names,
+            previous_tensors=previous_tensors,
+        )
+        return maki_tensor
+
+    @abstractmethod
+    def _forward(self, X):
         pass
+
+
+class InputLayer(MakiTensor):
+    def __init__(self, input_shape, name):
+        self.params = []
+        self._name = str(name)
+        self.__input_shape = input_shape
+        self.input = tf.placeholder(tf.float32, shape=input_shape, name=self._name)
+        super().__init__(
+            data_tensor=self.input,
+            parent_layer=self,
+            parent_tensor_names=None,
+            previous_tensors={},
+        )
+
+    def get_shape(self):
+        return self.__input_shape
+
+    def get_name(self):
+        return self._name
 
     def get_params(self):
-        return self.params
+        return []
 
     def get_params_dict(self):
-        """
-        This data is used for correct saving and loading models using TensorFlow checkpoint files.
-        """
-        return self.named_params_dict
+        return {}
 
     def to_dict(self):
-        """
-        This data is used for converting the model's architecture to json.json file.
-        """
-        pass
+        return {
+            'type': 'InputLayer',
+            'params': {
+                'name': self._name,
+                'input_shape': self.__input_shape
+            }
+        }
 
-    def __call__(self, *args, **kwargs):
-        pass
 
-
-class ConvLayer(Layer):
+class ConvLayer(SimpleForwardLayer):
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
                  W=None, b=None):
         """
@@ -47,15 +78,14 @@ class ConvLayer(Layer):
         :param W - filter's weights. This value is used for the filter initialization with pretrained filters.
         :param b - bias' weights. This value is used for the bias initialization with pretrained bias.
         """
-        Layer.__init__(self)
         self.shape = (kw, kh, in_f, out_f)
         self.stride = stride
         self.padding = padding
         self.f = activation
 
-        self.name = str(name)
-        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + str(name)
-        self.name_bias = 'ConvBias{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + str(name)
+        name = str(name)
+        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+        self.name_bias = 'ConvBias{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
 
         if W is None:
             W = np.random.randn(*self.shape) * np.sqrt(2.0 / np.prod(self.shape[:-1]))
@@ -64,15 +94,19 @@ class ConvLayer(Layer):
 
         self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
         self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
-        self.params = [self.W, self.b]
-        self.named_params_dict = {self.name_conv: self.W, self.name_bias: self.b}
+        params = [self.W, self.b]
+        named_params_dict = {self.name_conv: self.W, self.name_bias: self.b}
+        super().__init__(name, params, named_params_dict)
 
-    def forward(self, X, is_training=False):
+    def _forward(self, X):
         conv_out = tf.nn.conv2d(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
         conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:
             return conv_out
         return self.f(conv_out)
+
+    def _training_forward(self, X):
+        return self._forward(X)
 
     def copy_from_keras_layers(self, layer):
         W, b = layer.get_weights()
@@ -95,8 +129,8 @@ class ConvLayer(Layer):
         }
 
 
-class DenseLayer(Layer):
-    def __init__(self, input_shape, output_shape, name, activation=tf.nn.relu, init_type='xavier',
+class DenseLayer(SimpleForwardLayer):
+    def __init__(self, in_d, out_d, name, activation=tf.nn.relu, init_type='xavier',
                  W=None, b=None):
         """
         :param input_shape - number represents input shape. Example: 500.
@@ -107,49 +141,47 @@ class DenseLayer(Layer):
         :param W - matrix weights. Used for initialisation dense weights with pretrained weights.
         :param b - bias weights. Used for initialisation dense bias with pretrained bias.
         """
-        Layer.__init__(self)
-        self.input_shape = input_shape
-        self.output_shape = output_shape
+
+        self.input_shape = in_d
+        self.output_shape = out_d
         self.f = activation
 
         if W is None:
-            W = np.random.randn(input_shape, output_shape)
+            W = np.random.randn(in_d, out_d)
             # Perform Xavier initialization
             if init_type == 'xavier':
-                W /= (input_shape + output_shape) / 2
+                W /= (in_d + out_d) / 2
             # Perform Lasange initialization
             else:
-                W *= np.sqrt(12 / (input_shape + output_shape))
+                W *= np.sqrt(12 / (in_d + out_d))
 
         if b is None:
-            b = np.zeros(output_shape)
+            b = np.zeros(out_d)
 
-        self.name = str(name)
-        self.name_dense = 'DenseMat{}x{}_id_'.format(input_shape, output_shape) + str(name)
-        self.name_bias = 'DenseBias{}x{}_id_'.format(input_shape, output_shape) + str(name)
+        name = str(name)
+        self.name_dense = 'DenseMat{}x{}_id_'.format(in_d, out_d) + name
+        self.name_bias = 'DenseBias{}x{}_id_'.format(in_d, out_d) + name
 
         self.W = tf.Variable(W.astype(np.float32), name=self.name_dense)
         self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
-        self.params = [self.W, self.b]
-        self.named_params_dict = {self.name_dense: self.W, self.name_bias: self.b}
+        params = [self.W, self.b]
+        named_params_dict = {self.name_dense: self.W, self.name_bias: self.b}
+        super().__init__(name, params, named_params_dict)
 
-    def forward(self, X, is_training=False):
+    def _forward(self, X):
         out = tf.matmul(X, self.W) + self.b
         if self.f is None:
             return out
         return self.f(out)
 
-    def copy_from_keras_layers(self, layer):
-        W, b = layer.get_weights()
-        op1 = self.W.assign(W)
-        op2 = self.b.assign(b)
-        self.session.run((op1, op2))
+    def _training_forward(self, X):
+        return self._forward(X)
 
     def to_dict(self):
         return {
             'type': 'DenseLayer',
             'params': {
-                'name': self.name,
+                'name': self._name,
                 'input_shape': self.input_shape,
                 'output_shape': self.output_shape,
                 'activation': ActivationConverter.activation_to_str(self.f)
@@ -157,8 +189,8 @@ class DenseLayer(Layer):
         }
 
 
-class BatchNormLayer(Layer):
-    def __init__(self, D, name,
+class BatchNormLayer(SimpleForwardLayer):
+    def __init__(self, D, name, decay=0.9,
                  mean=None, var=None, gamma=None, beta=None):
         """
         :param D - number of tensors to be normalized.
@@ -171,7 +203,6 @@ class BatchNormLayer(Layer):
             X_final = X*gamma + beta
         gamma and beta are defined by the NN, e.g. they are trainable.
         """
-        Layer.__init__(self)
         self.D = D
 
         if mean is None:
@@ -188,22 +219,35 @@ class BatchNormLayer(Layer):
         if gamma is None:
             gamma = np.ones(D)
 
-        self.name = str(name)
-        self.name_mean = 'BatchMean{}_id_'.format(D) + str(name)
-        self.name_var = 'BatchVar{}_id_'.format(D) + str(name)
-        self.name_gamma = 'BatchGamma{}_id_'.format(D) + str(name)
-        self.name_beta = 'BatchBeta{}_id_'.format(D) + str(name)
+        name = str(name)
+        self.name_mean = 'BatchMean{}_id_'.format(D) + name
+        self.name_var = 'BatchVar{}_id_'.format(D) + name
+        self.name_gamma = 'BatchGamma{}_id_'.format(D) + name
+        self.name_beta = 'BatchBeta{}_id_'.format(D) + name
 
         self.running_mean = tf.Variable(mean.astype(np.float32), trainable=False, name=self.name_mean)
         self.running_variance = tf.Variable(var.astype(np.float32), trainable=False, name=self.name_var)
         self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)
         self.beta = tf.Variable(beta.astype(np.float32), name=self.name_beta)
 
-        self.params = [self.running_mean, self.running_variance, self.gamma, self.beta]
-        self.named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance,
-                                  self.name_gamma: self.gamma, self.name_beta: self.beta}
+        self.decay = decay
 
-    def forward(self, X, is_training=False, decay=0.9):
+        params = [self.running_mean, self.running_variance, self.gamma, self.beta]
+        named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance,
+                                  self.name_gamma: self.gamma, self.name_beta: self.beta}
+        super().__init__(name, params, named_params_dict)
+
+    def _forward(self, X):
+        return tf.nn.batch_normalization(
+            X,
+            self.running_mean,
+            self.running_variance,
+            self.beta,
+            self.gamma,
+            1e-4
+        )
+
+    def _training_forward(self, X):
         """
         :param decay - this argument is responsible for how fast batchnorm layer is trained. Values between 0.9 and 0.999 are
         commonly used.
@@ -215,65 +259,46 @@ class BatchNormLayer(Layer):
         else:
             # dense
             axes = [0]
-        if is_training:
-            batch_mean, batch_var = tf.nn.moments(X, axes=axes)
-            update_running_mean = tf.assign(
-                self.running_mean,
-                self.running_mean * decay + batch_mean * (1 - decay)
-            )
-            update_running_variance = tf.assign(
-                self.running_variance,
-                self.running_variance * decay + batch_var * (1 - decay)
-            )
-            with tf.control_dependencies([update_running_mean, update_running_variance]):
-                out = tf.nn.batch_normalization(
-                    X,
-                    batch_mean,
-                    batch_var,
-                    self.beta,
-                    self.gamma,
-                    1e-4
-                )
-        else:
+
+        batch_mean, batch_var = tf.nn.moments(X, axes=axes)
+        update_running_mean = tf.assign(
+            self.running_mean,
+            self.running_mean * self.decay + batch_mean * (1 - self.decay)
+        )
+        update_running_variance = tf.assign(
+            self.running_variance,
+            self.running_variance * self.decay + batch_var * (1 - self.decay)
+        )
+        with tf.control_dependencies([update_running_mean, update_running_variance]):
             out = tf.nn.batch_normalization(
                 X,
-                self.running_mean,
-                self.running_variance,
+                batch_mean,
+                batch_var,
                 self.beta,
                 self.gamma,
                 1e-4
             )
-        return out
 
-    def copy_from_keras_layer(self, layer):
-        # only 1 layer to copy from
-        # order:
-        # gamma, beta, moving mean, moving variance
-        gamma, beta, running_mean, running_variance = layer.get_weights()
-        op1 = self.running_mean.assign(running_mean)
-        op2 = self.running_variance.assign(running_variance)
-        op3 = self.gamma.assign(gamma)
-        op4 = self.beta.assign(beta)
-        self.session.run((op1, op2, op3, op4))
+        return out
 
     def to_dict(self):
         return {
             'type': 'BatchNormLayer',
             'params': {
-                'name': self.name,
+                'name': self._name,
                 'D': self.D,
             }
         }
 
 
-class MaxPoolLayer(Layer):
-    def __init__(self, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
-        Layer.__init__(self)
+class MaxPoolLayer(SimpleForwardLayer):
+    def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
+        super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
         self.padding = padding
 
-    def forward(self, X, is_training=False):
+    def _forward(self, X):
         return tf.nn.max_pool(
             X,
             ksize=self.ksize,
@@ -281,10 +306,14 @@ class MaxPoolLayer(Layer):
             padding=self.padding
         )
 
+    def _training_forward(self, x):
+        return self._forward(x)
+
     def to_dict(self):
         return {
             'type': 'MaxPoolLayer',
             'params': {
+                'name': self._name,
                 'ksize': self.ksize,
                 'strides': self.strides,
                 'padding': self.padding
@@ -292,14 +321,14 @@ class MaxPoolLayer(Layer):
         }
 
 
-class AvgPoolLayer(Layer):
-    def __init__(self, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
-        Layer.__init__(self)
+class AvgPoolLayer(SimpleForwardLayer):
+    def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
+        super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
         self.padding = padding
 
-    def forward(self, X, is_training=False):
+    def _forward(self, X):
         return tf.nn.avg_pool(
             X,
             ksize=self.ksize,
@@ -307,10 +336,14 @@ class AvgPoolLayer(Layer):
             padding=self.padding
         )
 
+    def _training_forward(self, x):
+        return self._forward(x)
+
     def to_dict(self):
         return {
             'type': 'AvgPoolLayer',
             'params': {
+                'name': self._name,
                 'ksize': self.ksize,
                 'strides': self.strides,
                 'padding': self.padding
@@ -318,52 +351,64 @@ class AvgPoolLayer(Layer):
         }
 
 
-class ActivationLayer(Layer):
-    def __init__(self, activation=tf.nn.relu):
-        Layer.__init__(self)
+class ActivationLayer(SimpleForwardLayer):
+    def __init__(self, name, activation=tf.nn.relu):
+        super().__init__(name, [], {})
         if activation is None:
-            raise WrongInput("Activation can't None")
+            raise Exception("Activation can't None")
         self.f = activation
 
-    def forward(self, X, is_training=False):
+    def _forward(self, X):
+        return self.f(X)
+
+    def _training_forward(self, X):
         return self.f(X)
 
     def to_dict(self):
         return {
             'type': 'ActivationLayer',
             'params': {
+                'name': self._name,
                 'activation': ActivationConverter.activation_to_str(self.f)
             }
         }
 
 
-class FlattenLayer(Layer):
-    def __init__(self):
-        Layer.__init__(self)
-        pass
+class FlattenLayer(SimpleForwardLayer):
+    def __init__(self, name):
+        super().__init__(name, [], {})
 
-    def forward(self, X, is_training=False):
+    def _forward(self, X):
         return tf.contrib.layers.flatten(X)
+
+    def _training_forward(self, x):
+        return self._forward(x)
 
     def to_dict(self):
         return {
             'type': 'FlattenLayer',
-            'params': {}
+            'params': {
+                'name': self._name
+            }
         }
 
 
-class DropoutLayer(Layer):
-    def __init__(self, p_keep=0.9):
-        Layer.__init__(self)
-        self.p_keep = p_keep
+class DropoutLayer(SimpleForwardLayer):
+    def __init__(self, name, p_keep=0.9):
+        super().__init__(name, [], {})
+        self._p_keep = p_keep
 
-    def forward(self, X, is_training=False):
-        return tf.nn.dropout(X, self.p_keep)
+    def _forward(self, X):
+        return X
+
+    def _training_forward(self, X):
+        return tf.nn.dropout(X, self._p_keep)
 
     def to_dict(self):
         return {
             'type': 'DropoutLayer',
             'params': {
-                'p_keep': self.p_keep
+                'name': self._name,
+                'p_keep': self._p_keep
             }
         }

@@ -4,7 +4,7 @@ import numpy as np
 from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
-from makiflow.layers import Layer
+from makiflow.layers import MakiLayer
 from makiflow.save_recover.activation_converter import ActivationConverter
 
 class CellType:
@@ -31,7 +31,7 @@ class CellType:
                 return CellType.Static
 
 
-class GRULayer(Layer):
+class GRULayer(MakiLayer):
     def __init__(self, num_cells, input_dim, seq_length, name, activation=tf.nn.tanh, dynamic=False, bidirectional=False):
         """
         Parameters
@@ -106,7 +106,7 @@ class GRULayer(Layer):
         }
 
 
-class LSTMLayer(Layer):
+class LSTMLayer(MakiLayer):
     def __init__(self, num_cells, input_dim, seq_length, name, activation=tf.nn.tanh, dynamic=False, bidirectional=False):
         """
         Parameters
@@ -183,7 +183,7 @@ class LSTMLayer(Layer):
     
 
 
-class RNNBlock(Layer):
+class RNNBlock(MakiLayer):
     def __init__(self, rnn_layers, seq_length, dynamic=False, bidirectional=False):
         """
         Parameters
@@ -259,7 +259,7 @@ class RNNBlock(Layer):
         return rnnblock_dict
     
 
-class EmbeddingLayer(Layer):
+class EmbeddingLayer(MakiLayer):
     def __init__(self, num_embeddings, dim, name):
         """
         Parameters

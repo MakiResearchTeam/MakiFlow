@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from makiflow.ssd.ssd_utils import resize_images_and_bboxes, prepare_data
+from makiflow.models.ssd.ssd_utils import resize_images_and_bboxes, prepare_data
 from tqdm import tqdm
 import cv2
 import numpy as np

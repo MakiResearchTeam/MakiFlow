@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from makiflow.layers import Layer, ConvLayer, BatchNormLayer, ActivationLayer
+from makiflow.layers import MakiLayer, ConvLayer, BatchNormLayer, ActivationLayer
 
 
 # Reference: https://arxiv.org/pdf/1603.05027v2.pdf
@@ -9,7 +9,7 @@ from makiflow.layers import Layer, ConvLayer, BatchNormLayer, ActivationLayer
 # 2) DON'T USE BATCHNORMALIZATION BEFORE THE BLOCK
 
 
-class ResnetIndentityBlock(Layer):
+class ResnetIndentityBlock(MakiLayer):
     def __init__(self, in_f1, out_f1, name, pretrained_weights=None):
         """
         Parameters
@@ -36,7 +36,7 @@ class ResnetIndentityBlock(Layer):
         ----
             Don't use batchnormalization before the block.
         """
-        Layer.__init__(self)
+        MakiLayer.__init__(self)
         self.in_f1 = in_f1
         self.out_f1 = out_f1
         if pretrained_weights is not None:
