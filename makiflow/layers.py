@@ -91,6 +91,7 @@ class ConvLayer(Layer):
                 'padding': self.padding,
                 'activation': ActivationConverter.activation_to_str(self.f)
             }
+            
         }
 
 

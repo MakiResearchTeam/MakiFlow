@@ -5,6 +5,9 @@ import numpy as np
 from sklearn.utils import shuffle
 from tqdm import tqdm
 from makiflow.utils import error_rate, sparse_cross_entropy
+from copy import copy
+
+from collections import ChainMap
 
 EPSILON = np.float32(1e-37)
 
@@ -13,35 +16,165 @@ class Classificator:
     def __init__(self, input: InputLayer, output: MakiTensor, num_classes: int):
         self.X = input.get_data_tensor()
         self.batch_sz = input.get_shape()[0]
+        used = {}
+        # Contains pairs {layer: tensor}, where `tensor` is output tensor of `layer`
+        output_tensors = {}
+        def create_tensor(from_,is_training):
+            if used.get(from_.get_name()) is None:
+                layer = from_.get_parent_layer()
+                used[layer.name] = True
+                X = copy(from_.get_data_tensor())
+                takes = []
+                # Check if we at the beginning of the computational graph, i.e. InputLayer
+                if from_.get_parent_tensor_names() is not None:
+                    for elem in from_.get_parent_tensors():
+                        takes += [create_tensor(elem,is_training)]
 
+                    X = layer.forward(takes[0] if len(takes) == 1 else takes,is_training)
+
+                output_tensors[layer.name] = X
+                return X
+            else:
+                return output_tensors[from_.get_name()]
+
+        self.output_test = create_tensor(output,is_training=False)
+        del used, output_tensors
         self.output = output
-        self.labels = tf.placeholder(tf.int32, shape=[self.batch_sz, num_classes], name='labels')
+        self.labels = tf.placeholder(tf.int32, shape=self.batch_sz)
+        self.__collect_params_and_dict()
+        # For learning
+        self.names_trainble_variables = [name_var for name_var in self.all_named_params_dict]
+        self.names_untrainble_variables = []
+        self.Create_list_or_train_var()
 
-    def __collect_params(self):
+
+    def __collect_params_and_dict(self):
         current_tensor = self.output
-        self.params = []
-        self.named_params_dict = {}
+        self.all_named_params_dict = {}
+        self.all_params = []
 
-        layer = current_tensor.get_binded_layer()
+        self.all_params = current_tensor.get_parent_layer().get_params()
+        # {LayerName: {params_name:values,...} }
+        self.all_named_params_dict[current_tensor.get_parent_layer().name] = current_tensor.get_parent_layer().get_params_dict()
 
-        while layer is not None:
-            self.params += layer.get_params()
-            self.named_params_dict.update(layer.get_params_dict())
-            top_name = current_tensor.get_last_tensor_name()
-            tensors_dict = current_tensor.get_previous_tensors()
-            current_tensor = tensors_dict[top_name]
-            layer = current_tensor.get_binded_layer()
+        for _,elem in (current_tensor.get_previous_tensors().items()):
+            self.all_params += elem.get_parent_layer().get_params()
+            self.all_named_params_dict[elem.get_parent_layer().name] = elem.get_parent_layer().get_params_dict()
+
+    def Add_train_variables(self,layer_names:list):
+        assert(self.session is not None)
+        # Check untrainble list
+        for name in layer_names:
+            if name not in self.names_untrainble_variables:
+                raise NameError(f'{name} layer do not exist in untrainble list')
+
+        for name in layer_names:
+            self.names_untrainble_variables.remove(str(name))
+            self.names_trainble_variables.append(str(name))
+
+        self.Create_list_or_train_var()
+
+
+    def Remove_from_train_variables(self,layer_names:list):
+        assert(self.session is not None)
+        # Check trainble list
+        for name in layer_names:
+            if name not in self.names_trainble_variables:
+                raise NameError(f'{name} layer do not exits in trainble list')
+
+        for name in layer_names:
+            self.names_trainble_variables.remove(str(name))
+            self.names_untrainble_variables.append(str(name))
+
+        self.Create_list_or_train_var()
+
+    def Create_list_or_train_var(self):
+        self.trainble_var = []
+        for name_layer in self.names_trainble_variables:
+            cur_layer = self.all_named_params_dict[name_layer]
+            self.trainble_var += list(cur_layer.values())
+
+    def load_weights(self, path,names_of_load_layer=None):
+        """
+        This function uses default TensorFlow's way for restoring models - checkpoint files.
+        :param path - full path+name of the model.
+        Example: '/home/student401/my_model/model.ckpt'
+        """
+        assert (self.session is not None)
+        # Store which params will be loaded
+        load_params_dict = {}
+
+        if names_of_load_layer is None:
+            load_params_dict = dict(ChainMap(*self.all_named_params_dict.values()))
+        else:
+            # Get named params in form of dict
+            # Combine what before output and output tensor
+            dict_of_all_tensors = dict(ChainMap(self.output.get_previous_tensors(),self.output.get_self_pair()))
+
+            for name in names_of_load_layer:
+                load_params_dict.update(dict_of_all_tensors[name].get_parent_layer().get_params_dict())
+
+        saver = tf.train.Saver(load_params_dict)
+        saver.restore(self.session, path)
+        print('Model restored')
+
+    def save_weights(self, path,names_of_save_layer=None):
+        """
+        This function uses default TensorFlow's way for saving models - checkpoint files.
+        :param path - full path+name of the model.
+        Example: '/home/student401/my_model/model.ckpt'
+        """
+        assert (self.session is not None)
+        # Store which params will be loaded
+        load_params_dict = {}
+
+        if names_of_save_layer is None:
+            load_params_dict = dict(ChainMap(*self.all_named_params_dict.values()))
+        else:
+            # Get named params in form of dict
+            # Combine what before output and output tensor
+            dict_of_all_tensors = dict(ChainMap(self.output.get_previous_tensors(),self.output.get_self_pair()))
+
+            for name in names_of_save_layer:
+                load_params_dict.update(dict_of_all_tensors[name].get_parent_layer().get_params_dict())
+
+        saver = tf.train.Saver(load_params_dict)
+        save_path = saver.save(self.session, path)
+        print('Model saved to %s' % save_path)
 
     def set_session(self, session: tf.Session):
         self.session = session
-        init_op = tf.variables_initializer(self.params)
+        init_op = tf.variables_initializer(self.all_params)
         self.session.run(init_op)
+
+    def evaluate(self, Xtest, Ytest):
+        # TODO: n_batches is never used
+        # Validating the network
+        Xtest = Xtest.astype(np.float32)
+
+        Yish_test = tf.nn.softmax(self.output_test)
+        n_batches = Xtest.shape[0] // self.batch_sz
+
+        # For train data
+        test_cost = 0
+        predictions = np.zeros(len(Xtest))
+        for k in tqdm(range(n_batches)):
+            # Test data
+            Xtestbatch = Xtest[k * self.batch_sz:(k + 1) * self.batch_sz]
+            Ytestbatch = Ytest[k * self.batch_sz:(k + 1) * self.batch_sz]
+            Yish_test_done = self.session.run(Yish_test, feed_dict={self.X: Xtestbatch}) + EPSILON
+            test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
+            predictions[k * self.batch_sz:(k + 1) * self.batch_sz] = np.argmax(Yish_test_done, axis=1)
+
+        error = error_rate(predictions, Ytest)
+        test_cost = test_cost / (len(Xtest) // self.batch_sz)
+        print('Accuracy:', 1 - error, 'Cost:', test_cost)
 
     def pure_fit(self, Xtrain, Ytrain, Xtest, Ytest, optimizer=None, epochs=1, test_period=1):
         """
         Method for training the model. Works faster than `verbose_fit` method because
         it uses exponential decay in order to speed up training. It produces less accurate
-        train error measurement.
+        train error mesurement.
 
         Parameters
         ----------
@@ -84,14 +217,14 @@ class Classificator:
 
         # For training
         cost = (
-            tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.output, labels=self.labels)),
-            self.output)
-        train_op = (cost, optimizer.minimize(cost[0]))
+            tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.output.get_data_tensor(), labels=self.labels)),
+            self.output.get_data_tensor())
+        train_op = (cost, optimizer.minimize(cost[0],var_list=self.trainble_var) )
         # Initialize optimizer's variables
         self.session.run(tf.variables_initializer(optimizer.variables()))
 
         # For testing
-        Yish_test = tf.nn.softmax(self.output)
+        Yish_test = tf.nn.softmax(self.output_test)
 
         n_batches = Xtrain.shape[0] // self.batch_sz
 
@@ -109,10 +242,9 @@ class Classificator:
                 for j in iterator:
                     Xbatch = Xtrain[j * self.batch_sz:(j + 1) * self.batch_sz]
                     Ybatch = Ytrain[j * self.batch_sz:(j + 1) * self.batch_sz]
-
                     (train_cost_batch, y_ish), _ = self.session.run(
                         train_op,
-                        feed_dict={self.X: Xbatch, self.output: Ybatch})
+                        feed_dict={self.X: Xbatch, self.labels: Ybatch})
                     # Use exponential decay for calculating loss and error
                     train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
                     train_error_batch = error_rate(np.argmax(y_ish, axis=1), Ybatch)
