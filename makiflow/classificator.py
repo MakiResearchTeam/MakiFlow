@@ -8,6 +8,7 @@ from makiflow.utils import error_rate, sparse_cross_entropy
 
 EPSILON = np.float32(1e-37)
 
+
 class Classificator:
     def __init__(self, input: InputLayer, output: MakiTensor, num_classes: int):
         self.X = input.get_data_tensor()
@@ -40,7 +41,7 @@ class Classificator:
         """
         Method for training the model. Works faster than `verbose_fit` method because
         it uses exponential decay in order to speed up training. It produces less accurate
-        train error mesurement.
+        train error measurement.
 
         Parameters
         ----------
