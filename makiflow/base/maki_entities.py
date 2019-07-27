@@ -234,7 +234,7 @@ class MakiModel:
         output_tensors = {}
         used = {}
 
-        def create_tensor(from_, is_training):
+        def create_tensor(from_):
             if used.get(from_.get_name()) is None:
                 layer = from_.get_parent_layer()
                 used[layer.get_name()] = True
@@ -243,10 +243,10 @@ class MakiModel:
                 # Check if we at the beginning of the computational graph, i.e. InputLayer
                 if from_.get_parent_tensor_names() is not None:
                     for elem in from_.get_parent_tensors():
-                        takes += [create_tensor(elem, is_training)]
+                        takes += [create_tensor(elem)]
 
                     X = layer._training_forward(takes[0] if len(takes) == 1 else takes)
-
+                    
                 output_tensors[layer.get_name()] = X
                 return X
             else:
@@ -254,5 +254,5 @@ class MakiModel:
 
         self._training_outputs = []
         for output in self._outputs:
-            self._training_outputs += [create_tensor(output, is_training=True)]
+            self._training_outputs += [create_tensor(output)]
 

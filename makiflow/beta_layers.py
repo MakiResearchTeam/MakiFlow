@@ -12,15 +12,15 @@ from makiflow.save_recover.activation_converter import ActivationConverter
 
 class SumMakiLayer(MakiLayer):
     def __init__(self,name='sum'):
-        MakiLayer.__init__(self)
+        MakiLayer.__init__(self,name=name,params=[],named_params_dict={})
         self.name = name
     
-    def forward(self,X,is_training):
+    def _training_forward(self,X):
         return sum(X)
     
     def __call__(self,x:list) -> MakiTensor :
         data = [i.get_data_tensor() for i in x]
-        data = self.forward(data,is_training=True)
+        data = sum(data)
         parent_tensor_names = [i.get_name() for i in x]
         arr = [i.get_previous_tensors() for i in x] + [i.get_self_pair() for i in x]
         previous_tensors = dict(ChainMap(*arr))

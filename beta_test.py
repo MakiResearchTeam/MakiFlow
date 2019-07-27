@@ -6,8 +6,13 @@ from tensorflow.python.keras.datasets import mnist
 
 def get_layers():
     in_x = InputLayer(input_shape=[64,784])
-    x = DenseMakiLayer(input_shape=784, output_shape=100, name='dense1')(in_x)
-    x = DenseMakiLayer(input_shape=100, output_shape=10, activation=None, name='dense5')(x)
+    x = DenseMakiLayer(input_shape=784, output_shape=5000, name='dense1')(in_x)
+    c = DenseMakiLayer(input_shape=784, output_shape=5000, name='dense1_0')(in_x)
+    z = DenseMakiLayer(input_shape=784, output_shape=1000, name='dense1_7')(in_x)
+    z = DenseMakiLayer(input_shape=1000, output_shape=5000, name='dense1_1')(z)
+
+    x = SumMakiLayer(name='summo')([x,c,z])
+    x = DenseMakiLayer(input_shape=5000, output_shape=10, activation=None, name='dense5')(x)
     return in_x, x
 
 
@@ -32,18 +37,26 @@ if __name__ == "__main__":
     model.set_session(session)
 
     (Xtrain, Ytrain), (Xtest, Ytest) = get_train_test_data()
-    epochs = 5
+    epochs = 2
     lr = 1e-3
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)
     info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
+    model.set_layers_trainable([('dense5',False),('dense1_1',False),('dense1_0',False)])
+    info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
+    print('\nadd back\n')
+    model.set_layers_trainable([('dense5',True),('dense1_1',True),('dense1_0',True)])
+    info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=1)
+    #model.save_architecture('../beta_model.json')
 
-    model.save_architecture('../beta_model.json')
+    model.save_weights('T:\download\shiru',layer_names=['dense1','dense5','dense1_1','dense1_0'])
 
-    model.save_weights('../beta_model.ckpt')
+    new_model = Classificator(input=in_x, output=out)
+    new_session = tf.Session()
+    new_model.set_session(new_session)
+    new_model.load_weights("T:\download\shiru",layer_names=['dense1','dense5','dense1_1','dense1_0'])
+    new_model.evaluate(Xtest,Ytest)
 
-    model.set_session(session)
-    model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=1)
-    model.load_weights('../beta_model.ckpt')
-    model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=1)
+    optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)
+    new_model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
 
