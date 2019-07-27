@@ -7,6 +7,8 @@ from copy import copy
 # Merge dict
 from collections import ChainMap
 
+from makiflow.save_recover.activation_converter import ActivationConverter
+
 
 class SumMakiLayer(MakiLayer):
     def __init__(self,name='sum'):
@@ -56,6 +58,15 @@ class InputLayer(MakiTensor):
 
     def get_params_dict(self):
         return {}
+
+    def to_dict(self):
+        return {
+            'type': 'InputLayer',
+            'params': {
+                'name': self._name,
+                'input_shape': self.__input_shape
+            }
+        }
 
 
 class DenseMakiLayer(MakiLayer):
@@ -122,4 +133,12 @@ class DenseMakiLayer(MakiLayer):
         return self.f(out)
 
     def to_dict(self):
-        pass
+        return {
+            'type': 'DenseLayer',
+            'params': {
+                'name': self._name,
+                'input_shape': self.input_shape,
+                'output_shape': self.output_shape,
+                'activation': ActivationConverter.activation_to_str(self.f)
+            }
+        }

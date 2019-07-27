@@ -38,8 +38,12 @@ if __name__ == "__main__":
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)
     info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
 
+    model.save_architecture('../beta_model.json')
 
+    model.save_weights('../beta_model.ckpt')
 
-
-
+    model.set_session(session)
+    model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=1)
+    model.load_weights('../beta_model.ckpt')
+    model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=1)
 
