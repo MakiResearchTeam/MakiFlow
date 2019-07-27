@@ -102,7 +102,6 @@ class SumLayer(Layer, MakiOperation):
         parent_tensor_names = [i.get_name() for i in x]
         arr = [i.get_previous_tensors() for i in x] + [i.get_self_pair() for i in x]
         previous_tensors = dict(ChainMap(*arr))
-        #previous_tensors.update([i.get_self_pair() for i in x])
         maki_tensor = MakiTensor(
             data_tensor=data,
             parent_layer=self,
