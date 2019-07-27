@@ -1,6 +1,4 @@
-# Run this file if you wanna check whether MakiFlow CNN works
-
-from makiflow.beta_layers import InputLayer, DenseLayer,SumLayer
+from makiflow.beta_layers import InputLayer, DenseMakiLayer,SumMakiLayer
 from makiflow.classificator import Classificator
 import tensorflow as tf
 import numpy as np
@@ -8,8 +6,8 @@ from tensorflow.python.keras.datasets import mnist
 
 def get_layers():
     in_x = InputLayer(input_shape=[64,784])
-    x = DenseLayer(input_shape=784, output_shape=100, name='dense1')(in_x)
-    x = DenseLayer(input_shape=100, output_shape=10, activation=None, name='dense5')(x)
+    x = DenseMakiLayer(input_shape=784, output_shape=100, name='dense1')(in_x)
+    x = DenseMakiLayer(input_shape=100, output_shape=10, activation=None, name='dense5')(x)
     return in_x, x
 
 
@@ -27,7 +25,8 @@ def get_train_test_data():
 
 if __name__ == "__main__":
     in_x, out = get_layers()
-    model = Classificator(input=in_x, output=out, num_classes=10)
+    model = Classificator(input=in_x, output=out)
+
 
     session = tf.Session()
     model.set_session(session)
@@ -38,3 +37,9 @@ if __name__ == "__main__":
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)
     info = model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
+
+
+
+
+
+

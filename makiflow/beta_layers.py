@@ -1,96 +1,16 @@
-from abc import abstractmethod
+from __future__ import absolute_import
+from makiflow.base import MakiLayer
+from makiflow.base import MakiTensor
 import tensorflow as tf
 import numpy as np
 from copy import copy
 # Merge dict
 from collections import ChainMap
 
-class Layer(object):
-    def __init__(self):
-        self.params = []
-        self.named_params_dict = {}
 
-    def forward(self, X, is_training=False):
-        pass
-
-    def get_params(self):
-        """
-        This data is used for initializing.
-        """
-        return self.params
-
-    def get_params_dict(self):
-        """
-        This data is used for correct saving and loading models using TensorFlow checkpoint files.
-        """
-        return self.named_params_dict
-
-    def to_dict(self):
-        """
-        This data is used for converting the model's architecture to json.json file.
-        """
-        pass
-
-
-class MakiTensor:
-    def __init__(self, data_tensor: tf.Tensor, parent_layer, parent_tensor_names: list, previous_tensors: dict):
-        self.__data_tensor: tf.Tensor = data_tensor
-        self.__name: str = parent_layer.name
-        self.__parent_tensor_names = parent_tensor_names
-        self.__parent_layer = parent_layer
-        self.__previous_tensors: dict = previous_tensors
-
-    def get_data_tensor(self):
-        return self.__data_tensor
-
-    def get_parent_layer(self):
-        """
-        Returns
-        -------
-        Layer
-            Layer which produced current MakiTensor.
-        """
-        return self.__parent_layer
-
-    def get_parent_tensors(self)->list:
-        """
-        Returns
-        -------
-        list of MakiTensors
-            MakiTensors that were used for creating current MakiTensor.
-        """
-        parent_tensors = []
-        for name in self.__parent_tensor_names:
-            parent_tensors += [self.__previous_tensors[name]]
-        return parent_tensors
-
-    def get_parent_tensor_names(self):
-        return self.__parent_tensor_names
-
-    def get_previous_tensors(self) -> dict:
-        """
-        Returns
-        -------
-        dict of MakiTensors
-            All the MakiTensors that appear earlier in the computational graph.
-        """
-        return self.__previous_tensors
-
-    def get_self_pair(self) -> dict:
-        return {self.__name: self}
-    
-    def get_name(self):
-        return self.__name
-
-
-class MakiOperation:
-    @abstractmethod
-    def __call__(self, x: MakiTensor)-> MakiTensor:
-        pass
-
-class SumLayer(Layer, MakiOperation):
+class SumMakiLayer(MakiLayer):
     def __init__(self,name='sum'):
-        Layer.__init__(self)
+        MakiLayer.__init__(self)
         self.name = name
     
     def forward(self,X,is_training):
@@ -111,41 +31,48 @@ class SumLayer(Layer, MakiOperation):
         )
         return maki_tensor
 
-class InputLayer(MakiTensor):
 
+class InputLayer(MakiTensor):
     def __init__(self, input_shape, name='Input'):
         self.params = []
-        self.name = str(name)
+        self._name = str(name)
         self.__input_shape = input_shape
-        self.input = tf.placeholder(tf.float32, shape=input_shape, name=self.name)
+        self.input = tf.placeholder(tf.float32, shape=input_shape, name=self._name)
         super().__init__(
             data_tensor=self.input,
             parent_layer=self,
-            parent_tensor_names = None,
+            parent_tensor_names=None,
             previous_tensors={},
         )
 
     def get_shape(self):
         return self.__input_shape
     
+    def get_name(self):
+        return self._name
+
     def get_params(self):
-        return self.params
-    
+        return []
+
     def get_params_dict(self):
         return {}
 
 
-class DenseLayer(Layer, MakiOperation):
+class DenseMakiLayer(MakiLayer):
     def __call__(self, x: MakiTensor) -> MakiTensor:
         data = x.get_data_tensor()
-        data = self.forward(data)
+
+        data = tf.matmul(data, self.W) + self.b
+        if self.f is not None:
+            data = self.f(data)
+
         parent_tensor_names = [x.get_name()]
         previous_tensors = copy(x.get_previous_tensors())
         previous_tensors.update(x.get_self_pair())
         maki_tensor = MakiTensor(
             data_tensor=data,
             parent_layer=self,
-            parent_tensor_names = parent_tensor_names,
+            parent_tensor_names=parent_tensor_names,
             previous_tensors=previous_tensors,
         )
         return maki_tensor
@@ -161,7 +88,7 @@ class DenseLayer(Layer, MakiOperation):
         :param W - matrix weights. Used for initialisation dense weights with pretrained weights.
         :param b - bias weights. Used for initialisation dense bias with pretrained bias.
         """
-        Layer.__init__(self)
+
         self.input_shape = input_shape
         self.output_shape = output_shape
         self.f = activation
@@ -178,18 +105,21 @@ class DenseLayer(Layer, MakiOperation):
         if b is None:
             b = np.zeros(output_shape)
 
-        self.name = str(name)
-        self.name_dense = 'DenseMat{}x{}_id_'.format(input_shape, output_shape) + str(name)
-        self.name_bias = 'DenseBias{}x{}_id_'.format(input_shape, output_shape) + str(name)
+        name = str(name)
+        self.name_dense = 'DenseMat{}x{}_id_'.format(input_shape, output_shape) + name
+        self.name_bias = 'DenseBias{}x{}_id_'.format(input_shape, output_shape) + name
 
         self.W = tf.Variable(W.astype(np.float32), name=self.name_dense)
         self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
-        self.params = [self.W, self.b]
-        self.named_params_dict = {self.name_dense: self.W, self.name_bias: self.b}
+        params = [self.W, self.b]
+        named_params_dict = {self.name_dense: self.W, self.name_bias: self.b}
+        super().__init__(name, params, named_params_dict)
 
-    def forward(self, X, is_training=False):
+    def _training_forward(self, X):
         out = tf.matmul(X, self.W) + self.b
         if self.f is None:
             return out
         return self.f(out)
 
+    def to_dict(self):
+        pass
