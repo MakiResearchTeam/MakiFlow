@@ -40,13 +40,12 @@ class Classificator(MakiModel):
 			'name': self.__name
 		}
 
-	def evaluate(self, Xtest, Ytest):
+	def evaluate(self, Xtest, Ytest,batch_sz):
 		# TODO: for test can be delete
 		# Validating the network
 		if not self._set_for_training:
 			self._setup_for_training()
 		Xtest = Xtest.astype(np.float32)
-		batch_sz = 64
 		Yish_test = tf.nn.softmax(self.__inference_out)
 		n_batches = Xtest.shape[0] // batch_sz
 

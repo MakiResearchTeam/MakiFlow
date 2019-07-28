@@ -5,6 +5,7 @@ import json
 
 from makiflow.advanced_layers import *
 from makiflow.conv_model import ConvModel
+from makiflow.models.classificator import Classificator
 from makiflow.layers import *
 from makiflow.rnn_layers import *
 from makiflow.save_recover.activation_converter import ActivationConverter
@@ -15,25 +16,69 @@ from makiflow.rnn_models.text_recognizer import TextRecognizer
 
 
 class Builder:
+
     @staticmethod
-    def convmodel_from_json(json_path, batch_size=None):
+    def restore_graph(outputs,graph_info):
+        used = {}
+        coll_tensors = {}
+        def restore_in_and_out_x(from_):#from_ - name of layer
+            parent_layer_info = graph_info[from_]
+            if used.get(from_) is None:
+                used[from_] = True
+                # like "to"
+                all_parent_names = parent_layer_info['parent_tensor_names']
+                # store ready tensors
+                takes = [] 
+                answer = None
+                if len(all_parent_names) != 0:
+                    # All layer except input layer
+                    layer = Builder.__layer_from_dict(parent_layer_info['parent_layer_info'])
+                    for elem in all_parent_names:
+                        takes += [restore_in_and_out_x(elem)]
+                    answer = layer(takes[0] if len(takes) == 1 else takes)
+                else:
+                    # Input layer
+                    temp = {}
+                    temp.update({'type':parent_layer_info['type'],'params':parent_layer_info['params']})
+                    answer = Builder.__layer_from_dict(temp)
+
+                coll_tensors[from_] = answer
+                return answer
+            else:
+                return coll_tensors[from_]
+
+        for name_output in outputs:
+            restore_in_and_out_x(name_output)
+
+        return coll_tensors
+
+
+    @staticmethod
+    def classificator_from_json(json_path, batch_size=None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
-        architecture_dict = json.loads(json_value)
-        name = architecture_dict['name']
-        input_shape = architecture_dict['input_shape']
-        if batch_size is not None:
-            input_shape[0] = batch_size
-        num_classes = architecture_dict['num_classes']
+        json_info = json.loads(json_value)
+
+        output_tensor_name = json_info['model_info']['output_mt']
+        input_tensor_name = json_info['model_info']['input_mt']
+        model_name = json_info['model_info']['name']
+
+        MakiTensors_of_model = json_info['graph_info']
+
+        # dict {NameTensor : Info about this tensor}
+        graph_info = {}
+
+        for tensor in MakiTensors_of_model:
+            graph_info[tensor['name']] = tensor
+
+        del MakiTensors_of_model
         
-        layers = []
-        for layer_dict in architecture_dict['layers']:
-            layers.append(Builder.__layer_from_dict(layer_dict))
-        
-        print('Model is recovered.')
-        
-        return ConvModel(layers=layers, input_shape=input_shape, num_classes=num_classes, name=name)
+        inputs_outputs = Builder.restore_graph([output_tensor_name],graph_info)
+        out_x = inputs_outputs[output_tensor_name]
+        in_x = inputs_outputs[input_tensor_name]
+        print('Model is restored!')
+        return Classificator(input=in_x,output=out_x,model_name=model_name)
     
     @staticmethod
     def ssd_from_json(json_path, batch_size=None):
@@ -144,12 +189,17 @@ class Builder:
             'ResnetInceptionBlockC':Builder.__inception_resnet_C_from_dict,
             'ResnetConvBlock':Builder.__convblock_resnet_from_dict,
             'ConvBlock':Builder.__convblock_from_dict,
+            'InputLayer':Builder.__input_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
     @staticmethod
     def __flatten_layer_from_dict(params):
-        return FlattenLayer()
+        return FlattenLayer(**params)
+
+    @staticmethod
+    def __input_layer_from_dict(params):
+        return InputLayer(**params)    
     
     @staticmethod
     def __resnet_convblock_from_dict(params):
@@ -198,10 +248,7 @@ class Builder:
     
     @staticmethod
     def __maxpool_layer_from_dict(params):
-        ksize = params['ksize']
-        strides = params['strides']
-        padding = params['padding']
-        return MaxPoolLayer(ksize=ksize, strides=strides, padding=padding)
+        return MaxPoolLayer(**params)
     
     @staticmethod
     def __avgpool_layer_from_dict(params):
