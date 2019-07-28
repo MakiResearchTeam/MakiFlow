@@ -66,6 +66,45 @@ class InputLayer(MakiTensor):
         }
 
 
+class SumLayer(MakiLayer):
+    def __init__(self,name):
+        super().__init__(name, [], {})
+    
+    def __call__(self,x):
+        data = [one_tensor.get_data_tensor() for one_tensor in x]
+        data = self._forward(data)
+
+        parent_tensor_names = [one_tensor.get_name() for one_tensor in x]
+        previous_tensors = {}
+        for one_tensor in x:
+            previous_tensors.update(one_tensor.get_previous_tensors())
+            previous_tensors.update(one_tensor.get_self_pair())
+
+        maki_tensor = MakiTensor(
+            data_tensor=data,
+            parent_layer=self,
+            parent_tensor_names=parent_tensor_names,
+            previous_tensors=previous_tensors,
+        )
+        return maki_tensor
+
+    def _forward(self,X):
+        return sum(X)
+    
+    def _training_forward(self,X):
+        return self._forward(X)
+
+    def to_dict(self):
+        return {
+            'type': 'SumLayer',
+            'params': {
+                'name': self._name,
+            }
+        }
+
+
+
+
 class ConvLayer(SimpleForwardLayer):
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
                  W=None, b=None):

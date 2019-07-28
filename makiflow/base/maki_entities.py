@@ -11,11 +11,11 @@ class MakiLayer:
         self._named_params_dict = named_params_dict
 
     @abstractmethod
-    def __call__(self, X):
+    def __call__(self, x):
         """
         Parameters
         ----------
-        X: MakiTensor or list of MakiTensors
+        x: MakiTensor or list of MakiTensors
 
         Returns
         -------

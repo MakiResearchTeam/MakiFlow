@@ -190,16 +190,25 @@ class Builder:
             'ResnetConvBlock':Builder.__convblock_resnet_from_dict,
             'ConvBlock':Builder.__convblock_from_dict,
             'InputLayer':Builder.__input_layer_from_dict,
+            'SumLayer':Builder.__sum_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
     @staticmethod
+    def __sum_layer_from_dict(params):
+        name = params['name']
+        return SumLayer(name=name)
+
+    @staticmethod
     def __flatten_layer_from_dict(params):
-        return FlattenLayer(**params)
+        name = params['name']
+        return FlattenLayer(name=name)
 
     @staticmethod
     def __input_layer_from_dict(params):
-        return InputLayer(**params)    
+        input_shape = params['input_shape']
+        name = params['name']
+        return InputLayer(name=name,input_shape = input_shape)    
     
     @staticmethod
     def __resnet_convblock_from_dict(params):
