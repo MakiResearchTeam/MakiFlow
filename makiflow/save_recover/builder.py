@@ -191,9 +191,16 @@ class Builder:
             'ConvBlock':Builder.__convblock_from_dict,
             'InputLayer':Builder.__input_layer_from_dict,
             'SumLayer':Builder.__sum_layer_from_dict,
+            'ConcatLayer' : Builder.__concat_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
+    @staticmethod
+    def __concat_layer_from_dict(params):
+        name = params['name']
+        axis = params['axis']
+        return ConcatLayer(name=name,axis=axis)
+
     @staticmethod
     def __sum_layer_from_dict(params):
         name = params['name']
