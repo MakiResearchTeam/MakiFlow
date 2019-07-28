@@ -56,6 +56,8 @@ class InputLayer(MakiTensor):
 
     def to_dict(self):
         return {
+            "name": self._name,
+            "parent_tensor_names": [],
             'type': 'InputLayer',
             'params': {
                 'name': self._name,
@@ -119,7 +121,7 @@ class ConvLayer(SimpleForwardLayer):
         return {
             'type': 'ConvLayer',
             'params': {
-                'name': self.name,
+                'name': self._name,
                 'shape': list(self.shape),
                 'stride': self.stride,
                 'padding': self.padding,
