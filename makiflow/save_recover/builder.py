@@ -52,7 +52,6 @@ class Builder:
 
         return coll_tensors
 
-
     @staticmethod
     def classificator_from_json(json_path, batch_size=None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
@@ -159,10 +158,7 @@ class Builder:
         in_f = params['classifier_shape'][2]
         
         return DetectorClassifier(kw=kw, kh=kh, in_f=in_f, class_number=class_number, dboxes=dboxes, name=name)
-        
-        
-        
-            
+         
     @staticmethod       
     def __layer_from_dict(layer_dict):
         """Creates and returns Layer from dictionary"""
@@ -190,16 +186,32 @@ class Builder:
             'ResnetConvBlock':Builder.__convblock_resnet_from_dict,
             'ConvBlock':Builder.__convblock_from_dict,
             'InputLayer':Builder.__input_layer_from_dict,
+            'SumLayer':Builder.__sum_layer_from_dict,
+            'ConcatLayer' : Builder.__concat_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
     @staticmethod
+    def __concat_layer_from_dict(params):
+        name = params['name']
+        axis = params['axis']
+        return ConcatLayer(name=name,axis=axis)
+
+    @staticmethod
+    def __sum_layer_from_dict(params):
+        name = params['name']
+        return SumLayer(name=name)
+
+    @staticmethod
     def __flatten_layer_from_dict(params):
-        return FlattenLayer(**params)
+        name = params['name']
+        return FlattenLayer(name=name)
 
     @staticmethod
     def __input_layer_from_dict(params):
-        return InputLayer(**params)    
+        input_shape = params['input_shape']
+        name = params['name']
+        return InputLayer(name=name,input_shape = input_shape)    
     
     @staticmethod
     def __resnet_convblock_from_dict(params):
@@ -286,7 +298,6 @@ class Builder:
             bidirectional=bidirectional
         )
 
-
     @staticmethod
     def __lstm_layer_from_dict(params):
         num_cells = params['num_cells']
@@ -306,7 +317,6 @@ class Builder:
             bidirectional=bidirectional
         )
 
-
     @staticmethod
     def __rnnblock_from_dict(params):
         seq_length = params['seq_length']
@@ -319,7 +329,6 @@ class Builder:
             dynamic=dynamic,
             bidirectional=bidirectional
         )
-    
 
     @staticmethod
     def __embedding_layer_from_dict(params):
