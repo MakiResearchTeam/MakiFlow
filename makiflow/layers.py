@@ -66,6 +66,27 @@ class InputLayer(MakiTensor):
         }
 
 
+class MultiOnAlphaLayer(SimpleForwardLayer):
+    def __init__(self,alpha,name):
+        self.alpha = alpha
+        super().__init__(name,[],{})
+    
+    def _forward(self,X):
+        return X*self.alpha
+    
+    def _training_forward(self,X):
+        return self._forward(X)
+    
+    def to_dict(self):
+        return {
+            'type' : 'MultiOnAlphaLayer',
+            'params' : {
+                'name' : self.get_name(),
+                'alpha' : self.alpha,
+            }
+        }
+
+
 class SumLayer(MakiLayer):
     def __init__(self,name):
         super().__init__(name, [], {})
