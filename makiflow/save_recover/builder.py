@@ -4,7 +4,6 @@ from __future__ import absolute_import
 import json
 
 from makiflow.advanced_layers import *
-from makiflow.conv_model import ConvModel
 from makiflow.models.classificator import Classificator
 from makiflow.layers import *
 from makiflow.rnn_layers import *
@@ -12,7 +11,6 @@ from makiflow.save_recover.activation_converter import ActivationConverter
 from makiflow.models.ssd import DetectorClassifier
 from makiflow.models.ssd import DetectorClassifierBlock
 from makiflow.models.ssd import SSDModel
-from makiflow.rnn_models.text_recognizer import TextRecognizer
 
 
 class Builder:
@@ -21,7 +19,9 @@ class Builder:
     def restore_graph(outputs,graph_info):
         used = {}
         coll_tensors = {}
-        def restore_in_and_out_x(from_):#from_ - name of layer
+
+        def restore_in_and_out_x(from_):
+            # from_ - name of layer
             parent_layer_info = graph_info[from_]
             if used.get(from_) is None:
                 used[from_] = True

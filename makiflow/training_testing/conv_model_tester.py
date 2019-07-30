@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-from makiflow.conv_model import ConvModel
 from makiflow.save_recover.builder import Builder
 from makiflow.tools.test_visualizer import TestVisualizer
 import tensorflow as tf
@@ -22,6 +21,7 @@ params = {
     'batch sizes': [32, 64, 96, 128],
 }
 """
+
 
 class ConvModelTester:
     def __init__(self, json_paths_list, where_to_save):
