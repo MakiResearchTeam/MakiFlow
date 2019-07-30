@@ -51,7 +51,12 @@ class MakiLayer:
 
 
 class MakiTensor:
+<<<<<<< HEAD
     def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list, previous_tensors: dict):
+=======
+    def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list,
+                 previous_tensors: dict):
+>>>>>>> upstream/beta_v1.0
         self.__data_tensor: tf.Tensor = data_tensor
         self.__name: str = parent_layer.get_name()
         self.__parent_tensor_names = parent_tensor_names
@@ -70,7 +75,11 @@ class MakiTensor:
         """
         return self.__parent_layer
 
+<<<<<<< HEAD
     def get_parent_tensors(self)->list:
+=======
+    def get_parent_tensors(self) -> list:
+>>>>>>> upstream/beta_v1.0
         """
         Returns
         -------
@@ -235,9 +244,15 @@ class MakiModel:
         """
         for layer_name, is_trainable in layers:
             if is_trainable and layer_name not in self._trainable_layers:
+<<<<<<< HEAD
                     self._trainable_layers.append(layer_name)
             elif not is_trainable and layer_name in self._trainable_layers:
                     self._trainable_layers.remove(layer_name)
+=======
+                self._trainable_layers.append(layer_name)
+            elif not is_trainable and layer_name in self._trainable_layers:
+                self._trainable_layers.remove(layer_name)
+>>>>>>> upstream/beta_v1.0
         self._collect_train_params()
 
     def _collect_train_params(self):
@@ -274,7 +289,11 @@ class MakiModel:
                         takes += [create_tensor(elem)]
 
                     X = layer._training_forward(takes[0] if len(takes) == 1 else takes)
+<<<<<<< HEAD
                     
+=======
+
+>>>>>>> upstream/beta_v1.0
                 output_tensors[layer.get_name()] = X
                 return X
             else:
@@ -283,4 +302,7 @@ class MakiModel:
         self._training_outputs = []
         for output in self._outputs:
             self._training_outputs += [create_tensor(output)]
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/beta_v1.0

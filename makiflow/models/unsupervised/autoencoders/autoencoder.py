@@ -1,9 +1,8 @@
 from __future__ import absolute_import
-from makiflow.unsupervised.autoencoders.encoder import Encoder
-from makiflow.unsupervised.autoencoders.decoder import Decoder
+from makiflow.models.unsupervised.autoencoders.encoder import Encoder
+from makiflow.models.unsupervised.autoencoders import Decoder
 
 import tensorflow as tf
-import json
 import numpy as np
 from sklearn.utils import shuffle
 from tqdm import tqdm
