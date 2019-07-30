@@ -67,17 +67,10 @@ class InputLayer(MakiTensor):
 
 
 class SumLayer(MakiLayer):
-<<<<<<< HEAD
     def __init__(self,name):
         super().__init__(name, [], {})
     
     def __call__(self,x : list):
-=======
-    def __init__(self, name):
-        super().__init__(name, [], {})
-
-    def __call__(self, x: list):
->>>>>>> upstream/beta_v1.0
         data = [one_tensor.get_data_tensor() for one_tensor in x]
         data = self._forward(data)
 
@@ -95,17 +88,10 @@ class SumLayer(MakiLayer):
         )
         return maki_tensor
 
-<<<<<<< HEAD
     def _forward(self,X):
         return sum(X)
     
     def _training_forward(self,X):
-=======
-    def _forward(self, X):
-        return sum(X)
-
-    def _training_forward(self, X):
->>>>>>> upstream/beta_v1.0
         return self._forward(X)
 
     def to_dict(self):
@@ -118,19 +104,11 @@ class SumLayer(MakiLayer):
 
 
 class ConcatLayer(MakiLayer):
-<<<<<<< HEAD
     def __init__(self,name,axis=3):
         super().__init__(name, [], {})
         self.axis = axis
     
     def __call__(self,x : list):
-=======
-    def __init__(self, name, axis=3):
-        super().__init__(name, [], {})
-        self.axis = axis
-
-    def __call__(self, x: list):
->>>>>>> upstream/beta_v1.0
         data = [one_tensor.get_data_tensor() for one_tensor in x]
         data = self._forward(data)
 
@@ -147,19 +125,11 @@ class ConcatLayer(MakiLayer):
             previous_tensors=previous_tensors,
         )
         return maki_tensor
-<<<<<<< HEAD
     
     def _forward(self,X):
         return tf.concat(values=X,axis=self.axis)
     
     def _training_forward(self,X):
-=======
-
-    def _forward(self, X):
-        return tf.concat(values=X, axis=self.axis)
-
-    def _training_forward(self, X):
->>>>>>> upstream/beta_v1.0
         return self._forward(X)
 
     def to_dict(self):
@@ -167,11 +137,7 @@ class ConcatLayer(MakiLayer):
             'type': 'ConcatLayer',
             'params': {
                 'name': self._name,
-<<<<<<< HEAD
                 'axis' : self.axis,
-=======
-                'axis': self.axis,
->>>>>>> upstream/beta_v1.0
             }
         }
 
@@ -237,11 +203,7 @@ class ConvLayer(SimpleForwardLayer):
                 'padding': self.padding,
                 'activation': ActivationConverter.activation_to_str(self.f)
             }
-<<<<<<< HEAD
             
-=======
-
->>>>>>> upstream/beta_v1.0
         }
 
 
@@ -350,11 +312,7 @@ class BatchNormLayer(SimpleForwardLayer):
 
         params = [self.running_mean, self.running_variance, self.gamma, self.beta]
         named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance,
-<<<<<<< HEAD
                                   self.name_gamma: self.gamma, self.name_beta: self.beta}
-=======
-                             self.name_gamma: self.gamma, self.name_beta: self.beta}
->>>>>>> upstream/beta_v1.0
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
