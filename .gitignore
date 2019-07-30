@@ -1,2 +1,4 @@
-beta_test.py
-.gitignore
+.ipynb_checkpoints
+.idea
+*/__pycache__
+test
