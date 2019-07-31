@@ -188,9 +188,16 @@ class Builder:
             'InputLayer':Builder.__input_layer_from_dict,
             'SumLayer':Builder.__sum_layer_from_dict,
             'ConcatLayer' : Builder.__concat_layer_from_dict,
+            'MultiOnAlphaLayer' : Builder.__MultiOnAlphaLayer_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
+    @staticmethod
+    def __MultiOnAlphaLayer_layer_from_dict(params):
+        name = params['name']
+        alpha = params['alpha']
+        return LamdaLayer(alpha=alpha,name=name)
+
     @staticmethod
     def __concat_layer_from_dict(params):
         name = params['name']
