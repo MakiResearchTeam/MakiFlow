@@ -9,7 +9,6 @@ from makiflow.layers import *
 from makiflow.rnn_layers import *
 from makiflow.save_recover.activation_converter import ActivationConverter
 from makiflow.models.ssd import DetectorClassifier
-from makiflow.models.ssd import DetectorClassifierBlock
 from makiflow.models.ssd import SSDModel
 
 
@@ -157,7 +156,7 @@ class Builder:
         kh = params['classifier_shape'][1]
         in_f = params['classifier_shape'][2]
         
-        return DetectorClassifier(kw=kw, kh=kh, in_f=in_f, class_number=class_number, dboxes=dboxes, name=name)
+        return DetectorClassifier(kw=kw, kh=kh, in_f=in_f, num_classes=class_number, dboxes=dboxes, name=name)
          
     @staticmethod       
     def __layer_from_dict(layer_dict):

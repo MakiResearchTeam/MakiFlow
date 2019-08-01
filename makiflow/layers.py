@@ -183,8 +183,8 @@ class ConvLayer(SimpleForwardLayer):
         self.f = activation
 
         name = str(name)
-        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
-        self.name_bias = 'ConvBias{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+        self.name_conv = 'ConvKernel_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+        self.name_bias = 'ConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
 
         if W is None:
             W = np.random.randn(*self.shape) * np.sqrt(2.0 / np.prod(self.shape[:-1]))

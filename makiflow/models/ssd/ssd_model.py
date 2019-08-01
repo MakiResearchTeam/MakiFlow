@@ -12,9 +12,8 @@ from tqdm import tqdm
 
 
 class SSDModel(MakiModel):
-    def __init__(self, dcs: list, input_s: InputLayer, num_classes, name='MakiSSD'):
+    def __init__(self, dcs: list, input_s: InputLayer, name='MakiSSD'):
         self.dcs = dcs
-        self.num_classes = num_classes
         self.name = str(name)
 
         inputs = [input_s]
@@ -23,6 +22,7 @@ class SSDModel(MakiModel):
         for dc in dcs:
             confs, offs = dc.get_conf_offsets()
             graph_tensors.update(confs.get_previous_tensors())
+            graph_tensors.update(offs.get_previous_tensors())
             graph_tensors.update(confs.get_self_pair())
             graph_tensors.update(offs.get_self_pair())
 
@@ -41,11 +41,11 @@ class SSDModel(MakiModel):
         # particular bboxes
         self.dc_block_feature_map_sizes = []
         for dc in self.dcs:
-            confs, _ = dc.get_conf_offsets()
-            # HINT: confs.get_shape() = [ batch_sz, width, height, feature_maps ]
+            fmap_shape = dc.get_feature_map_shape()
+            # [ batch_sz, width, height, feature_maps ]
             # We need to convert shape to int because initially it's a Dimension object
-            width = int(confs.get_shape()[1])
-            height = int(confs.get_shape()[2])
+            width = int(fmap_shape[1])
+            height = int(fmap_shape[2])
             self.dc_block_feature_map_sizes.append((width, height))
             dboxes = dc.get_dboxes()
             default_boxes = self.__default_box_generator(self.input_shape[1], self.input_shape[2],
@@ -145,35 +145,39 @@ class SSDModel(MakiModel):
         self.confidences_ish = concatenate(confidences)
         self.offsets = concatenate(offsets)
 
-        predicted_boxes = self.offsets + self.default_boxes
+        self.offsets_tensor = self.offsets.get_data_tensor()
+        predicted_boxes = self.offsets_tensor + self.default_boxes
+
         classificator = ActivationLayer(name='Classificator' + self.name, activation=tf.nn.softmax)
         self.confidences = classificator(self.confidences_ish)
-        self.predictions = [confidences, predicted_boxes]
+        confidences_tensor = self.confidences.get_data_tensor()
+
+        self.predictions = [confidences_tensor, predicted_boxes]
 
     def predict(self, X):
         assert (self._session is not None)
         return self._session.run(
             self.predictions,
-            feed_dict={self._inputs[0]: X}
+            feed_dict={self._input_data_tensors[0]: X}
         )
 
     def _prepare_training_graph(self):
         training_confidences = []
         training_offsets = []
-
-        for i in range(len(self._training_outputs)):
+        n_outs = len(self._training_outputs)
+        i = 0
+        while i != n_outs:
             confs, offs = self._training_outputs[i], self._training_outputs[i+1]
             training_confidences += [confs]
             training_offsets += [offs]
-            i += 1
+            i += 2
 
-        concatenate = ConcatLayer(axis=1, name='TrainingPredictionConcat' + self.name)
-        self._train_confidences_ish = concatenate(training_confidences)
-        self._train_offsets = concatenate(training_offsets)
+        self._train_confidences_ish = tf.concat(training_confidences, axis=1)
+        self._train_offsets = tf.concat(training_offsets, axis=1)
 
     def _create_loss(self, loc_loss_weight, neg_samples_ratio):
-        self._prepare_training_graph()
         super()._setup_for_training()
+        self._prepare_training_graph()
         self.input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
         self.input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
         self.input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
@@ -183,26 +187,27 @@ class SSDModel(MakiModel):
         )
         # Calculate confidence loss for positive bboxes
         num_positives = tf.reduce_sum(self.input_loc_loss_masks)
-        positive_confidence_loss = self.input_loc_loss_masks * confidence_loss
+        positive_confidence_loss = confidence_loss * self.input_loc_loss_masks
         positive_confidence_loss = tf.reduce_sum(positive_confidence_loss)
         self.positive_confidence_loss = positive_confidence_loss / num_positives
 
         # Calculate confidence loss for part of negative bboxes, i.e. Hard Negative Mining
         # Create binary mask for negative loss
         ones = tf.ones(shape=[self.batch_sz, self.total_predictions])
-        num_negatives_to_pick = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.int32)
         negative_loss_mask = ones - self.input_loc_loss_masks
         negative_confidence_loss = negative_loss_mask * confidence_loss
         negative_confidence_loss = tf.reshape(
             negative_confidence_loss, shape=[self.batch_sz * self.total_predictions]
         )
 
+        num_negatives_to_pick = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.int32)
         negative_confidence_loss, indices = tf.nn.top_k(
             negative_confidence_loss, k=num_negatives_to_pick
         )
+        num_negatives_to_pick = tf.cast(num_negatives_to_pick, dtype=tf.float32)
         self.negative_confidence_loss = tf.reduce_sum(negative_confidence_loss) / num_negatives_to_pick
 
-        final_confidence_loss = positive_confidence_loss + negative_confidence_loss
+        final_confidence_loss = self.positive_confidence_loss + self.negative_confidence_loss
 
         diff = self.input_loc - self._train_offsets
 
@@ -223,8 +228,8 @@ class SSDModel(MakiModel):
         self.loss = (final_confidence_loss + loc_loss_weight * self.loc_loss) * loss_factor
 
     def _create_scan_loss(self, loc_loss_weight, neg_samples_ratio):
-        self._prepare_training_graph()
         super()._setup_for_training()
+        self._prepare_training_graph()
         self.input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
         self.input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
         self.input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
@@ -232,25 +237,27 @@ class SSDModel(MakiModel):
         confidence_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self._train_confidences_ish, labels=self.input_labels
         )
+        print(confidence_loss.shape)
         # Calculate confidence loss for positive bboxes
         num_positives = tf.reduce_sum(self.input_loc_loss_masks)
-        positive_confidence_loss = self.input_loc_loss_masks * confidence_loss
+        positive_confidence_loss = confidence_loss * self.input_loc_loss_masks
         positive_confidence_loss = tf.reduce_sum(positive_confidence_loss)
         self.positive_confidence_loss = positive_confidence_loss / num_positives
+        print(self.positive_confidence_loss.shape)
 
         # Calculate confidence loss for part of negative bboxes, i.e. Hard Negative Mining
         # Create binary mask for negative loss
         ones = tf.ones(shape=[self.batch_sz, self.total_predictions])
-        num_negatives = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.int32)
+        num_negatives = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.float32)
         negative_loss_mask = ones - self.input_loc_loss_masks
-        negative_confidence_loss = negative_loss_mask * confidence_loss
-
+        negative_confidence_loss = confidence_loss * negative_loss_mask
+        print(negative_confidence_loss.shape)
         num_negatives_per_batch = tf.cast(
             num_negatives / self.batch_sz,
             dtype=tf.int32
         )
 
-        def sort_neg_losses_for_each_batch(batch_loss):
+        def sort_neg_losses_for_each_batch(_, batch_loss):
             top_k_negative_confidence_loss, _ = tf.nn.top_k(
                 batch_loss, k=num_negatives_per_batch
             )
@@ -258,11 +265,13 @@ class SSDModel(MakiModel):
 
         neg_conf_losses = tf.scan(
             fn=sort_neg_losses_for_each_batch,
-            elems=negative_confidence_loss
+            elems=negative_confidence_loss,
+            infer_shape=False,
+            initializer=1.0
         )
-        negative_confidence_loss = tf.reduce_sum(neg_conf_losses) / num_negatives
+        self.negative_confidence_loss = tf.reduce_sum(neg_conf_losses) / num_negatives
 
-        final_confidence_loss = positive_confidence_loss + negative_confidence_loss
+        final_confidence_loss = self.positive_confidence_loss + self.negative_confidence_loss
 
         diff = self.input_loc - self._train_offsets
 
@@ -282,8 +291,8 @@ class SSDModel(MakiModel):
 
         self.loss = (final_confidence_loss + loc_loss_weight * self.loc_loss) * loss_factor
 
-    def fit(self, images, loc_masks, labels, gt_locs,
-            loc_loss_weight=1.0, neg_samples_ratio=3.5, optimizer=None,
+    def fit(self, images, loc_masks, labels, gt_locs, optimizer,
+            loc_loss_weight=1.0, neg_samples_ratio=3.5,
             epochs=1, loss_type='top_k_loss'):
         """
         Function for training the SSD.
@@ -291,7 +300,7 @@ class SSDModel(MakiModel):
         Parameters
         ----------
         images : numpy ndarray
-            Numpy array contain images with shape [batch_sz, image_w, image_h, color_channels].
+            Numpy array contains images with shape [batch_sz, image_w, image_h, color_channels].
         loc_masks : numpy array
             Binary masks represent which default box matches ground truth box. In training loop it will be multiplied
             with confidence losses array in order to get only positive confidences.
@@ -355,7 +364,7 @@ class SSDModel(MakiModel):
                         loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self._session.run(
                             [self.loc_loss, self.positive_confidence_loss, self.negative_confidence_loss, train_op],
                             feed_dict={
-                                self._inputs[0]: img_batch,
+                                self._input_data_tensors[0]: img_batch,
                                 self.input_labels: labels_batch,
                                 self.input_loc_loss_masks: loc_mask_batch,
                                 self.input_loc: gt_locs_batch

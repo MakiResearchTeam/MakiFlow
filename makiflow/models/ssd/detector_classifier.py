@@ -12,7 +12,7 @@ class DetectorClassifier:
     conv layers -> detector -> confidences + localization regression.
     """
 
-    def __init__(self, f_source: MakiTensor, kw, kh, in_f, class_number, dboxes: list, name):
+    def __init__(self, f_source: MakiTensor, kw, kh, in_f, num_classes, dboxes: list, name):
         """
         Parameters
         ----------
@@ -24,7 +24,7 @@ class DetectorClassifier:
         kh : int
             Height of the predictor's kernel.
         in_f : int
-        class_number : int
+        num_classes : int
             Number of classes to be classified + 'no object' class. 'no object' class is used for
         background.
         dboxes : list
@@ -37,11 +37,11 @@ class DetectorClassifier:
         self.kw = kw
         self.kh = kh
         self.in_f = in_f
-        self.class_number = class_number
+        self.class_number = num_classes
         self._dboxes = dboxes
         self.name = str(name)
 
-        classifier_out_f = class_number * len(dboxes)
+        classifier_out_f = num_classes * len(dboxes)
         bb_regressor_out_f = 4 * len(dboxes)
         self.classifier = ConvLayer(kw, kh, in_f, classifier_out_f,
                                     activation=None, padding='SAME', name='SSDClassifier_' + str(name))
@@ -85,6 +85,13 @@ class DetectorClassifier:
 
     def get_conf_offsets(self):
         return [self._confidences, self._offsets]
+
+    def get_feature_map_shape(self):
+        """
+        It is used for creating default boxes since their size depends
+        on the feature maps' widths and heights.
+        """
+        return self.x.get_shape()
 
     def to_dict(self):
         return {
