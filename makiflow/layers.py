@@ -66,6 +66,27 @@ class InputLayer(MakiTensor):
         }
 
 
+class ReshapeLayer(SimpleForwardLayer):
+    def __init__(self, new_shape: list, name):
+        super().__init__(name, [], {})
+        self.new_shape = new_shape
+
+    def _forward(self, X):
+        return tf.reshape(tensor=X, shape=self.new_shape, name=self.get_name())
+
+    def _training_forward(self, x):
+        return self._forward(x)
+
+    def to_dict(self):
+        return {
+            'type': 'ReshapeLayer',
+            'params': {
+                'name': self.get_name(),
+                'new_shape': self.new_shape
+            }
+        }
+
+
 class SumLayer(MakiLayer):
     def __init__(self, name):
         super().__init__(name, [], {})
