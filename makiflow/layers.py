@@ -540,7 +540,7 @@ class AvgPoolLayer(SimpleForwardLayer):
         }
 
 
-class UpSampling(SimpleForwardLayer):
+class UpSamplingLayer(SimpleForwardLayer):
     def __init__(self, name, size=(2, 2)):
         super().__init__(name, [], {})
         self.size = size
