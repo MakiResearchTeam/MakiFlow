@@ -210,7 +210,7 @@ class ConvLayer(SimpleForwardLayer):
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
-        conv_out = tf.nn.conv2d_transpose(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
+        conv_out = tf.nn.conv2d(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
         conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:
             return conv_out
@@ -290,7 +290,7 @@ class UpConvLayer(SimpleForwardLayer):
         out_shape[1] *= self.size[0]
         out_shape[2] *= self.size[1]
         out_shape[3] = self.shape[2] # out_f
-
+        print(out_shape)
         conv_out = tf.nn.conv2d_transpose(
             X, self.W, 
             output_shape=out_shape, strides=self.strides, padding=self.padding

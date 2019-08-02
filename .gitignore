@@ -1,4 +1,12 @@
-makiflow/__pycache__
+makiflow/__pycache__/
+makiflow/advanced_layers/__pycache__/
+makiflow/base/__pycache__/
+makiflow/generators/__pycache__/
+makiflow/models/__pycache__/
+makiflow/models/__pycache__/
+makiflow/models/ssd/__pycache__/
+makiflow/save_recover/__pycache__/
+makiflow/tools/__pycache__/
 .idea/
 beta_test.py
 makiflow_test.py
