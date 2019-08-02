@@ -540,6 +540,32 @@ class AvgPoolLayer(SimpleForwardLayer):
         }
 
 
+class UpSampling(SimpleForwardLayer):
+    def __init__(self, name, size=(2, 2)):
+        super().__init__(name, [], {})
+        self.size = size
+
+    def _forward(self, X):
+        t_shape = X.get_shape().as_list()
+        im_size = (t_shape[1]*self.size[0], t_shape[2]*self.size[1])
+        return tf.image.resize_nearest_neighbor(
+            X,
+            im_size
+        )
+
+    def _training_forward(self, x):
+        return self._forward(x)
+
+    def to_dict(self):
+        return {
+            'type': 'AvgPoolLayer',
+            'params': {
+                'name': self._name,
+                'size': self.size
+            }
+        }
+
+
 class ActivationLayer(SimpleForwardLayer):
     def __init__(self, name, activation=tf.nn.relu):
         super().__init__(name, [], {})
