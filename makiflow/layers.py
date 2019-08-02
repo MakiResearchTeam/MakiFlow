@@ -306,7 +306,7 @@ class UpConvLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            'type': 'ConvLayer',
+            'type': 'UpConvLayer',
             'params': {
                 'name': self._name,
                 'shape': list(self.shape),
@@ -558,7 +558,7 @@ class UpSamplingLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            'type': 'AvgPoolLayer',
+            'type': 'UpSamplingLayer',
             'params': {
                 'name': self._name,
                 'size': self.size
