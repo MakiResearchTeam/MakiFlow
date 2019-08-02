@@ -87,6 +87,27 @@ class MultiOnAlphaLayer(SimpleForwardLayer):
         }
 
 
+class ReshapeLayer(SimpleForwardLayer):
+    def __init__(self, new_shape: list, name):
+        super().__init__(name, [], {})
+        self.new_shape = new_shape
+
+    def _forward(self, X):
+        return tf.reshape(tensor=X, shape=self.new_shape, name=self.get_name())
+
+    def _training_forward(self, x):
+        return self._forward(x)
+
+    def to_dict(self):
+        return {
+            'type': 'ReshapeLayer',
+            'params': {
+                'name': self.get_name(),
+                'new_shape': self.new_shape
+            }
+        }
+
+
 class SumLayer(MakiLayer):
     def __init__(self,name):
         super().__init__(name, [], {})
@@ -183,8 +204,8 @@ class ConvLayer(SimpleForwardLayer):
         self.f = activation
 
         name = str(name)
-        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
-        self.name_bias = 'ConvBias{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+        self.name_conv = 'ConvKernel_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+        self.name_bias = 'ConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
 
         if W is None:
             W = np.random.randn(*self.shape) * np.sqrt(2.0 / np.prod(self.shape[:-1]))

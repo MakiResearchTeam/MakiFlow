@@ -243,14 +243,14 @@ class SSDModelTrainer:
         
         for i in range(training_iterations):
             # TRAINING PART
-            sub_train_info = model.fit(images=images, 
-                                          loc_masks=masks, 
-                                          labels=labels, 
-                                          gt_locs=locs, 
-                                          loc_loss_weigth=loc_loss_weight, 
-                                          neg_samples_ration=neg_samples_ratio, 
-                                          optimizer=optimizer, 
-                                          epochs=test_period)
+            sub_train_info = model.fit(images=images,
+                                       loc_masks=masks,
+                                       labels=labels,
+                                       gt_locs=locs,
+                                       loc_loss_weight=loc_loss_weight,
+                                       neg_samples_ratio=neg_samples_ratio,
+                                       optimizer=optimizer,
+                                       epochs=test_period)
             # Collect data about losses
             pos_conf_losses += sub_train_info['pos conf losses']
             neg_cong_losses += sub_train_info['neg conf losses']
