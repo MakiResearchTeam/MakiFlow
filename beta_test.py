@@ -17,7 +17,6 @@ def get_layers():
     x = ConvLayer(kh=3, kw=3, in_f=16, out_f=32, name='conv2')(x)
     x = MaxPoolLayer(name='pool2')(x)
     # 8x8
-    x = BatchNormLayer(D=32,name='batch2')(x)
     q = ConvLayer(kh=3, kw=3, in_f=32, out_f=31, name='conv3_0')(x)
     z = ConvLayer(kh=5, kw=5, in_f=32, out_f=57, name='conv3_1')(x)
     c = ConvLayer(kh=2, kw=2, in_f=32, out_f=43, name='conv3_2')(x)
@@ -58,7 +57,7 @@ if __name__ == "__main__":
     model.set_session(session)
 
     (Xtrain, Ytrain), (Xtest, Ytest) = get_train_test_data()
-    epochs = 5
+    epochs = 2
     lr = 1e-3
     epsilon = 1e-8
     optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, epsilon=epsilon)
@@ -71,6 +70,6 @@ if __name__ == "__main__":
     new_session = tf.Session()
     new_model.set_session(new_session)
     new_model.load_weights(path='T:/download/shiru/')
-    info = new_model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
     new_model.evaluate(Xtest,Ytest,64)
+    info = new_model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
     new_model.save_architecture('T:/download/shiru/new.json')
