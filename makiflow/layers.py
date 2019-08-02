@@ -167,15 +167,27 @@ class ConvLayer(SimpleForwardLayer):
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
                  W=None, b=None):
         """
-        :param kw - kernel width.
-        :param kh - kernel height.
-        :param in_f - number of input feature maps. Treat as color channels if this layer
+        Parameters
+        ----------
+        kw : int
+            Kernel width.
+        kh : int
+            Kernel height.
+        in_f : int
+            Number of input feature maps. Treat as color channels if this layer
             is first one.
-        :param out_f - number of output feature maps (number of filters).
-        :param padding - padding mode for convolution operation.
-        :param activation - activation function. Set None if you don't need activation.
-        :param W - filter's weights. This value is used for the filter initialization with pretrained filters.
-        :param b - bias' weights. This value is used for the bias initialization with pretrained bias.
+        out_f : int 
+            Number of output feature maps (number of filters).
+        stride : int
+            Defines the stride of the convolution.
+        padding : str
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensetive). 
+        activation : tensorflow function
+            Activation function. Set None if you don't need activation.
+        W : numpy array
+            Filter's weights. This value is used for the filter initialization with pretrained filters.
+        b : numpy array
+            Bias' weights. This value is used for the bias initialization with pretrained bias.
         """
         self.shape = (kw, kh, in_f, out_f)
         self.stride = stride
@@ -183,8 +195,8 @@ class ConvLayer(SimpleForwardLayer):
         self.f = activation
 
         name = str(name)
-        self.name_conv = 'ConvKernel_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
-        self.name_bias = 'ConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+        self.name_conv = 'UpConvKernel_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+        self.name_bias = 'UpConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
 
         if W is None:
             W = np.random.randn(*self.shape) * np.sqrt(2.0 / np.prod(self.shape[:-1]))
@@ -198,7 +210,7 @@ class ConvLayer(SimpleForwardLayer):
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
-        conv_out = tf.nn.conv2d(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
+        conv_out = tf.nn.conv2d_transpose(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
         conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:
             return conv_out
@@ -207,13 +219,6 @@ class ConvLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
-    def copy_from_keras_layers(self, layer):
-        W, b = layer.get_weights()
-        op1 = self.W.assign(W)
-        op2 = self.b.assign(b)
-
-        self.session.run((op1, op2))
-
     def to_dict(self):
         return {
             'type': 'ConvLayer',
@@ -221,6 +226,91 @@ class ConvLayer(SimpleForwardLayer):
                 'name': self._name,
                 'shape': list(self.shape),
                 'stride': self.stride,
+                'padding': self.padding,
+                'activation': ActivationConverter.activation_to_str(self.f)
+            }
+
+        }
+
+
+class UpConvLayer(SimpleForwardLayer):
+    def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu,
+                 W=None, b=None):
+        """
+        Parameters
+        ----------
+        kw : int
+            Kernel width.
+        kh : int
+            Kernel height.
+        in_f : int
+            Number of input feature maps. Treat as color channels if this layer
+            is first one.
+        out_f : int 
+            Number of output feature maps (number of filters).
+        size : tuple
+            Tuple of two ints - factors of the size of the output feature map.
+            Example: feature map with spatial dimension (n, m) will produce
+            output feature map of size (a*n, b*m) after performing up-convolution
+            with `size` (a, b).
+        padding : str
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensetive). 
+        activation : tensorflow function
+            Activation function. Set None if you don't need activation.
+        W : numpy array
+            Filter's weights. This value is used for the filter initialization with pretrained filters.
+        b : numpy array
+            Bias' weights. This value is used for the bias initialization with pretrained bias.
+        """
+        # Shape is different from normal convolution since it's required by 
+        # transposed convolution. Outpute feature maps go before input ones.
+        self.shape = (kw, kh, out_f, in_f)
+        self.size = size
+        self.strides = [1, *size, 1]
+        self.padding = padding
+        self.f = activation
+
+        name = str(name)
+        self.name_conv = 'UpConvKernel_{}x{}_out{}_in{}_id_'.format(kw, kh, out_f, in_f) + name
+        self.name_bias = 'UpConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+
+        if W is None:
+            W = np.random.randn(*self.shape) * np.sqrt(2.0 / np.prod(self.shape[:-1]))
+        if b is None:
+            b = np.zeros(out_f)
+
+        self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
+        self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
+        params = [self.W, self.b]
+        named_params_dict = {self.name_conv: self.W, self.name_bias: self.b}
+        super().__init__(name, params, named_params_dict)
+
+    def _forward(self, X):
+        out_shape = X.get_shape().as_list()
+        out_shape[1] *= self.size[0]
+        out_shape[2] *= self.size[1]
+        out_shape[3] = self.shape[2] # out_f
+
+        conv_out = tf.nn.conv2d_transpose(
+            X, self.W, 
+            output_shape=out_shape, strides=self.strides, padding=self.padding
+        )
+        conv_out = tf.nn.bias_add(conv_out, self.b)
+
+        if self.f is None:
+            return conv_out
+        return self.f(conv_out)
+
+    def _training_forward(self, X):
+        return self._forward(X)
+
+    def to_dict(self):
+        return {
+            'type': 'ConvLayer',
+            'params': {
+                'name': self._name,
+                'shape': list(self.shape),
+                'size': self.size,
                 'padding': self.padding,
                 'activation': ActivationConverter.activation_to_str(self.f)
             }

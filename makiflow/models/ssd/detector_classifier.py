@@ -17,7 +17,7 @@ class DetectorClassifier:
         Parameters
         ----------
         f_source : MakiTensor
-            Source of features for the predictor. It ьгые feature maps from the convolutional
+            Source of features for the predictor. It must be feature maps from the convolutional
             network.
         kw : int
             Width of the predictor's kernel.
