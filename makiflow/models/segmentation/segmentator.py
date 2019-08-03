@@ -27,11 +27,12 @@ class Segmentator(MakiModel):
         super()._setup_for_training()
         out_shape = self._outputs[0].get_shape()
         training_out = self._training_outputs[0]
-        self.__labels = tf.placeholder(tf.int32, shape=out_shape)
+        self.__labels = tf.placeholder(tf.int32, shape=out_shape[:-1])
 
         total_predictions = out_shape[1] * out_shape[2]
+        num_classes = out_shape[-1]
         batch_sz = out_shape[0]
-        flattened_logits = tf.reshape(training_out, shape=[-1, total_predictions])
+        flattened_logits = tf.reshape(training_out, shape=[-1, total_predictions, num_classes])
         flattened_labels = tf.reshape(self.__labels, shape=[-1, total_predictions])
         
         ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
