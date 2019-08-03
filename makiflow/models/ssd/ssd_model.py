@@ -205,7 +205,7 @@ class SSDModel(MakiModel):
         )
 
         num_negatives_to_pick = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.int32)
-        negative_confidence_loss, indices = tf.nn.top_k(
+        negative_confidence_loss, _ = tf.nn.top_k(
             negative_confidence_loss, k=num_negatives_to_pick
         )
         num_negatives_to_pick = tf.cast(num_negatives_to_pick, dtype=tf.float32)
@@ -225,11 +225,9 @@ class SSDModel(MakiModel):
         loc_loss = loc_loss_mask * loc_loss
         self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
 
-        loss_factor_mask_sum = tf.reduce_sum(self.input_loc_loss_masks)
-        loss_factor_condition = tf.less(loss_factor_mask_sum, 1.0)
-        loss_factor = tf.where(loss_factor_condition, loss_factor_mask_sum, 1.0 / loss_factor_mask_sum)
-
-        self.loss = (final_confidence_loss + loc_loss_weight * self.loc_loss) * loss_factor
+        loss = (final_confidence_loss + loc_loss_weight * self.loc_loss)
+        loss_factor_condition = tf.less(num_positives, 1.0)
+        self.loss = tf.where(loss_factor_condition, 0.0, loss)
 
     def _create_scan_loss(self, loc_loss_weight, neg_samples_ratio):
         if not self._set_for_training:
@@ -291,11 +289,10 @@ class SSDModel(MakiModel):
         loc_loss = loc_loss_mask * loc_loss
         self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
 
-        loss_factor_mask_sum = tf.reduce_sum(self.input_loc_loss_masks)
-        loss_factor_condition = tf.less(loss_factor_mask_sum, 1.0)
-        loss_factor = tf.where(loss_factor_condition, loss_factor_mask_sum, 1.0 / loss_factor_mask_sum)
 
-        self.loss = (final_confidence_loss + loc_loss_weight * self.loc_loss) * loss_factor
+        loss = (final_confidence_loss + loc_loss_weight * self.loc_loss)
+        loss_factor_condition = tf.less(num_positives, 1.0)
+        self.loss = tf.where(loss_factor_condition, 0.0, loss)
 
     def _create_focal_loss(self, loc_loss_weight):
         if not self._set_for_training:
@@ -337,9 +334,9 @@ class SSDModel(MakiModel):
             weights=loc_loss_mask
         ) / num_positives
 
+        loss = (final_confidence_loss + loc_loss_weight * self.loc_loss)
         loss_factor_condition = tf.less(num_positives, 1.0)
-        loss_factor = tf.where(loss_factor_condition, num_positives, 1.0 / num_positives)
-        self.loss = (focal_loss + loc_loss_weight * self.loc_loss) * loss_factor
+        self.loss = tf.where(loss_factor_condition, 0.0, loss)
 
     def fit(self, images, loc_masks, labels, gt_locs, optimizer,
             loc_loss_weight=1.0, neg_samples_ratio=3.5,
