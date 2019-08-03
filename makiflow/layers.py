@@ -290,7 +290,6 @@ class UpConvLayer(SimpleForwardLayer):
         out_shape[1] *= self.size[0]
         out_shape[2] *= self.size[1]
         out_shape[3] = self.shape[2] # out_f
-        print(out_shape)
         conv_out = tf.nn.conv2d_transpose(
             X, self.W, 
             output_shape=out_shape, strides=self.strides, padding=self.padding

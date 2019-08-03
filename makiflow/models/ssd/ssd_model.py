@@ -176,7 +176,9 @@ class SSDModel(MakiModel):
         self._train_offsets = tf.concat(training_offsets, axis=1)
 
     def _create_loss(self, loc_loss_weight, neg_samples_ratio):
-        super()._setup_for_training()
+        if not self._set_for_training:
+            super()._setup_for_training()
+
         self._prepare_training_graph()
         self.input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
         self.input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
@@ -228,7 +230,9 @@ class SSDModel(MakiModel):
         self.loss = (final_confidence_loss + loc_loss_weight * self.loc_loss) * loss_factor
 
     def _create_scan_loss(self, loc_loss_weight, neg_samples_ratio):
-        super()._setup_for_training()
+        if not self._set_for_training:
+            super()._setup_for_training()
+            
         self._prepare_training_graph()
         self.input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
         self.input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])

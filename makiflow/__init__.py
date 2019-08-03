@@ -7,4 +7,4 @@ from makiflow import tools
 from makiflow import utils
 from makiflow.save_recover.builder import Builder
 
-del absolute_import
+
