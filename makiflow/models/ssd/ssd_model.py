@@ -232,7 +232,7 @@ class SSDModel(MakiModel):
     def _create_scan_loss(self, loc_loss_weight, neg_samples_ratio):
         if not self._set_for_training:
             super()._setup_for_training()
-            
+
         self._prepare_training_graph()
         self.input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
         self.input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
@@ -296,7 +296,7 @@ class SSDModel(MakiModel):
         self.loss = (final_confidence_loss + loc_loss_weight * self.loc_loss) * loss_factor
 
     def fit(self, images, loc_masks, labels, gt_locs, optimizer,
-            loc_loss_weight=1.0, neg_samples_ratio=3.5,
+            loc_loss_weight=0.1, neg_samples_ratio=3.5,
             epochs=1, loss_type='top_k_loss'):
         """
         Function for training the SSD.
@@ -339,7 +339,7 @@ class SSDModel(MakiModel):
             else:
                 raise Exception('Unknown loss type: ' + loss_type)
 
-        train_op = optimizer.minimize(self.loss)
+        train_op = optimizer.minimize(self.loss, var_list=self._trainable_vars)
         # Initilize optimizer's variables
         self._session.run(tf.variables_initializer(optimizer.variables()))
 
