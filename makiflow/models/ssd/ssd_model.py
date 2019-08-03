@@ -434,7 +434,7 @@ class SSDModel(MakiModel):
                         train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
                         train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
                         train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
-                        train_total_loss = 0.9 * train_total_loss + 0.1 * train_total_loss
+                        train_total_loss = 0.9 * train_total_loss + 0.1 * total_loss
 
                     train_loc_losses.append(train_loc_loss)
                     train_pos_conf_losses.append(train_pos_conf_loss)

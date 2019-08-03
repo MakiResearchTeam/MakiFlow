@@ -50,7 +50,6 @@ class Segmentator(MakiModel):
         focal_weight = tf.pow(ones_arr - sparse_confidences, 1.8)
         self.loss = tf.reduce_mean(focal_weight * ce_loss)
         
-
     def fit(self, Xtrain, Ytrain, optimizer, epochs=1, test_period=1, loss_type='focal_loss'):
         """
 		Method for training the model. Works faster than `verbose_fit` method because
