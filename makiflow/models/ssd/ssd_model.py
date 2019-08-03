@@ -342,7 +342,7 @@ class SSDModel(MakiModel):
         self.loss = (focal_loss + loc_loss_weight * self.loc_loss) * loss_factor
 
     def fit(self, images, loc_masks, labels, gt_locs, optimizer,
-            loc_loss_weight=0.1, neg_samples_ratio=3.5,
+            loc_loss_weight=1.0, neg_samples_ratio=3.5,
             epochs=1, loss_type='top_k_loss'):
         """
         Function for training the SSD.
