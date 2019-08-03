@@ -404,6 +404,7 @@ class SSDModel(MakiModel):
                 train_loc_loss = np.float32(0)
                 train_pos_conf_loss = np.float32(0)
                 train_neg_conf_loss = np.float32(0)
+                train_total_loss = np.float32(0)
                 iterator = tqdm(range(n_batches))
                 try:
                     for j in iterator:
@@ -433,6 +434,7 @@ class SSDModel(MakiModel):
                         train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
                         train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
                         train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
+                        train_total_loss = 0.9 * train_total_loss + 0.1 * train_total_loss
 
                     train_loc_losses.append(train_loc_loss)
                     train_pos_conf_losses.append(train_pos_conf_loss)
@@ -441,7 +443,7 @@ class SSDModel(MakiModel):
                         'Epoch:', i, "Positive conf loss:", train_pos_conf_loss,
                         "Negative conf loss:", train_neg_conf_loss,
                         'Loc loss:', train_loc_loss,
-                        'Total loss', total_loss
+                        'Total loss', train_total_loss
                     )
                 except Exception as ex:
                     iterator.close()
