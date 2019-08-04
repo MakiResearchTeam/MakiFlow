@@ -317,7 +317,7 @@ class SSDModel(MakiModel):
         # [batch_sz, total_predictions]
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
         ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
-        focal_weight = tf.pow(ones_arr - sparse_confidences, 1.8)
+        focal_weight = tf.pow(ones_arr - sparse_confidences, 2.0)
         focal_loss = tf.reduce_mean(focal_weight * confidence_loss)
 
         # For compability
