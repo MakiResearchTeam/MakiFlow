@@ -320,9 +320,38 @@ class SSDModel(MakiModel):
         focal_weight = tf.pow(ones_arr - sparse_confidences, gamma)
         focal_loss = tf.reduce_mean(focal_weight * confidence_loss)
 
-        # For compability
-        self.positive_confidence_loss = focal_loss
-        self.negative_confidence_loss = focal_loss
+        # Calculate positive and negative losses 
+        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
+        positive_confidence_loss = confidence_loss * self.input_loc_loss_masks
+        positive_confidence_loss = tf.reduce_sum(positive_confidence_loss)
+        self.positive_confidence_loss = positive_confidence_loss / num_positives
+        print(self.positive_confidence_loss.shape)
+
+        # Calculate confidence loss for part of negative bboxes, i.e. Hard Negative Mining
+        # Create binary mask for negative loss
+        ones = tf.ones(shape=[self.batch_sz, self.total_predictions])
+        num_negatives = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.float32)
+        negative_loss_mask = ones - self.input_loc_loss_masks
+        negative_confidence_loss = confidence_loss * negative_loss_mask
+        print(negative_confidence_loss.shape)
+        num_negatives_per_batch = tf.cast(
+            num_negatives / self.batch_sz,
+            dtype=tf.int32
+        )
+
+        def sort_neg_losses_for_each_batch(_, batch_loss):
+            top_k_negative_confidence_loss, _ = tf.nn.top_k(
+                batch_loss, k=num_negatives_per_batch
+            )
+            return tf.reduce_sum(top_k_negative_confidence_loss)
+
+        neg_conf_losses = tf.scan(
+            fn=sort_neg_losses_for_each_batch,
+            elems=negative_confidence_loss,
+            infer_shape=False,
+            initializer=1.0
+        )
+        self.negative_confidence_loss = tf.reduce_sum(neg_conf_losses) / num_negatives
         
         # CREATE LOCALIZATION LOSS
         num_positives = tf.reduce_sum(self.input_loc_loss_masks)
