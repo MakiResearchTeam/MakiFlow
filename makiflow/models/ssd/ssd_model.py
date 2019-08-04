@@ -446,6 +446,7 @@ class SSDModel(MakiModel):
                     iterator.close()
                     print(ex)
         finally:
+            iterator.close()
             return {
                 'pos conf losses': train_pos_conf_losses,
                 'neg conf losses': train_neg_conf_losses,
