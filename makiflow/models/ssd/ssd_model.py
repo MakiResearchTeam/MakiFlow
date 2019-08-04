@@ -318,10 +318,11 @@ class SSDModel(MakiModel):
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
         ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
         focal_weight = tf.pow(ones_arr - sparse_confidences, gamma)
-        focal_loss = tf.reduce_mean(focal_weight * confidence_loss)
+        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
+        focal_loss = tf.reduce_sum(focal_weight * confidence_loss) / num_positives
 
         # Calculate positive and negative losses 
-        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
+        
         positive_confidence_loss = confidence_loss * self.input_loc_loss_masks
         positive_confidence_loss = tf.reduce_sum(positive_confidence_loss)
         self.positive_confidence_loss = positive_confidence_loss / num_positives
