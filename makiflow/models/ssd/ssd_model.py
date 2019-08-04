@@ -326,13 +326,18 @@ class SSDModel(MakiModel):
         
         # CREATE LOCALIZATION LOSS
         num_positives = tf.reduce_sum(self.input_loc_loss_masks)
+        diff = self.input_loc - self._train_offsets
+
         # Define smooth L1 loss
+        loc_loss_l2 = 0.5 * (diff ** 2.0)
+        loc_loss_l1 = tf.abs(diff) - 0.5
+        smooth_l1_condition = tf.less(tf.abs(diff), 1.0)
+        loc_loss = tf.where(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
+
         loc_loss_mask = tf.stack([self.input_loc_loss_masks] * 4, axis=2)
-        self.loc_loss = tf.losses.huber_loss(
-            labels=self.input_loc,
-            predictions=self._train_offsets,
-            weights=loc_loss_mask
-        ) / num_positives
+        loc_loss = loc_loss_mask * loc_loss
+        self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
+
 
         loss = focal_loss + loc_loss_weight * self.loc_loss
         loss_factor_condition = tf.less(num_positives, 1.0)
