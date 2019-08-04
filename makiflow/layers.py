@@ -500,6 +500,81 @@ class BatchNormLayer(SimpleForwardLayer):
         }
 
 
+class ZeroPaddingLayer(SimpleForwardLayer):
+    def __init__(self,padding,name):
+        """
+        This layer can add rows and columns of zeros
+        at the top, bottom, left and right side of an image tensor.
+
+        Parameters
+        ----------
+            padding : list
+                List the number of additional rows and columns in the appropriate directions. For example like [ [top,bottom], [left,right] ]
+                
+        """
+        self.padding = padding
+        super().__ini__(name,[],{})
+    
+    def _forward(self, X):
+        return tf.pad(
+            X,
+            padding=self.padding,
+            "CONSTANT",
+        )
+
+    def _training_forward(self, x):
+        return self._forward(x)
+
+    def to_dict(self):
+        return {
+            'type': 'ZeroPaddingLayer',
+            'params': {
+                'name': self._name,
+                'padding': self.padding,
+            }
+        }
+
+
+class GlobalMaxPoolLayer(SimpleForwardLayer):
+    def __init__(self,name):
+        super().__ini__(name,[],{})
+    
+    def _forward(self, X):
+        assert(len(X.shape) == 4)
+        return tf.reduce_max(X,axis=[1,2])
+
+    def _training_forward(self, x):
+        return self._forward(x)
+
+    def to_dict(self):
+        return {
+            'type': 'GlobalMaxPoolLayer',
+            'params': {
+                'name': self._name,
+            }
+        }
+
+
+class GlobalAvgPoolLayer(SimpleForwardLayer):
+    def __init__(self,name):
+        super().__ini__(name,[],{})
+    
+    def _forward(self,X):
+        assert(len(X.shape) == 4)
+        return tf.reduce_mean(X,axis=[1,2])
+    
+    def _training_forward(self,x):
+        return self._forward(x)
+    
+    def to_dict(self):
+        return {
+            'type' : 'GlobalAvgPoolLayer',
+            'params' : {
+                'name' : self._name,
+            }
+        }
+
+
 class MaxPoolLayer(SimpleForwardLayer):
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
         super().__init__(name, [], {})

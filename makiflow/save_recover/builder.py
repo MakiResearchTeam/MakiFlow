@@ -170,26 +170,63 @@ class Builder:
             'FlattenLayer': Builder.__flatten_layer_from_dict,
             'DropoutLayer': Builder.__dropout_layer_from_dict,
             'ActivationLayer': Builder.__activation_layer_from_dict,
-            'ResnetIndentityBlock': Builder.__resnet_convblock_from_dict,
-            'IdentityBlock': Builder.__identityblock_from_dict,
             'GRULayer': Builder.__gru_layer_from_dict,
             'LSTMLayer': Builder.__lstm_layer_from_dict,
             'RNNBlock': Builder.__rnnblock_from_dict,
-            'StemBlock':Builder.__stem_from_dict,
-            'ResnetInceptionBlockA':Builder.__inception_resnet_A_from_dict,
-            'ReductionBlockA':Builder.__reduction_A_from_dict,
-            'ResnetInceptionBlockB':Builder.__inception_resnet_B_from_dict,
-            'ReductionBlockB':Builder.__reduction_B_from_dict,
-            'ResnetInceptionBlockC':Builder.__inception_resnet_C_from_dict,
-            'ResnetConvBlock':Builder.__convblock_resnet_from_dict,
-            'ConvBlock':Builder.__convblock_from_dict,
             'InputLayer':Builder.__input_layer_from_dict,
             'SumLayer':Builder.__sum_layer_from_dict,
             'ConcatLayer' : Builder.__concat_layer_from_dict,
             'MultiOnAlphaLayer' : Builder.__MultiOnAlphaLayer_layer_from_dict,
+            'ZeroPaddingLayer' : Builder.__zeropadding_layer_from_dict,
+            'GlobalMaxPoolLayer' : Builder.__globalmaxpoollayer_from_dict,
+            'GlobalAvgPoolLayer' : Builder.__globalavgpoollayer_from_dict,
+            'UpSamplingLayer' : Builder.__upsampling_layer_from_dict,
+            'UpConvLayer' : Builder.__upconv_layer_from_dict,
+            'ReshapeLayer' : Builder.__reshape_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
     
+    @staticmethod
+    def __reshape_layer_from_dict(params):
+        name = params['name']
+        new_shape = params['new_shape']
+        return ReshapeLayer(new_shape=new_shape,name=name)
+
+    @staticmethod
+    def __upconv_layer_from_dict(params):
+        name = params['name']
+        kw = params['shape'][0]
+        kh = params['shape'][1]
+        in_f = params['shape'][2]
+        out_f = params['shape'][3]
+        size = params['size']
+        padding = params['padding']
+        activation = ActivationConverter.str_to_activation(params['activation'])
+        return UpConvLayer(kw=kw, kh=kh, in_f=in_f, out_f=out_f, 
+                         size=size, name=name, padding=padding, activation=activation)
+
+    @staticmethod
+    def __upsampling_layer_from_dict(params):
+        name = params['name']
+        size = params['size']
+        return UpSamplingLayer(name=name,size=size)
+
+    @staticmethod
+    def __globalmaxpoollayer_from_dict(params):
+        name = params['name']
+        return GlobalMaxPoolLayer(name=name)
+    
+    @staticmethod
+    def __globalavgpoollayer_from_dict(params):
+        name = params['name']
+        return GlobalAvgPoolLayer(name=name)
+
+    @staticmethod
+    def __zeropadding_layer_from_dict(params):
+        name = params['name']
+        padding = params['padding']
+        return ZeroPaddingLayer(padding=padding,name=name)
+
     @staticmethod
     def __MultiOnAlphaLayer_layer_from_dict(params):
         name = params['name']
@@ -217,24 +254,6 @@ class Builder:
         input_shape = params['input_shape']
         name = params['name']
         return InputLayer(name=name,input_shape = input_shape)    
-    
-    @staticmethod
-    def __resnet_convblock_from_dict(params):
-        name = params['name']
-        in_f1 = params['in_f1']
-        out_f1 = params['out_f1']
-        return ResnetIndentityBlock(in_f1=in_f1, out_f1=out_f1, name=name)
-    
-    @staticmethod
-    def __identityblock_from_dict(params):
-        name = params['name']
-        main_branch = []
-        for layer in params['main_branch']:
-            main_branch.append(Builder.__layer_from_dict(layer))
-        return IdentityBlock(
-            main_branch=main_branch,
-            name=name
-            )
         
     @staticmethod
     def __conv_layer_from_dict(params):
@@ -276,13 +295,15 @@ class Builder:
     
     @staticmethod
     def __activation_layer_from_dict(params):
+        name = params['name']
         activation = ActivationConverter.str_to_activation(params['activation'])
-        return ActivationLayer(activation=activation)
+        return ActivationLayer(name=name,activation=activation)
     
     @staticmethod
     def __dropout_layer_from_dict(params):
+        name = params['name']
         p_keep = params['p_keep']
-        return DropoutLayer(p_keep=p_keep)
+        return DropoutLayer(name=name,p_keep=p_keep)
 
     @staticmethod
     def __gru_layer_from_dict(params):
@@ -345,79 +366,3 @@ class Builder:
             dim=dim,
             name=name
         )
-
-    @staticmethod
-    def __stem_from_dict(params):
-        name = params['name']
-        in_f = params['in_f']
-        out_f = params['out_f']
-        activation =  ActivationConverter.str_to_activation(params['activation'])
-        return StemBlock(in_f=in_f, out_f=out_f,activation=activation, name=name)
-
-    @staticmethod
-    def __inception_resnet_A_from_dict(params):
-        name = params['name']
-        in_f = params['in_f']
-        out_f = params['out_f']
-        alpha = params['alpha']
-        activation =  ActivationConverter.str_to_activation(params['activation'])
-        return InceptionA(in_f=in_f, out_f=out_f,activation=activation, name=name,alpha=alpha)  
-    
-    @staticmethod
-    def __reduction_A_from_dict(params):
-        name = params['name']
-        in_f = params['in_f']
-        out_f = params['out_f']
-        activation =  ActivationConverter.str_to_activation(params['activation'])
-        return ReductionA(in_f=in_f, out_f=out_f,activation=activation, name=name)  
-    
-    @staticmethod
-    def __inception_resnet_B_from_dict(params):
-        name = params['name']
-        in_f = params['in_f']
-        out_f = params['out_f']
-        alpha = params['alpha']
-        activation =  ActivationConverter.str_to_activation(params['activation'])
-        return InceptionB(in_f=in_f, out_f=out_f,activation=activation, name=name,alpha=alpha)
-
-    @staticmethod
-    def __reduction_B_from_dict(params):
-        name = params['name']
-        in_f = params['in_f']
-        out_f = params['out_f']
-        activation =  ActivationConverter.str_to_activation(params['activation'])
-        return ReductionB(in_f=in_f, out_f=out_f,activation=activation, name=name)  
-
-    @staticmethod
-    def __inception_resnet_C_from_dict(params):
-        name = params['name']
-        in_f = params['in_f']
-        out_f = params['out_f']
-        alpha = params['alpha']
-        activation =  ActivationConverter.str_to_activation(params['activation'])
-        return InceptionC(in_f=in_f, out_f=out_f,activation=activation, name=name,alpha=alpha)  
-    
-    @staticmethod
-    def __convblock_resnet_from_dict(params):
-        name = params['name']
-        in_f = params['in_f']
-        out_f = params['out_f']
-        activation =  ActivationConverter.str_to_activation(params['activation'])
-        return ResnetConvBlock(in_f=in_f, out_f=out_f,activation=activation, name=name) 
-
-    @staticmethod
-    def __convblock_from_dict(params):
-        name = params['name']
-        main_branch = []
-        for layer in params['main_branch']:
-            main_branch.append(Builder.__layer_from_dict(layer))
-        
-        skip_branch = []
-        for layer in params['skip_branch']:
-            skip_branch.append(Builder.__layer_from_dict(layer))
-
-        return ConvBlock(skip_branch=skip_branch,main_branch=main_branch,name=name)   
-      
-    
-
-        
