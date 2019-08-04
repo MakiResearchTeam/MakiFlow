@@ -294,7 +294,7 @@ class SSDModel(MakiModel):
         loss_factor_condition = tf.less(num_positives, 1.0)
         self.loss = tf.where(loss_factor_condition, 0.0, loss)
 
-    def _create_focal_loss(self, loc_loss_weight, gamma):
+    def _create_focal_loss(self, loc_loss_weight, neg_samples_ratio, gamma):
         if not self._set_for_training:
             super()._setup_for_training()
 
@@ -415,7 +415,7 @@ class SSDModel(MakiModel):
             elif loss_type == 'scan_loss':
                 self._create_scan_loss(loc_loss_weight, neg_samples_ratio)
             elif loss_type == 'focal_loss':
-                self._create_focal_loss(loc_loss_weight, gamma)
+                self._create_focal_loss(loc_loss_weight, neg_samples_ratio, gamma)
             else:
                 raise Exception('Unknown loss type: ' + loss_type)
 
