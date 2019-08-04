@@ -294,7 +294,7 @@ class SSDModel(MakiModel):
         loss_factor_condition = tf.less(num_positives, 1.0)
         self.loss = tf.where(loss_factor_condition, 0.0, loss)
 
-    def _create_focal_loss(self, loc_loss_weight, neg_samples_ratio, gamma):
+    def _create_focal_loss(self, loc_loss_weight, gamma):
         if not self._set_for_training:
             super()._setup_for_training()
 
@@ -321,53 +321,20 @@ class SSDModel(MakiModel):
         num_positives = tf.reduce_sum(self.input_loc_loss_masks)
         focal_loss = tf.reduce_sum(focal_weight * confidence_loss) / num_positives
 
-        # Calculate positive and negative losses 
-        
-        positive_confidence_loss = confidence_loss * self.input_loc_loss_masks
-        positive_confidence_loss = tf.reduce_sum(positive_confidence_loss)
-        self.positive_confidence_loss = positive_confidence_loss / num_positives
-        print(self.positive_confidence_loss.shape)
-
-        # Calculate confidence loss for part of negative bboxes, i.e. Hard Negative Mining
-        # Create binary mask for negative loss
-        ones = tf.ones(shape=[self.batch_sz, self.total_predictions])
-        num_negatives = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.float32)
-        negative_loss_mask = ones - self.input_loc_loss_masks
-        negative_confidence_loss = confidence_loss * negative_loss_mask
-        print(negative_confidence_loss.shape)
-        num_negatives_per_batch = tf.cast(
-            num_negatives / self.batch_sz,
-            dtype=tf.int32
-        )
-
-        def sort_neg_losses_for_each_batch(_, batch_loss):
-            top_k_negative_confidence_loss, _ = tf.nn.top_k(
-                batch_loss, k=num_negatives_per_batch
-            )
-            return tf.reduce_sum(top_k_negative_confidence_loss)
-
-        neg_conf_losses = tf.scan(
-            fn=sort_neg_losses_for_each_batch,
-            elems=negative_confidence_loss,
-            infer_shape=False,
-            initializer=1.0
-        )
-        self.negative_confidence_loss = tf.reduce_sum(neg_conf_losses) / num_negatives
+        # For compability
+        self.negative_confidence_loss = focal_loss
+        self.positive_confidence_loss = focal_loss
         
         # CREATE LOCALIZATION LOSS
-        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
         diff = self.input_loc - self._train_offsets
-
         # Define smooth L1 loss
         loc_loss_l2 = 0.5 * (diff ** 2.0)
         loc_loss_l1 = tf.abs(diff) - 0.5
         smooth_l1_condition = tf.less(tf.abs(diff), 1.0)
         loc_loss = tf.where(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
-
         loc_loss_mask = tf.stack([self.input_loc_loss_masks] * 4, axis=2)
         loc_loss = loc_loss_mask * loc_loss
         self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
-
 
         loss = focal_loss + loc_loss_weight * self.loc_loss
         loss_factor_condition = tf.less(num_positives, 1.0)
@@ -416,7 +383,7 @@ class SSDModel(MakiModel):
             elif loss_type == 'scan_loss':
                 self._create_scan_loss(loc_loss_weight, neg_samples_ratio)
             elif loss_type == 'focal_loss':
-                self._create_focal_loss(loc_loss_weight, neg_samples_ratio, gamma)
+                self._create_focal_loss(loc_loss_weight, gamma)
             else:
                 raise Exception('Unknown loss type: ' + loss_type)
 
