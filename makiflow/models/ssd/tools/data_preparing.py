@@ -160,6 +160,12 @@ class DataPreparator:
         
         return self.__images
 
+    def get_bboxes(self):
+        return self.__bboxes
+
+    def get_images_info(self):
+        return self.__images_info
+
         
         
         

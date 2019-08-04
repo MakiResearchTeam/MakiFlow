@@ -236,6 +236,8 @@ class MakiModel:
             the following tuple (`conv1`, False), if you want to make it trainable
             use the following tuple (`conv1`, True).
         """
+        if not self._set_for_training:
+            self._setup_for_training()
         for layer_name, is_trainable in layers:
             if is_trainable and layer_name not in self._trainable_layers:
                     self._trainable_layers.append(layer_name)

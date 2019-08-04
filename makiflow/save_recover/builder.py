@@ -3,7 +3,6 @@ from __future__ import absolute_import
 # For loading model architecture
 import json
 
-from makiflow.advanced_layers import *
 from makiflow.models.classificator import Classificator
 from makiflow.layers import *
 from makiflow.rnn_layers import *

@@ -84,7 +84,6 @@ def get_train_test_data():
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     in_x, out = get_layers()
     model = Classificator(input=in_x, output=out)
 
@@ -109,6 +108,3 @@ if __name__ == "__main__":
     new_model.evaluate(Xtest,Ytest,64)
     info = new_model.pure_fit(Xtrain, Ytrain, Xtest, Ytest, optimizer=optimizer, epochs=epochs)
     new_model.save_architecture('T:/download/shiru/new.json')
-=======
-    test_ssd()
->>>>>>> upstream/beta_v1.0
