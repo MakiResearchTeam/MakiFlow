@@ -1,4 +1,5 @@
-from makiflow.layers import InputLayer, DenseLayer, ConvLayer, MaxPoolLayer, FlattenLayer, BatchNormLayer,SumLayer, ConcatLayer
+from makiflow.layers import InputLayer, DenseLayer, ConvLayer, MaxPoolLayer, FlattenLayer, BatchNormLayer, SumLayer, \
+    ConcatLayer
 from makiflow.models.classificator import Classificator
 from makiflow.models.ssd import SSDModel, DetectorClassifier
 import tensorflow as tf
@@ -27,7 +28,7 @@ def create_ssd_training_data():
     images = np.random.randn(128, 12, 12, 3)
 
     loc_mask = [0, 0, 0, 0, 0, 0, 1, 1, 1]
-    loc_masks = np.array(loc_mask*128).reshape([128, 9])
+    loc_masks = np.array(loc_mask * 128).reshape([128, 9])
     labels = np.ones((128, 9))
     gt_locs = np.ones((128, 9, 4))
     return images, loc_masks, labels, gt_locs
@@ -43,32 +44,33 @@ def test_ssd():
                           loss_type='scan_loss')
     print(predictions)
 
+
 def get_layers():
-    in_x = InputLayer(input_shape=[64, 32,32,3], name='input')
+    in_x = InputLayer(input_shape=[64, 32, 32, 3], name='input')
     x = ConvLayer(kh=3, kw=3, in_f=3, out_f=16, name='conv1')(in_x)
     x = MaxPoolLayer(name='pool1')(x)
     # 16x16
-    x = BatchNormLayer(D=16,name='batch1')(x)
+    x = BatchNormLayer(D=16, name='batch1')(x)
     x = ConvLayer(kh=3, kw=3, in_f=16, out_f=32, name='conv2')(x)
     x = MaxPoolLayer(name='pool2')(x)
     # 8x8
-    x = BatchNormLayer(D=32,name='batch2')(x)
+    x = BatchNormLayer(D=32, name='batch2')(x)
     q = ConvLayer(kh=3, kw=3, in_f=32, out_f=31, name='conv3_0')(x)
     z = ConvLayer(kh=5, kw=5, in_f=32, out_f=57, name='conv3_1')(x)
     c = ConvLayer(kh=2, kw=2, in_f=32, out_f=43, name='conv3_2')(x)
-    x = ConcatLayer(name='conc')([q,z,c])
+    x = ConcatLayer(name='conc')([q, z, c])
     x = MaxPoolLayer(name='pool3')(x)
     # 4x4
-    x = BatchNormLayer(D=131,name='batch3')(x)
+    x = BatchNormLayer(D=131, name='batch3')(x)
     x = ConvLayer(kh=3, kw=3, in_f=131, out_f=128, name='conv4')(x)
     x = MaxPoolLayer(name='pool4')(x)
     # 2x2
-    x = BatchNormLayer(D=128,name='batch4')(x)
+    x = BatchNormLayer(D=128, name='batch4')(x)
     x = ConvLayer(kh=3, kw=3, in_f=128, out_f=64, name='conv5')(x)
     x = MaxPoolLayer(name='pool5')(x)
     # 1x1
     x = FlattenLayer(name='flatten')(x)
-    x = DenseLayer(in_d=64,out_d=10,activation=None,name='outputsZ')(x)
+    x = DenseLayer(in_d=64, out_d=10, activation=None, name='outputsZ')(x)
     return in_x, x
 
 

@@ -173,26 +173,18 @@ def resize_images_and_bboxes(image_array, bboxes_array, new_size):
         ]
     :param new_size - tuple of numbers represent new size: (new_width, new_height)
     """
-    new_image_array = copy(image_array)
-    new_bboxes_array = copy(bboxes_array)
     # For navigation in new_image_array and new_bboxes_array
-    i = 0
-    for image, bboxes in tqdm(zip(image_array, bboxes_array)):
+    for i, (image, bboxes) in tqdm(enumerate(zip(image_array, bboxes_array))):
         image_dims = image.shape[:2]
         width_ratio = new_size[0] / image_dims[1]
         height_ratio = new_size[1] / image_dims[0]
-        new_image_array[i] = cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)
+        image_array[i] = cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)
         # For navigation in new_bboxes_array
-        j = 0
-        for bbox in bboxes:
-            new_bboxes_array[i][j][0] = round(bbox[0] * width_ratio)
-            new_bboxes_array[i][j][2] = round(bbox[2] * width_ratio)
-            new_bboxes_array[i][j][1] = round(bbox[1] * height_ratio)
-            new_bboxes_array[i][j][3] = round(bbox[3] * height_ratio)
-            j += 1
-        i += 1
-
-    return new_image_array, new_bboxes_array
+        for j, bbox in enumerate(bboxes):
+            bboxes_array[i][j][0] = round(bbox[0] * width_ratio)
+            bboxes_array[i][j][2] = round(bbox[2] * width_ratio)
+            bboxes_array[i][j][1] = round(bbox[1] * height_ratio)
+            bboxes_array[i][j][3] = round(bbox[3] * height_ratio)
 
 
 def nms(pred_bboxes, pred_confs, conf_trashhold=0.4, iou_trashhold=0.1, background_class=0):
