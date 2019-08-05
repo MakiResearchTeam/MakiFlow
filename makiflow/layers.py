@@ -512,7 +512,8 @@ class ZeroPaddingLayer(SimpleForwardLayer):
                 List the number of additional rows and columns in the appropriate directions. For example like [ [top,bottom], [left,right] ]
                 
         """
-        self.padding = padding
+        assert(len(padding) == 2)
+        self.padding = [[0,0],padding[0],padding[1],[0,0]]
         super().__init__(name,[],{})
     
     def _forward(self, X):
