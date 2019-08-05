@@ -294,7 +294,7 @@ class SSDModel(MakiModel):
         loss_factor_condition = tf.less(num_positives, 1.0)
         self.loss = tf.where(loss_factor_condition, 0.0, loss)
 
-    def _create_focal_loss(self, loc_loss_weight):
+    def _create_focal_loss(self, loc_loss_weight, gamma):
         if not self._set_for_training:
             super()._setup_for_training()
 
@@ -317,29 +317,31 @@ class SSDModel(MakiModel):
         # [batch_sz, total_predictions]
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
         ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
-        focal_weight = tf.pow(ones_arr - sparse_confidences, 1.8)
-        focal_loss = tf.reduce_mean(focal_weight * confidence_loss)
+        focal_weight = tf.pow(ones_arr - sparse_confidences, gamma)
+        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
+        focal_loss = tf.reduce_sum(focal_weight * confidence_loss) / num_positives
 
         # For compability
-        self.positive_confidence_loss = focal_loss
         self.negative_confidence_loss = focal_loss
+        self.positive_confidence_loss = focal_loss
         
         # CREATE LOCALIZATION LOSS
-        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
+        diff = self.input_loc - self._train_offsets
         # Define smooth L1 loss
+        loc_loss_l2 = 0.5 * (diff ** 2.0)
+        loc_loss_l1 = tf.abs(diff) - 0.5
+        smooth_l1_condition = tf.less(tf.abs(diff), 1.0)
+        loc_loss = tf.where(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
         loc_loss_mask = tf.stack([self.input_loc_loss_masks] * 4, axis=2)
-        self.loc_loss = tf.losses.huber_loss(
-            labels=self.input_loc,
-            predictions=self._train_offsets,
-            weights=loc_loss_mask
-        ) / num_positives
+        loc_loss = loc_loss_mask * loc_loss
+        self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
 
         loss = focal_loss + loc_loss_weight * self.loc_loss
         loss_factor_condition = tf.less(num_positives, 1.0)
         self.loss = tf.where(loss_factor_condition, 0.0, loss)
 
     def fit(self, images, loc_masks, labels, gt_locs, optimizer,
-            loc_loss_weight=1.0, neg_samples_ratio=3.5,
+            loc_loss_weight=1.0, neg_samples_ratio=3.5, gamma=2.0,
             epochs=1, loss_type='top_k_loss'):
         """
         Function for training the SSD.
@@ -373,6 +375,7 @@ class SSDModel(MakiModel):
         assert (optimizer is not None)
         assert (type(loc_loss_weight) == float)
         assert (type(neg_samples_ratio) == float)
+        assert (type(gamma) == float)
 
         if not self._set_for_training:
             if loss_type == 'top_k_loss':
@@ -380,7 +383,7 @@ class SSDModel(MakiModel):
             elif loss_type == 'scan_loss':
                 self._create_scan_loss(loc_loss_weight, neg_samples_ratio)
             elif loss_type == 'focal_loss':
-                self._create_focal_loss(loc_loss_weight)
+                self._create_focal_loss(loc_loss_weight, gamma)
             else:
                 raise Exception('Unknown loss type: ' + loss_type)
 
