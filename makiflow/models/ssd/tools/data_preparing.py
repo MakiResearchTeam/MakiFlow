@@ -3,7 +3,8 @@ from makiflow.models.ssd.ssd_utils import resize_images_and_bboxes, prepare_data
 from tqdm import tqdm
 import cv2
 import numpy as np
-import tensorflow as tf
+
+
 
 """
 Helper class for fast and convenient data preparation for the SSDModel training.
@@ -16,8 +17,6 @@ Tip - use the following order to prepare your data:
 5) preparator.normalize_images()
 6) preparator.generate_masks_labels_locs(defalut_boxes)
 """
-
-
 class DataPreparator:
     def __init__(self, annotation_dict, class_name_to_num, path_to_data):
         """
@@ -42,33 +41,32 @@ class DataPreparator:
         self.__annotation_dict = annotation_dict
         self.__class_name_to_num = class_name_to_num
         self.__path_to_data = path_to_data
-        self.__images = []
-        self.__bboxes = []
-        self.__labels = []
-        self.__images_normalized = False
-
+        
+        
+    
     def load_images(self):
-        tf.logging.info('Loading images, bboxes and labels...')
-
+        print('Loading images, bboxes and labels...')
         self.__images = []
         self.__bboxes = []
         self.__labels = []
+        # For later usage in normalizing method
         self.__images_normalized = False
-
+        
         for annotation in tqdm(self.__annotation_dict):
             image = cv2.imread(self.__path_to_data + annotation['filename'])
             bboxes = []
             labels = []
-
+            
             for gt_object in annotation['objects']:
                 bboxes.append(gt_object['box'])
-                labels.append(self.__class_name_to_num[gt_object['name']])
-
+                labels.append( self.__class_name_to_num[gt_object['name']] )
+                
             self.__images.append(image)
             self.__bboxes.append(bboxes)
             self.__labels.append(labels)
-        tf.logging.info('Images, bboxes and labels are loaded.')
-
+        print('Images, bboxes and labels are loaded.')
+        
+        
     def __collect_image_info(self):
         self.__images_info = []  # Used in prepare_data function
         for labels, bboxes in zip(self.__labels, self.__bboxes):
@@ -77,7 +75,8 @@ class DataPreparator:
                 'classes': labels
             }
             self.__images_info.append(image_info)
-
+        
+        
     def resize_images_and_bboxes(self, new_size):
         """ 
         Resizes loaded images and bounding boxes accordingly.
@@ -87,9 +86,14 @@ class DataPreparator:
         new_size : tuple
             Contains new width and height. Example: (300, 300).
         """
-        resize_images_and_bboxes(self.__images, self.__bboxes, new_size)
+        images, bboxes = resize_images_and_bboxes(self.__images, self.__bboxes, new_size)
+        del self.__images
+        del self.__bboxes
+        self.__images = images
+        self.__bboxes = bboxes
         self.__collect_image_info()
-
+    
+    
     def generate_masks_labels_locs(self, default_boxes, iou_trashhold=0.5):
         """
         Generates masks, labels and locs for later usage in fit function of the SSD class.
@@ -121,15 +125,17 @@ class DataPreparator:
             labels.append(prepared_data['labels'])
             loc_masks.append(prepared_data['loc_mask'])
             gt_locs.append(prepared_data['gt_locs'])
-
+        
         self.__last_labels = np.array(labels, dtype=np.int32)
         self.__last_loc_masks = np.array(loc_masks, dtype=np.float32)
         self.__last_gt_locs = np.array(gt_locs, dtype=np.float32)
         return self.__last_loc_masks, self.__last_labels, self.__last_gt_locs
-
+    
+    
     def get_last_masks_labels_locs(self):
         return self.__last_labels, self.__last_loc_masks, self.__last_gt_locs
-
+    
+    
     def normalize_images(self):
         """
         Normalizes loaded images by dividing each one by 255.
@@ -141,14 +147,37 @@ class DataPreparator:
         """
         if self.__images_normalized:
             raise Exception("Images are already normalized!")
-
+            
         self.__images_normalized = True
         for i in range(len(self.__images)):
             self.__images[i] = np.array(self.__images[i], dtype=np.float32) / 255
         return self.__images
-
+    
+    
     def get_images(self):
         if not self.__images_normalized:
-            tf.logging.info('Be careful, images are not normalized.')
-
+            print('Be careful, images are not normalized.')
+        
         return self.__images
+
+    def get_bboxes(self):
+        return self.__bboxes
+
+    def get_images_info(self):
+        return self.__images_info
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+            
+            
+        

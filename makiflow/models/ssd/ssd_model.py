@@ -34,6 +34,8 @@ class SSDModel(MakiModel):
 
         self._generate_default_boxes()
         self._prepare_inference_graph()
+        # Get number of classes. It is needed for Focal Loss
+        self._num_classes = self.dcs[0].class_number
 
     def _generate_default_boxes(self):
         self.default_boxes_wh = []
@@ -203,7 +205,7 @@ class SSDModel(MakiModel):
         )
 
         num_negatives_to_pick = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.int32)
-        negative_confidence_loss, indices = tf.nn.top_k(
+        negative_confidence_loss, _ = tf.nn.top_k(
             negative_confidence_loss, k=num_negatives_to_pick
         )
         num_negatives_to_pick = tf.cast(num_negatives_to_pick, dtype=tf.float32)
@@ -223,11 +225,9 @@ class SSDModel(MakiModel):
         loc_loss = loc_loss_mask * loc_loss
         self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
 
-        loss_factor_mask_sum = tf.reduce_sum(self.input_loc_loss_masks)
-        loss_factor_condition = tf.less(loss_factor_mask_sum, 1.0)
-        loss_factor = tf.where(loss_factor_condition, loss_factor_mask_sum, 1.0 / loss_factor_mask_sum)
-
-        self.loss = (final_confidence_loss + loc_loss_weight * self.loc_loss) * loss_factor
+        loss = final_confidence_loss + loc_loss_weight * self.loc_loss
+        loss_factor_condition = tf.less(num_positives, 1.0)
+        self.loss = tf.where(loss_factor_condition, 0.0, loss)
 
     def _create_scan_loss(self, loc_loss_weight, neg_samples_ratio):
         if not self._set_for_training:
@@ -289,14 +289,59 @@ class SSDModel(MakiModel):
         loc_loss = loc_loss_mask * loc_loss
         self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
 
-        loss_factor_mask_sum = tf.reduce_sum(self.input_loc_loss_masks)
-        loss_factor_condition = tf.less(loss_factor_mask_sum, 1.0)
-        loss_factor = tf.where(loss_factor_condition, loss_factor_mask_sum, 1.0 / loss_factor_mask_sum)
 
-        self.loss = (final_confidence_loss + loc_loss_weight * self.loc_loss) * loss_factor
+        loss = final_confidence_loss + loc_loss_weight * self.loc_loss
+        loss_factor_condition = tf.less(num_positives, 1.0)
+        self.loss = tf.where(loss_factor_condition, 0.0, loss)
+
+    def _create_focal_loss(self, loc_loss_weight, gamma):
+        if not self._set_for_training:
+            super()._setup_for_training()
+
+        self._prepare_training_graph()
+        self.input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
+        self.input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
+        self.input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
+
+        # CREATE FOCAL LOSS
+        # [batch_sz, total_predictions]
+        confidence_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            logits=self._train_confidences_ish, labels=self.input_labels
+        )
+        # [batch_sz, total_predictions, num_classes]
+        train_confidences = tf.nn.softmax(self._train_confidences_ish)
+        # Create one-hot encoding for picking predictions we need
+        # [batch_sz, total_predictions, num_classes]
+        one_hot_labels = tf.one_hot(self.input_labels, depth=self._num_classes, on_value=1.0, off_value=0.0)
+        filtered_confidences = train_confidences * one_hot_labels
+        # [batch_sz, total_predictions]
+        sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
+        ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
+        focal_weight = tf.pow(ones_arr - sparse_confidences, gamma)
+        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
+        focal_loss = tf.reduce_sum(focal_weight * confidence_loss) / num_positives
+
+        # For compability
+        self.negative_confidence_loss = focal_loss
+        self.positive_confidence_loss = focal_loss
+        
+        # CREATE LOCALIZATION LOSS
+        diff = self.input_loc - self._train_offsets
+        # Define smooth L1 loss
+        loc_loss_l2 = 0.5 * (diff ** 2.0)
+        loc_loss_l1 = tf.abs(diff) - 0.5
+        smooth_l1_condition = tf.less(tf.abs(diff), 1.0)
+        loc_loss = tf.where(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
+        loc_loss_mask = tf.stack([self.input_loc_loss_masks] * 4, axis=2)
+        loc_loss = loc_loss_mask * loc_loss
+        self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
+
+        loss = focal_loss + loc_loss_weight * self.loc_loss
+        loss_factor_condition = tf.less(num_positives, 1.0)
+        self.loss = tf.where(loss_factor_condition, 0.0, loss)
 
     def fit(self, images, loc_masks, labels, gt_locs, optimizer,
-            loc_loss_weight=0.1, neg_samples_ratio=3.5,
+            loc_loss_weight=1.0, neg_samples_ratio=3.5, gamma=2.0,
             epochs=1, loss_type='top_k_loss'):
         """
         Function for training the SSD.
@@ -323,19 +368,22 @@ class SSDModel(MakiModel):
             Number of epochs to run.
         loss_type : str
             Affects which loss function will be used for training.
-            Options: 'scan_loss', 'top_k_loss'.
+            Options: 'scan_loss', 'top_k_loss', 'focal_loss'.
         """
         assert (optimizer is not None)
         assert (self._session is not None)
         assert (optimizer is not None)
         assert (type(loc_loss_weight) == float)
         assert (type(neg_samples_ratio) == float)
+        assert (type(gamma) == float)
 
         if not self._set_for_training:
             if loss_type == 'top_k_loss':
                 self._create_loss(loc_loss_weight, neg_samples_ratio)
             elif loss_type == 'scan_loss':
                 self._create_scan_loss(loc_loss_weight, neg_samples_ratio)
+            elif loss_type == 'focal_loss':
+                self._create_focal_loss(loc_loss_weight, gamma)
             else:
                 raise Exception('Unknown loss type: ' + loss_type)
 
@@ -356,6 +404,7 @@ class SSDModel(MakiModel):
                 train_loc_loss = np.float32(0)
                 train_pos_conf_loss = np.float32(0)
                 train_neg_conf_loss = np.float32(0)
+                train_total_loss = np.float32(0)
                 iterator = tqdm(range(n_batches))
                 try:
                     for j in iterator:
@@ -366,8 +415,8 @@ class SSDModel(MakiModel):
 
                         # Don't know how to fix it yet.
                         try:
-                            loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self._session.run(
-                                [self.loc_loss, self.positive_confidence_loss, self.negative_confidence_loss, train_op],
+                            total_loss, loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self._session.run(
+                                [self.loss, self.loc_loss, self.positive_confidence_loss, self.negative_confidence_loss, train_op],
                                 feed_dict={
                                     self._input_data_tensors[0]: img_batch,
                                     self.input_labels: labels_batch,
@@ -385,6 +434,7 @@ class SSDModel(MakiModel):
                         train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
                         train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
                         train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
+                        train_total_loss = 0.9 * train_total_loss + 0.1 * total_loss
 
                     train_loc_losses.append(train_loc_loss)
                     train_pos_conf_losses.append(train_pos_conf_loss)
@@ -392,12 +442,14 @@ class SSDModel(MakiModel):
                     print(
                         'Epoch:', i, "Positive conf loss:", train_pos_conf_loss,
                         "Negative conf loss:", train_neg_conf_loss,
-                        'Loc loss:', train_loc_loss
+                        'Loc loss:', train_loc_loss,
+                        'Total loss', train_total_loss
                     )
                 except Exception as ex:
                     iterator.close()
                     print(ex)
         finally:
+            iterator.close()
             return {
                 'pos conf losses': train_pos_conf_losses,
                 'neg conf losses': train_neg_conf_losses,
