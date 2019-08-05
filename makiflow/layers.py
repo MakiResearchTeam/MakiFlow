@@ -513,7 +513,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
                 
         """
         self.padding = padding
-        super().__ini__(name,[],{})
+        super().__init__(name,[],{})
     
     def _forward(self, X):
         return tf.pad(
@@ -537,7 +537,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 
 class GlobalMaxPoolLayer(SimpleForwardLayer):
     def __init__(self,name):
-        super().__ini__(name,[],{})
+        super().__init__(name,[],{})
     
     def _forward(self, X):
         assert(len(X.shape) == 4)
@@ -557,7 +557,7 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
 
 class GlobalAvgPoolLayer(SimpleForwardLayer):
     def __init__(self,name):
-        super().__ini__(name,[],{})
+        super().__init__(name,[],{})
     
     def _forward(self,X):
         assert(len(X.shape) == 4)
