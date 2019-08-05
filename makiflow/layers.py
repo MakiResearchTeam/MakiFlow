@@ -67,22 +67,22 @@ class InputLayer(MakiTensor):
 
 
 class MultiOnAlphaLayer(SimpleForwardLayer):
-    def __init__(self,alpha,name):
+    def __init__(self, alpha, name):
         self.alpha = alpha
         super().__init__(name,[],{})
     
-    def _forward(self,X):
-        return X*self.alpha
+    def _forward(self, X):
+        return X * self.alpha
     
-    def _training_forward(self,X):
+    def _training_forward(self, X):
         return self._forward(X)
     
     def to_dict(self):
         return {
             'type' : 'MultiOnAlphaLayer',
             'params' : {
-                'name' : self.get_name(),
-                'alpha' : self.alpha,
+                'name': self.get_name(),
+                'alpha': self.alpha,
             }
         }
 
@@ -109,10 +109,10 @@ class ReshapeLayer(SimpleForwardLayer):
 
 
 class SumLayer(MakiLayer):
-    def __init__(self,name):
+    def __init__(self, name):
         super().__init__(name, [], {})
     
-    def __call__(self,x : list):
+    def __call__(self, x : list):
         data = [one_tensor.get_data_tensor() for one_tensor in x]
         data = self._forward(data)
 
@@ -130,10 +130,10 @@ class SumLayer(MakiLayer):
         )
         return maki_tensor
 
-    def _forward(self,X):
+    def _forward(self, X):
         return sum(X)
     
-    def _training_forward(self,X):
+    def _training_forward(self, X):
         return self._forward(X)
 
     def to_dict(self):
@@ -146,11 +146,11 @@ class SumLayer(MakiLayer):
 
 
 class ConcatLayer(MakiLayer):
-    def __init__(self,name,axis=3):
+    def __init__(self, name, axis=3):
         super().__init__(name, [], {})
         self.axis = axis
     
-    def __call__(self,x : list):
+    def __call__(self, x : list):
         data = [one_tensor.get_data_tensor() for one_tensor in x]
         data = self._forward(data)
 
@@ -168,10 +168,10 @@ class ConcatLayer(MakiLayer):
         )
         return maki_tensor
     
-    def _forward(self,X):
+    def _forward(self, X):
         return tf.concat(values=X,axis=self.axis)
     
-    def _training_forward(self,X):
+    def _training_forward(self, X):
         return self._forward(X)
 
     def to_dict(self):
@@ -179,7 +179,7 @@ class ConcatLayer(MakiLayer):
             'type': 'ConcatLayer',
             'params': {
                 'name': self._name,
-                'axis' : self.axis,
+                'axis': self.axis,
             }
         }
 
@@ -501,7 +501,7 @@ class BatchNormLayer(SimpleForwardLayer):
 
 
 class ZeroPaddingLayer(SimpleForwardLayer):
-    def __init__(self,padding,name):
+    def __init__(self, padding, name):
         """
         This layer can add rows and columns of zeros
         at the top, bottom, left and right side of an image tensor.
@@ -513,7 +513,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
                 
         """
         assert(len(padding) == 2)
-        self.padding = [[0,0],padding[0],padding[1],[0,0]]
+        self.padding = [ [0,0], padding[0], padding[1], [0,0]]
         super().__init__(name,[],{})
     
     def _forward(self, X):
@@ -537,7 +537,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 
 
 class GlobalMaxPoolLayer(SimpleForwardLayer):
-    def __init__(self,name):
+    def __init__(self, name):
         super().__init__(name,[],{})
     
     def _forward(self, X):
@@ -557,14 +557,14 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
 
 
 class GlobalAvgPoolLayer(SimpleForwardLayer):
-    def __init__(self,name):
+    def __init__(self, name):
         super().__init__(name,[],{})
     
-    def _forward(self,X):
+    def _forward(self, X):
         assert(len(X.shape) == 4)
         return tf.reduce_mean(X,axis=[1,2])
     
-    def _training_forward(self,x):
+    def _training_forward(self, x):
         return self._forward(x)
     
     def to_dict(self):

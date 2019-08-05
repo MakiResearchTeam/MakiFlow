@@ -190,7 +190,7 @@ class Builder:
     def __reshape_layer_from_dict(params):
         name = params['name']
         new_shape = params['new_shape']
-        return ReshapeLayer(new_shape=new_shape,name=name)
+        return ReshapeLayer(new_shape=new_shape, name=name)
 
     @staticmethod
     def __upconv_layer_from_dict(params):
@@ -209,7 +209,7 @@ class Builder:
     def __upsampling_layer_from_dict(params):
         name = params['name']
         size = params['size']
-        return UpSamplingLayer(name=name,size=size)
+        return UpSamplingLayer(name=name, size=size)
 
     @staticmethod
     def __globalmaxpoollayer_from_dict(params):
@@ -225,19 +225,19 @@ class Builder:
     def __zeropadding_layer_from_dict(params):
         name = params['name']
         padding = params['padding']
-        return ZeroPaddingLayer(padding=padding,name=name)
+        return ZeroPaddingLayer(padding=padding, name=name)
 
     @staticmethod
     def __MultiOnAlphaLayer_layer_from_dict(params):
         name = params['name']
         alpha = params['alpha']
-        return LamdaLayer(alpha=alpha,name=name)
+        return LamdaLayer(alpha=alpha, name=name)
 
     @staticmethod
     def __concat_layer_from_dict(params):
         name = params['name']
         axis = params['axis']
-        return ConcatLayer(name=name,axis=axis)
+        return ConcatLayer(name=name, axis=axis)
 
     @staticmethod
     def __sum_layer_from_dict(params):
@@ -253,7 +253,7 @@ class Builder:
     def __input_layer_from_dict(params):
         input_shape = params['input_shape']
         name = params['name']
-        return InputLayer(name=name,input_shape = input_shape)    
+        return InputLayer(name=name, input_shape = input_shape)    
         
     @staticmethod
     def __conv_layer_from_dict(params):

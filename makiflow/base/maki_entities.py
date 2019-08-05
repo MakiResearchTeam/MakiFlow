@@ -51,7 +51,8 @@ class MakiLayer:
 
 
 class MakiTensor:
-    def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list, previous_tensors: dict):
+    def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list,
+                previous_tensors: dict):
         self.__data_tensor: tf.Tensor = data_tensor
         self.__name: str = parent_layer.get_name()
         self.__parent_tensor_names = parent_tensor_names
