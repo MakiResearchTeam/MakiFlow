@@ -443,7 +443,7 @@ class BatchNormLayer(SimpleForwardLayer):
 
         params = [self.running_mean, self.running_variance, self.gamma, self.beta]
         named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance,
-                                  self.name_gamma: self.gamma, self.name_beta: self.beta}
+                                self.name_gamma: self.gamma, self.name_beta: self.beta}
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
