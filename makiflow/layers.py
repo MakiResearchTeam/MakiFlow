@@ -518,7 +518,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
     def _forward(self, X):
         return tf.pad(
             tensor = X,
-            padding = self.padding,
+            paddings = self.padding,
             mode = "CONSTANT",
         )
 
