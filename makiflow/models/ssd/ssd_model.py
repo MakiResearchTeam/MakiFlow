@@ -239,6 +239,8 @@ class SSDModel(MakiModel):
         condition = tf.less(self.__num_positives, 1.0)
         self.__total_focal_loss = tf.where(condition, 0.0, loss)
 
+        self.__focal_loss_is_build = True
+
     def __setup_focal_loss_inputs(self):
         self.__gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
 
@@ -340,9 +342,9 @@ class SSDModel(MakiModel):
                         train_focal_loss += focal_loss
                         train_total_loss += total_loss
 
-                    train_loc_loss /= self.batch_sz
-                    train_focal_loss /= self.batch_sz
-                    train_total_loss /= self.batch_sz
+                    train_loc_loss /= n_batches
+                    train_focal_loss /= n_batches
+                    train_total_loss /= n_batches
 
                     train_loc_losses.append(train_loc_loss)
                     train_focal_losses.append(train_focal_loss)
@@ -401,6 +403,8 @@ class SSDModel(MakiModel):
         total_loss = top_k_loss + self.__loc_loss_weight * self.__loc_loss
         condition = tf.less(self.__num_positives, 1.0)
         self.__total_top_k_loss = tf.where(condition, 0.0, total_loss)
+
+        self.__top_k_loss_is_build = True
 
     def __setup_top_k_loss_inputs(self):
         self.__top_k_neg_samples_ratio = tf.placeholder(tf.float32, shape=[], name='top_k_neg_samples_ratio')
@@ -512,10 +516,10 @@ class SSDModel(MakiModel):
                         train_pos_loss += p_loss
                         train_total_loss += total_loss
 
-                    train_loc_loss /= self.batch_sz
-                    train_neg_loss /= self.batch_sz
-                    train_pos_loss /= self.batch_sz
-                    train_total_loss /= self.batch_sz
+                    train_loc_loss /= n_batches
+                    train_neg_loss /= n_batches
+                    train_pos_loss /= n_batches
+                    train_total_loss /= n_batches
 
                     train_loc_losses.append(train_loc_loss)
                     train_neg_losses.append(train_neg_loss)
@@ -584,6 +588,7 @@ class SSDModel(MakiModel):
         total_loss = confidence_loss + self.__loc_loss_weight * self.__loc_loss
         condition = tf.less(self.__num_positives, 1.0)
         self.__total_scan_loss = tf.where(condition, 0.0, total_loss)
+        self.__scan_loss_is_build = True
 
     def __setup_scan_loss_inputs(self):
         self.__scan_neg_samples_ratio = tf.placeholder(tf.float32, shape=[], name='scan_neg_samples_ratio')
@@ -695,10 +700,10 @@ class SSDModel(MakiModel):
                         train_pos_loss += p_loss
                         train_total_loss += total_loss
 
-                    train_loc_loss /= self.batch_sz
-                    train_neg_loss /= self.batch_sz
-                    train_pos_loss /= self.batch_sz
-                    train_total_loss /= self.batch_sz
+                    train_loc_loss /= n_batches
+                    train_neg_loss /= n_batches
+                    train_pos_loss /= n_batches
+                    train_total_loss /= n_batches
 
                     train_loc_losses.append(train_loc_loss)
                     train_neg_losses.append(train_neg_loss)

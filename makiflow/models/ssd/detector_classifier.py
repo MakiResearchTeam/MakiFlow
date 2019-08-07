@@ -12,7 +12,8 @@ class DetectorClassifier:
     conv layers -> detector -> confidences + localization regression.
     """
 
-    def __init__(self, f_source: MakiTensor, kw, kh, in_f, num_classes, dboxes: list, name):
+    def __init__(self, reg_fms: MakiTensor, rkw, rkh, rin_f,
+        class_fms: MakiTensor, ckw, ckh, cin_f, num_classes, dboxes: list, name):
         """
         Parameters
         ----------
@@ -33,19 +34,23 @@ class DetectorClassifier:
             the cell of the feature map. Example:
             [(1, 1), (0.5, 1.44), (1.44, 0.5)] - (1,1) - center box matches one cell of the feature map.
         """
-        self.x = f_source
-        self.kw = kw
-        self.kh = kh
-        self.in_f = in_f
+        self.reg_x = reg_fms
+        self.rkw = rkw
+        self.rkh = rkh
+        self.rin_f = rin_f
+        self.class_x = class_fms
+        self.ckw = ckw
+        self.ckh = ckh
+        self.cin_f = cin_f
         self.class_number = num_classes
         self._dboxes = dboxes
         self.name = str(name)
 
         classifier_out_f = num_classes * len(dboxes)
         bb_regressor_out_f = 4 * len(dboxes)
-        self.classifier = ConvLayer(kw, kh, in_f, classifier_out_f,
+        self.classifier = ConvLayer(ckw, ckh, cin_f, classifier_out_f,
                                     activation=None, padding='SAME', name='SSDClassifier_' + str(name))
-        self.bb_regressor = ConvLayer(kw, kh, in_f, bb_regressor_out_f,
+        self.bb_regressor = ConvLayer(rkw, rkh, rin_f, bb_regressor_out_f,
                                       activation=None, padding='SAME', name='SSDBBDetector_' + str(name))
         self._make_detections()
 
@@ -54,11 +59,10 @@ class DetectorClassifier:
         Creates list with "flattened" predicted confidences and regressed localization offsets for each dbox.
         Example: [confidences, offsets]
         """
-        X = self.x
         n_dboxes = len(self._dboxes)
 
         # FLATTEN PREDICTIONS OF THE CLASSIFIER
-        confidences = self.classifier(X)
+        confidences = self.classifier(self.class_x)
         # [BATCH SIZE, WIDTH, HEIGHT, DEPTH]
         conf_shape = confidences.get_shape()
         # width of the tensor
@@ -69,7 +73,7 @@ class DetectorClassifier:
         self._confidences = conf_reshape(confidences)
 
         # FLATTEN PREDICTIONS OF THE REGRESSOR
-        offsets = self.bb_regressor(X)
+        offsets = self.bb_regressor(self.reg_x)
         # [BATCH SIZE, WIDTH, HEIGHT, DEPTH]
         off_shape = offsets.get_shape()
         # width of the tensor
@@ -91,16 +95,13 @@ class DetectorClassifier:
         It is used for creating default boxes since their size depends
         on the feature maps' widths and heights.
         """
-        return self.x.get_shape()
+        return self.reg_x.get_shape()
 
     def to_dict(self):
+        # TODO
         return {
             'type': 'DetectorClassifier',
             'params': {
-                'f_source_name': self.x.get_name(),
-                'kw': self.kw,
-                'kh': self.kh,
-                'in_f': self.in_f,
                 'class_number': self.class_number,
                 'dboxes': self._dboxes,
                 'name': self.name
