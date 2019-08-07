@@ -259,6 +259,7 @@ class SSDModel(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self.__focal_optimizer != optimizer:
+            print('New optimizer is used.')
             self.__focal_optimizer = optimizer
             self.__focal_train_op = optimizer.minimize(self.__total_focal_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
@@ -385,7 +386,7 @@ class SSDModel(MakiModel):
         )
 
         num_negatives_to_pick = tf.cast(
-            self.__num_positives * tf.constant(self.__top_k_neg_samples_ratio), dtype=tf.int32
+            self.__num_positives * self.__top_k_neg_samples_ratio, dtype=tf.int32
         )
         negative_confidence_loss, _ = tf.nn.top_k(
             negative_confidence_loss, k=num_negatives_to_pick
@@ -424,6 +425,7 @@ class SSDModel(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self.__top_k_optimizer != optimizer:
+            print('New optimizer is used.')
             self.__top_k_optimizer = optimizer
             self.__top_k_train_op = optimizer.minimize(self.__total_top_k_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
@@ -556,7 +558,7 @@ class SSDModel(MakiModel):
         # Calculate confidence loss for part of negative bboxes, i.e. Hard Negative Mining
         # Create binary mask for negative loss
         ones = tf.ones(shape=[self.batch_sz, self.total_predictions])
-        num_negatives = tf.cast(self.__num_positives * tf.constant(self.__scan_neg_samples_ratio), dtype=tf.float32)
+        num_negatives = tf.cast(self.__num_positives * self.__scan_neg_samples_ratio, dtype=tf.float32)
         negative_loss_mask = ones - self.__input_loc_loss_masks
         negative_confidence_loss = self.__ce_loss * negative_loss_mask
         num_negatives_per_batch = tf.cast(
@@ -608,6 +610,7 @@ class SSDModel(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self.__scan_optimizer != optimizer:
+            print('New optimizer is used.')
             self.__scan_optimizer = optimizer
             self.__scan_train_op = optimizer.minimize(self.__total_scan_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))

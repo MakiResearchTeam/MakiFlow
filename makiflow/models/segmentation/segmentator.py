@@ -87,6 +87,7 @@ class Segmentator(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self.__focal_optimizer != optimizer:
+            print('New optimizer is used.')
             self.__focal_optimizer = optimizer
             self.__focal_train_op = optimizer.minimize(self.__focal_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
@@ -217,6 +218,7 @@ class Segmentator(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self.__weighted_focal_optimizer != optimizer:
+            print('New optimizer is used.')
             self.__weighted_focal_optimizer = optimizer
             self.__weighted_focal_train_op = optimizer.minimize(self.__weighted_focal_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
@@ -337,6 +339,7 @@ class Segmentator(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self.__focal_optimizer != optimizer:
+            print('New optimizer is used.')
             self.__focal_optimizer = optimizer
             self.__focal_train_op = optimizer.minimize(self.__focal_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
