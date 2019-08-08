@@ -86,11 +86,7 @@ class DataPreparator:
         new_size : tuple
             Contains new width and height. Example: (300, 300).
         """
-        images, bboxes = resize_images_and_bboxes(self.__images, self.__bboxes, new_size)
-        del self.__images
-        del self.__bboxes
-        self.__images = images
-        self.__bboxes = bboxes
+        resize_images_and_bboxes(self.__images, self.__bboxes, new_size)
         self.__collect_image_info()
     
     

@@ -389,69 +389,69 @@ class SSDModel(MakiModel):
 
         train_op = optimizer.minimize(self.loss, var_list=self._trainable_vars)
         # Initilize optimizer's variables
-        self._session.run(tf.variables_initializer(optimizer.variables()))
+        with tf.init_scope():
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+            n_batches = len(images) // self.batch_sz
 
-        n_batches = len(images) // self.batch_sz
+            train_loc_losses = []
+            train_pos_conf_losses = []
+            train_neg_conf_losses = []
+            try:
+                for i in range(epochs):
+                    print('Start shuffling...')
+                    images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
+                    print('Finished shuffling.')
+                    train_loc_loss = np.float32(0)
+                    train_pos_conf_loss = np.float32(0)
+                    train_neg_conf_loss = np.float32(0)
+                    train_total_loss = np.float32(0)
+                    iterator = tqdm(range(n_batches))
+                    try:
+                        for j in iterator:
+                            img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                            loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
+                            labels_batch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                            gt_locs_batch = gt_locs[j * self.batch_sz:(j + 1) * self.batch_sz]
 
-        train_loc_losses = []
-        train_pos_conf_losses = []
-        train_neg_conf_losses = []
-        try:
-            for i in range(epochs):
-                print('Start shuffling...')
-                images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
-                print('Finished shuffling.')
-                train_loc_loss = np.float32(0)
-                train_pos_conf_loss = np.float32(0)
-                train_neg_conf_loss = np.float32(0)
-                train_total_loss = np.float32(0)
-                iterator = tqdm(range(n_batches))
-                try:
-                    for j in iterator:
-                        img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
-                        loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
-                        labels_batch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
-                        gt_locs_batch = gt_locs[j * self.batch_sz:(j + 1) * self.batch_sz]
+                            # Don't know how to fix it yet.
+                            try:
+                                total_loss, loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self._session.run(
+                                    [self.loss, self.loc_loss, self.positive_confidence_loss, self.negative_confidence_loss, train_op],
+                                    feed_dict={
+                                        self._input_data_tensors[0]: img_batch,
+                                        self.input_labels: labels_batch,
+                                        self.input_loc_loss_masks: loc_mask_batch,
+                                        self.input_loc: gt_locs_batch
+                                    })
+                            except Exception as ex:
+                                if ex is KeyboardInterrupt:
+                                    raise Exception('You have raised KeyboardInterrupt exception.')
+                                else:
+                                    print(ex)
+                                    continue
 
-                        # Don't know how to fix it yet.
-                        try:
-                            total_loss, loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self._session.run(
-                                [self.loss, self.loc_loss, self.positive_confidence_loss, self.negative_confidence_loss, train_op],
-                                feed_dict={
-                                    self._input_data_tensors[0]: img_batch,
-                                    self.input_labels: labels_batch,
-                                    self.input_loc_loss_masks: loc_mask_batch,
-                                    self.input_loc: gt_locs_batch
-                                })
-                        except Exception as ex:
-                            if ex is KeyboardInterrupt:
-                                raise Exception('You have raised KeyboardInterrupt exception.')
-                            else:
-                                print(ex)
-                                continue
+                            # Calculate losses using exponential decay
+                            train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
+                            train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
+                            train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
+                            train_total_loss = 0.9 * train_total_loss + 0.1 * total_loss
 
-                        # Calculate losses using exponential decay
-                        train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
-                        train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
-                        train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
-                        train_total_loss = 0.9 * train_total_loss + 0.1 * total_loss
-
-                    train_loc_losses.append(train_loc_loss)
-                    train_pos_conf_losses.append(train_pos_conf_loss)
-                    train_neg_conf_losses.append(train_neg_conf_loss)
-                    print(
-                        'Epoch:', i, "Positive conf loss:", train_pos_conf_loss,
-                        "Negative conf loss:", train_neg_conf_loss,
-                        'Loc loss:', train_loc_loss,
-                        'Total loss', train_total_loss
-                    )
-                except Exception as ex:
-                    iterator.close()
-                    print(ex)
-        finally:
-            iterator.close()
-            return {
-                'pos conf losses': train_pos_conf_losses,
-                'neg conf losses': train_neg_conf_losses,
-                'loc losses': train_loc_losses,
-            }
+                        train_loc_losses.append(train_loc_loss)
+                        train_pos_conf_losses.append(train_pos_conf_loss)
+                        train_neg_conf_losses.append(train_neg_conf_loss)
+                        print(
+                            'Epoch:', i, "Positive conf loss:", train_pos_conf_loss,
+                            "Negative conf loss:", train_neg_conf_loss,
+                            'Loc loss:', train_loc_loss,
+                            'Total loss', train_total_loss
+                        )
+                    except Exception as ex:
+                        iterator.close()
+                        print(ex)
+            finally:
+                iterator.close()
+                return {
+                    'pos conf losses': train_pos_conf_losses,
+                    'neg conf losses': train_neg_conf_losses,
+                    'loc losses': train_loc_losses,
+                }
