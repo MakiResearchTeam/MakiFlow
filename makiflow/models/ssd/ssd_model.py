@@ -32,12 +32,16 @@ class SSDModel(MakiModel):
         self.input_shape = input_s.get_shape()
         self.batch_sz = self.input_shape[0]
 
-        self._generate_default_boxes()
-        self._prepare_inference_graph()
+        self.__generate_default_boxes()
+        self.__prepare_inference_graph()
         # Get number of classes. It is needed for Focal Loss
-        self._num_classes = self.dcs[0].class_number
+        self.__num_classes = self.dcs[0].class_number
+        # For training
+        self.__training_vars_are_ready = False
 
-    def _generate_default_boxes(self):
+#-------------------------------------------------------SETTING UP DEFAULT BOXES---------------------------------------------------------
+
+    def __generate_default_boxes(self):
         self.default_boxes_wh = []
         # Also collect feature map sizes for later easy access to
         # particular bboxes
@@ -72,6 +76,7 @@ class SSDModel(MakiModel):
         self.__correct_default_boxes(self.default_boxes)
 
         self.total_predictions = len(self.default_boxes)
+        
 
     def get_dbox(self, dc_block_ind, dbox_category, x_pos, y_pos):
         dcblock_dboxes_to_pass = 0
@@ -134,7 +139,10 @@ class SSDModel(MakiModel):
 
         return np.vstack(boxes_list)
 
-    def _prepare_inference_graph(self):
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------SETTING UP INFERENCE OF THE MODEL---------------------------------------------------------
+
+    def __prepare_inference_graph(self):
         confidences = []
         offsets = []
 
@@ -162,8 +170,11 @@ class SSDModel(MakiModel):
             self.predictions,
             feed_dict={self._input_data_tensors[0]: X}
         )
+    
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------SETTING UP TRAINING--------------------------------------------------------------------
 
-    def _prepare_training_graph(self):
+    def __prepare_training_graph(self):
         training_confidences = []
         training_offsets = []
         n_outs = len(self._training_outputs)
@@ -174,88 +185,382 @@ class SSDModel(MakiModel):
             training_offsets += [offs]
             i += 2
 
-        self._train_confidences_ish = tf.concat(training_confidences, axis=1)
-        self._train_offsets = tf.concat(training_offsets, axis=1)
+        self.__train_confidences_ish = tf.concat(training_confidences, axis=1)
+        self.__train_offsets = tf.concat(training_offsets, axis=1)
 
-    def _create_loss(self, loc_loss_weight, neg_samples_ratio):
-        if not self._set_for_training:
-            super()._setup_for_training()
+        # Create placeholders for the training data
+        self.__input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
+        self.__input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
+        self.__input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
+        self.__loc_loss_weight = tf.placeholder(tf.float32, shape=[], name='loc_loss_weight')
 
-        self._prepare_training_graph()
-        self.input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
-        self.input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
-        self.input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
-
-        confidence_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=self._train_confidences_ish, labels=self.input_labels
+        # DEFINE VARIABLES NECESSARY FOR BUILDING LOSSES
+        self.__ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            logits=self.__train_confidences_ish, labels=self.__input_labels
         )
-        # Calculate confidence loss for positive bboxes
-        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
-        positive_confidence_loss = confidence_loss * self.input_loc_loss_masks
-        positive_confidence_loss = tf.reduce_sum(positive_confidence_loss)
-        self.positive_confidence_loss = positive_confidence_loss / num_positives
+        self.__num_positives = tf.reduce_sum(self.__input_loc_loss_masks)
+        self.__training_vars_are_ready = True
 
-        # Calculate confidence loss for part of negative bboxes, i.e. Hard Negative Mining
-        # Create binary mask for negative loss
-        ones = tf.ones(shape=[self.batch_sz, self.total_predictions])
-        negative_loss_mask = ones - self.input_loc_loss_masks
-        negative_confidence_loss = negative_loss_mask * confidence_loss
-        negative_confidence_loss = tf.reshape(
-            negative_confidence_loss, shape=[self.batch_sz * self.total_predictions]
-        )
+        self.__focal_loss_is_build = False
+        self.__top_k_loss_is_build = False
+        self.__scan_loss_is_build = False
+    
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------FOCAL LOSS-----------------------------------------------------------------------------
 
-        num_negatives_to_pick = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.int32)
-        negative_confidence_loss, _ = tf.nn.top_k(
-            negative_confidence_loss, k=num_negatives_to_pick
-        )
-        num_negatives_to_pick = tf.cast(num_negatives_to_pick, dtype=tf.float32)
-        self.negative_confidence_loss = tf.reduce_sum(negative_confidence_loss) / num_negatives_to_pick
-
-        final_confidence_loss = self.positive_confidence_loss + self.negative_confidence_loss
-
-        diff = self.input_loc - self._train_offsets
-
+    def __build_loc_loss(self):
+        diff = self.__input_loc - self.__train_offsets
         # Define smooth L1 loss
         loc_loss_l2 = 0.5 * (diff ** 2.0)
         loc_loss_l1 = tf.abs(diff) - 0.5
         smooth_l1_condition = tf.less(tf.abs(diff), 1.0)
         loc_loss = tf.where(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
 
-        loc_loss_mask = tf.stack([self.input_loc_loss_masks] * 4, axis=2)
+        loc_loss_mask = tf.stack([self.__input_loc_loss_masks] * 4, axis=2)
         loc_loss = loc_loss_mask * loc_loss
-        self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
+        self.__loc_loss = tf.reduce_sum(loc_loss) / self.__num_positives
 
-        loss = final_confidence_loss + loc_loss_weight * self.loc_loss
-        loss_factor_condition = tf.less(num_positives, 1.0)
-        self.loss = tf.where(loss_factor_condition, 0.0, loss)
+    def __build_focal_loss(self):
+        # [batch_sz, total_predictions, num_classes]
+        train_confidences = tf.nn.softmax(self.__train_confidences_ish)
+        # Create one-hot encoding for picking predictions we need
+        # [batch_sz, total_predictions, num_classes]
+        one_hot_labels = tf.one_hot(self.__input_labels, depth=self.__num_classes, on_value=1.0, off_value=0.0)
+        filtered_confidences = train_confidences * one_hot_labels
+        # [batch_sz, total_predictions]
+        sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
+        ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
+        focal_weights = tf.pow(ones_arr - sparse_confidences, self.__gamma)
+        self.__focal_loss = tf.reduce_sum(focal_weights * self.__ce_loss) / self.__num_positives
 
-    def _create_scan_loss(self, loc_loss_weight, neg_samples_ratio):
+        self.__build_loc_loss()
+
+        loss = self.__focal_loss + self.__loc_loss_weight * self.__loc_loss
+        condition = tf.less(self.__num_positives, 1.0)
+        self.__total_focal_loss = tf.where(condition, 0.0, loss)
+
+        self.__focal_loss_is_build = True
+
+    def __setup_focal_loss_inputs(self):
+        self.__gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
+
+    def __minimize_focal_loss(self, optimizer):
         if not self._set_for_training:
             super()._setup_for_training()
+        
+        if not self.__training_vars_are_ready:
+            self.__prepare_training_graph()
+        
+        if not self.__focal_loss_is_build:
+            self.__setup_focal_loss_inputs()
+            self.__build_focal_loss()
+            self.__focal_optimizer = optimizer
+            self.__focal_train_op = optimizer.minimize(self.__total_focal_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
 
-        self._prepare_training_graph()
-        self.input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
-        self.input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
-        self.input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
+        if self.__focal_optimizer != optimizer:
+            print('New optimizer is used.')
+            self.__focal_optimizer = optimizer
+            self.__focal_train_op = optimizer.minimize(self.__total_focal_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
 
-        confidence_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=self._train_confidences_ish, labels=self.input_labels
-        )
-        print(confidence_loss.shape)
-        # Calculate confidence loss for positive bboxes
-        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
-        positive_confidence_loss = confidence_loss * self.input_loc_loss_masks
+        return self.__focal_train_op
+        
+    def fit_focal(self, images, loc_masks, labels, gt_locs, optimizer,
+            loc_loss_weight=1.0, gamma=2.0, epochs=1):
+        """
+        Function for training the SSD.
+        
+        Parameters
+        ----------
+        images : numpy ndarray
+            Numpy array contains images with shape [batch_sz, image_w, image_h, color_channels].
+        loc_masks : numpy array
+            Binary masks represent which default box matches ground truth box. In training loop it will be multiplied
+            with confidence losses array in order to get only positive confidences.
+        labels : numpy array
+            Sparse(not one-hot encoded!) labels for classification loss. The array has a shape of [num_images].
+        gt_locs : numpy ndarray
+            Array with differences between ground truth boxes and default boxes coordinates: gbox - dbox.
+        loc_loss_weight : float
+            Means how much localization loss influences total loss:
+            loss = confidence_loss + loss_weight*localization_loss
+        gamma : float
+            Gamma term of the focal loss. Affects how much good predictions' loss is penalized:
+            more gamma - higher penalizing.
+        optimizer : TensorFlow optimizer
+            Used for minimizing the loss function.
+        epochs : int
+            Number of epochs to run.
+        """
+        assert (type(loc_loss_weight) == float)
+        assert (type(gamma) == float)
+
+        train_op = self.__minimize_focal_loss(optimizer)
+
+        n_batches = len(images) // self.batch_sz
+
+        train_loc_losses = []
+        train_focal_losses = []
+        train_total_losses = []
+        try:
+            for i in range(epochs):
+                print('Start shuffling...')
+                images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
+                print('Finished shuffling.')
+                train_loc_loss = 0
+                train_focal_loss = 0
+                train_total_loss = 0
+                iterator = tqdm(range(n_batches))
+                try:
+                    for j in iterator:
+                        img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        labels_batch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        gt_locs_batch = gt_locs[j * self.batch_sz:(j + 1) * self.batch_sz]
+
+                        # Don't know how to fix it yet.
+                        try:
+                            total_loss, focal_loss, loc_loss, _ = self._session.run(
+                                [self.__total_focal_loss, self.__focal_loss, self.__loc_loss, train_op],
+                                feed_dict={
+                                    self._input_data_tensors[0]: img_batch,
+                                    self.__input_labels: labels_batch,
+                                    self.__input_loc_loss_masks: loc_mask_batch,
+                                    self.__input_loc: gt_locs_batch,
+                                    self.__loc_loss_weight: loc_loss_weight,
+                                    self.__gamma: gamma
+                                })
+                        except Exception as ex:
+                            if ex is KeyboardInterrupt:
+                                raise Exception('You have raised KeyboardInterrupt exception.')
+                            else:
+                                print(ex)
+                                continue
+
+                        # Calculate losses using exponential decay
+                        train_loc_loss +=  loc_loss
+                        train_focal_loss += focal_loss
+                        train_total_loss += total_loss
+
+                    train_loc_loss /= n_batches
+                    train_focal_loss /= n_batches
+                    train_total_loss /= n_batches
+
+                    train_loc_losses.append(train_loc_loss)
+                    train_focal_losses.append(train_focal_loss)
+                    train_total_losses.append(train_total_loss)
+                    print(
+                        'Epoch:', i, 
+                        'Loc loss:', train_loc_loss,
+                        'Focal loss', train_focal_loss,
+                        'Total loss', train_total_loss
+                    )
+                except Exception as ex:
+                    iterator.close()
+                    print(ex)
+        finally:
+            iterator.close()
+            return {
+                'focal losses': train_focal_losses,
+                'total losses': train_total_losses,
+                'loc losses': train_loc_losses,
+            }
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------TOP-K LOSS-----------------------------------------------------------------------------
+
+    def __build_top_k_positive_loss(self):
+        positive_confidence_loss = self.__ce_loss * self.__input_loc_loss_masks
         positive_confidence_loss = tf.reduce_sum(positive_confidence_loss)
-        self.positive_confidence_loss = positive_confidence_loss / num_positives
-        print(self.positive_confidence_loss.shape)
+        self.__top_k_positive_confidence_loss = positive_confidence_loss / self.__num_positives
 
+    def __build_top_k_negative_loss(self):
         # Calculate confidence loss for part of negative bboxes, i.e. Hard Negative Mining
         # Create binary mask for negative loss
         ones = tf.ones(shape=[self.batch_sz, self.total_predictions])
-        num_negatives = tf.cast(num_positives * tf.constant(neg_samples_ratio), dtype=tf.float32)
-        negative_loss_mask = ones - self.input_loc_loss_masks
-        negative_confidence_loss = confidence_loss * negative_loss_mask
-        print(negative_confidence_loss.shape)
+        negative_loss_mask = ones - self.__input_loc_loss_masks
+        negative_confidence_loss = negative_loss_mask * self.__ce_loss
+        negative_confidence_loss = tf.reshape(
+            negative_confidence_loss, shape=[self.batch_sz * self.total_predictions]
+        )
+
+        num_negatives_to_pick = tf.cast(
+            self.__num_positives * self.__top_k_neg_samples_ratio, dtype=tf.int32
+        )
+        negative_confidence_loss, _ = tf.nn.top_k(
+            negative_confidence_loss, k=num_negatives_to_pick
+        )
+        num_negatives_to_pick = tf.cast(num_negatives_to_pick, dtype=tf.float32)
+        self.__top_k_negative_confidence_loss = tf.reduce_sum(negative_confidence_loss) / num_negatives_to_pick
+
+    def __build_top_k_loss(self):
+        # BUILDS CROSS-ENTROPY LOSS WITH BATCH HARD NEGATIVE MINING
+        self.__build_top_k_positive_loss()
+        self.__build_top_k_negative_loss()
+        self.__build_loc_loss()
+
+        top_k_loss = self.__top_k_positive_confidence_loss + self.__top_k_negative_confidence_loss
+        total_loss = top_k_loss + self.__loc_loss_weight * self.__loc_loss
+        condition = tf.less(self.__num_positives, 1.0)
+        self.__total_top_k_loss = tf.where(condition, 0.0, total_loss)
+
+        self.__top_k_loss_is_build = True
+
+    def __setup_top_k_loss_inputs(self):
+        self.__top_k_neg_samples_ratio = tf.placeholder(tf.float32, shape=[], name='top_k_neg_samples_ratio')
+
+    def __minimize_top_k_loss(self, optimizer):
+        if not self._set_for_training:
+            super()._setup_for_training()
+        
+        if not self.__training_vars_are_ready:
+            self.__prepare_training_graph()
+        
+        if not self.__top_k_loss_is_build:
+            self.__setup_top_k_loss_inputs()
+            self.__build_top_k_loss()
+            self.__top_k_optimizer = optimizer
+            self.__top_k_train_op = optimizer.minimize(self.__total_top_k_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        if self.__top_k_optimizer != optimizer:
+            print('New optimizer is used.')
+            self.__top_k_optimizer = optimizer
+            self.__top_k_train_op = optimizer.minimize(self.__total_top_k_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        return self.__top_k_train_op
+
+    def fit_top_k(self, images, loc_masks, labels, gt_locs, optimizer,
+            loc_loss_weight=1.0, neg_samples_ratio=3.0, epochs=1):
+        """
+        Function for training the SSD.
+        
+        Parameters
+        ----------
+        images : numpy ndarray
+            Numpy array contains images with shape [batch_sz, image_w, image_h, color_channels].
+        loc_masks : numpy array
+            Binary masks represent which default box matches ground truth box. In training loop it will be multiplied
+            with confidence losses array in order to get only positive confidences.
+        labels : numpy array
+            Sparse(not one-hot encoded!) labels for classification loss. The array has a shape of [num_images].
+        gt_locs : numpy ndarray
+            Array with differences between ground truth boxes and default boxes coordinates: gbox - dbox.
+        loc_loss_weight : float
+            Means how much localization loss influences total loss:
+            loss = confidence_loss + loss_weight*localization_loss
+        neg_samples_ratio : float
+            Affects amount of negative samples used for calculation of the negative loss.
+            Note: number of negative samples = number of positive samples * `neg_samples_ratio`
+        optimizer : TensorFlow optimizer
+            Used for minimizing the loss function.
+        epochs : int
+            Number of epochs to run.
+        """
+        assert (type(loc_loss_weight) == float)
+        assert (type(neg_samples_ratio) == float)
+
+        train_op = self.__minimize_top_k_loss(optimizer)
+
+        n_batches = len(images) // self.batch_sz
+
+        train_loc_losses = []
+        train_neg_losses = []
+        train_pos_losses = []
+        train_total_losses = []
+        try:
+            for i in range(epochs):
+                print('Start shuffling...')
+                images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
+                print('Finished shuffling.')
+                train_loc_loss = 0
+                train_neg_loss = 0
+                train_pos_loss = 0
+                train_total_loss = 0
+                iterator = tqdm(range(n_batches))
+                try:
+                    for j in iterator:
+                        img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        labels_batch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        gt_locs_batch = gt_locs[j * self.batch_sz:(j + 1) * self.batch_sz]
+
+                        # Don't know how to fix it yet.
+                        try:
+                            total_loss, p_loss, n_loss, loc_loss, _ = self._session.run(
+                                [
+                                    self.__total_top_k_loss,
+                                    self.__top_k_positive_confidence_loss,
+                                    self.__top_k_negative_confidence_loss, 
+                                    self.__loc_loss,
+                                    train_op
+                                ],
+                                feed_dict={
+                                    self._input_data_tensors[0]: img_batch,
+                                    self.__input_labels: labels_batch,
+                                    self.__input_loc_loss_masks: loc_mask_batch,
+                                    self.__input_loc: gt_locs_batch,
+                                    self.__loc_loss_weight: loc_loss_weight,
+                                    self.__top_k_neg_samples_ratio: neg_samples_ratio
+                                })
+                        except Exception as ex:
+                            if ex is KeyboardInterrupt:
+                                raise Exception('You have raised KeyboardInterrupt exception.')
+                            else:
+                                print(ex)
+                                continue
+
+                        # Calculate losses using exponential decay
+                        train_loc_loss +=  loc_loss
+                        train_neg_loss += n_loss
+                        train_pos_loss += p_loss
+                        train_total_loss += total_loss
+
+                    train_loc_loss /= n_batches
+                    train_neg_loss /= n_batches
+                    train_pos_loss /= n_batches
+                    train_total_loss /= n_batches
+
+                    train_loc_losses.append(train_loc_loss)
+                    train_neg_losses.append(train_neg_loss)
+                    train_pos_losses.append(train_pos_loss)
+                    train_total_losses.append(train_total_loss)
+                    print(
+                        'Epoch:', i, 
+                        'Loc loss:', train_loc_loss,
+                        'Positive loss', train_pos_loss,
+                        'Negative loss', train_neg_loss,
+                        'Total loss', train_total_loss
+                    )
+                except Exception as ex:
+                    iterator.close()
+                    print(ex)
+        finally:
+            iterator.close()
+            return {
+                'positive losses': train_pos_losses,
+                'negative losses': train_neg_losses,
+                'total losses': train_total_losses,
+                'loc losses': train_loc_losses,
+            }
+    
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------SCAN LOSS-----------------------------------------------------------------------------
+
+    def __build_scan_positive_loss(self):
+        positive_confidence_loss = self.__ce_loss * self.__input_loc_loss_masks
+        positive_confidence_loss = tf.reduce_sum(positive_confidence_loss)
+        self.__scan_positive_confidence_loss = positive_confidence_loss / self.__num_positives
+
+    def __build_scan_negative_loss(self):
+        # Calculate confidence loss for part of negative bboxes, i.e. Hard Negative Mining
+        # Create binary mask for negative loss
+        ones = tf.ones(shape=[self.batch_sz, self.total_predictions])
+        num_negatives = tf.cast(self.__num_positives * self.__scan_neg_samples_ratio, dtype=tf.float32)
+        negative_loss_mask = ones - self.__input_loc_loss_masks
+        negative_confidence_loss = self.__ce_loss * negative_loss_mask
         num_negatives_per_batch = tf.cast(
             num_negatives / self.batch_sz,
             dtype=tf.int32
@@ -273,76 +578,47 @@ class SSDModel(MakiModel):
             infer_shape=False,
             initializer=1.0
         )
-        self.negative_confidence_loss = tf.reduce_sum(neg_conf_losses) / num_negatives
+        self.__scan_negative_confidence_loss = tf.reduce_sum(neg_conf_losses) / num_negatives
 
-        final_confidence_loss = self.positive_confidence_loss + self.negative_confidence_loss
+    def __build_scan_loss(self):
+        # BUILDS CROSS-ENTROPY LOSS WITH PER SAMPLE HARD NEGATIVE MINING
+        self.__build_scan_positive_loss()
+        self.__build_scan_negative_loss()
+        self.__build_loc_loss()
 
-        diff = self.input_loc - self._train_offsets
+        confidence_loss = self.__scan_positive_confidence_loss + self.__scan_negative_confidence_loss
+        total_loss = confidence_loss + self.__loc_loss_weight * self.__loc_loss
+        condition = tf.less(self.__num_positives, 1.0)
+        self.__total_scan_loss = tf.where(condition, 0.0, total_loss)
+        self.__scan_loss_is_build = True
 
-        # Define smooth L1 loss
-        loc_loss_l2 = 0.5 * (diff ** 2.0)
-        loc_loss_l1 = tf.abs(diff) - 0.5
-        smooth_l1_condition = tf.less(tf.abs(diff), 1.0)
-        loc_loss = tf.where(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
+    def __setup_scan_loss_inputs(self):
+        self.__scan_neg_samples_ratio = tf.placeholder(tf.float32, shape=[], name='scan_neg_samples_ratio')
 
-        loc_loss_mask = tf.stack([self.input_loc_loss_masks] * 4, axis=2)
-        loc_loss = loc_loss_mask * loc_loss
-        self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
-
-
-        loss = final_confidence_loss + loc_loss_weight * self.loc_loss
-        loss_factor_condition = tf.less(num_positives, 1.0)
-        self.loss = tf.where(loss_factor_condition, 0.0, loss)
-
-    def _create_focal_loss(self, loc_loss_weight, gamma):
+    def __minimize_scan_loss(self, optimizer):
         if not self._set_for_training:
             super()._setup_for_training()
-
-        self._prepare_training_graph()
-        self.input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
-        self.input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
-        self.input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
-
-        # CREATE FOCAL LOSS
-        # [batch_sz, total_predictions]
-        confidence_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=self._train_confidences_ish, labels=self.input_labels
-        )
-        # [batch_sz, total_predictions, num_classes]
-        train_confidences = tf.nn.softmax(self._train_confidences_ish)
-        # Create one-hot encoding for picking predictions we need
-        # [batch_sz, total_predictions, num_classes]
-        one_hot_labels = tf.one_hot(self.input_labels, depth=self._num_classes, on_value=1.0, off_value=0.0)
-        filtered_confidences = train_confidences * one_hot_labels
-        # [batch_sz, total_predictions]
-        sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
-        ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
-        focal_weight = tf.pow(ones_arr - sparse_confidences, gamma)
-        num_positives = tf.reduce_sum(self.input_loc_loss_masks)
-        focal_loss = tf.reduce_sum(focal_weight * confidence_loss) / num_positives
-
-        # For compability
-        self.negative_confidence_loss = focal_loss
-        self.positive_confidence_loss = focal_loss
         
-        # CREATE LOCALIZATION LOSS
-        diff = self.input_loc - self._train_offsets
-        # Define smooth L1 loss
-        loc_loss_l2 = 0.5 * (diff ** 2.0)
-        loc_loss_l1 = tf.abs(diff) - 0.5
-        smooth_l1_condition = tf.less(tf.abs(diff), 1.0)
-        loc_loss = tf.where(smooth_l1_condition, loc_loss_l2, loc_loss_l1)
-        loc_loss_mask = tf.stack([self.input_loc_loss_masks] * 4, axis=2)
-        loc_loss = loc_loss_mask * loc_loss
-        self.loc_loss = tf.reduce_sum(loc_loss) / num_positives
+        if not self.__training_vars_are_ready:
+            self.__prepare_training_graph()
+        
+        if not self.__scan_loss_is_build:
+            self.__setup_scan_loss_inputs()
+            self.__build_scan_loss()
+            self.__scan_optimizer = optimizer
+            self.__scan_train_op = optimizer.minimize(self.__total_scan_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
 
-        loss = focal_loss + loc_loss_weight * self.loc_loss
-        loss_factor_condition = tf.less(num_positives, 1.0)
-        self.loss = tf.where(loss_factor_condition, 0.0, loss)
+        if self.__scan_optimizer != optimizer:
+            print('New optimizer is used.')
+            self.__scan_optimizer = optimizer
+            self.__scan_train_op = optimizer.minimize(self.__total_scan_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
 
-    def fit(self, images, loc_masks, labels, gt_locs, optimizer,
-            loc_loss_weight=1.0, neg_samples_ratio=3.5, gamma=2.0,
-            epochs=1, loss_type='top_k_loss'):
+        return self.__scan_train_op
+
+    def fit_scan(self, images, loc_masks, labels, gt_locs, optimizer,
+            loc_loss_weight=1.0, neg_samples_ratio=3.0, epochs=1):
         """
         Function for training the SSD.
         
@@ -359,99 +635,100 @@ class SSDModel(MakiModel):
             Array with differences between ground truth boxes and default boxes coordinates: gbox - dbox.
         loc_loss_weight : float
             Means how much localization loss influences total loss:
-                    loss = confidence_loss + loss_weight*localization_loss
+            loss = confidence_loss + loss_weight*localization_loss
         neg_samples_ratio : float
-            Affects amount of negative samples taken for calculation confidence loss.
+            Affects amount of negative samples used for calculation of the negative loss.
+            Note: number of negative samples = number of positive samples * `neg_samples_ratio`
         optimizer : TensorFlow optimizer
-            Used for minimizing loss function.
+            Used for minimizing the loss function.
         epochs : int
             Number of epochs to run.
-        loss_type : str
-            Affects which loss function will be used for training.
-            Options: 'scan_loss', 'top_k_loss', 'focal_loss'.
         """
-        assert (optimizer is not None)
-        assert (self._session is not None)
-        assert (optimizer is not None)
         assert (type(loc_loss_weight) == float)
         assert (type(neg_samples_ratio) == float)
-        assert (type(gamma) == float)
 
-        if not self._set_for_training:
-            if loss_type == 'top_k_loss':
-                self._create_loss(loc_loss_weight, neg_samples_ratio)
-            elif loss_type == 'scan_loss':
-                self._create_scan_loss(loc_loss_weight, neg_samples_ratio)
-            elif loss_type == 'focal_loss':
-                self._create_focal_loss(loc_loss_weight, gamma)
-            else:
-                raise Exception('Unknown loss type: ' + loss_type)
+        train_op = self.__minimize_scan_loss(optimizer)
 
-        train_op = optimizer.minimize(self.loss, var_list=self._trainable_vars)
-        # Initilize optimizer's variables
-        with tf.init_scope():
-            self._session.run(tf.variables_initializer(optimizer.variables()))
-            n_batches = len(images) // self.batch_sz
+        n_batches = len(images) // self.batch_sz
 
-            train_loc_losses = []
-            train_pos_conf_losses = []
-            train_neg_conf_losses = []
-            try:
-                for i in range(epochs):
-                    print('Start shuffling...')
-                    images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
-                    print('Finished shuffling.')
-                    train_loc_loss = np.float32(0)
-                    train_pos_conf_loss = np.float32(0)
-                    train_neg_conf_loss = np.float32(0)
-                    train_total_loss = np.float32(0)
-                    iterator = tqdm(range(n_batches))
-                    try:
-                        for j in iterator:
-                            img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
-                            loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
-                            labels_batch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
-                            gt_locs_batch = gt_locs[j * self.batch_sz:(j + 1) * self.batch_sz]
+        train_loc_losses = []
+        train_neg_losses = []
+        train_pos_losses = []
+        train_total_losses = []
+        try:
+            for i in range(epochs):
+                print('Start shuffling...')
+                images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
+                print('Finished shuffling.')
+                train_loc_loss = 0
+                train_neg_loss = 0
+                train_pos_loss = 0
+                train_total_loss = 0
+                iterator = tqdm(range(n_batches))
+                try:
+                    for j in iterator:
+                        img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        labels_batch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        gt_locs_batch = gt_locs[j * self.batch_sz:(j + 1) * self.batch_sz]
 
-                            # Don't know how to fix it yet.
-                            try:
-                                total_loss, loc_loss_batch, pos_conf_loss_batch, neg_conf_loss_batch, _ = self._session.run(
-                                    [self.loss, self.loc_loss, self.positive_confidence_loss, self.negative_confidence_loss, train_op],
-                                    feed_dict={
-                                        self._input_data_tensors[0]: img_batch,
-                                        self.input_labels: labels_batch,
-                                        self.input_loc_loss_masks: loc_mask_batch,
-                                        self.input_loc: gt_locs_batch
-                                    })
-                            except Exception as ex:
-                                if ex is KeyboardInterrupt:
-                                    raise Exception('You have raised KeyboardInterrupt exception.')
-                                else:
-                                    print(ex)
-                                    continue
+                        # Don't know how to fix it yet.
+                        try:
+                            total_loss, p_loss, n_loss, loc_loss, _ = self._session.run(
+                                [
+                                    self.__total_scan_loss,
+                                    self.__scan_positive_confidence_loss,
+                                    self.__scan_negative_confidence_loss, 
+                                    self.__loc_loss,
+                                    train_op
+                                ],
+                                feed_dict={
+                                    self._input_data_tensors[0]: img_batch,
+                                    self.__input_labels: labels_batch,
+                                    self.__input_loc_loss_masks: loc_mask_batch,
+                                    self.__input_loc: gt_locs_batch,
+                                    self.__loc_loss_weight: loc_loss_weight,
+                                    self.__scan_neg_samples_ratio: neg_samples_ratio
+                                })
+                        except Exception as ex:
+                            if ex is KeyboardInterrupt:
+                                raise Exception('You have raised KeyboardInterrupt exception.')
+                            else:
+                                print(ex)
+                                continue
 
-                            # Calculate losses using exponential decay
-                            train_loc_loss = 0.9 * train_loc_loss + 0.1 * loc_loss_batch
-                            train_pos_conf_loss = 0.9 * train_pos_conf_loss + 0.1 * pos_conf_loss_batch
-                            train_neg_conf_loss = 0.9 * train_neg_conf_loss + 0.1 * neg_conf_loss_batch
-                            train_total_loss = 0.9 * train_total_loss + 0.1 * total_loss
+                        # Calculate losses using exponential decay
+                        train_loc_loss +=  loc_loss
+                        train_neg_loss += n_loss
+                        train_pos_loss += p_loss
+                        train_total_loss += total_loss
 
-                        train_loc_losses.append(train_loc_loss)
-                        train_pos_conf_losses.append(train_pos_conf_loss)
-                        train_neg_conf_losses.append(train_neg_conf_loss)
-                        print(
-                            'Epoch:', i, "Positive conf loss:", train_pos_conf_loss,
-                            "Negative conf loss:", train_neg_conf_loss,
-                            'Loc loss:', train_loc_loss,
-                            'Total loss', train_total_loss
-                        )
-                    except Exception as ex:
-                        iterator.close()
-                        print(ex)
-            finally:
-                iterator.close()
-                return {
-                    'pos conf losses': train_pos_conf_losses,
-                    'neg conf losses': train_neg_conf_losses,
-                    'loc losses': train_loc_losses,
-                }
+                    train_loc_loss /= n_batches
+                    train_neg_loss /= n_batches
+                    train_pos_loss /= n_batches
+                    train_total_loss /= n_batches
+
+                    train_loc_losses.append(train_loc_loss)
+                    train_neg_losses.append(train_neg_loss)
+                    train_pos_losses.append(train_pos_loss)
+                    train_total_losses.append(train_total_loss)
+                    print(
+                        'Epoch:', i, 
+                        'Loc loss:', train_loc_loss,
+                        'Positive loss', train_pos_loss,
+                        'Negative loss', train_neg_loss,
+                        'Total loss', train_total_loss
+                    )
+                except Exception as ex:
+                    iterator.close()
+                    print(ex)
+        finally:
+            iterator.close()
+            return {
+                'positive losses': train_pos_losses,
+                'negative losses': train_neg_losses,
+                'total losses': train_total_losses,
+                'loc losses': train_loc_losses,
+            }
+
+    

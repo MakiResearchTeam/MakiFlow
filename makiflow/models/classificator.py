@@ -104,10 +104,7 @@ class Classificator(MakiModel):
 		# the iterator tqdm iterates through manually. Yes, it's ugly, but necessary for
 		# convenient working with MakiFlow in Jupyter Notebook. Sometimes it's helpful
 		# even for console applications.
-		iterator = None
-		Xtrain = Xtrain.astype(np.float32)
-		Xtest = Xtest.astype(np.float32)
-
+		
 		# For training
 		cost = (
 			tf.reduce_mean(
@@ -128,6 +125,7 @@ class Classificator(MakiModel):
 		train_errors = []
 		test_costs = []
 		test_errors = []
+		iterator = None
 		try:
 			for i in range(epochs):
 				Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
