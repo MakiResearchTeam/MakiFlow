@@ -40,7 +40,7 @@ class Segmentator(MakiModel):
 
         training_out = self._training_outputs[0]
         self.__flattened_logits = tf.reshape(training_out, shape=[-1, self.total_predictions, self.num_classes])
-        self.__flattened_labels = tf.reshape(self._labels, shape=[-1, self.total_predictions])
+        self.__flattened_labels = tf.reshape(self.__labels, shape=[-1, self.total_predictions])
         
         self.__ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self.__flattened_logits, labels=self.__flattened_labels
@@ -49,6 +49,8 @@ class Segmentator(MakiModel):
         self.__training_vars_are_ready = True
 
         self.__focal_loss_is_build = False
+        self.__weighted_focal_loss_is_build = False
+        self.__weighted_ce_loss_is_build = False
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------FOCAL LOSS-----------------------------------------------------------------------------
@@ -93,7 +95,7 @@ class Segmentator(MakiModel):
             self.__focal_train_op = optimizer.minimize(self.__focal_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
-        return self._focal_train_op
+        return self.__focal_train_op
         
     def fit_focal(self, images, labels, gamma, num_positives, optimizer, epochs=1, test_period=1):
         """
@@ -103,28 +105,24 @@ class Segmentator(MakiModel):
 
 		Parameters
 		----------
-			Xtrain : numpy array
-				Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
-			Ytrain : numpy array
-				Training label for each image in `Xtrain` array with shape (num_images).
-				IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
-			Xtest : numpy array
-				Same as `Xtrain` but for testing.
-			Ytest : numpy array
-				Same as `Ytrain` but for testing.
-			optimizer : tensorflow optimizer
-				Model uses tensorflow optimizers in order train itself.
-			epochs : int
-				Number of epochs.
-			test_period : int
-				Test begins each `test_period` epochs. You can set a larger number in order to
-				speed up training.
+        images : numpy array
+            Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
+            labels : numpy array
+            Training label for each image in `Xtrain` array with shape (num_images).
+            IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+        test_period : int
+            Test begins each `test_period` epochs. You can set a larger number in order to
+            speed up training.
 
 		Returns
 		-------
-			python dictionary
-				Dictionary with all testing data(train error, train cost, test error, test cost)
-				for each test period.
+        python dictionary
+            Dictionary with all testing data(train error, train cost, test error, test cost)
+            for each test period.
 		"""
         assert (optimizer is not None)
         assert (self._session is not None)
@@ -139,21 +137,21 @@ class Segmentator(MakiModel):
         
         train_op = self.__minimize_focal_loss(optimizer)
 
-        n_batches = len(images) // self.__batch_sz
+        n_batches = len(images) // self.batch_sz
         train_losses = []
         iterator = None
         try:
             for i in range(epochs):
-                Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
+                images, labels = shuffle(images, labels)
                 train_loss = 0
                 iterator = tqdm(range(n_batches))
 
                 for j in iterator:
-                    Ibatch = images[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-                    Lbatch = labels[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-                    NPbatch = num_positives[j * self.__batch_sz:(j + 1) * self.__batch_sz]
+                    Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    NPbatch = num_positives[j * self.batch_sz:(j + 1) * self.batch_sz]
                     batch_loss, _ = self._session.run(
-                        [self._focal_loss, train_op],
+                        [self.__focal_loss, train_op],
                         feed_dict={
                             self.__images: Ibatch,
                             self.__labels: Lbatch,
@@ -195,13 +193,13 @@ class Segmentator(MakiModel):
         num_positives = tf.reduce_sum(self.__num_positives)
         self.__weighted_focal_loss = tf.reduce_sum(flattened_weights* focal_weights * self.__ce_loss) / num_positives
 
-        self.__focal_loss_is_build = True
+        self.__weighted_focal_loss_is_build = True
 
     def __setup_weighted_focal_loss_inputs(self):        
         self.__gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
         self.__num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
         self.__weighted_focal_weight_maps = tf.placeholder(
-            tf.float32, shape=[self.batch_sz, self.out_w, self.out_h], name='weighted focal weight map'
+            tf.float32, shape=[self.batch_sz, self.out_w, self.out_h], name='weighted_focal_weight_map'
         )
 
     def __minimize_weighted_focal_loss(self, optimizer):
@@ -211,11 +209,11 @@ class Segmentator(MakiModel):
         if not self.__training_vars_are_ready:
             self.__prepare_training_vars()
         
-        if not self.__focal_loss_is_build:
+        if not self.__weighted_focal_loss_is_build:
             self.__setup_weighted_focal_loss_inputs()
             self.__build_weighted_focal_loss()
             self.__weighted_focal_optimizer = optimizer
-            self.__focal_train_op = optimizer.minimize(self.__weighted_focal_loss, var_list=self._trainable_vars)
+            self.__weighted_focal_train_op = optimizer.minimize(self.__weighted_focal_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self.__weighted_focal_optimizer != optimizer:
@@ -224,7 +222,7 @@ class Segmentator(MakiModel):
             self.__weighted_focal_train_op = optimizer.minimize(self.__weighted_focal_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
-        return self._focal_train_op
+        return self.__weighted_focal_train_op
         
     def fit_weighted_focal(self, images, labels, gamma, num_positives, weight_maps, optimizer, epochs=1, test_period=1):
         """
@@ -268,24 +266,24 @@ class Segmentator(MakiModel):
         # convenient working with MakiFlow in Jupyter Notebook. Sometimes it's helpful
         # even for console applications.
         
-        train_op = self.__minimize_focal_loss(optimizer)
+        train_op = self.__minimize_weighted_focal_loss(optimizer)
 
-        n_batches = len(images) // self.__batch_sz
+        n_batches = len(images) // self.batch_sz
         train_losses = []
         iterator = None
         try:
             for i in range(epochs):
-                Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
+                images, labels, num_positives, weight_maps = shuffle(images, labels, num_positives, weight_maps)
                 train_loss = 0
                 iterator = tqdm(range(n_batches))
 
                 for j in iterator:
-                    Ibatch = images[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-                    Lbatch = labels[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-                    NPbatch = num_positives[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-                    WMbatch = weight_maps[j * self.__batch_sz:(j + 1) * self.__batch_sz]
+                    Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    NPbatch = num_positives[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    WMbatch = weight_maps[j * self.batch_sz:(j + 1) * self.batch_sz]
                     batch_loss, _ = self._session.run(
-                        [self._focal_loss, train_op],
+                        [self.__weighted_focal_loss, train_op],
                         feed_dict={
                             self.__images: Ibatch,
                             self.__labels: Lbatch,
@@ -320,9 +318,9 @@ class Segmentator(MakiModel):
 
         self.__weighted_ce_loss_is_build = True
 
-    def __setup_weghted_ce_loss_inputs(self):        
+    def __setup_weighted_ce_loss_inputs(self):        
         self.__weighted_ce_weight_maps = tf.placeholder(
-            tf.float32, shape=[self.batch_sz, self.out_w, self.out_h], name='ce weight map'
+            tf.float32, shape=[self.batch_sz, self.out_w, self.out_h], name='ce_weight_map'
         )
 
     def __minimize_weighted_ce_loss(self, optimizer):
@@ -332,20 +330,20 @@ class Segmentator(MakiModel):
         if not self.__training_vars_are_ready:
             self.__prepare_training_vars()
         
-        if not self.__focal_loss_is_build:
-            self.__setup_focal_loss_inputs()
-            self.__build_focal_loss()
-            self.__focal_optimizer = optimizer
-            self.__focal_train_op = optimizer.minimize(self.__focal_loss, var_list=self._trainable_vars)
+        if not self.__weighted_ce_loss_is_build:
+            self.__setup_weighted_ce_loss_inputs()
+            self.__build_weighted_ce_loss()
+            self.__weighted_ce_optimizer = optimizer
+            self.__weighted_ce_train_op = optimizer.minimize(self.__weighted_ce_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
-        if self.__focal_optimizer != optimizer:
+        if self.__weighted_ce_optimizer != optimizer:
             print('New optimizer is used.')
-            self.__focal_optimizer = optimizer
-            self.__focal_train_op = optimizer.minimize(self.__focal_loss, var_list=self._trainable_vars)
+            self.__weighted_ce_optimizer = optimizer
+            self.__weighted_ce_train_op = optimizer.minimize(self.__weighted_ce_loss, var_list=self._trainable_vars)
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
-        return self._focal_train_op
+        return self.__weighted_ce_train_op
     
     def fit_weighted_ce(self, images, labels, weight_maps, optimizer, epochs=1, test_period=1):
         """
@@ -383,21 +381,21 @@ class Segmentator(MakiModel):
         
         train_op = self.__minimize_weighted_ce_loss(optimizer)
 
-        n_batches = len(images) // self.__batch_sz
+        n_batches = len(images) // self.batch_sz
         train_losses = []
         iterator = None
         try:
             for i in range(epochs):
-                Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
+                images, labels, weight_maps = shuffle(images, labels, weight_maps)
                 train_loss = 0
                 iterator = tqdm(range(n_batches))
 
                 for j in iterator:
-                    Ibatch = images[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-                    Lbatch = labels[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-                    WMbatch = weight_maps[j * self.__batch_sz:(j + 1) * self.__batch_sz]
+                    Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    WMbatch = weight_maps[j * self.batch_sz:(j + 1) * self.batch_sz]
                     batch_loss, _ = self._session.run(
-                        [self._focal_loss, train_op],
+                        [self.__weighted_ce_loss, train_op],
                         feed_dict={
                             self.__images: Ibatch,
                             self.__labels: Lbatch,

@@ -49,9 +49,8 @@ class SSDModel(MakiModel):
         for dc in self.dcs:
             fmap_shape = dc.get_feature_map_shape()
             # [ batch_sz, width, height, feature_maps ]
-            # We need to convert shape to int because initially it's a Dimension object
-            width = int(fmap_shape[1])
-            height = int(fmap_shape[2])
+            width = fmap_shape[1]
+            height = fmap_shape[2]
             self.dc_block_feature_map_sizes.append((width, height))
             dboxes = dc.get_dboxes()
             default_boxes = self.__default_box_generator(self.input_shape[1], self.input_shape[2],
