@@ -12,6 +12,7 @@ class Segmentator(MakiModel):
         graph_tensors = output.get_previous_tensors()
         graph_tensors.update(output.get_self_pair())
         super().__init__(graph_tensors, outputs=[output], inputs=[input_s])
+        self.__training_vars_are_ready = False
 
     def predict(self, x):
         return self._session.run(
@@ -23,34 +24,207 @@ class Segmentator(MakiModel):
         # TODO
         pass
 
-    def _setup_for_training(self):
-        super()._setup_for_training()
-        out_shape = self._outputs[0].get_shape()
-        training_out = self._training_outputs[0]
-        self.__labels = tf.placeholder(tf.int32, shape=out_shape[:-1])
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------SETTING UP TRAINING--------------------------------------------------------------------
 
-        total_predictions = out_shape[1] * out_shape[2]
-        num_classes = out_shape[-1]
-        batch_sz = out_shape[0]
-        flattened_logits = tf.reshape(training_out, shape=[-1, total_predictions, num_classes])
-        flattened_labels = tf.reshape(self.__labels, shape=[-1, total_predictions])
+    def __prepare_training_vars(self):
+        out_shape = self._outputs[0].get_shape()
+        self.out_w = out_shape[1]
+        self.out_h = out_shape[2]
+        self.total_predictions = out_shape[1] * out_shape[2]
+        self.num_classes = out_shape[-1]
+        self.batch_sz = out_shape[0]
+
+        self.__images = self._input_data_tensors[0]
+        self.__labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
+
+        training_out = self._training_outputs[0]
+        self.__flattened_logits = tf.reshape(training_out, shape=[-1, self.total_predictions, self.num_classes])
+        self.__flattened_labels = tf.reshape(self.__labels, shape=[-1, self.total_predictions])
         
-        ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=flattened_logits, labels=flattened_labels
+        self.__ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            logits=self.__flattened_logits, labels=self.__flattened_labels
         )
+
+        self.__training_vars_are_ready = True
+
+        self.__focal_loss_is_build = False
+        self.__weighted_focal_loss_is_build = False
+        self.__weighted_ce_loss_is_build = False
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------FOCAL LOSS-----------------------------------------------------------------------------
+
+    def __build_focal_loss(self):
         # [batch_sz, total_predictions, num_classes]
-        train_confidences = tf.nn.softmax(flattened_logits)
+        train_confidences = tf.nn.softmax(self.__flattened_logits)
         # Create one-hot encoding for picking predictions we need
         # [batch_sz, total_predictions, num_classes]
-        one_hot_labels = tf.one_hot(flattened_labels, depth=self._num_classes, on_value=1.0, off_value=0.0)
+        one_hot_labels = tf.one_hot(self.__flattened_labels, depth=self.num_classes, on_value=1.0, off_value=0.0)
         filtered_confidences = train_confidences * one_hot_labels
         # [batch_sz, total_predictions]
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
-        ones_arr = tf.ones(shape=[batch_sz, total_predictions], dtype=tf.float32)
-        focal_weight = tf.pow(ones_arr - sparse_confidences, 1.8)
-        self.loss = tf.reduce_mean(focal_weight * ce_loss)
+        ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
+        focal_weights = tf.pow(ones_arr - sparse_confidences, self.__focal_gamma)
+        num_positives = tf.reduce_sum(self.__focal_num_positives)
+        self.__focal_loss = tf.reduce_sum(focal_weights * self.__ce_loss) / num_positives
+
+        self.__focal_loss_is_build = True
+
+    def __setup_focal_loss_inputs(self):        
+        self.__focal_gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
+        self.__focal_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
+
+    def __minimize_focal_loss(self, optimizer):
+        if not self._set_for_training:
+            super()._setup_for_training()
+
+        if not self.__training_vars_are_ready:
+            self.__prepare_training_vars()
         
-    def fit(self, Xtrain, Ytrain, optimizer, epochs=1, test_period=1, loss_type='focal_loss'):
+        if not self.__focal_loss_is_build:
+            self.__setup_focal_loss_inputs()
+            self.__build_focal_loss()
+            self.__focal_optimizer = optimizer
+            self.__focal_train_op = optimizer.minimize(self.__focal_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        if self.__focal_optimizer != optimizer:
+            print('New optimizer is used.')
+            self.__focal_optimizer = optimizer
+            self.__focal_train_op = optimizer.minimize(self.__focal_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        return self.__focal_train_op
+        
+    def fit_focal(self, images, labels, gamma, num_positives, optimizer, epochs=1, test_period=1):
+        """
+		Method for training the model. Works faster than `verbose_fit` method because
+		it uses exponential decay in order to speed up training. It produces less accurate
+		train error mesurement.
+
+		Parameters
+		----------
+        images : numpy array
+            Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
+            labels : numpy array
+            Training label for each image in `Xtrain` array with shape (num_images).
+            IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+        test_period : int
+            Test begins each `test_period` epochs. You can set a larger number in order to
+            speed up training.
+
+		Returns
+		-------
+        python dictionary
+            Dictionary with all testing data(train error, train cost, test error, test cost)
+            for each test period.
+		"""
+        assert (optimizer is not None)
+        assert (self._session is not None)
+        if not self._set_for_training:
+            self._setup_for_training()
+        # This is for correct working of tqdm loop. After KeyboardInterrupt it breaks and
+        # starts to print progress bar each time it updates.
+        # In order to avoid this problem we handle KeyboardInterrupt exception and close
+        # the iterator tqdm iterates through manually. Yes, it's ugly, but necessary for
+        # convenient working with MakiFlow in Jupyter Notebook. Sometimes it's helpful
+        # even for console applications.
+        
+        train_op = self.__minimize_focal_loss(optimizer)
+
+        n_batches = len(images) // self.batch_sz
+        train_losses = []
+        iterator = None
+        try:
+            for i in range(epochs):
+                images, labels = shuffle(images, labels)
+                train_loss = 0
+                iterator = tqdm(range(n_batches))
+
+                for j in iterator:
+                    Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    NPbatch = num_positives[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    batch_loss, _ = self._session.run(
+                        [self.__focal_loss, train_op],
+                        feed_dict={
+                            self.__images: Ibatch,
+                            self.__labels: Lbatch,
+                            self.__focal_gamma: gamma,
+                            self.__focal_num_positives: NPbatch
+                            })
+                    # Use exponential decay for calculating loss and error
+                    train_loss += batch_loss
+                
+                train_loss /= n_batches
+
+                train_losses.append(train_loss)
+
+                print('Epoch:', i, 'Focal loss: {:0.4f}'.format(train_loss))
+        except Exception as ex:
+            print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {'train costs': train_losses}
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------WEIGHTED FOCAL LOSS--------------------------------------------------------------------
+
+    def __build_weighted_focal_loss(self):
+        # [batch_sz, total_predictions, num_classes]
+        train_confidences = tf.nn.softmax(self.__flattened_logits)
+        # Create one-hot encoding for picking predictions we need
+        # [batch_sz, total_predictions, num_classes]
+        one_hot_labels = tf.one_hot(self.__flattened_labels, depth=self.num_classes, on_value=1.0, off_value=0.0)
+        filtered_confidences = train_confidences * one_hot_labels
+        # [batch_sz, total_predictions]
+        sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
+        ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
+        focal_weights = tf.pow(ones_arr - sparse_confidences, self.__weighted_focal_gamma)
+        flattened_weights = tf.reshape(
+            self.__weighted_focal_weight_maps, shape=[-1, self.total_predictions]
+        )
+        num_positives = tf.reduce_sum(self.__weighted_focal_num_positives)
+        self.__weighted_focal_loss = tf.reduce_sum(flattened_weights* focal_weights * self.__ce_loss) / num_positives
+
+        self.__weighted_focal_loss_is_build = True
+
+    def __setup_weighted_focal_loss_inputs(self):        
+        self.__weighted_focal_gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
+        self.__weighted_focal_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
+        self.__weighted_focal_weight_maps = tf.placeholder(
+            tf.float32, shape=[self.batch_sz, self.out_w, self.out_h], name='weighted_focal_weight_map'
+        )
+
+    def __minimize_weighted_focal_loss(self, optimizer):
+        if not self._set_for_training:
+            super()._setup_for_training()
+
+        if not self.__training_vars_are_ready:
+            self.__prepare_training_vars()
+        
+        if not self.__weighted_focal_loss_is_build:
+            self.__setup_weighted_focal_loss_inputs()
+            self.__build_weighted_focal_loss()
+            self.__weighted_focal_optimizer = optimizer
+            self.__weighted_focal_train_op = optimizer.minimize(self.__weighted_focal_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        if self.__weighted_focal_optimizer != optimizer:
+            print('New optimizer is used.')
+            self.__weighted_focal_optimizer = optimizer
+            self.__weighted_focal_train_op = optimizer.minimize(self.__weighted_focal_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        return self.__weighted_focal_train_op
+        
+    def fit_weighted_focal(self, images, labels, gamma, num_positives, weight_maps, optimizer, epochs=1, test_period=1):
         """
 		Method for training the model. Works faster than `verbose_fit` method because
 		it uses exponential decay in order to speed up training. It produces less accurate
@@ -91,35 +265,155 @@ class Segmentator(MakiModel):
         # the iterator tqdm iterates through manually. Yes, it's ugly, but necessary for
         # convenient working with MakiFlow in Jupyter Notebook. Sometimes it's helpful
         # even for console applications.
-        iterator = None
-        Xtrain = Xtrain.astype(np.float32)
-        train_op = optimizer.minimize(self.loss, var_list=self._trainable_vars)
-        # Initialize optimizer's variables
-        self._session.run(tf.variables_initializer(optimizer.variables()))
-        n_batches = Xtrain.shape[0] // self.__batch_sz
+        
+        train_op = self.__minimize_weighted_focal_loss(optimizer)
 
-        train_costs = []
+        n_batches = len(images) // self.batch_sz
+        train_losses = []
+        iterator = None
         try:
             for i in range(epochs):
-                Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
-                train_cost = np.float32(0)
+                images, labels, num_positives, weight_maps = shuffle(images, labels, num_positives, weight_maps)
+                train_loss = 0
                 iterator = tqdm(range(n_batches))
 
                 for j in iterator:
-                    Xbatch = Xtrain[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-                    Ybatch = Ytrain[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-                    train_cost_batch, _ = self._session.run(
-                        [self.loss, train_op],
-                        feed_dict={self.__input: Xbatch, self.__labels: Ybatch})
+                    Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    NPbatch = num_positives[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    WMbatch = weight_maps[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    batch_loss, _ = self._session.run(
+                        [self.__weighted_focal_loss, train_op],
+                        feed_dict={
+                            self.__images: Ibatch,
+                            self.__labels: Lbatch,
+                            self.__weighted_focal_gamma: gamma,
+                            self.__weighted_focal_num_positives: NPbatch,
+                            self.__weighted_focal_weight_maps: WMbatch
+                            })
                     # Use exponential decay for calculating loss and error
-                    train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
+                    train_loss += batch_loss
+                
+                train_loss /= n_batches
 
-                    train_costs.append(train_cost)
+                train_losses.append(train_loss)
 
-                print('Epoch:', i, 'Loss: {:0.4f}'.format(train_cost))
+                print('Epoch:', i, 'Focal loss: {:0.4f}'.format(train_loss))
         except Exception as ex:
             print(ex)
         finally:
             if iterator is not None:
                 iterator.close()
-            return {'train costs': train_costs}
+            return {'train costs': train_losses}
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------WEIGHTED CROSSENTROPY LOSS-------------------------------------------------------------
+
+    def __build_weighted_ce_loss(self):
+        # [batch_sz, total_predictions, num_classes]
+        flattened_weights = tf.reshape(
+            self.__weighted_ce_weight_maps, shape=[-1, self.total_predictions]
+        )
+        self.__weighted_ce_loss = tf.reduce_mean(self.__ce_loss * flattened_weights)
+
+        self.__weighted_ce_loss_is_build = True
+
+    def __setup_weighted_ce_loss_inputs(self):        
+        self.__weighted_ce_weight_maps = tf.placeholder(
+            tf.float32, shape=[self.batch_sz, self.out_w, self.out_h], name='ce_weight_map'
+        )
+
+    def __minimize_weighted_ce_loss(self, optimizer):
+        if not self._set_for_training:
+            super()._setup_for_training()
+
+        if not self.__training_vars_are_ready:
+            self.__prepare_training_vars()
+        
+        if not self.__weighted_ce_loss_is_build:
+            self.__setup_weighted_ce_loss_inputs()
+            self.__build_weighted_ce_loss()
+            self.__weighted_ce_optimizer = optimizer
+            self.__weighted_ce_train_op = optimizer.minimize(self.__weighted_ce_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        if self.__weighted_ce_optimizer != optimizer:
+            print('New optimizer is used.')
+            self.__weighted_ce_optimizer = optimizer
+            self.__weighted_ce_train_op = optimizer.minimize(self.__weighted_ce_loss, var_list=self._trainable_vars)
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        return self.__weighted_ce_train_op
+    
+    def fit_weighted_ce(self, images, labels, weight_maps, optimizer, epochs=1, test_period=1):
+        """
+		Method for training the model. Works faster than `verbose_fit` method because
+		it uses exponential decay in order to speed up training. It produces less accurate
+		train error mesurement.
+
+		Parameters
+		----------
+			Xtrain : numpy array
+				Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
+			Ytrain : numpy array
+				Training label for each image in `Xtrain` array with shape (num_images).
+				IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
+			Xtest : numpy array
+				Same as `Xtrain` but for testing.
+			Ytest : numpy array
+				Same as `Ytrain` but for testing.
+			optimizer : tensorflow optimizer
+				Model uses tensorflow optimizers in order train itself.
+			epochs : int
+				Number of epochs.
+			test_period : int
+				Test begins each `test_period` epochs. You can set a larger number in order to
+				speed up training.
+
+		Returns
+		-------
+			python dictionary
+				Dictionary with all testing data(train error, train cost, test error, test cost)
+				for each test period.
+		"""
+        assert (optimizer is not None)
+        assert (self._session is not None)
+        
+        train_op = self.__minimize_weighted_ce_loss(optimizer)
+
+        n_batches = len(images) // self.batch_sz
+        train_losses = []
+        iterator = None
+        try:
+            for i in range(epochs):
+                images, labels, weight_maps = shuffle(images, labels, weight_maps)
+                train_loss = 0
+                iterator = tqdm(range(n_batches))
+
+                for j in iterator:
+                    Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    WMbatch = weight_maps[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    batch_loss, _ = self._session.run(
+                        [self.__weighted_ce_loss, train_op],
+                        feed_dict={
+                            self.__images: Ibatch,
+                            self.__labels: Lbatch,
+                            self.__weighted_ce_weight_maps: WMbatch
+                            }
+                    )
+                    # Use exponential decay for calculating loss and error
+                    train_loss += batch_loss
+                
+                train_loss /= n_batches
+
+                train_losses.append(train_loss)
+
+                print('Epoch:', i, 'Loss: {:0.4f}'.format(train_loss))
+        except Exception as ex:
+            print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {'train losses': train_losses}
+

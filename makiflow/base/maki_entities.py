@@ -97,7 +97,7 @@ class MakiTensor:
         return self.__previous_tensors
 
     def get_shape(self):
-        return self.__data_tensor.get_shape()
+        return self.__data_tensor.get_shape().as_list()
 
     def get_self_pair(self) -> dict:
         return {self.__name: self}
