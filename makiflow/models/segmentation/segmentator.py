@@ -35,6 +35,7 @@ class Segmentator(MakiModel):
         self.num_classes = out_shape[-1]
         self.batch_sz = out_shape[0]
 
+        self.__images = self._input_data_tensors[0]
         self.__labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
 
         training_out = self._training_outputs[0]
@@ -154,7 +155,7 @@ class Segmentator(MakiModel):
                     batch_loss, _ = self._session.run(
                         [self._focal_loss, train_op],
                         feed_dict={
-                            self.__input: Ibatch,
+                            self.__images: Ibatch,
                             self.__labels: Lbatch,
                             self.__gamma: gamma,
                             self.__num_positives: NPbatch
@@ -286,7 +287,7 @@ class Segmentator(MakiModel):
                     batch_loss, _ = self._session.run(
                         [self._focal_loss, train_op],
                         feed_dict={
-                            self.__input: Ibatch,
+                            self.__images: Ibatch,
                             self.__labels: Lbatch,
                             self.__gamma: gamma,
                             self.__num_positives: NPbatch,
@@ -398,7 +399,7 @@ class Segmentator(MakiModel):
                     batch_loss, _ = self._session.run(
                         [self._focal_loss, train_op],
                         feed_dict={
-                            self.__input: Ibatch,
+                            self.__images: Ibatch,
                             self.__labels: Lbatch,
                             self.__weighted_ce_weight_maps: WMbatch
                             }
