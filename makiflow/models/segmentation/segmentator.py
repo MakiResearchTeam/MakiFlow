@@ -65,15 +65,15 @@ class Segmentator(MakiModel):
         # [batch_sz, total_predictions]
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
         ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
-        focal_weights = tf.pow(ones_arr - sparse_confidences, self.__gamma)
-        num_positives = tf.reduce_sum(self.__num_positives)
+        focal_weights = tf.pow(ones_arr - sparse_confidences, self.__focal_gamma)
+        num_positives = tf.reduce_sum(self.__focal_num_positives)
         self.__focal_loss = tf.reduce_sum(focal_weights * self.__ce_loss) / num_positives
 
         self.__focal_loss_is_build = True
 
     def __setup_focal_loss_inputs(self):        
-        self.__gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
-        self.__num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
+        self.__focal_gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
+        self.__focal_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
 
     def __minimize_focal_loss(self, optimizer):
         if not self._set_for_training:
@@ -155,8 +155,8 @@ class Segmentator(MakiModel):
                         feed_dict={
                             self.__images: Ibatch,
                             self.__labels: Lbatch,
-                            self.__gamma: gamma,
-                            self.__num_positives: NPbatch
+                            self.__focal_gamma: gamma,
+                            self.__focal_num_positives: NPbatch
                             })
                     # Use exponential decay for calculating loss and error
                     train_loss += batch_loss
@@ -186,18 +186,18 @@ class Segmentator(MakiModel):
         # [batch_sz, total_predictions]
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
         ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
-        focal_weights = tf.pow(ones_arr - sparse_confidences, self.__gamma)
+        focal_weights = tf.pow(ones_arr - sparse_confidences, self.__weighted_focal_gamma)
         flattened_weights = tf.reshape(
             self.__weighted_focal_weight_maps, shape=[-1, self.total_predictions]
         )
-        num_positives = tf.reduce_sum(self.__num_positives)
+        num_positives = tf.reduce_sum(self.__weighted_focal_num_positives)
         self.__weighted_focal_loss = tf.reduce_sum(flattened_weights* focal_weights * self.__ce_loss) / num_positives
 
         self.__weighted_focal_loss_is_build = True
 
     def __setup_weighted_focal_loss_inputs(self):        
-        self.__gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
-        self.__num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
+        self.__weighted_focal_gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
+        self.__weighted_focal_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
         self.__weighted_focal_weight_maps = tf.placeholder(
             tf.float32, shape=[self.batch_sz, self.out_w, self.out_h], name='weighted_focal_weight_map'
         )
@@ -287,8 +287,8 @@ class Segmentator(MakiModel):
                         feed_dict={
                             self.__images: Ibatch,
                             self.__labels: Lbatch,
-                            self.__gamma: gamma,
-                            self.__num_positives: NPbatch,
+                            self.__weighted_focal_gamma: gamma,
+                            self.__weighted_focal_num_positives: NPbatch,
                             self.__weighted_focal_weight_maps: WMbatch
                             })
                     # Use exponential decay for calculating loss and error
