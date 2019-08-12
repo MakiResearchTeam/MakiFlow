@@ -183,9 +183,23 @@ class Builder:
             'UpSamplingLayer' : Builder.__upsampling_layer_from_dict,
             'UpConvLayer' : Builder.__upconv_layer_from_dict,
             'ReshapeLayer' : Builder.__reshape_layer_from_dict,
+            'DepthWiseLayer' : Builder.__depthwise_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
-    
+
+    @staticmethod
+    def __depthwise_layer_from_dict(params):
+        name = params['name']
+        kw = params['shape'][0]
+        kh = params['shape'][1]
+        in_f = params['shape'][2]
+        multiplier = params['shape'][3]
+        padding = params['padding']
+        stride = params['stride']
+        activation = ActivationConverter.str_to_activation(params['activation'])
+        return DepthWiseLayer(kw=kw, kh=kh, in_f=in_f, multiplier=multiplier, padding=padding,
+                            stride=stride, activation=activation, name=name)
+
     @staticmethod
     def __reshape_layer_from_dict(params):
         name = params['name']

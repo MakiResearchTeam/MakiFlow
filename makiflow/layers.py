@@ -184,6 +184,73 @@ class ConcatLayer(MakiLayer):
         }
 
 
+class DepthWiseLayer(SimpleForwardLayer):
+    def __init__(self, kw, kh, in_f, multiplier=1, name, stride=1, padding='SAME', activation=tf.nn.relu,
+                 W=None):
+        """
+        Parameters
+        ----------
+        kw : int
+            Kernel width.
+        kh : int
+            Kernel height.
+        in_f : int
+            Number of input feature maps. Treat as color channels if this layer
+            is first one.
+        multiplier : int 
+            ...
+        stride : int
+            Defines the stride of the convolution.
+        padding : str
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensetive). 
+        activation : tensorflow function
+            Activation function. Set None if you don't need activation.
+        W : numpy array
+            Filter's weights. This value is used for the filter initialization with pretrained filters.
+        """
+        self.shape = (kw, kh, in_f, multiplier)
+        self.stride = stride
+        self.padding = padding
+        self.f = activation
+
+        name = str(name)
+        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, multiplier) + name
+
+        if W is None:
+            W = np.random.randn(*self.shape) * np.sqrt(2.0 / np.prod(self.shape[:-1]))
+
+        self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
+        params = [self.W]
+        named_params_dict = {self.name_conv: self.W}
+        super().__init__(name, params, named_params_dict)
+
+    def _forward(self, X):
+        conv_out = tf.nn.depthwise_conv2d(input=X,
+                                        filter=self.W,
+                                        strides=[1,self.stride,self.stride,1],
+                                        padding=self.padding,
+        )
+        if self.f is None:
+            return conv_out
+        return self.f(conv_out)
+
+    def _training_forward(self, X):
+        return self._forward(X)
+
+    def to_dict(self):
+        return {
+            'type': 'DepthWiseLayer',
+            'params': {
+                'name': self._name,
+                'shape': list(self.shape),
+                'stride': self.stride,
+                'padding': self.padding,
+                'activation': ActivationConverter.activation_to_str(self.f)
+            }
+            
+        }
+
+
 class ConvLayer(SimpleForwardLayer):
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
                  W=None, b=None):
