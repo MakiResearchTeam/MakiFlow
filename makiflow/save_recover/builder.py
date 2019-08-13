@@ -217,7 +217,7 @@ class Builder:
         padding = params['padding']
         use_bias = params['use_bias']
         activation = ActivationConverter.str_to_activation(params['activation'])
-        return UpConvLayer(kw=kw, kh=kh, in_f=in_f, out_f=out_f, use_bias=use_bias 
+        return UpConvLayer(kw=kw, kh=kh, in_f=in_f, out_f=out_f, use_bias=use_bias, 
                          size=size, name=name, padding=padding, activation=activation)
 
     @staticmethod
