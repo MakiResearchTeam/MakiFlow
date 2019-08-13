@@ -185,7 +185,7 @@ class ConcatLayer(MakiLayer):
 
 
 class DepthWiseLayer(SimpleForwardLayer):
-    def __init__(self, kw, kh, in_f, multiplier=1, name, stride=1, padding='SAME', activation=tf.nn.relu,
+    def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME', activation=tf.nn.relu,
                  W=None):
         """
         Parameters
