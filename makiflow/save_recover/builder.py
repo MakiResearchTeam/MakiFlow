@@ -215,8 +215,9 @@ class Builder:
         out_f = params['shape'][3]
         size = params['size']
         padding = params['padding']
+        use_bias = params['use_bias']
         activation = ActivationConverter.str_to_activation(params['activation'])
-        return UpConvLayer(kw=kw, kh=kh, in_f=in_f, out_f=out_f, 
+        return UpConvLayer(kw=kw, kh=kh, in_f=in_f, out_f=out_f, use_bias=use_bias 
                          size=size, name=name, padding=padding, activation=activation)
 
     @staticmethod
@@ -278,8 +279,9 @@ class Builder:
         out_f = params['shape'][3]
         stride = params['stride']
         padding = params['padding']
+        use_bias = params['use_bias']
         activation = ActivationConverter.str_to_activation(params['activation'])
-        return ConvLayer(kw=kw, kh=kh, in_f=in_f, out_f=out_f, 
+        return ConvLayer(kw=kw, kh=kh, in_f=in_f, out_f=out_f, use_bias=use_bias,
                          stride=stride, name=name, padding=padding, activation=activation)
     
     @staticmethod
@@ -287,8 +289,9 @@ class Builder:
         name = params['name']
         input_shape = params['input_shape']
         output_shape = params['output_shape']
+        use_bias = params['use_bias']
         activation = ActivationConverter.str_to_activation(params['activation'])
-        return DenseLayer(in_d=input_shape, out_d=output_shape, activation=activation, name=name)
+        return DenseLayer(in_d=input_shape, out_d=output_shape, activation=activation, use_bias=use_bias,name=name)
     
     @staticmethod
     def __batchnorm_layer_from_dict(params):

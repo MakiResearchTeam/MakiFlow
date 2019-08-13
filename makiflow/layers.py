@@ -252,7 +252,7 @@ class DepthWiseLayer(SimpleForwardLayer):
 
 
 class ConvLayer(SimpleForwardLayer):
-    def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
+    def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu, use_bias=True,
                  W=None, b=None):
         """
         Parameters
@@ -281,25 +281,33 @@ class ConvLayer(SimpleForwardLayer):
         self.stride = stride
         self.padding = padding
         self.f = activation
+        self.use_bias = use_bias
 
         name = str(name)
         self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
-        self.name_bias = 'ConvBias{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
 
         if W is None:
             W = np.random.randn(*self.shape) * np.sqrt(2.0 / np.prod(self.shape[:-1]))
-        if b is None:
-            b = np.zeros(out_f)
 
         self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
-        self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
-        params = [self.W, self.b]
-        named_params_dict = {self.name_conv: self.W, self.name_bias: self.b}
+        params = [self.W]
+        named_params_dict = {self.name_conv: self.W}
+
+        if use_bias:
+            self.name_bias = 'ConvBias{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+            if b is None:
+                b = np.zeros(out_f)
+            
+            self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
+            params += [self.b]
+            named_params_dict[self.name_bias] = self.b
+
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
         conv_out = tf.nn.conv2d(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
-        conv_out = tf.nn.bias_add(conv_out, self.b)
+        if self.use_bias:
+            conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:
             return conv_out
         return self.f(conv_out)
@@ -315,6 +323,7 @@ class ConvLayer(SimpleForwardLayer):
                 'shape': list(self.shape),
                 'stride': self.stride,
                 'padding': self.padding,
+                'use_bias' : self.use_bias,
                 'activation': ActivationConverter.activation_to_str(self.f)
             }
             
@@ -357,20 +366,26 @@ class UpConvLayer(SimpleForwardLayer):
         self.strides = [1, *size, 1]
         self.padding = padding
         self.f = activation
+        self.use_bias = use_bias
 
         name = str(name)
         self.name_conv = 'UpConvKernel_{}x{}_out{}_in{}_id_'.format(kw, kh, out_f, in_f) + name
-        self.name_bias = 'UpConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
 
         if W is None:
             W = np.random.randn(*self.shape) * np.sqrt(2.0 / np.prod(self.shape[:-1]))
-        if b is None:
-            b = np.zeros(out_f)
 
         self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
-        self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
-        params = [self.W, self.b]
-        named_params_dict = {self.name_conv: self.W, self.name_bias: self.b}
+        params = [self.W]
+        named_params_dict = {self.name_conv: self.W}
+
+        if use_bias:
+            if b is None:
+                b = np.zeros(out_f)
+            self.name_bias = 'UpConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+            self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
+            params += [self.b]
+            named_params_dict[self.name_bias] = self.b
+
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
@@ -382,7 +397,8 @@ class UpConvLayer(SimpleForwardLayer):
             X, self.W, 
             output_shape=out_shape, strides=self.strides, padding=self.padding
         )
-        conv_out = tf.nn.bias_add(conv_out, self.b)
+        if self.use_bias:
+            conv_out = tf.nn.bias_add(conv_out, self.b)
 
         if self.f is None:
             return conv_out
@@ -399,6 +415,7 @@ class UpConvLayer(SimpleForwardLayer):
                 'shape': list(self.shape),
                 'size': self.size,
                 'padding': self.padding,
+                'use_bias' : self.use_bias,
                 'activation': ActivationConverter.activation_to_str(self.f)
             }
 
@@ -406,7 +423,7 @@ class UpConvLayer(SimpleForwardLayer):
 
 
 class DenseLayer(SimpleForwardLayer):
-    def __init__(self, in_d, out_d, name, activation=tf.nn.relu, init_type='xavier',
+    def __init__(self, in_d, out_d, name, activation=tf.nn.relu, init_type='xavier', use_bias=True,
                  W=None, b=None):
         """
         :param input_shape - number represents input shape. Example: 500.
@@ -421,6 +438,7 @@ class DenseLayer(SimpleForwardLayer):
         self.input_shape = in_d
         self.output_shape = out_d
         self.f = activation
+        self.use_bias = use_bias
 
         if W is None:
             W = np.random.randn(in_d, out_d)
@@ -431,21 +449,27 @@ class DenseLayer(SimpleForwardLayer):
             else:
                 W *= np.sqrt(12 / (in_d + out_d))
 
-        if b is None:
-            b = np.zeros(out_d)
-
         name = str(name)
         self.name_dense = 'DenseMat{}x{}_id_'.format(in_d, out_d) + name
-        self.name_bias = 'DenseBias{}x{}_id_'.format(in_d, out_d) + name
 
         self.W = tf.Variable(W.astype(np.float32), name=self.name_dense)
-        self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
-        params = [self.W, self.b]
-        named_params_dict = {self.name_dense: self.W, self.name_bias: self.b}
+        params = [self.W]
+        named_params_dict = {self.name_dense: self.W}
+
+        if use_bias:
+            if b is None:
+                b = np.zeros(out_d)
+            self.name_bias = 'DenseBias{}x{}_id_'.format(in_d, out_d) + name
+            self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
+            params += [self.b]
+            named_params_dict[self.name_bias] = self.b
+
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
-        out = tf.matmul(X, self.W) + self.b
+        out = tf.matmul(X, self.W)
+        if self.use_bias:
+            out += self.b
         if self.f is None:
             return out
         return self.f(out)
@@ -459,6 +483,7 @@ class DenseLayer(SimpleForwardLayer):
             'params': {
                 'name': self._name,
                 'input_shape': self.input_shape,
+                'use_bias' : self.use_bias,
                 'output_shape': self.output_shape,
                 'activation': ActivationConverter.activation_to_str(self.f)
             }
