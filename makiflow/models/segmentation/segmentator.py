@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 class Segmentator(MakiModel):
     def __init__(self, input_s: InputLayer, output: MakiTensor, name='MakiSegmentator'):
+        self.name = str(name)
         graph_tensors = output.get_previous_tensors()
         graph_tensors.update(output.get_self_pair())
         super().__init__(graph_tensors, outputs=[output], inputs=[input_s])
@@ -21,8 +22,11 @@ class Segmentator(MakiModel):
         )
 
     def _get_model_info(self):
-        # TODO
-        pass
+        return {
+            'name': self.name,
+            'input_s': self._inputs[0].get_name(),
+            'output': self._outputs[0].get_name()
+        }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------SETTING UP TRAINING--------------------------------------------------------------------

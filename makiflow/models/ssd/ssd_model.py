@@ -138,6 +138,17 @@ class SSDModel(MakiModel):
 
         return np.vstack(boxes_list)
 
+    def _get_model_info(self):
+        model_dict = {
+            'name': self.name,
+            'input_s': self._inputs[0].get_name(),
+            'dcs': []
+        }
+
+        for dc in self.dcs:
+            model_dict['dcs'].append(dc.to_dict())
+        return model_dict
+
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------SETTING UP INFERENCE OF THE MODEL---------------------------------------------------------
 

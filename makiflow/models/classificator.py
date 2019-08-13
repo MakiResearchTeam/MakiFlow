@@ -13,7 +13,7 @@ EPSILON = np.float32(1e-37)
 
 class Classificator(MakiModel):
 
-	def __init__(self, input: InputLayer, output: MakiTensor, model_name='MakiClassificator'):
+	def __init__(self, input: InputLayer, output: MakiTensor, name='MakiClassificator'):
 		graph_tensors = copy(output.get_previous_tensors())
 		# Add output tensor to `graph_tensors` since it doesn't have it.
 		# It is assumed that graph_tensors contains ALL THE TENSORS graph consists of.
@@ -21,7 +21,7 @@ class Classificator(MakiModel):
 		outputs = [output]
 		inputs = [input]
 		super().__init__(graph_tensors, outputs, inputs)
-		self.__name = str(model_name)
+		self.name = str(name)
 		self.__batch_sz = input.get_shape()[0]
 		self.__input = self._input_data_tensors[0]
 		self.__inference_out = self._output_data_tensors[0]
@@ -37,7 +37,7 @@ class Classificator(MakiModel):
 		return {
 			'input_mt': input_mt.get_name(),
 			'output_mt': output_mt.get_name(),
-			'name': self.__name
+			'name': self.name
 		}
 
 	def evaluate(self, Xtest, Ytest,batch_sz):
