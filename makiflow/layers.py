@@ -331,7 +331,7 @@ class ConvLayer(SimpleForwardLayer):
 
 
 class UpConvLayer(SimpleForwardLayer):
-    def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu,
+    def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu, use_bias=True,
                  W=None, b=None):
         """
         Parameters
