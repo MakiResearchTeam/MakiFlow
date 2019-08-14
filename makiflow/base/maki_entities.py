@@ -227,6 +227,9 @@ class MakiModel:
     def get_node(self, node_name):
         return self._graph_tensors.get(node_name)
 
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------MAKIMODEL TRAINING-----------------------------------------------------------------------------------
+
     def set_layers_trainable(self, layers):
         """
         Parameters
@@ -254,13 +257,146 @@ class MakiModel:
 
     def _setup_for_training(self):
         self._set_for_training = True
-
-        self._trainable_vars = []
+        
+        # Collect all the layers' names since all of them are trainable from 
+        # the beginning.
         self._trainable_layers = []
         for layer_name in self._graph_tensors:
             self._trainable_layers.append(layer_name)
+        self._trainable_vars = []
         self._collect_train_params()
+        
+        # Setup L2 regularization
+        self._uses_l2_regularization = False
+        self._l2_reg_loss_is_build = False
+        self._l2_regularized_layers = {}
+        for layer_name in self._trainable_layers:
+            self._l2_regularized_layers[layer_name] = 1e-5 # This value seems to be proper as a default
+
+        self._uses_l1_regularization = False
+        self._l1_reg_loss_is_build = False
+        self._l1_regularized_layers = {}
+        for layer_name in self._trainable_layers:
+            self._l1_regularized_layers[layer_name] = 1e-5 # This value seems to be proper as a default
+        
         self._build_training_graph()
+
+    # L2 REGULARIZATION
+
+    def set_l2_reg(self, layers):
+        """
+        Enables L2 regularization while training and allows to set different
+        decays to different weights.
+        WARNING! It is assummed that `set_layers_trainable` method won't
+        be used anymore.
+
+        Parameters
+        ----------
+        layers : list
+            Contains tuples (layer_name, decay) where decay is float number(set it to
+            None if you want to turn off regularization on this weight).
+        """
+        if not self._set_for_training:
+            self._setup_for_training()
+            self._uses_l2_regularization = True
+        
+        for layer_name, decay in layers:
+            self._l2_regularized_layers[layer_name] = decay
+    
+    def set_common_l2_weight_decay(self, decay=1e-5):
+        """
+        Enables L2 regularization while training. 
+        `decay` will be set as decay for each regularized weight.
+
+        Parameters
+        ----------
+        decay : float
+            Decay for all the regularized weights.
+        """
+        if not self._set_for_training:
+            self._setup_for_training()
+            self._uses_l2_regularization = True
+
+        for layer_name in self._l2_regularized_layers:
+            if self._l2_regularized_layers[layer_name] is not None:
+                self._l2_regularized_layers[layer_name] = decay
+    
+    def _build_l2_loss(self):
+        self._l2_reg_loss = tf.constant(0)
+        for layer_name in self._l2_regularized_layers:
+            decay = self._l2_regularized_layers[layer_name]
+            if decay is not None:
+                layer = self._graph_tensors[layer_name].get_parent_layer()
+                params = layer.get_params()
+                for param in params:
+                    self._l2_reg_loss += tf.nn.l2_loss(param) * tf.constant(decay)
+        
+        self._l2_reg_loss_is_build = True
+
+    # L1 REGULARIZATION
+
+    def set_l1_reg(self, layers):
+        """
+        Enables L2 regularization while training and allows to set different
+        decays to different weights.
+        WARNING! It is assummed that `set_layers_trainable` method won't
+        be used anymore.
+
+        Parameters
+        ----------
+        layers : list
+            Contains tuples (layer_name, decay) where decay is float number(set it to
+            None if you want to turn off regularization on this weight).
+        """
+        if not self._set_for_training:
+            self._setup_for_training()
+            self._uses_l1_regularization = True
+        
+        for layer_name, decay in layers:
+            self._l1_regularized_layers[layer_name] = decay
+    
+    def set_common_l1_weight_decay(self, decay=1e-5):
+        """
+        Enables L2 regularization while training. 
+        `decay` will be set as decay for each regularized weight.
+
+        Parameters
+        ----------
+        decay : float
+            Decay for all the regularized weights.
+        """
+        if not self._set_for_training:
+            self._setup_for_training()
+            self._uses_l1_regularization = True
+
+        for layer_name in self._l1_regularized_layers:
+            if self._l1_regularized_layers[layer_name] is not None:
+                self._l1_regularized_layers[layer_name] = decay
+    
+    def _build_l1_loss(self):
+        self._l1_reg_loss = tf.constant(0)
+        for layer_name in self._l1_regularized_layers:
+            decay = self._l1_regularized_layers[layer_name]
+            if decay is not None:
+                layer = self._graph_tensors[layer_name].get_parent_layer()
+                params = layer.get_params()
+                for param in params:
+                    self._l1_reg_loss += tf.abs(tf.reduce_sum(param)) * tf.constant(decay)
+
+        self._l1_reg_loss_is_build = True
+
+    def _build_final_loss(self, custom_loss):
+        if self._uses_l1_regularization:
+            if not self._l1_reg_loss_is_build:
+                self._build_l1_loss()
+            custom_loss += self._l1_reg_loss
+
+        if self._uses_l2_regularization:
+            if not self._l2_reg_loss_is_build:
+                self._build_l2_loss()
+            custom_loss += self._l2_reg_loss
+        
+        return custom_loss
 
     def _build_training_graph(self):
         # Contains pairs {layer_name: tensor}, where `tensor` is output

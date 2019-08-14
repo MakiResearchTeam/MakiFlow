@@ -5,11 +5,11 @@ import json
 
 from makiflow.models.classificator import Classificator
 from makiflow.layers import *
-from makiflow.rnn_layers import *
 from makiflow.save_recover.activation_converter import ActivationConverter
-from makiflow.models.ssd import DetectorClassifier
-from makiflow.models.ssd import SSDModel
+from makiflow.models import DetectorClassifier
+from makiflow.models import SSDModel
 from makiflow.models import Segmentator
+from makiflow.models import TextRecognizer
 
 
 class Builder:
@@ -168,6 +168,11 @@ class Builder:
             'InputLayer':Builder.__input_layer_from_dict,
             'SumLayer':Builder.__sum_layer_from_dict,
             'ConcatLayer' : Builder.__concat_layer_from_dict,
+            'MultiOnAlphaLayer' : Builder.__mulbyalpha_layer_from_dict,
+            'ZeroPaddingLayer' : Builder.__zeropadding_layer_from_dict,
+            'GlobalMaxPoolLayer' : Builder.__globalmaxpoollayer_from_dict,
+            'GlobalAvgPoolLayer' : Builder.__globalavgpoollayer_from_dict,
+            'DepthWiseLayer' : Builder.__depthwise_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
 
@@ -203,8 +208,13 @@ class Builder:
         stride = params['stride']
         padding = params['padding']
         activation = ActivationConverter.str_to_activation(params['activation'])
-        return ConvLayer(kw=kw, kh=kh, in_f=in_f, out_f=out_f, 
-                         stride=stride, name=name, padding=padding, activation=activation)
+        init_type = params['init_type']
+        use_bias = params['use_bias']
+        return ConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f, 
+            stride=stride, name=name, padding=padding, activation=activation,
+            kernel_initializer=init_type, use_bias=use_bias
+        )
         
     @staticmethod
     def __upconv_layer_from_dict(params):
@@ -216,12 +226,52 @@ class Builder:
         padding = params['padding']
         size = params['size']
         activation = ActivationConverter.str_to_activation(params['activation'])
+        init_type = params['init_type']
+        use_bias = params['use_bias']
         return UpConvLayer(
             kw=kw, kh=kh, in_f=in_f, out_f=out_f, size=size,
-            name=name, padding=padding, activation=activation
+            name=name, padding=padding, activation=activation,
+            kernel_initializer=init_type, use_bias=use_bias
         )
 
-                     
+    @staticmethod
+    def __depthwise_layer_from_dict(params):
+        name = params['name']
+        kw = params['shape'][0]
+        kh = params['shape'][1]
+        in_f = params['shape'][2]
+        multiplier = params['shape'][3]
+        padding = params['padding']
+        stride = params['stride']
+        init_type = params['init_type']
+        use_bias = params['use_bias']
+        activation = ActivationConverter.str_to_activation(params['activation'])
+        return DepthWiseConvLayer(
+            kw=kw, kh=kh, in_f=in_f, multiplier=multiplier, padding=padding,
+            stride=stride, activation=activation, name=name,
+            kernel_initializer=init_type, use_bias=use_bias
+        )         
+    
+    @staticmethod
+    def __separableconv_layer_from_dict(params):
+        name = params['name']
+        kw = params['shape'][0]
+        kh = params['shape'][1]
+        in_f = params['shape'][2]
+        out_f = params['out_f']
+        multiplier = params['shape'][3]
+        padding = params['padding']
+        stride = params['stride']
+        dw_init_type = params['dw_init_type']
+        pw_init_type = params['pw_init_type']
+        use_bias = params['use_bias']
+        activation = ActivationConverter.str_to_activation(params['activation'])
+        return SeparableConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f, multiplier=multiplier,
+            padding=padding, stride=stride, activation=activation,
+            dw_kernel_initializer=dw_init_type, pw_kernel_initializer=pw_init_type,
+            use_bias=use_bias, name=name
+        )
     
     @staticmethod
     def __dense_layer_from_dict(params):
@@ -229,9 +279,12 @@ class Builder:
         input_shape = params['input_shape']
         output_shape = params['output_shape']
         activation = ActivationConverter.str_to_activation(params['activation'])
+        init_type = params['init_type']
+        use_bias = params['use_bias']
         return DenseLayer(
             in_d=input_shape, out_d=output_shape,
-            activation=activation, name=name
+            activation=activation, name=name,
+            mat_initializer=init_type, use_bias=use_bias
         )
     
     @staticmethod
@@ -239,6 +292,34 @@ class Builder:
         name = params['name']
         D = params['D']
         return BatchNormLayer(D=D, name=name)
+    
+    @staticmethod
+    def __upsampling_layer_from_dict(params):
+        name = params['name']
+        size = params['size']
+        return UpSamplingLayer(name=name, size=size)
+
+    @staticmethod
+    def __globalmaxpoollayer_from_dict(params):
+        name = params['name']
+        return GlobalMaxPoolLayer(name=name)
+    
+    @staticmethod
+    def __globalavgpoollayer_from_dict(params):
+        name = params['name']
+        return GlobalAvgPoolLayer(name=name)
+
+    @staticmethod
+    def __zeropadding_layer_from_dict(params):
+        name = params['name']
+        padding = params['padding']
+        return ZeroPaddingLayer(padding=padding, name=name)
+
+    @staticmethod
+    def __mulbyalpha_layer_from_dict(params):
+        name = params['name']
+        alpha = params['alpha']
+        return MulByAlphaLayer(alpha=alpha, name=name)
     
     @staticmethod
     def __maxpool_layer_from_dict(params):
