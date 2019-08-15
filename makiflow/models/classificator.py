@@ -25,11 +25,18 @@ class Classificator(MakiModel):
 		self.__batch_sz = input.get_shape()[0]
 		self.__input = self._input_data_tensors[0]
 		self.__inference_out = self._output_data_tensors[0]
+		# For training
+		self.__training_vars_are_ready = False
 
-	def _setup_for_training(self):
-		super()._setup_for_training()
+	def __prepare_training_vars(self):
+		if not self._set_for_training:
+			super()._setup_for_training()
 		self.__training_out = self._training_outputs[0]
 		self.__labels = tf.placeholder(tf.int32, shape=[self.__batch_sz])
+		self.__ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+			logits=self.__training_out, labels=self.__labels
+		)
+		self.__training_vars_are_ready = True
 
 	def _get_model_info(self):
 		input_mt = self._inputs[0]
@@ -40,27 +47,34 @@ class Classificator(MakiModel):
 			'name': self.name
 		}
 
-	def evaluate(self, Xtest, Ytest,batch_sz):
-		# TODO: for test can be delete
-		# Validating the network
-		Xtest = Xtest.astype(np.float32)
-		Yish_test = tf.nn.softmax(self.__inference_out)
-		n_batches = Xtest.shape[0] // batch_sz
+	def __build_ce_loss(self):
+        # [batch_sz, total_predictions, num_classes]
+		ce_loss = tf.reduce_mean(self.__ce_loss)
+		self.__final_ce_loss = self._build_final_loss(ce_loss)
 
-		# For train data
-		test_cost = 0
-		predictions = np.zeros(len(Xtest))
-		for k in tqdm(range(n_batches)):
-			# Test data
-			Xtestbatch = Xtest[k * batch_sz:(k + 1) * batch_sz]
-			Ytestbatch = Ytest[k * batch_sz:(k + 1) * batch_sz]
-			Yish_test_done = self._session.run(Yish_test, feed_dict={self.__input: Xtestbatch}) + EPSILON
-			test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
-			predictions[k * batch_sz:(k + 1) * batch_sz] = np.argmax(Yish_test_done, axis=1)
+		self.__ce_loss_is_build = True
 
-		error = error_rate(predictions, Ytest)
-		test_cost = test_cost / (len(Xtest) // batch_sz)
-		print('Accuracy:', 1 - error, 'Cost:', test_cost)
+	def __minimize_ce_loss(self, optimizer):
+		if not self._set_for_training:
+			super()._setup_for_training()
+
+		if not self.__training_vars_are_ready:
+			self.__prepare_training_vars()
+		
+		if not self.__ce_loss_is_build:
+			# no need to setup any inputs for this loss
+			self.__build_ce_loss()
+			self.__ce_optimizer = optimizer
+			self.__ce_train_op = optimizer.minimize(self.__final_ce_loss, var_list=self._trainable_vars)
+			self._session.run(tf.variables_initializer(optimizer.variables()))
+
+		if self.__ce_optimizer != optimizer:
+			print('New optimizer is used.')
+			self.__ce_optimizer = optimizer
+			self.__ce_train_op = optimizer.minimize(self.__final_ce_loss, var_list=self._trainable_vars)
+			self._session.run(tf.variables_initializer(optimizer.variables()))
+
+		return self.__ce_train_op
 
 	def pure_fit(self, Xtrain, Ytrain, Xtest, Ytest, optimizer=None, epochs=1, test_period=1):
 		"""
@@ -168,8 +182,8 @@ class Classificator(MakiModel):
 					train_errors.append(train_error)
 
 					print('Epoch:', i, 'Train accuracy: {:0.4f}'.format(1 - train_error),
-						  'Train cost: {:0.4f}'.format(train_cost),
-						  'Test accuracy: {:0.4f}'.format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
+							'Train cost: {:0.4f}'.format(train_cost),
+							'Test accuracy: {:0.4f}'.format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
 		except Exception as ex:
 			print(ex)
 		finally:
@@ -177,5 +191,27 @@ class Classificator(MakiModel):
 				iterator.close()
 			return {'train costs': train_costs, 'train errors': train_errors,
 					'test costs': test_costs, 'test errors': test_errors}
+
+	def evaluate(self, Xtest, Ytest,batch_sz):
+		# TODO: for test can be delete
+		# Validating the network
+		Xtest = Xtest.astype(np.float32)
+		Yish_test = tf.nn.softmax(self.__inference_out)
+		n_batches = Xtest.shape[0] // batch_sz
+
+		# For train data
+		test_cost = 0
+		predictions = np.zeros(len(Xtest))
+		for k in tqdm(range(n_batches)):
+			# Test data
+			Xtestbatch = Xtest[k * batch_sz:(k + 1) * batch_sz]
+			Ytestbatch = Ytest[k * batch_sz:(k + 1) * batch_sz]
+			Yish_test_done = self._session.run(Yish_test, feed_dict={self.__input: Xtestbatch}) + EPSILON
+			test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
+			predictions[k * batch_sz:(k + 1) * batch_sz] = np.argmax(Yish_test_done, axis=1)
+
+		error = error_rate(predictions, Ytest)
+		test_cost = test_cost / (len(Xtest) // batch_sz)
+		print('Accuracy:', 1 - error, 'Cost:', test_cost)
 
 
