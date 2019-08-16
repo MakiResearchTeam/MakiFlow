@@ -40,14 +40,13 @@ class ConvLayer(SimpleForwardLayer):
         self.init_type = kernel_initializer
 
         name = str(name)
-        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
-        self.name_bias = 'ConvBias{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
 
         if W is None:
             W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
+        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
         self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
         params = [self.W]
         named_params_dict = {self.name_conv: self.W}
