@@ -6,7 +6,7 @@ FRACTION_MEMORY_SESS = None
 
 def set_main_gpu(gpu_id):
     import os
-    os.environ["CUDA_VISIBLE_DEVICES"]="0"
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
     del os
 
 
