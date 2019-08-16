@@ -1,11 +1,8 @@
 from __future__ import absolute_import
-from abc import abstractmethod
 import numpy as np
 import tensorflow as tf
-from copy import copy
 
-from makiflow.save_recover.activation_converter import ActivationConverter
-from makiflow.base import MakiLayer, MakiTensor
+from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
 
 

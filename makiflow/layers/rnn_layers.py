@@ -5,7 +5,7 @@ from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
 from makiflow.base import MakiLayer
-from makiflow.save_recover.activation_converter import ActivationConverter
+from makiflow.layers.activation_converter import ActivationConverter
 
 class CellType:
     # Bidirectional dynamic

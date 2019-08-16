@@ -5,7 +5,7 @@ import json
 
 from makiflow.models.classificator import Classificator
 from makiflow.layers import *
-from makiflow.save_recover.activation_converter import ActivationConverter
+from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.models import DetectorClassifier
 from makiflow.models import SSDModel
 from makiflow.models import Segmentator

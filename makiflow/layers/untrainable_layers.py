@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import tensorflow as tf
 
-from makiflow.save_recover.activation_converter import ActivationConverter
+from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.base import MakiLayer, MakiTensor
 from makiflow.layers.sf_layer import SimpleForwardLayer
 
