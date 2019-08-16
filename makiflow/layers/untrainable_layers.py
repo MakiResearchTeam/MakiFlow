@@ -304,7 +304,7 @@ class UpSamplingLayer(SimpleForwardLayer):
         self.size = size
 
     def _forward(self, X):
-        t_shape = X.get_shape().as_list()
+        t_shape = X.get_shape()
         im_size = (t_shape[1]*self.size[0], t_shape[2]*self.size[1])
         return tf.image.resize_nearest_neighbor(
             X,

@@ -154,6 +154,7 @@ class Builder:
         params = layer_dict['params']
         uni_dict = {
             'UpConvLayer': Builder.__upconv_layer_from_dict,
+            'SeparableConvLayer': Builder.__separableconv_layer_from_dict,
             'ConvLayer': Builder.__conv_layer_from_dict,
             'DenseLayer': Builder.__dense_layer_from_dict,
             'BatchNormLayer': Builder.__batchnorm_layer_from_dict,
@@ -167,12 +168,14 @@ class Builder:
             'RNNBlock': Builder.__rnnblock_from_dict,
             'InputLayer':Builder.__input_layer_from_dict,
             'SumLayer':Builder.__sum_layer_from_dict,
-            'ConcatLayer' : Builder.__concat_layer_from_dict,
-            'MultiOnAlphaLayer' : Builder.__mulbyalpha_layer_from_dict,
-            'ZeroPaddingLayer' : Builder.__zeropadding_layer_from_dict,
-            'GlobalMaxPoolLayer' : Builder.__globalmaxpoollayer_from_dict,
-            'GlobalAvgPoolLayer' : Builder.__globalavgpoollayer_from_dict,
-            'DepthWiseLayer' : Builder.__depthwise_layer_from_dict,
+            'ConcatLayer': Builder.__concat_layer_from_dict,
+            'MultiOnAlphaLayer': Builder.__mulbyalpha_layer_from_dict,
+            'ZeroPaddingLayer': Builder.__zeropadding_layer_from_dict,
+            'GlobalMaxPoolLayer': Builder.__globalmaxpoollayer_from_dict,
+            'GlobalAvgPoolLayer': Builder.__globalavgpoollayer_from_dict,
+            'DepthWiseLayer': Builder.__depthwise_layer_from_dict,
+            'ReshapeLayer': Builder.__reshape_layer_from_dict,
+            'UpSamplingLayer': Builder.__upsampling_layer_from_dict
         }
         return uni_dict[layer_dict['type']](params)
 
@@ -255,11 +258,11 @@ class Builder:
     @staticmethod
     def __separableconv_layer_from_dict(params):
         name = params['name']
-        kw = params['shape'][0]
-        kh = params['shape'][1]
-        in_f = params['shape'][2]
+        kw = params['dw_shape'][0]
+        kh = params['dw_shape'][1]
+        in_f = params['dw_shape'][2]
         out_f = params['out_f']
-        multiplier = params['shape'][3]
+        multiplier = params['dw_shape'][3]
         padding = params['padding']
         stride = params['stride']
         dw_init_type = params['dw_init_type']
@@ -407,6 +410,15 @@ class Builder:
         return EmbeddingLayer(
             num_embeddings=num_embeddings,
             dim=dim,
+            name=name
+        )
+
+    @staticmethod
+    def __reshape_layer_from_dict(params):
+        name = params['name']
+        new_shape = params['new_shape']
+        return ReshapeLayer(
+            new_shape=new_shape,
             name=name
         )
 

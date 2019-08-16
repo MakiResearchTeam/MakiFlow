@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from makiflow.base import MakiTensor
 from makiflow.layers import ConvLayer
 from makiflow.layers import ReshapeLayer

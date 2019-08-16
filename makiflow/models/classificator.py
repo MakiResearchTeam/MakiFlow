@@ -37,6 +37,7 @@ class Classificator(MakiModel):
 			logits=self._training_out, labels=self._labels
 		)
 		self._training_vars_are_ready = True
+		self._ce_loss_is_build = False
 
 	def _get_model_info(self):
 		input_mt = self._inputs[0]
@@ -137,7 +138,7 @@ class Classificator(MakiModel):
 					Xbatch = Xtrain[j * self._batch_sz:(j + 1) * self._batch_sz]
 					Ybatch = Ytrain[j * self._batch_sz:(j + 1) * self._batch_sz]
 					y_ish, train_cost_batch, _ = self._session.run(
-						self._training_out, self._final_ce_loss, train_op,
+						[self._training_out, self._final_ce_loss, train_op],
 						feed_dict={self._images: Xbatch, self._labels: Ybatch})
 					# Use exponential decay for calculating loss and error
 					train_cost = 0.99 * train_cost + 0.01 * train_cost_batch

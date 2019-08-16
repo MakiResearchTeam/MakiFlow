@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from makiflow.rnn_layers import RNNBlock
+from makiflow.layers import RNNBlock
 import tensorflow as tf
 import numpy as np
 import pandas as pd
