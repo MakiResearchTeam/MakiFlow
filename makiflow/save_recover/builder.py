@@ -131,13 +131,9 @@ class Builder:
 
         MakiTensors_of_model = json_info['graph_info']
 
-        # dict {NameTensor : Info about this tensor}
-        graph_info = {}
-
-        for tensor in MakiTensors_of_model:
-            graph_info[tensor['name']] = tensor
-
-        inputs_outputs = Builder.restore_graph([output_tensor_name],graph_info, batch_size)
+        inputs_outputs = Builder.restore_graph(
+            [output_tensor_name], MakiTensors_of_model, batch_size
+        )
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
