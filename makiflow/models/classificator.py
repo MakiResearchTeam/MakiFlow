@@ -80,7 +80,7 @@ class Classificator(MakiModel):
 
 		return self._ce_train_op
 
-	def pure_fit(
+	def fit_ce(
 			self, Xtrain, Ytrain, Xtest, Ytest, optimizer=None, epochs=1, test_period=1, global_step=None
 	):
 		"""
