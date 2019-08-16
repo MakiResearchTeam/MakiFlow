@@ -6,6 +6,6 @@ from makiflow.layers.trainable_layers import SeparableConvLayer, BatchNormLayer
 from makiflow.layers.untrainable_layers import MaxPoolLayer, AvgPoolLayer, GlobalAvgPoolLayer, GlobalMaxPoolLayer
 from makiflow.layers.untrainable_layers import FlattenLayer, DropoutLayer, ActivationLayer, MulByAlphaLayer
 from makiflow.layers.untrainable_layers import ZeroPaddingLayer, UpSamplingLayer, ConcatLayer, SumLayer
-from makiflow.layers.untrainable_layers import InputLayer
+from makiflow.layers.untrainable_layers import InputLayer, ReshapeLayer
 
 from makiflow.layers.rnn_layers import CellType, GRULayer, LSTMLayer, RNNBlock, EmbeddingLayer

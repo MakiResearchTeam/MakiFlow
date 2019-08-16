@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import tensorflow as tf
 from makiflow.base import MakiTensor
 from makiflow.layers import ConvLayer
 from makiflow.layers import ReshapeLayer
@@ -13,7 +12,7 @@ class DetectorClassifier:
     """
 
     def __init__(self, reg_fms: MakiTensor, rkw, rkh, rin_f,
-        class_fms: MakiTensor, ckw, ckh, cin_f, num_classes, dboxes: list, name):
+                 class_fms: MakiTensor, ckw, ckh, cin_f, num_classes, dboxes: list, name):
         """
         Parameters
         ----------
@@ -69,7 +68,7 @@ class DetectorClassifier:
         conf_w = conf_shape[1]
         # height of the tensor
         conf_h = conf_shape[2]
-        conf_reshape = ReshapeLayer([-1, conf_w*conf_h*n_dboxes, self.class_number], 'ConfReshape_'+self.name)
+        conf_reshape = ReshapeLayer([-1, conf_w * conf_h * n_dboxes, self.class_number], 'ConfReshape_' + self.name)
         self._confidences = conf_reshape(confidences)
 
         # FLATTEN PREDICTIONS OF THE REGRESSOR
@@ -81,7 +80,7 @@ class DetectorClassifier:
         # height of the tensor
         off_h = off_shape[2]
         # 4 is for four offsets: [x1, y1, x2, y2]
-        off_reshape = ReshapeLayer([-1,  off_w*off_h*n_dboxes, 4], name='OffReshape_'+self.name)
+        off_reshape = ReshapeLayer([-1, off_w * off_h * n_dboxes, 4], name='OffReshape_' + self.name)
         self._offsets = off_reshape(offsets)
 
     def get_dboxes(self):
@@ -98,7 +97,6 @@ class DetectorClassifier:
         return self.reg_x.get_shape()
 
     def to_dict(self):
-        # TODO
         return {
             'type': 'DetectorClassifier',
             'params': {

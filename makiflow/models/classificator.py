@@ -22,21 +22,21 @@ class Classificator(MakiModel):
 		inputs = [input]
 		super().__init__(graph_tensors, outputs, inputs)
 		self.name = str(name)
-		self.__batch_sz = input.get_shape()[0]
-		self.__input = self._input_data_tensors[0]
-		self.__inference_out = self._output_data_tensors[0]
+		self._batch_sz = input.get_shape()[0]
+		self._images = self._input_data_tensors[0]
+		self._inference_out = self._output_data_tensors[0]
 		# For training
-		self.__training_vars_are_ready = False
+		self._training_vars_are_ready = False
 
-	def __prepare_training_vars(self):
+	def _prepare_training_vars(self):
 		if not self._set_for_training:
 			super()._setup_for_training()
-		self.__training_out = self._training_outputs[0]
-		self.__labels = tf.placeholder(tf.int32, shape=[self.__batch_sz])
-		self.__ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-			logits=self.__training_out, labels=self.__labels
+		self._training_out = self._training_outputs[0]
+		self._labels = tf.placeholder(tf.int32, shape=[self._batch_sz])
+		self._ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+			logits=self._training_out, labels=self._labels
 		)
-		self.__training_vars_are_ready = True
+		self._training_vars_are_ready = True
 
 	def _get_model_info(self):
 		input_mt = self._inputs[0]
@@ -47,36 +47,41 @@ class Classificator(MakiModel):
 			'name': self.name
 		}
 
-	def __build_ce_loss(self):
-        # [batch_sz, total_predictions, num_classes]
-		ce_loss = tf.reduce_mean(self.__ce_loss)
-		self.__final_ce_loss = self._build_final_loss(ce_loss)
+	def _build_ce_loss(self):
+		ce_loss = tf.reduce_mean(self._ce_loss)
+		self._final_ce_loss = self._build_final_loss(ce_loss)
 
-		self.__ce_loss_is_build = True
+		self._ce_loss_is_build = True
 
-	def __minimize_ce_loss(self, optimizer):
+	def _minimize_ce_loss(self, optimizer, global_step):
 		if not self._set_for_training:
 			super()._setup_for_training()
 
-		if not self.__training_vars_are_ready:
-			self.__prepare_training_vars()
+		if not self._training_vars_are_ready:
+			self._prepare_training_vars()
 		
-		if not self.__ce_loss_is_build:
+		if not self._ce_loss_is_build:
 			# no need to setup any inputs for this loss
-			self.__build_ce_loss()
-			self.__ce_optimizer = optimizer
-			self.__ce_train_op = optimizer.minimize(self.__final_ce_loss, var_list=self._trainable_vars)
+			self._build_ce_loss()
+			self._ce_optimizer = optimizer
+			self._ce_train_op = optimizer.minimize(
+				self._final_ce_loss, var_list=self._trainable_vars, global_step=global_step
+			)
 			self._session.run(tf.variables_initializer(optimizer.variables()))
 
-		if self.__ce_optimizer != optimizer:
+		if self._ce_optimizer != optimizer:
 			print('New optimizer is used.')
-			self.__ce_optimizer = optimizer
-			self.__ce_train_op = optimizer.minimize(self.__final_ce_loss, var_list=self._trainable_vars)
+			self._ce_optimizer = optimizer
+			self._ce_train_op = optimizer.minimize(
+				self._final_ce_loss, var_list=self._trainable_vars, global_step=global_step
+			)
 			self._session.run(tf.variables_initializer(optimizer.variables()))
 
-		return self.__ce_train_op
+		return self._ce_train_op
 
-	def pure_fit(self, Xtrain, Ytrain, Xtest, Ytest, optimizer=None, epochs=1, test_period=1):
+	def pure_fit(
+			self, Xtrain, Ytrain, Xtest, Ytest, optimizer=None, epochs=1, test_period=1, global_step=None
+	):
 		"""
 		Method for training the model. Works faster than `verbose_fit` method because
 		it uses exponential decay in order to speed up training. It produces less accurate
@@ -110,30 +115,11 @@ class Classificator(MakiModel):
 
 		assert (optimizer is not None)
 		assert (self._session is not None)
-		if not self._set_for_training:
-			self._setup_for_training()
-		# This is for correct working of tqdm loop. After KeyboardInterrupt it breaks and
-		# starts to print progress bar each time it updates.
-		# In order to avoid this problem we handle KeyboardInterrupt exception and close
-		# the iterator tqdm iterates through manually. Yes, it's ugly, but necessary for
-		# convenient working with MakiFlow in Jupyter Notebook. Sometimes it's helpful
-		# even for console applications.
-		
-		# For training
-		cost = (
-			tf.reduce_mean(
-				tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.__training_out, labels=self.__labels)
-			),
-			self.__training_out
-		)
-		train_op = (cost, optimizer.minimize(cost[0], var_list=self._trainable_vars) )
-		# Initialize optimizer's variables
-		self._session.run(tf.variables_initializer(optimizer.variables()))
-
+		train_op = self._minimize_ce_loss(optimizer, global_step)
 		# For testing
-		Yish_test = tf.nn.softmax(self.__inference_out)
+		Yish_test = tf.nn.softmax(self._inference_out)
 
-		n_batches = Xtrain.shape[0] // self.__batch_sz
+		n_batches = Xtrain.shape[0] // self._batch_sz
 
 		train_costs = []
 		train_errors = []
@@ -148,11 +134,11 @@ class Classificator(MakiModel):
 				iterator = tqdm(range(n_batches))
 
 				for j in iterator:
-					Xbatch = Xtrain[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-					Ybatch = Ytrain[j * self.__batch_sz:(j + 1) * self.__batch_sz]
-					(train_cost_batch, y_ish), _ = self._session.run(
-						train_op,
-						feed_dict={self.__input: Xbatch, self.__labels: Ybatch})
+					Xbatch = Xtrain[j * self._batch_sz:(j + 1) * self._batch_sz]
+					Ybatch = Ytrain[j * self._batch_sz:(j + 1) * self._batch_sz]
+					y_ish, train_cost_batch, _ = self._session.run(
+						self._training_out, self._final_ce_loss, train_op,
+						feed_dict={self._images: Xbatch, self._labels: Ybatch})
 					# Use exponential decay for calculating loss and error
 					train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
 					train_error_batch = error_rate(np.argmax(y_ish, axis=1), Ybatch)
@@ -164,16 +150,16 @@ class Classificator(MakiModel):
 					test_cost = np.float32(0)
 					test_predictions = np.zeros(len(Xtest))
 
-					for k in range(len(Xtest) // self.__batch_sz):
+					for k in range(len(Xtest) // self._batch_sz):
 						# Test data
-						Xtestbatch = Xtest[k * self.__batch_sz:(k + 1) * self.__batch_sz]
-						Ytestbatch = Ytest[k * self.__batch_sz:(k + 1) * self.__batch_sz]
-						Yish_test_done = self._session.run(Yish_test, feed_dict={self.__input: Xtestbatch}) + EPSILON
+						Xtestbatch = Xtest[k * self._batch_sz:(k + 1) * self._batch_sz]
+						Ytestbatch = Ytest[k * self._batch_sz:(k + 1) * self._batch_sz]
+						Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
 						test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
-						test_predictions[k * self.__batch_sz:(k + 1) * self.__batch_sz] = np.argmax(Yish_test_done, axis=1)
+						test_predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=1)
 
 					# Collect and print data
-					test_cost = test_cost / (len(Xtest) // self.__batch_sz)
+					test_cost = test_cost / (len(Xtest) // self._batch_sz)
 					test_error = error_rate(test_predictions, Ytest)
 					test_errors.append(test_error)
 					test_costs.append(test_cost)
@@ -192,11 +178,11 @@ class Classificator(MakiModel):
 			return {'train costs': train_costs, 'train errors': train_errors,
 					'test costs': test_costs, 'test errors': test_errors}
 
-	def evaluate(self, Xtest, Ytest,batch_sz):
+	def evaluate(self, Xtest, Ytest, batch_sz):
 		# TODO: for test can be delete
 		# Validating the network
 		Xtest = Xtest.astype(np.float32)
-		Yish_test = tf.nn.softmax(self.__inference_out)
+		Yish_test = tf.nn.softmax(self._inference_out)
 		n_batches = Xtest.shape[0] // batch_sz
 
 		# For train data
@@ -206,7 +192,7 @@ class Classificator(MakiModel):
 			# Test data
 			Xtestbatch = Xtest[k * batch_sz:(k + 1) * batch_sz]
 			Ytestbatch = Ytest[k * batch_sz:(k + 1) * batch_sz]
-			Yish_test_done = self._session.run(Yish_test, feed_dict={self.__input: Xtestbatch}) + EPSILON
+			Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
 			test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
 			predictions[k * batch_sz:(k + 1) * batch_sz] = np.argmax(Yish_test_done, axis=1)
 

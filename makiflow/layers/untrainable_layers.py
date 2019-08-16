@@ -1,8 +1,5 @@
 from __future__ import absolute_import
-from abc import abstractmethod
-import numpy as np
 import tensorflow as tf
-from copy import copy
 
 from makiflow.save_recover.activation_converter import ActivationConverter
 from makiflow.base import MakiLayer, MakiTensor
@@ -13,7 +10,7 @@ class InputLayer(MakiTensor):
     def __init__(self, input_shape, name):
         self.params = []
         self._name = str(name)
-        self.__input_shape = input_shape
+        self._input_shape = input_shape
         self.input = tf.placeholder(tf.float32, shape=input_shape, name=self._name)
         super().__init__(
             data_tensor=self.input,
@@ -23,7 +20,7 @@ class InputLayer(MakiTensor):
         )
 
     def get_shape(self):
-        return self.__input_shape
+        return self._input_shape
 
     def get_name(self):
         return self._name
@@ -41,7 +38,7 @@ class InputLayer(MakiTensor):
             'type': 'InputLayer',
             'params': {
                 'name': self._name,
-                'input_shape': self.__input_shape
+                'input_shape': self._input_shape
             }
         }
 
@@ -183,9 +180,9 @@ class ZeroPaddingLayer(SimpleForwardLayer):
     
     def _forward(self, X):
         return tf.pad(
-            tensor = X,
-            paddings = self.padding,
-            mode = "CONSTANT",
+            tensor=X,
+            paddings=self.padding,
+            mode="CONSTANT",
         )
 
     def _training_forward(self, x):
@@ -203,11 +200,11 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 
 class GlobalMaxPoolLayer(SimpleForwardLayer):
     def __init__(self, name):
-        super().__init__(name,[],{})
+        super().__init__(name, [], {})
     
     def _forward(self, X):
         assert(len(X.shape) == 4)
-        return tf.reduce_max(X,axis=[1,2])
+        return tf.reduce_max(X, axis=[1,2])
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -223,11 +220,11 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
 
 class GlobalAvgPoolLayer(SimpleForwardLayer):
     def __init__(self, name):
-        super().__init__(name,[],{})
+        super().__init__(name, [], {})
     
     def _forward(self, X):
         assert(len(X.shape) == 4)
-        return tf.reduce_mean(X,axis=[1,2])
+        return tf.reduce_mean(X, axis=[1, 2])
     
     def _training_forward(self, x):
         return self._forward(x)
@@ -239,6 +236,7 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
                 'name' : self._name,
             }
         }
+
 
 class MaxPoolLayer(SimpleForwardLayer):
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):

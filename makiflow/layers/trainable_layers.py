@@ -59,7 +59,7 @@ class ConvLayer(SimpleForwardLayer):
             self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
             params += [self.b]
             named_params_dict[self.name_bias] = self.b
-        
+
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
@@ -128,8 +128,6 @@ class UpConvLayer(SimpleForwardLayer):
         self.init_type = kernel_initializer
 
         name = str(name)
-        
-        
 
         if W is None:
             W = init_conv_kernel(kw, kh, out_f, in_f, kernel_initializer)
@@ -145,16 +143,16 @@ class UpConvLayer(SimpleForwardLayer):
             self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
             params += [self.b]
             named_params_dict[self.name_bias] = self.b
-        
+
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
         out_shape = X.get_shape().as_list()
         out_shape[1] *= self.size[0]
         out_shape[2] *= self.size[1]
-        out_shape[3] = self.shape[2] # out_f
+        out_shape[3] = self.shape[2]  # out_f
         conv_out = tf.nn.conv2d_transpose(
-            X, self.W, 
+            X, self.W,
             output_shape=out_shape, strides=self.strides, padding=self.padding
         )
         if self.use_bias:
@@ -184,7 +182,7 @@ class UpConvLayer(SimpleForwardLayer):
 
 class DepthWiseConvLayer(SimpleForwardLayer):
     def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME',
-                kernel_initializer='he',use_bias=True, activation=tf.nn.relu, W=None, b=None):
+                 kernel_initializer='he', use_bias=True, activation=tf.nn.relu, W=None, b=None):
         """
         Parameters
         ----------
@@ -214,31 +212,30 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         self.init_type = kernel_initializer
 
         name = str(name)
-        
-        
 
         if W is None:
             W = init_conv_kernel(kw, kh, in_f, multiplier, kernel_initializer)
         if b is None:
-            b = np.zeros(in_f*multiplier)
-        
+            b = np.zeros(in_f * multiplier)
+
         self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, multiplier) + name
         self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
         params = [self.W]
         named_params_dict = {self.name_conv: self.W}
         if use_bias:
-            self.bias_name = f'DepthWiseConvBias_{in_f*multiplier}' + name
+            self.bias_name = f'DepthWiseConvBias_{in_f * multiplier}' + name
             self.b = tf.Variable(b.astype(np.float32), name=self.bias_name)
             params += [self.b]
             named_params_dict[self.bias_name] = self.b
-        
+
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
-        conv_out = tf.nn.depthwise_conv2d(input=X,
-                                        filter=self.W,
-                                        strides=[1,self.stride,self.stride,1],
-                                        padding=self.padding,
+        conv_out = tf.nn.depthwise_conv2d(
+            input=X,
+            filter=self.W,
+            strides=[1, self.stride, self.stride, 1],
+            padding=self.padding,
         )
         if self.use_bias:
             conv_out = tf.nn.bias_add(conv_out, self.b)
@@ -260,15 +257,15 @@ class DepthWiseConvLayer(SimpleForwardLayer):
                 'activation': ActivationConverter.activation_to_str(self.f),
                 'use_bias': self.use_bias,
                 'init_type': self.init_type
-            } 
+            }
         }
 
 
 class SeparableConvLayer(SimpleForwardLayer):
     def __init__(self, kw, kh, in_f, out_f, multiplier, name, stride=1, padding='SAME',
-                dw_kernel_initializer='xavier_gaussian_inf', pw_kernel_initializer='he',
-                use_bias=True, activation=tf.nn.relu,
-                W_dw=None, W_pw=None, b=None):
+                 dw_kernel_initializer='xavier_gaussian_inf', pw_kernel_initializer='he',
+                 use_bias=True, activation=tf.nn.relu,
+                 W_dw=None, W_pw=None, b=None):
         """
         Parameters
         ----------
@@ -303,16 +300,16 @@ class SeparableConvLayer(SimpleForwardLayer):
         self.pw_init_type = pw_kernel_initializer
 
         name = str(name)
-        
+
         if W_dw is None:
             W_dw = init_conv_kernel(kw, kh, in_f, multiplier, dw_kernel_initializer)
         if W_pw is None:
-            W_pw = init_conv_kernel(1, 1, multiplier*in_f, out_f, pw_kernel_initializer)
+            W_pw = init_conv_kernel(1, 1, multiplier * in_f, out_f, pw_kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
-        
-        self.name_DW = f'DWConvKernel_{kw}x{kh}_in{in_f}_out{in_f*multiplier}_id_{name}'
-        self.name_PW = f'PWConvKernel_{1}x{1}_in{in_f*multiplier}_out{out_f}_id_{name}'
+
+        self.name_DW = f'DWConvKernel_{kw}x{kh}_in{in_f}_out{in_f * multiplier}_id_{name}'
+        self.name_PW = f'PWConvKernel_{1}x{1}_in{in_f * multiplier}_out{out_f}_id_{name}'
         self.W_dw = tf.Variable(W_dw, name=self.name_DW)
         self.W_pw = tf.Variable(W_pw, name=self.name_PW)
         params = [self.W_dw, self.W_pw]
@@ -325,7 +322,7 @@ class SeparableConvLayer(SimpleForwardLayer):
             self.b = tf.Variable(b.astype(np.float32), name=self.bias_name)
             params += [self.b]
             named_params_dict[self.bias_name] = self.b
-        
+
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
@@ -333,7 +330,7 @@ class SeparableConvLayer(SimpleForwardLayer):
             input=X,
             depthwise_filter=self.W_dw,
             pointwise_filter=self.W_pw,
-            strides=[1,self.stride,self.stride,1],
+            strides=[1, self.stride, self.stride, 1],
             padding=self.padding,
         )
         if self.use_bias:
@@ -358,12 +355,12 @@ class SeparableConvLayer(SimpleForwardLayer):
                 'use_bias': self.use_bias,
                 'dw_init_type': self.dw_init_type,
                 'pw_init_type': self.pw_init_type
-            } 
+            }
         }
 
 
 class DenseLayer(SimpleForwardLayer):
-    def __init__(self, in_d, out_d, name, activation=tf.nn.relu, 
+    def __init__(self, in_d, out_d, name, activation=tf.nn.relu,
                  mat_initializer='he', use_bias=True, W=None, b=None):
         """
         Paremeters
@@ -406,7 +403,7 @@ class DenseLayer(SimpleForwardLayer):
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
-        out = tf.matmul(X, self.W) 
+        out = tf.matmul(X, self.W)
         if self.use_bias:
             out = out + self.b
         if self.f is None:
@@ -425,13 +422,13 @@ class DenseLayer(SimpleForwardLayer):
                 'output_shape': self.output_shape,
                 'activation': ActivationConverter.activation_to_str(self.f),
                 'use_bias': self.use_bias,
-                'init_type': self.init_type 
+                'init_type': self.init_type
             }
         }
 
 
 class BatchNormLayer(SimpleForwardLayer):
-    def __init__(self, D, name, decay=0.9,
+    def __init__(self, D, name, decay=0.9, eps=1e-4,
                  mean=None, var=None, gamma=None, beta=None):
         """
         :param D - number of tensors to be normalized.
@@ -445,6 +442,8 @@ class BatchNormLayer(SimpleForwardLayer):
         gamma and beta are defined by the NN, e.g. they are trainable.
         """
         self.D = D
+        self.decay = decay
+        self.eps = eps
 
         if mean is None:
             mean = np.zeros(D)
@@ -471,8 +470,6 @@ class BatchNormLayer(SimpleForwardLayer):
         self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)
         self.beta = tf.Variable(beta.astype(np.float32), name=self.name_beta)
 
-        self.decay = decay
-
         params = [self.running_mean, self.running_variance, self.gamma, self.beta]
         named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance,
                              self.name_gamma: self.gamma, self.name_beta: self.beta}
@@ -485,7 +482,7 @@ class BatchNormLayer(SimpleForwardLayer):
             self.running_variance,
             self.beta,
             self.gamma,
-            1e-4
+            self.eps
         )
 
     def _training_forward(self, X):
@@ -517,7 +514,7 @@ class BatchNormLayer(SimpleForwardLayer):
                 batch_var,
                 self.beta,
                 self.gamma,
-                1e-4
+                self.eps
             )
 
         return out
@@ -535,25 +532,25 @@ class BatchNormLayer(SimpleForwardLayer):
 def init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer):
     W = np.random.randn(kw, kh, in_f, out_f)
     if kernel_initializer == 'xavier_gaussian_avg':
-        W *= np.sqrt( 3./(kw*kh*in_f + kw*kh*out_f) )
+        W *= np.sqrt(3. / (kw * kh * in_f + kw * kh * out_f))
 
     elif kernel_initializer == 'xavier_gaussian_inf':
-        W *= np.sqrt( 1./(kw*kh*in_f) )
+        W *= np.sqrt(1. / (kw * kh * in_f))
 
     elif kernel_initializer == 'xavier_uniform_avg':
         W = np.random.uniform(low=-1., high=1.0, size=[kw, kh, in_f, out_f])
-        W *= np.sqrt( 6./(kw*kh*in_f + kw*kh*out_f) )
+        W *= np.sqrt(6. / (kw * kh * in_f + kw * kh * out_f))
 
     elif kernel_initializer == 'xavier_uniform_inf':
         W = np.random.uniform(low=-1., high=1.0, size=[kw, kh, in_f, out_f])
-        W *= np.sqrt( 3./(kw*kh*in_f) )
+        W *= np.sqrt(3. / (kw * kh * in_f))
 
     elif kernel_initializer == 'he':
-        W *= np.sqrt( 2./(kw*kh*in_f) )
+        W *= np.sqrt(2. / (kw * kh * in_f))
 
     elif kernel_initializer == 'lasange':
         W = np.random.uniform(low=-1., high=1.0, size=[kw, kh, in_f, out_f])
-        W *= np.sqrt( 12./(kw*kh*in_f + kw*kh*out_f) )
+        W *= np.sqrt(12. / (kw * kh * in_f + kw * kh * out_f))
 
     return W.astype(np.float32)
 
@@ -561,17 +558,17 @@ def init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer):
 def init_dense_mat(in_d, out_d, mat_initializer):
     W = np.random.randn(in_d, out_d)
     if mat_initializer == 'xavier_gaussian':
-        W *= np.sqrt( 3./(in_d + out_d) )
+        W *= np.sqrt(3. / (in_d + out_d))
 
     elif mat_initializer == 'xavier_uniform':
         W = np.random.uniform(low=-1., high=1.0, size=[in_d, out_d])
-        W *= np.sqrt( 6./(in_d + out_d) )
+        W *= np.sqrt(6. / (in_d + out_d))
 
     elif mat_initializer == 'he':
-        W *= np.sqrt( 2./(in_d) )
+        W *= np.sqrt(2. / (in_d))
 
     elif mat_initializer == 'lasange':
         W = np.random.uniform(low=-1., high=1.0, size=[in_d, out_d])
-        W *= np.sqrt( 12./(in_d + out_d) )
+        W *= np.sqrt(12. / (in_d + out_d))
 
     return W.astype(np.float32)
