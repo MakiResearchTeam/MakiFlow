@@ -305,7 +305,7 @@ class SeparableConvLayer(SimpleForwardLayer):
         if b is None:
             b = np.zeros(out_f)
 
-        self.name_DW = f'DWConvKernel_{kw}x{kh}_in{in_f}_out{in_f * multiplier}_id_{name}'
+        self.name_DW = f'DWConvKernel_{kw}x{kh}_in{in_f}_out{multiplier}_id_{name}'
         self.name_PW = f'PWConvKernel_{1}x{1}_in{in_f * multiplier}_out{out_f}_id_{name}'
         self.W_dw = tf.Variable(W_dw, name=self.name_DW)
         self.W_pw = tf.Variable(W_pw, name=self.name_PW)
