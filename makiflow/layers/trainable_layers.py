@@ -46,7 +46,7 @@ class ConvLayer(SimpleForwardLayer):
         if b is None:
             b = np.zeros(out_f)
 
-        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+        self.name_conv = 'ConvKernel_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
         self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
         params = [self.W]
         named_params_dict = {self.name_conv: self.W}
@@ -215,7 +215,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         if b is None:
             b = np.zeros(in_f * multiplier)
 
-        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, multiplier) + name
+        self.name_conv = 'DepthWiseConvKernel_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, multiplier) + name
         self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
         params = [self.W]
         named_params_dict = {self.name_conv: self.W}
@@ -387,12 +387,12 @@ class DenseLayer(SimpleForwardLayer):
             b = np.zeros(out_d)
 
         name = str(name)
-        self.name_dense = 'DenseMat{}x{}_id_'.format(in_d, out_d) + name
+        self.name_dense = 'DenseMat_{}x{}_id_'.format(in_d, out_d) + name
         self.W = tf.Variable(W, name=self.name_dense)
         params = [self.W]
         named_params_dict = {self.name_dense: self.W}
         if use_bias:
-            self.name_bias = 'DenseBias{}x{}_id_'.format(in_d, out_d) + name
+            self.name_bias = 'DenseBias_{}x{}_id_'.format(in_d, out_d) + name
             self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
             params += [self.b]
             named_params_dict[self.name_bias] = self.b
@@ -417,6 +417,62 @@ class DenseLayer(SimpleForwardLayer):
                 'name': self._name,
                 'input_shape': self.input_shape,
                 'output_shape': self.output_shape,
+                'activation': ActivationConverter.activation_to_str(self.f),
+                'use_bias': self.use_bias,
+                'init_type': self.init_type
+            }
+        }
+
+
+class AtrousConvLayer(SimpleForwardLayer):
+    def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=tf.nn.relu,
+                 kernel_initializer='he', use_bias=True, W=None, b=None):
+        self.shape = (kw, kh, in_f, out_f)
+        self.rate = rate
+        self.padding = padding
+        self.f = activation
+        self.use_bias = use_bias
+        self.init_type = kernel_initializer
+
+        name = str(name)
+        self.name_conv = f'AtrousConvKernel_{kw}x{kh}_in{in_f}_out{out_f}_rate{rate}_id_{name}'
+
+        if W is None:
+            W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
+        if b is None:
+            b = np.zeros(out_f)
+
+        self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
+        params = [self.W]
+        named_params_dict = {self.name_conv: self.W}
+
+        if use_bias:
+            self.name_bias = f'AtrousConvBias_{kw}x{kh}_in{in_f}_out{out_f}_rate{rate}_id_{name}'
+            self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
+            params += [self.b]
+            named_params_dict[self.name_bias] = self.b
+
+        super().__init__(name, params, named_params_dict)
+
+    def _forward(self, X):
+        conv_out = tf.nn.atrous_conv2d(X, self.W, self.rate, self.padding)
+        if self.use_bias:
+            conv_out = tf.nn.bias_add(conv_out, self.b)
+        if self.f is None:
+            return conv_out
+        return self.f(conv_out)
+
+    def _training_forward(self, x):
+        return self._forward(x)
+
+    def to_dict(self):
+        return {
+            'type': 'AtrousConvLayer',
+            'params': {
+                'name': self._name,
+                'shape': list(self.shape),
+                'rate': self.rate,
+                'padding': self.padding,
                 'activation': ActivationConverter.activation_to_str(self.f),
                 'use_bias': self.use_bias,
                 'init_type': self.init_type
@@ -457,10 +513,10 @@ class BatchNormLayer(SimpleForwardLayer):
             gamma = np.ones(D)
 
         name = str(name)
-        self.name_mean = 'BatchMean{}_id_'.format(D) + name
-        self.name_var = 'BatchVar{}_id_'.format(D) + name
-        self.name_gamma = 'BatchGamma{}_id_'.format(D) + name
-        self.name_beta = 'BatchBeta{}_id_'.format(D) + name
+        self.name_mean = 'BatchMean_{}_id_'.format(D) + name
+        self.name_var = 'BatchVar_{}_id_'.format(D) + name
+        self.name_gamma = 'BatchGamma_{}_id_'.format(D) + name
+        self.name_beta = 'BatchBeta_{}_id_'.format(D) + name
 
         self.running_mean = tf.Variable(mean.astype(np.float32), trainable=False, name=self.name_mean)
         self.running_variance = tf.Variable(var.astype(np.float32), trainable=False, name=self.name_var)
