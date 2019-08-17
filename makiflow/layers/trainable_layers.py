@@ -60,7 +60,8 @@ class ConvLayer(SimpleForwardLayer):
 
     def _forward(self, X):
         conv_out = tf.nn.conv2d(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
-        conv_out = tf.nn.bias_add(conv_out, self.b)
+        if self.use_bias:
+            conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:
             return conv_out
         return self.f(conv_out)
