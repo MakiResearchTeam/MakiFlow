@@ -51,7 +51,7 @@ class ConvLayer(SimpleForwardLayer):
         params = [self.W]
         named_params_dict = {self.name_conv: self.W}
         if use_bias:
-            self.name_bias = 'UpConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+            self.name_bias = 'ConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
             self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
             params += [self.b]
             named_params_dict[self.name_bias] = self.b
