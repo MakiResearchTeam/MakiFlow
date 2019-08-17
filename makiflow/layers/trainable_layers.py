@@ -522,6 +522,8 @@ class BatchNormLayer(SimpleForwardLayer):
             'params': {
                 'name': self._name,
                 'D': self.D,
+                'decay': self.decay,
+                'eps': self.eps
             }
         }
 

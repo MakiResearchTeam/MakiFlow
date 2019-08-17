@@ -290,7 +290,9 @@ class Builder:
     def __batchnorm_layer_from_dict(params):
         name = params['name']
         D = params['D']
-        return BatchNormLayer(D=D, name=name)
+        decay = params['decay']
+        eps = params['eps']
+        return BatchNormLayer(D=D, name=name, decay=decay, eps=eps)
     
     @staticmethod
     def __upsampling_layer_from_dict(params):
