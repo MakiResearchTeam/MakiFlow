@@ -6,6 +6,62 @@ from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
 
 
+class AtrousConvLayer(SimpleForwardLayer):
+    def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=tf.nn.relu,
+                 kernel_initializer='he', use_bias=True, W=None, b=None):
+        self.shape = (kw, kh, in_f, out_f)
+        self.rate = rate
+        self.padding = padding
+        self.f = activation
+        self.use_bias = use_bias
+        self.init_type = kernel_initializer
+
+        name = str(name)
+        self.name_conv = f'AtrousConvKernel{kw}x{kh}_in{in_f}_out{out_f}_rate{rate}_id_{name}'
+
+        if W is None:
+            W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
+        if b is None:
+            b = np.zeros(out_f)
+
+        self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
+        params = [self.W]
+        named_params_dict = {self.name_conv: self.W}
+
+        if use_bias:
+            self.name_bias = f'AtrousConvBias{kw}x{kh}_in{in_f}_out{out_f}_rate{rate}_id_{name}'
+            self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
+            params += [self.b]
+            named_params_dict[self.name_bias] = self.b
+
+        super().__init__(name, params, named_params_dict)
+
+    def _forward(self, X):
+        conv_out = tf.nn.atrous_conv2d(X, self.W, self.rate, self.padding)
+        if self.use_bias:
+            conv_out = tf.nn.bias_add(conv_out, self.b)
+        if self.f is None:
+            return conv_out
+        return self.f(conv_out)
+
+    def _training_forward(self, x):
+        return self._forward(x)
+
+    def to_dict(self):
+        return {
+            'type': 'AtrousConvLayer',
+            'params': {
+                'name': self._name,
+                'shape': list(self.shape),
+                'rate': self.rate,
+                'padding': self.padding,
+                'activation': ActivationConverter.activation_to_str(self.f),
+                'use_bias': self.use_bias,
+                'init_type': self.init_type
+            }
+        }
+
+
 class ConvLayer(SimpleForwardLayer):
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
                  kernel_initializer='he', use_bias=True, W=None, b=None):
@@ -41,7 +97,6 @@ class ConvLayer(SimpleForwardLayer):
 
         name = str(name)
         self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
-        self.name_bias = 'ConvBias{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
 
         if W is None:
             W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
@@ -52,7 +107,7 @@ class ConvLayer(SimpleForwardLayer):
         params = [self.W]
         named_params_dict = {self.name_conv: self.W}
         if use_bias:
-            self.name_bias = 'UpConvBias_{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
+            self.name_bias = 'ConvBias{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, out_f) + name
             self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
             params += [self.b]
             named_params_dict[self.name_bias] = self.b
@@ -61,7 +116,8 @@ class ConvLayer(SimpleForwardLayer):
 
     def _forward(self, X):
         conv_out = tf.nn.conv2d(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
-        conv_out = tf.nn.bias_add(conv_out, self.b)
+        if self.use_bias:
+            conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:
             return conv_out
         return self.f(conv_out)
@@ -215,7 +271,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         if b is None:
             b = np.zeros(in_f * multiplier)
 
-        self.name_conv = 'ConvKernel{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, multiplier) + name
+        self.name_conv = 'DepthWiseConvLayer{}x{}_in{}_out{}_id_'.format(kw, kh, in_f, multiplier) + name
         self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
         params = [self.W]
         named_params_dict = {self.name_conv: self.W}
