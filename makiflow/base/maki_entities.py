@@ -298,7 +298,8 @@ class MakiModel:
         """
         if not self._set_for_training:
             self._setup_for_training()
-            self._uses_l2_regularization = True
+
+        self._uses_l2_regularization = True
         
         for layer_name, decay in layers:
             self._l2_regularized_layers[layer_name] = decay
@@ -315,7 +316,8 @@ class MakiModel:
         """
         if not self._set_for_training:
             self._setup_for_training()
-            self._uses_l2_regularization = True
+
+        self._uses_l2_regularization = True
 
         for layer_name in self._l2_regularized_layers:
             if self._l2_regularized_layers[layer_name] is not None:
@@ -350,7 +352,8 @@ class MakiModel:
         """
         if not self._set_for_training:
             self._setup_for_training()
-            self._uses_l1_regularization = True
+
+        self._uses_l1_regularization = True
         
         for layer_name, decay in layers:
             self._l1_regularized_layers[layer_name] = decay
@@ -367,7 +370,8 @@ class MakiModel:
         """
         if not self._set_for_training:
             self._setup_for_training()
-            self._uses_l1_regularization = True
+
+        self._uses_l1_regularization = True
 
         for layer_name in self._l1_regularized_layers:
             if self._l1_regularized_layers[layer_name] is not None:
