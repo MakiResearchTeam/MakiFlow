@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from makiflow.layers.trainable_layers import ConvLayer, UpConvLayer, DepthWiseConvLayer, DenseLayer
-from makiflow.layers.trainable_layers import SeparableConvLayer, BatchNormLayer
+from makiflow.layers.trainable_layers import SeparableConvLayer, BatchNormLayer, AtrousConvLayer
 
 from makiflow.layers.untrainable_layers import MaxPoolLayer, AvgPoolLayer, GlobalAvgPoolLayer, GlobalMaxPoolLayer
 from makiflow.layers.untrainable_layers import FlattenLayer, DropoutLayer, ActivationLayer, MulByAlphaLayer
