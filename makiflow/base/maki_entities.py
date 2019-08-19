@@ -324,7 +324,7 @@ class MakiModel:
                 self._l2_regularized_layers[layer_name] = decay
     
     def _build_l2_loss(self):
-        self._l2_reg_loss = tf.constant(0)
+        self._l2_reg_loss = tf.constant(0.0)
         for layer_name in self._l2_regularized_layers:
             decay = self._l2_regularized_layers[layer_name]
             if decay is not None:
@@ -378,7 +378,7 @@ class MakiModel:
                 self._l1_regularized_layers[layer_name] = decay
     
     def _build_l1_loss(self):
-        self._l1_reg_loss = tf.constant(0)
+        self._l1_reg_loss = tf.constant(0.0)
         for layer_name in self._l1_regularized_layers:
             decay = self._l1_regularized_layers[layer_name]
             if decay is not None:
