@@ -76,6 +76,6 @@ def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
     P2vec = P2.sum(axis=1)
     Lvec = L.sum(axis=1)
     dens = P2vec + Lvec
-    dices_b = 2 * nums / dens
+    dices_b = (2 * nums + EPSILON) / (dens + EPSILON)
     dices = dices_b.mean(axis=0)
     return dices.mean(), dices
