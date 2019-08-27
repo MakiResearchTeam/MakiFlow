@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from makiflow.metrics.utils import one_hot
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
 import numpy as np
 
 EPSILON = 1e-9
@@ -79,3 +81,44 @@ def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
     dices_b = (2 * nums + EPSILON) / (dens + EPSILON)
     dices = dices_b.mean(axis=0)
     return dices.mean(), dices
+
+
+def confusion_matrix(
+        p, l,
+        use_argmax_p=False, use_argmax_l=False, to_flatten=False,
+        save_path=None, dpi=200):
+    """
+    Creates confusion matrix for the given predictions `p` and labels `l`.
+    Parameters
+    ----------
+    p : np.ndarray
+        Predictions.
+    l : np.ndarray
+        Corresponding labels.
+    use_argmax_p : bool
+        Set to true if prediction aren't sparse, i.e. `p` is an array of shape [..., num_classes].
+    use_argmax_l : bool
+        Set to true if labels aren't sparse (one-hot encoded), i.e. `l` is an array of shape [..., num_classes].
+    to_flatten : bool
+        Set to true if `p' and `l` are high-dimensional arrays.
+    save_path : str
+        Saving path for the confusion matrix picture.
+    dpi : int
+        Affects the size of the saved confusion matrix picture.
+    """
+    if use_argmax_p:
+        p = p.argmax(axis=-1)
+
+    if use_argmax_l:
+        l = l.argmax(axis=-1)
+
+    if to_flatten:
+        p = p.reshape(-1)
+        l = l.reshape(-1)
+
+    mat = confusion_matrix(l, p)
+
+    if save_path is not None:
+        conf_mat = sns.heatmap(mat, annot=True)
+        conf_mat.figure.savefig(save_path, dpi=dpi)
+    return mat
