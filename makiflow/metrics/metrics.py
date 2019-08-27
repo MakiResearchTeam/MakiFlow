@@ -83,7 +83,7 @@ def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
     return dices.mean(), dices
 
 
-def confusion_matrix(
+def confusion_mat(
         p, l,
         use_argmax_p=False, use_argmax_l=False, to_flatten=False,
         save_path=None, dpi=200):
@@ -116,7 +116,7 @@ def confusion_matrix(
         p = p.reshape(-1)
         l = l.reshape(-1)
 
-    mat = confusion_matrix(l, p)
+    mat = confusion_mat(l, p)
 
     if save_path is not None:
         conf_mat = sns.heatmap(mat, annot=True)
