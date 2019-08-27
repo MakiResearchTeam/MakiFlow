@@ -116,7 +116,7 @@ def confusion_mat(
         p = p.reshape(-1)
         l = l.reshape(-1)
 
-    mat = confusion_mat(l, p)
+    mat = confusion_matrix(l, p)
 
     if save_path is not None:
         conf_mat = sns.heatmap(mat, annot=True)
