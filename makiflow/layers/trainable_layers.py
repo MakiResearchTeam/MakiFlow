@@ -481,8 +481,8 @@ class AtrousConvLayer(SimpleForwardLayer):
 
 
 class BatchNormLayer(SimpleForwardLayer):
-    def __init__(self, D, name, decay=0.9, eps=1e-4,
-                 mean=None, var=None, gamma=None, beta=None):
+    def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
+                    use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
         :param D - number of tensors to be normalized.
         :param mean - batch mean value. Used for initialization mean with pretrained value.
@@ -497,6 +497,8 @@ class BatchNormLayer(SimpleForwardLayer):
         self.D = D
         self.decay = decay
         self.eps = eps
+        self.use_gamma = use_gamma
+        self.use_beta = use_beta
 
         if mean is None:
             mean = np.zeros(D)
@@ -515,17 +517,33 @@ class BatchNormLayer(SimpleForwardLayer):
         name = str(name)
         self.name_mean = 'BatchMean_{}_id_'.format(D) + name
         self.name_var = 'BatchVar_{}_id_'.format(D) + name
-        self.name_gamma = 'BatchGamma_{}_id_'.format(D) + name
-        self.name_beta = 'BatchBeta_{}_id_'.format(D) + name
 
         self.running_mean = tf.Variable(mean.astype(np.float32), trainable=False, name=self.name_mean)
         self.running_variance = tf.Variable(var.astype(np.float32), trainable=False, name=self.name_var)
-        self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)
-        self.beta = tf.Variable(beta.astype(np.float32), name=self.name_beta)
 
-        params = [self.running_mean, self.running_variance, self.gamma, self.beta]
-        named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance,
-                             self.name_gamma: self.gamma, self.name_beta: self.beta}
+        params = [self.running_mean, self.running_variance]
+        named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance}
+        
+        # Create gamma
+        if use_gamma:
+            self.name_gamma = 'BatchGamma_{}_id_'.format(D) + name
+            self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)
+            params += [self.gamma]
+            named_params_dict[self.name_gamma] = self.gamma
+        else:
+            name_gamma = 'BatchGamma_{}_id_const_'.format(D) + name
+            self.gamma = tf.constant(gamma, dtype=np.float32, shape=gamma.shape, name=name_gamma)
+        
+        # Create beta
+        if use_beta:
+            self.name_beta = 'BatchBeta_{}_id_'.format(D) + name
+            self.beta = tf.Variable(beta.astype(np.float32), name=self.name_beta)
+            params += [self.beta]
+            named_params_dict[self.name_beta] = self.beta
+        else:
+            name_beta = 'BatchBeta_{}_id_const_'.format(D) + name
+            self.beta = tf.constant(beta, dtype=np.float32, shape=beta.shape, name=name_beta)
+
         super().__init__(name, params, named_params_dict)
 
     def _forward(self, X):
@@ -579,7 +597,9 @@ class BatchNormLayer(SimpleForwardLayer):
                 'name': self._name,
                 'D': self.D,
                 'decay': self.decay,
-                'eps': self.eps
+                'eps': self.eps,
+                'use_beta': self.use_beta,
+                'use_gamma': self.use_gamma,
             }
         }
 

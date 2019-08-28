@@ -292,7 +292,10 @@ class Builder:
         D = params['D']
         decay = params['decay']
         eps = params['eps']
-        return BatchNormLayer(D=D, name=name, decay=decay, eps=eps)
+        use_beta = params['use_beta']
+        use_gamma = params['use_gamma']
+        return BatchNormLayer(D=D, name=name, decay=decay, eps=eps, 
+                                                use_beta=use_beta, use_gamma=use_gamma)
     
     @staticmethod
     def __upsampling_layer_from_dict(params):
