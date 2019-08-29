@@ -2,7 +2,9 @@ from __future__ import absolute_import
 from makiflow.metrics.utils import one_hot
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
 
 EPSILON = 1e-9
 
@@ -85,8 +87,8 @@ def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
 
 def confusion_mat(
         p, l,
-        use_argmax_p=False, use_argmax_l=False, to_flatten=False,
-        save_path=None, dpi=200):
+        use_argmax_p=False, use_argmax_l=False, to_flatten=False, normalize=True,
+        save_path=None, dpi=150, annot=False):
     """
     Creates confusion matrix for the given predictions `p` and labels `l`.
     Parameters
@@ -98,13 +100,17 @@ def confusion_mat(
     use_argmax_p : bool
         Set to true if prediction aren't sparse, i.e. `p` is an array of shape [..., num_classes].
     use_argmax_l : bool
-        Set to true if labels aren't sparse (one-hot encoded), i.e. `l` is an array of shape [..., num_classes].
+        Set to True if labels aren't sparse (one-hot encoded), i.e. `l` is an array of shape [..., num_classes].
     to_flatten : bool
-        Set to true if `p' and `l` are high-dimensional arrays.
+        Set to True if `p' and `l` are high-dimensional arrays.
+    normalize : bool 
+        Set to True if you want to ge normalized matrix.
     save_path : str
         Saving path for the confusion matrix picture.
     dpi : int
         Affects the size of the saved confusion matrix picture.
+    annot : bool
+        Set to true if want to see actual numbers on the matrix picture.
     """
     if use_argmax_p:
         p = p.argmax(axis=-1)
@@ -116,9 +122,13 @@ def confusion_mat(
         p = p.reshape(-1)
         l = l.reshape(-1)
 
-    mat = confusion_matrix(l, p)
+    mat = np.asarray(confusion_matrix(l, p), dtype=np.float32)
+    mat /= mat.sum(axis=1)
+    del p
+    del l
 
     if save_path is not None:
-        conf_mat = sns.heatmap(mat, annot=True)
+        conf_mat = sns.heatmap(mat, annot=annot)
         conf_mat.figure.savefig(save_path, dpi=dpi)
+        plt.close(conf_mat.figure)
     return mat
