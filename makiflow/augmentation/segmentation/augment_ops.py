@@ -45,7 +45,7 @@ class ElasticAugment(AugmentOp):
             x, y = np.meshgrid(np.arange(self._img_shape[1]), np.arange(self._img_shape[0]))
             mapx = np.float32(x + dx)
             mapy = np.float32(y + dy)
-            self._maps += [mapx, mapy]
+            self._maps += [(mapx, mapy)]
 
     def get_data(self):
         imgs, masks = self._data.get_data()
