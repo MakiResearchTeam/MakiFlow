@@ -65,3 +65,4 @@ class ElasticAugment(AugmentOp):
     def __call__(self, data: Augmentor):
         super().__call__(data)
         self._generate_maps()
+        return self
