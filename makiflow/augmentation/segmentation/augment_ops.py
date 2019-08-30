@@ -107,7 +107,7 @@ class ElasticAugment(AugmentOp):
             new_imgs += imgs
             new_masks += masks
 
-        return new_imgs, masks
+        return new_imgs, new_masks
 
     def __call__(self, data: Augmentor):
         super().__call__(data)
@@ -193,7 +193,7 @@ class AffineAugment(AugmentOp):
             new_imgs += imgs
             new_masks += masks
 
-        return new_imgs, masks
+        return new_imgs, new_masks
 
     def __call__(self, data: Augmentor):
         super().__call__(data)
