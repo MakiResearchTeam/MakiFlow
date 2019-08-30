@@ -10,11 +10,19 @@ INTERPOLATION_TYPE = {
     'cubic': cv2.INTER_CUBIC
 }
 
+BORDER_MODE = {
+    'reflect': cv2.BORDER_REFLECT101,
+    'reflect_101': cv2.BORDER_REFLECT_101,
+    'constant': cv2.BORDER_CONSTANT,
+    'isolated': cv2.BORDER_ISOLATED,
+    'replicate': cv2.BORDER_REPLICATE
+}
+
 
 class ElasticAugment(AugmentOp):
     def __init__(
             self, alpha=500, std=8, num_maps=10, noise_invert_scale=5, seed=None,
-            img_inter='linear', mask_inter='nearest',
+            img_inter='linear', mask_inter='nearest', border_mode='reflect',
             keep_old_data=True
     ):
         """
@@ -42,6 +50,9 @@ class ElasticAugment(AugmentOp):
             Image interpolation type. Can be 'nearest', 'linear' or 'cubic'.
         mask_inter : str
             Image interpolation type. Can be 'nearest', 'linear' or 'cubic'.
+        border_mode : str
+            Border mode applied to transformed image. Can be 'reflect', 'constant',
+            'isolated', 'replicate', 'reflect_101'.
         keep_old_data : bool
             Set to false if you don't want to include unaugmented images into the final data set.
         """
@@ -54,6 +65,7 @@ class ElasticAugment(AugmentOp):
         self.keep_old_data = keep_old_data
         self.img_inter = INTERPOLATION_TYPE[img_inter]
         self.mask_inter = INTERPOLATION_TYPE[mask_inter]
+        self.border_mode = BORDER_MODE[border_mode]
 
     def _generate_maps(self):
         # List of tuples (xmap, ymap)
@@ -100,8 +112,8 @@ class ElasticAugment(AugmentOp):
         new_imgs, new_masks = [], []
         for img, mask in zip(imgs, masks):
             for mapx, mapy in self._maps:
-                new_imgs.append(cv2.remap(img, mapx, mapy, self.img_inter, borderMode=cv2.BORDER_REFLECT101))
-                new_masks.append(cv2.remap(mask, mapx, mapy, self.mask_inter, borderMode=cv2.BORDER_REFLECT101))
+                new_imgs.append(cv2.remap(img, mapx, mapy, self.img_inter, borderMode=self.border_mode))
+                new_masks.append(cv2.remap(mask, mapx, mapy, self.mask_inter, borderMode=self.border_mode))
 
         if self.keep_old_data:
             new_imgs += imgs
@@ -118,7 +130,7 @@ class ElasticAugment(AugmentOp):
 class AffineAugment(AugmentOp):
     def __init__(
             self, delta=10., num_matrices=5, seed=None, noise_type='uniform',
-            img_inter='linear', mask_inter='nearest',
+            img_inter='linear', mask_inter='nearest', border_mode='reflect_101',
             keep_old_data=True
     ):
         """
@@ -139,6 +151,9 @@ class AffineAugment(AugmentOp):
             Image interpolation type. Can be 'nearest', 'linear' or 'cubic'.
         mask_inter : str
             Image interpolation type. Can be 'nearest', 'linear' or 'cubic'.
+        border_mode : str
+            Border mode applied to transformed image. Can be 'reflect', 'constant',
+            'isolated', 'replicate', 'reflect_101'.
         keep_old_data : bool
             Set to false if you don't want to include unaugmented images into the final data set.
         """
@@ -150,6 +165,7 @@ class AffineAugment(AugmentOp):
         self.keep_old_data = keep_old_data
         self.img_inter = INTERPOLATION_TYPE[img_inter]
         self.mask_inter = INTERPOLATION_TYPE[mask_inter]
+        self.border_mode = BORDER_MODE[border_mode]
 
     def _generate_matrices(self):
         self.mxs = []
@@ -178,13 +194,13 @@ class AffineAugment(AugmentOp):
             for M in self.mxs:
                 new_imgs.append(
                     cv2.warpAffine(
-                        img, M, shape_size[::-1], borderMode=cv2.BORDER_REFLECT_101,
+                        img, M, shape_size[::-1], borderMode=self.border_mode,
                         flags=self.img_inter
                     )
                 )
                 new_masks.append(
                     cv2.warpAffine(
-                        mask, M, shape_size[::-1], borderMode=cv2.BORDER_REFLECT_101,
+                        mask, M, shape_size[::-1], borderMode=self.border_mode,
                         flags=self.mask_inter
                     )
                 )

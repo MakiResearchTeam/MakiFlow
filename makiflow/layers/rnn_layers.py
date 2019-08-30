@@ -7,6 +7,7 @@ from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, st
 from makiflow.base import MakiLayer
 from makiflow.layers.activation_converter import ActivationConverter
 
+
 class CellType:
     # Bidirectional dynamic
     Bidir_Dynamic = 1

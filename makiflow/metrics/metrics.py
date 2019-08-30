@@ -4,7 +4,6 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
 
 EPSILON = 1e-9
 
