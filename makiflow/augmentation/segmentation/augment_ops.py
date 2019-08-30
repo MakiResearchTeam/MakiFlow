@@ -117,7 +117,7 @@ class ElasticAugment(AugmentOp):
 
 class AffineAugment(AugmentOp):
     def __init__(
-            self, delta=10., num_matrices=5, seed=None,
+            self, delta=10., num_matrices=5, seed=None, noise_type='uniform',
             img_inter='linear', mask_inter='nearest',
             keep_old_data=True
     ):
@@ -133,6 +133,8 @@ class AffineAugment(AugmentOp):
         seed : int (optional)
             Seed for the random generator that will generate noise tensors for the
             elastic transformation maps.
+        noise_type : str
+            The noise distribution. Can be 'uniform' or 'gaussian'
         img_inter : str
             Image interpolation type. Can be 'nearest', 'linear' or 'cubic'.
         mask_inter : str
@@ -143,6 +145,7 @@ class AffineAugment(AugmentOp):
         super().__init__()
         self.delta = delta
         self.num_matrices = num_matrices
+        self.noise_type = noise_type
         self.random_state = np.random.RandomState(seed)
         self.keep_old_data = keep_old_data
         self.img_inter = INTERPOLATION_TYPE[img_inter]
@@ -159,7 +162,10 @@ class AffineAugment(AugmentOp):
             pts1 = np.float32(
                 [center_square + square_size, [center_square[0] + square_size, center_square[1] - square_size],
                  center_square - square_size])
-            pts2 = pts1 + self.random_state.uniform(-self.delta, self.delta, size=pts1.shape).astype(np.float32)
+            noise_shift = self.random_state.uniform(-self.delta, self.delta, size=pts1.shape).astype(np.float32)
+            if self.noise_type == 'gaussian':
+                noise_shift = self.random_state.randn(*pts1.shape) * self.delta
+            pts2 = pts1 + noise_shift
             M = cv2.getAffineTransform(pts1, pts2)
             self.mxs.append(M)
 
