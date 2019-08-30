@@ -48,7 +48,7 @@ def categorical_dice_coeff(P, L, use_argmax=False):
             sub_actual = (sample_actual[:] == j).astype(np.int32)
             sub_confs = sample_pred[:, j]
             class_dices[j] += binary_dice(sub_confs, sub_actual)
-    return class_dices / batch_sz, class_dices.mean() / batch_sz
+    return class_dices.mean() / batch_sz, class_dices / batch_sz
 
 
 def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
