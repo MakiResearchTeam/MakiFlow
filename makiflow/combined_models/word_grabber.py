@@ -7,6 +7,7 @@ import cv2
 # For cutting out pieces of images with text
 import numpy as np
 
+
 class WordGrabber:
     # Used for the preparing input images to the SSD
     SSD_X_STEP = 150
