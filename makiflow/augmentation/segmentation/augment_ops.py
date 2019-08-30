@@ -164,7 +164,7 @@ class AffineAugment(AugmentOp):
                  center_square - square_size])
             noise_shift = self.random_state.uniform(-self.delta, self.delta, size=pts1.shape).astype(np.float32)
             if self.noise_type == 'gaussian':
-                noise_shift = self.random_state.randn(*pts1.shape) * self.delta
+                noise_shift = self.random_state.randn(*pts1.shape).astype(np.float32) * self.delta
             pts2 = pts1 + noise_shift
             M = cv2.getAffineTransform(pts1, pts2)
             self.mxs.append(M)
