@@ -15,19 +15,35 @@ def binary_dice(predicted, actual):
     return (2 * num + EPSILON) / (den + EPSILON)
 
 
-def categorical_dice_coeff(predicted, actual, num_classes):
-    # Without `flatten` shape is [batch_sz] and [batch_sz, num_classes]
-    # With `flatten` shape is [batch_sz, img_w, im_h] and [batch_sz, img_w, im_h, num_classes]
-    batch_sz = len(predicted)
-    actual = np.asarray(actual)
-    predicted = np.asarray(predicted)
-    actual = actual.reshape(batch_sz, -1)
-    predicted = predicted.reshape(batch_sz, -1, num_classes)
+def categorical_dice_coeff(P, L, use_argmax=False):
+    """
+    Calculates V-Dice for give predictions and labels.
+    WARNING! THIS IMPLIES SEGMENTATION CONTEXT.
+    Parameters
+    ----------
+    P : np.ndarray
+        Predictions of a segmentator. Array of shape [batch_sz, W, H, num_classes].
+    L : np.ndarray
+        Labels for the segmentator. Array of shape [batch_sz, W, H]
+    use_argmax : bool
+        Converts the segmentator's predictions to one-hot format.
+        Example: [0.4, 0.1, 0.5] -> [0., 0., 1.]
+    """
+    batch_sz = len(P)
+    L = np.asarray(L)
+    P = np.asarray(P)
+    num_classes = P.shape[-1]
+    if use_argmax:
+        P = P.argmax(axis=3)
+        P = P.reshape(-1)
+        P = one_hot(P, depth=num_classes)
+    P = P.reshape(batch_sz, -1, num_classes)
+    L = L.reshape(batch_sz, -1)
 
     class_dices = np.zeros(num_classes)
     for i in range(batch_sz):
-        sample_actual = actual[i]
-        sample_pred = predicted[i]
+        sample_actual = L[i]
+        sample_pred = P[i]
         for j in range(num_classes):
             sub_actual = (sample_actual[:] == j).astype(np.int32)
             sub_confs = sample_pred[:, j]
