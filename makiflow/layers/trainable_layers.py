@@ -525,24 +525,20 @@ class BatchNormLayer(SimpleForwardLayer):
         named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance}
         
         # Create gamma
+        self.name_gamma = 'BatchGamma_{}_id_'.format(D) + name
+        self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)
+        named_params_dict[self.name_gamma] = self.gamma
+
         if use_gamma:
-            self.name_gamma = 'BatchGamma_{}_id_'.format(D) + name
-            self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)
             params += [self.gamma]
-            named_params_dict[self.name_gamma] = self.gamma
-        else:
-            name_gamma = 'BatchGamma_{}_id_const_'.format(D) + name
-            self.gamma = tf.constant(gamma, dtype=np.float32, shape=gamma.shape, name=name_gamma)
         
         # Create beta
-        if use_beta:
-            self.name_beta = 'BatchBeta_{}_id_'.format(D) + name
-            self.beta = tf.Variable(beta.astype(np.float32), name=self.name_beta)
-            params += [self.beta]
-            named_params_dict[self.name_beta] = self.beta
-        else:
-            name_beta = 'BatchBeta_{}_id_const_'.format(D) + name
-            self.beta = tf.constant(beta, dtype=np.float32, shape=beta.shape, name=name_beta)
+        self.name_beta = 'BatchBeta_{}_id_'.format(D) + name
+        self.beta = tf.Variable(beta.astype(np.float32), name=self.name_beta)
+        named_params_dict[self.name_beta] = self.beta
+
+        if use_beta: 
+            params += [self.beta]   
 
         super().__init__(name, params, named_params_dict)
 
