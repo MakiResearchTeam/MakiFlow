@@ -12,4 +12,3 @@ class Data(Augmentor):
     def get_data(self):
         return self.images, self.masks
 
-
