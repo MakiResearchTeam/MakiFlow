@@ -521,7 +521,7 @@ class BatchNormLayer(SimpleForwardLayer):
         self.running_mean = tf.Variable(mean.astype(np.float32), trainable=False, name=self.name_mean)
         self.running_variance = tf.Variable(var.astype(np.float32), trainable=False, name=self.name_var)
 
-        params = [self.running_mean, self.running_variance]
+        params = []
         named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance}
         
         # Create gamma
