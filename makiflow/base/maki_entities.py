@@ -141,7 +141,14 @@ class MakiModel:
 
     def set_session(self, session: tf.Session):
         self._session = session
-        init_op = tf.variables_initializer(self._params)
+        params = []
+        # Do not initialize variables using self._params since
+        # self._params contains only gradient descent trainable parameters.
+        # It is not the case with BatchNormalization where mean and variance are
+        # computed on the fly.
+        for key in self._named_dict_params:
+            params += [self._named_dict_params[key]]
+        init_op = tf.variables_initializer(params)
         self._session.run(init_op)
 
     def load_weights(self, path, layer_names=None):
