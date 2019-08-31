@@ -14,6 +14,6 @@ setup(
     classifiers=[
         'Programming Language :: Python :: 3.7',
         'Topic :: Software Development :: Libraries :: Python Modules',
-    ], install_requires=['matplotlib', 'numpy', 'scikit-learn', 'seaborn', 'tqdm', 'tensorflow', 'pandas', 'PIL', 'cv2',
+    ], install_requires=['matplotlib', 'numpy', 'scikit-learn', 'seaborn', 'tqdm', 'tensorflow', 'pandas', 'pillow', 'cv2',
                          'scipy']
 )
