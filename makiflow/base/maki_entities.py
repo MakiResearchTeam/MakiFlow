@@ -141,10 +141,7 @@ class MakiModel:
 
     def set_session(self, session: tf.Session):
         self._session = session
-        params = []
-        for name,param in self._named_dict_params.items():
-            params += [param]
-        init_op = tf.variables_initializer(params)
+        init_op = tf.variables_initializer(self._params)
         self._session.run(init_op)
 
     def load_weights(self, path, layer_names=None):
