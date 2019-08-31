@@ -84,7 +84,7 @@ class ImageCutter:
                             crop_img, crop_mask = ImageCutter.crop_img_and_mask(
                                 img,
                                 mask,
-                                dy * step_y, dy * step_y + window_h, current_width - window_w, current_height)
+                                dy * step_y, dy * step_y + window_h, current_width - window_w, current_width)
                             cropped_images.append(crop_img)
                             cropped_masks.append(crop_mask)
 
