@@ -21,5 +21,6 @@ class TestVisualizer:
             fig.savefig(save_path)
         if save_path is None:
             fig.show()
-        fig.clf()
+        plt.close(fig)
 
+        
