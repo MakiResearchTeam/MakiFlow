@@ -237,32 +237,38 @@ class SegmentatorTrainer:
         test_period = exp_params['test_period']
         save_period = exp_params['save_period']
         optimizer = tf.train.AdamOptimizer(learning_rate=lr)
-        for i in range(epochs):
-            sub_train_info = model.fit_focal(
-                images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
-                num_positives=self.num_pos, optimizer=optimizer, epochs=1
-            )
-            self.loss_list += sub_train_info['train losses']
-
-            if i % test_period == 0:
-                self._perform_testing(model, exp_params, i)
-
-            if save_period is not None and i % save_period == 0:
-                os.makedirs(
-                    f'{self.to_save_folder}/epoch_{i}/', exist_ok=True
+        # Catch InterruptException
+        try:
+            for i in range(epochs):
+                sub_train_info = model.fit_focal(
+                    images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
+                    num_positives=self.num_pos, optimizer=optimizer, epochs=1
                 )
-                model.save_weights(f'{self.to_save_folder}/epoch_{i}/weights.ckpt')
-            print('Epochs:', (i + 1) * test_period)
-        # ALWAYS DO LAST SAVE
-        os.makedirs(
-            f'{self.to_save_folder}/last_weights/', exist_ok=True
-        )
-        model.save_weights(f'{self.to_save_folder}/last_weights/weights.ckpt')
-        print('Test finished.')
+                self.loss_list += sub_train_info['train losses']
 
-        self._save_test_info()
-        self._create_dice_loss_graphs()
-        print('Sub test is done')
+                if i % test_period == 0:
+                    self._perform_testing(model, exp_params, i)
+
+                if save_period is not None and i % save_period == 0:
+                    os.makedirs(
+                        f'{self.to_save_folder}/epoch_{i}/', exist_ok=True
+                    )
+                    model.save_weights(f'{self.to_save_folder}/epoch_{i}/weights.ckpt')
+                print('Epochs:', i)
+        except Exception as ex:
+            print(ex)
+            print("SAVING GAINED DATA")
+        finally:
+            # ALWAYS DO LAST SAVE
+            os.makedirs(
+                f'{self.to_save_folder}/last_weights/', exist_ok=True
+            )
+            model.save_weights(f'{self.to_save_folder}/last_weights/weights.ckpt')
+            print('Test finished.')
+
+            self._save_test_info()
+            self._create_dice_loss_graphs()
+            print('Sub test is done')
 
 # ----------------------------------------------------------------------------------------------------------------------
 # -----------------------------------SAVING TRAINING RESULTS------------------------------------------------------------
