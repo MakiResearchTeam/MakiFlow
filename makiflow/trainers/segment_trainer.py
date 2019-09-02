@@ -211,7 +211,7 @@ class SegmentatorTrainer:
         print('Computing confusion matrix...')
         confusion_mat(
             predictions, labels, use_argmax_p=True, to_flatten=True,
-            save_path=conf_mat_path, dpi=200
+            save_path=conf_mat_path, dpi=175
         )
         # Hope for freeing memory
         del labels
