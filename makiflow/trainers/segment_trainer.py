@@ -8,6 +8,7 @@ from sklearn.utils import shuffle
 from makiflow.save_recover.builder import Builder
 from makiflow.tools.test_visualizer import TestVisualizer
 from tqdm import tqdm
+import traceback
 
 """
 EXAMPLE OF THE TEST PARAMETERS:
@@ -170,12 +171,10 @@ class SegmentatorTrainer:
             'loss_list': self.loss_list,
         }
 
-        test_period = exp_params['test_period']
-        epochs = exp_params['epochs']
-        training_iter = range(epochs // test_period)
         self.v_dice_test_list = []
+        self.epochs_list = []
         self.test_info = {
-            'epoch': np.array(training_iter, dtype=np.uint8) * test_period,
+            'epoch': self.epochs_list,
             'v_dice_list': self.v_dice_test_list
         }
         # Add sublists for each class
@@ -220,6 +219,7 @@ class SegmentatorTrainer:
         print('Collecting data...')
 
         # COLLECT DATA
+        self.epochs_list.append(epoch)
         self.v_dice_test_list.append(v_dice_val)
         for i, class_name in enumerate(exp_params['class_names']):
             self.dices_for_each_class[class_name] += [dices[i]]
@@ -256,7 +256,7 @@ class SegmentatorTrainer:
                     model.save_weights(f'{self.to_save_folder}/epoch_{i}/weights.ckpt')
                 print('Epochs:', i)
         except Exception as ex:
-            print(ex)
+            traceback.print_exc()
             print("SAVING GAINED DATA")
         finally:
             # ALWAYS DO LAST SAVE
