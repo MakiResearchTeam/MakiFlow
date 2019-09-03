@@ -101,8 +101,8 @@ class ImageCutter:
                         if postprocessing is not None:
                             additional_list.append(postprocessing(crop_img, crop_mask))
 
-                img = cv2.resize(img, (int(current_height * scale_factor), int(current_width * scale_factor)))
-                mask = cv2.resize(mask, (int(current_height * scale_factor), int(current_width * scale_factor)))
+                img = cv2.resize(img, (int(current_width * scale_factor), int(current_height * scale_factor)))
+                mask = cv2.resize(mask, (int(current_width * scale_factor), int(current_height * scale_factor)))
 
                 current_height, current_width = img.shape[:2]
 
