@@ -103,7 +103,7 @@ def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
 def confusion_mat(
         p, l,
         use_argmax_p=False, use_argmax_l=False, to_flatten=False, normalize=True,
-        save_path=None, dpi=150, annot=False):
+        save_path=None, dpi=150, annot=True):
     """
     Creates confusion matrix for the given predictions `p` and labels `l`.
     Parameters
