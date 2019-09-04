@@ -140,6 +140,7 @@ def confusion_mat(
     mat = np.asarray(confusion_matrix(l, p), dtype=np.float32)
     if normalize:
         mat /= mat.sum(axis=0)
+        mat = np.round(mat, decimals=2)
     del p
     del l
 
