@@ -138,7 +138,8 @@ def confusion_mat(
         l = l.reshape(-1)
 
     mat = np.asarray(confusion_matrix(l, p), dtype=np.float32)
-    mat /= mat.sum(axis=1)
+    if normalize:
+        mat /= mat.sum(axis=0)
     del p
     del l
 
