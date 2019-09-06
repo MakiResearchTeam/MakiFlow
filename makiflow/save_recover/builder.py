@@ -244,11 +244,12 @@ class Builder:
         stride = params['stride']
         init_type = params['init_type']
         use_bias = params['use_bias']
+        rate = params['rate']
         activation = ActivationConverter.str_to_activation(params['activation'])
         return DepthWiseConvLayer(
             kw=kw, kh=kh, in_f=in_f, multiplier=multiplier, padding=padding,
-            stride=stride, activation=activation, name=name,
-            kernel_initializer=init_type, use_bias=use_bias
+            stride=stride, activation=activation, name=name, rate=rate,
+            kernel_initializer=init_type, use_bias=use_bias,
         )         
     
     @staticmethod

@@ -178,7 +178,7 @@ class UpConvLayer(SimpleForwardLayer):
 
 
 class DepthWiseConvLayer(SimpleForwardLayer):
-    def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME',
+    def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME', rate=[1,1],
                  kernel_initializer='he', use_bias=True, activation=tf.nn.relu, W=None, b=None):
         """
         Parameters
@@ -201,11 +201,13 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         W : numpy array
             Filter's weights. This value is used for the filter initialization with pretrained filters.
         """
+        assert (len(rate) == 2)
         self.shape = (kw, kh, in_f, multiplier)
         self.stride = stride
         self.padding = padding
         self.f = activation
         self.use_bias = use_bias
+        self.rate = rate
         self.init_type = kernel_initializer
 
         name = str(name)
@@ -233,6 +235,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
             filter=self.W,
             strides=[1, self.stride, self.stride, 1],
             padding=self.padding,
+            rate=self.rate,
         )
         if self.use_bias:
             conv_out = tf.nn.bias_add(conv_out, self.b)
