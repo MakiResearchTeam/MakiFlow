@@ -176,6 +176,34 @@ class UpConvLayer(SimpleForwardLayer):
             }
         }
 
+class BiasLayer(SimpleForwardLayer):
+    def __init__(self,D,name):
+        self.D = D
+        self.name = name
+
+        b = np.zeros(D)
+        params = []
+        self.bias_name = f'BiasLayer_{D}' + name
+        self.b = tf.Variable(b.astype(np.float32), name=self.bias_name)
+        params = [self.b]
+        named_params_dict = {self.bias_name: self.b}
+
+        super().__init__(name, params, named_params_dict)
+
+    def _forward(self, X):    
+        return tf.nn.bias_add(X, self.b)
+
+    def _training_forward(self, X):
+        return self._forward(X)
+
+    def to_dict(self):
+        return {
+            'type': 'BiasLayer',
+            'params': {
+                'name': self._name,
+                'D': self.D,
+            }
+        }
 
 class DepthWiseConvLayer(SimpleForwardLayer):
     def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME', rate=[1,1],
@@ -256,7 +284,8 @@ class DepthWiseConvLayer(SimpleForwardLayer):
                 'padding': self.padding,
                 'activation': ActivationConverter.activation_to_str(self.f),
                 'use_bias': self.use_bias,
-                'init_type': self.init_type
+                'init_type': self.init_type,
+                'rate': self.rate,
             }
         }
 

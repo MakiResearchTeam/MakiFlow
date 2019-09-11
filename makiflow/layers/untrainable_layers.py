@@ -386,3 +386,33 @@ class DropoutLayer(SimpleForwardLayer):
             }
         }
 
+class Bilinear_resize(SimpleForwardLayer):
+    def __init__(self, new_shape: list, name, align_corners=False, half_pixel_centers=False):
+        assert (len(new_shape) == 2)
+        self.new_shape = new_shape
+        self.name = name
+        self.align_corners = align_corners
+        self.half_pixel_centers = half_pixel_centers
+
+        super().__init__(name,[],{})
+
+    def _forward(self,X):
+        return tf.image.resize_bilinear(X,
+                new_shape,
+                align_corners=self.align_corners,
+                name=self.name,
+                half_pixel_centers=self.half_pixel_centers,
+        )
+    
+    def _training_forward(self,X):
+        return self._forward(X)
+    
+    def to_dict(self):
+        return {
+            'type': 'BilinearResizeLayer',
+            'params':{
+                'name': self.name,
+                'new_shape': self.new_shape,
+            }
+        }
+

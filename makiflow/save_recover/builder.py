@@ -171,9 +171,23 @@ class Builder:
             'GlobalAvgPoolLayer': Builder.__globalavgpoollayer_from_dict,
             'DepthWiseLayer': Builder.__depthwise_layer_from_dict,
             'ReshapeLayer': Builder.__reshape_layer_from_dict,
-            'UpSamplingLayer': Builder.__upsampling_layer_from_dict
+            'UpSamplingLayer': Builder.__upsampling_layer_from_dict,
+            'BiasLayer': Builder.__bias_layer_from_dict,
+            'BilinearResizeLayer': Builder.__bilinear_resize_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
+
+    @staticmethod
+    def __bilinear_resize_layer_from_dict(params):
+        new_shape = params['new_shape']
+        name = params['name']
+        return Bilinear_resize(new_shape=new_shape, name=name)
+
+    @staticmethod
+    def __bias_layer_from_dict(params):
+        name = params['name']
+        D = params['D']
+        return BiasLayer(D=D, name=name)
 
     @staticmethod
     def __concat_layer_from_dict(params):
