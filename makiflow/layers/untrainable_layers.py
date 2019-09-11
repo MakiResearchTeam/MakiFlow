@@ -398,7 +398,7 @@ class Bilinear_resize(SimpleForwardLayer):
 
     def _forward(self,X):
         return tf.image.resize_bilinear(X,
-                new_shape,
+                self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
                 half_pixel_centers=self.half_pixel_centers,
