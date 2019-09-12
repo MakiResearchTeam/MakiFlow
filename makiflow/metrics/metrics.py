@@ -14,7 +14,7 @@ def binary_dice(predicted, actual):
     return (2 * num + EPSILON) / (den + EPSILON)
 
 
-def categorical_dice_coeff(P, L, use_argmax=False):
+def categorical_dice_coeff(P, L, use_argmax=False, ind_norm=True):
     """
     Calculates V-Dice for give predictions and labels.
     WARNING! THIS IMPLIES SEGMENTATION CONTEXT.
@@ -27,6 +27,9 @@ def categorical_dice_coeff(P, L, use_argmax=False):
     use_argmax : bool
         Converts the segmentator's predictions to one-hot format.
         Example: [0.4, 0.1, 0.5] -> [0., 0., 1.]
+    ind_norm : bool
+        Normalize each dice separately. Useful in case some classes don't appear
+        on some images.
     """
     batch_sz = len(P)
     L = np.asarray(L)
@@ -40,14 +43,22 @@ def categorical_dice_coeff(P, L, use_argmax=False):
     L = L.reshape(batch_sz, -1)
 
     class_dices = np.zeros(num_classes)
+    class_counts = np.zeros(num_classes)
     for i in range(batch_sz):
         sample_actual = L[i]
         sample_pred = P[i]
         for j in range(num_classes):
             sub_actual = (sample_actual[:] == j).astype(np.int32)
             sub_confs = sample_pred[:, j]
+            if np.sum(sub_actual) == 0 and np.sum(sub_confs) == 0:
+                continue
             class_dices[j] += binary_dice(sub_confs, sub_actual)
-    return class_dices.mean() / batch_sz, class_dices / batch_sz
+            class_counts[j] += 1
+
+    v_dice, dices = class_dices.mean() / batch_sz, class_dices / batch_sz
+    if ind_norm:
+        v_dice, dices = (class_dices / class_counts).mean(), class_dices / class_counts
+    return v_dice, dices
 
 
 def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
@@ -103,7 +114,7 @@ def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
 def confusion_mat(
         p, l,
         use_argmax_p=False, use_argmax_l=False, to_flatten=False, normalize=True,
-        save_path=None, dpi=150, annot=False):
+        save_path=None, dpi=150, annot=True):
     """
     Creates confusion matrix for the given predictions `p` and labels `l`.
     Parameters
@@ -138,7 +149,9 @@ def confusion_mat(
         l = l.reshape(-1)
 
     mat = np.asarray(confusion_matrix(l, p), dtype=np.float32)
-    mat /= mat.sum(axis=1)
+    if normalize:
+        mat /= mat.sum(axis=0)
+        mat = np.round(mat, decimals=2)
     del p
     del l
 

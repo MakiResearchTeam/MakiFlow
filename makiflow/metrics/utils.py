@@ -11,13 +11,15 @@ def one_hot(sparse_labels, depth):
     ----------
     sparse_labels : array like
         Labels to encode.
+    depth : int
+        Num classes.
     Returns
     -------
     np.ndarray
         One-hot encoded labels.
     """
     N = len(sparse_labels)
-    one_hotted = np.zeros((N, depth))
+    one_hotted = np.zeros((N, depth), dtype=np.uint8)
     one_hotted[np.arange(N), sparse_labels] = 1
     return one_hotted
 
