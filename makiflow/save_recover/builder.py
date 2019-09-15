@@ -171,9 +171,25 @@ class Builder:
             'GlobalAvgPoolLayer': Builder.__globalavgpoollayer_from_dict,
             'DepthWiseLayer': Builder.__depthwise_layer_from_dict,
             'ReshapeLayer': Builder.__reshape_layer_from_dict,
-            'UpSamplingLayer': Builder.__upsampling_layer_from_dict
+            'UpSamplingLayer': Builder.__upsampling_layer_from_dict,
+            'BiasLayer': Builder.__bias_layer_from_dict,
+            'BilinearResizeLayer': Builder.__bilinear_resize_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
+
+    @staticmethod
+    def __bilinear_resize_layer_from_dict(params):
+        new_shape = params['new_shape']
+        name = params['name']
+        align_corners = params['align_corners']
+        half_pixel_centers = params['half_pixel_centers']
+        return Bilinear_resize(new_shape=new_shape, name=name, align_corners=align_corners, half_pixel_centers=half_pixel_centers)
+
+    @staticmethod
+    def __bias_layer_from_dict(params):
+        name = params['name']
+        D = params['D']
+        return BiasLayer(D=D, name=name)
 
     @staticmethod
     def __concat_layer_from_dict(params):
@@ -244,11 +260,12 @@ class Builder:
         stride = params['stride']
         init_type = params['init_type']
         use_bias = params['use_bias']
+        rate = params['rate']
         activation = ActivationConverter.str_to_activation(params['activation'])
         return DepthWiseConvLayer(
             kw=kw, kh=kh, in_f=in_f, multiplier=multiplier, padding=padding,
-            stride=stride, activation=activation, name=name,
-            kernel_initializer=init_type, use_bias=use_bias
+            stride=stride, activation=activation, name=name, rate=rate,
+            kernel_initializer=init_type, use_bias=use_bias,
         )         
     
     @staticmethod
@@ -350,7 +367,11 @@ class Builder:
     def __dropout_layer_from_dict(params):
         p_keep = params['p_keep']
         name = params['name']
-        return DropoutLayer(p_keep=p_keep, name=name)
+        noise_shape = params['noise_shape']
+        seed = params['seed']
+        rate = params['rate']
+        return DropoutLayer(p_keep=p_keep, name=name, noise_shape=noise_shape,
+                            seed=seed, rate=rate)
 
     @staticmethod
     def __gru_layer_from_dict(params):

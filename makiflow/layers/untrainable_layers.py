@@ -8,6 +8,16 @@ from makiflow.layers.sf_layer import SimpleForwardLayer
 
 class InputLayer(MakiTensor):
     def __init__(self, input_shape, name):
+        """
+        InputLayer is used to instantiate a MakiFlow tensor.
+
+        Parameters
+        ----------
+        input_shape : list
+            Shape of input object.
+        name : str
+            Name of this layer.
+        """
         self.params = []
         self._name = str(name)
         self._input_shape = input_shape
@@ -45,6 +55,16 @@ class InputLayer(MakiTensor):
 
 class ReshapeLayer(SimpleForwardLayer):
     def __init__(self, new_shape: list, name):
+        """
+        ReshapeLayer is used to chanche size from some input_shape to new_shape (include batch_size and color dimension).
+
+        Parameters
+        ----------
+        new_shape : list
+            Shape of output object.
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
         self.new_shape = new_shape
 
@@ -66,6 +86,16 @@ class ReshapeLayer(SimpleForwardLayer):
         
 class MulByAlphaLayer(SimpleForwardLayer):
     def __init__(self, alpha, name):
+        """
+        MulByAlphaLayer is used to multiply input MakiTensor on alpha.
+
+        Parameters
+        ----------
+        alpha : int
+            Сonstant.
+        name : str
+            Name of this layer.
+        """
         self.alpha = tf.constant(alpha)
         super().__init__(name,[],{})
     
@@ -87,6 +117,14 @@ class MulByAlphaLayer(SimpleForwardLayer):
 
 class SumLayer(MakiLayer):
     def __init__(self, name):
+        """
+        SumLayer is used sum input MakiTensor and give one output MakiTensor.
+
+        Parameters
+        ----------
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
 
     def __call__(self, x: list):
@@ -124,6 +162,16 @@ class SumLayer(MakiLayer):
 
 class ConcatLayer(MakiLayer):
     def __init__(self, name, axis=3):
+        """
+        ConcatLayer is used concatenate input MakiTensors on certain axis.
+
+        Parameters
+        ----------
+        axis : int
+            Dimension along which to concatenate.
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
         self.axis = axis
 
@@ -164,7 +212,7 @@ class ConcatLayer(MakiLayer):
 class ZeroPaddingLayer(SimpleForwardLayer):
     def __init__(self, padding, name):
         """
-        This layer can add rows and columns of zeros
+        ZeroPaddingLayer can add rows and columns of zeros
         at the top, bottom, left and right side of an image tensor.
 
         Parameters
@@ -172,7 +220,8 @@ class ZeroPaddingLayer(SimpleForwardLayer):
         padding : list
             List the number of additional rows and columns in the appropriate directions. 
             For example like [ [top,bottom], [left,right] ]
-            
+        name : str
+            Name of this layer.
         """
         assert(len(padding) == 2)
         self.padding = [ [0,0], padding[0], padding[1], [0,0]]
@@ -200,6 +249,15 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 
 class GlobalMaxPoolLayer(SimpleForwardLayer):
     def __init__(self, name):
+        """
+        Global max pooling operation for temporal data.
+        NOTICE! After this operation tensor will be flatten.
+
+        Parameters
+        ----------
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
     
     def _forward(self, X):
@@ -220,6 +278,15 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
 
 class GlobalAvgPoolLayer(SimpleForwardLayer):
     def __init__(self, name):
+        """
+        Global average pooling operation for temporal data.
+        NOTICE! After this operation tensor will be flatten.
+
+        Parameters
+        ----------
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
     
     def _forward(self, X):
@@ -240,6 +307,20 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
 
 class MaxPoolLayer(SimpleForwardLayer):
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
+        """
+        Max pooling operation for spatial data.
+        
+        Parameters
+        ----------
+        ksize : list
+            The size of the window for each dimension of the input MakiTensor.
+        strides : list
+            The stride of the sliding window for each dimension of the input MakiTensor.
+        padding : str
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive).
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
@@ -270,6 +351,20 @@ class MaxPoolLayer(SimpleForwardLayer):
 
 class AvgPoolLayer(SimpleForwardLayer):
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
+        """
+        Average pooling operation for spatial data.
+        
+        Parameters
+        ----------
+        ksize : list
+            The size of the window for each dimension of the input MakiTensor.
+        strides : list
+            The stride of the sliding window for each dimension of the input MakiTensor.
+        padding : str
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive).
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
@@ -300,6 +395,18 @@ class AvgPoolLayer(SimpleForwardLayer):
 
 class UpSamplingLayer(SimpleForwardLayer):
     def __init__(self, name, size=(2, 2)):
+        """
+        Upsampling layer which changes height and width of MakiTensor.
+        For example: input MakiTensor have shape [N1, H1, W1, C1], after this operation it would be [N1, H2, W2, C1], 
+        where H2 = H1 * size[0], W2 = W2 * size[1]
+        
+        Parameters
+        ----------
+        size : list
+            The upsampling factors for rows and columns.
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
         self.size = size
 
@@ -326,6 +433,16 @@ class UpSamplingLayer(SimpleForwardLayer):
 
 class ActivationLayer(SimpleForwardLayer):
     def __init__(self, name, activation=tf.nn.relu):
+        """
+        Applies an activation function to an input MakiTensor.
+        
+        Parameters
+        ----------
+        activation : object
+            Activation function from tf.
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
         if activation is None:
             raise Exception("Activation can't None")
@@ -349,6 +466,15 @@ class ActivationLayer(SimpleForwardLayer):
 
 class FlattenLayer(SimpleForwardLayer):
     def __init__(self, name):
+        """
+        Flattens the input.
+        For example: if input is [B1, H1, W1, C1], after this operation it would be [B1, C2], where C2 = H1 * W1 * C1
+        
+        Parameters
+        ----------
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
 
     def _forward(self, X):
@@ -367,7 +493,23 @@ class FlattenLayer(SimpleForwardLayer):
 
 
 class DropoutLayer(SimpleForwardLayer):
-    def __init__(self, name, p_keep=0.9):
+    def __init__(self, name, p_keep=0.9, noise_shape=None, seed=None, rate=None):
+        """
+        Applies Dropout to the input MakiTensor.
+        
+        Parameters
+        ----------
+        p_keep : float
+            A deprecated alias for (1-rate).
+        rate : float
+            A scalar Tensor with the same type as input MakiTensor. The probability that each element of input MakiTensor is discarded.
+        seed : int
+            A Python integer. Used to create random seeds.
+        noise_shape : list
+            Representing the shape for randomly generated keep/drop flags.
+        name : str
+            Name of this layer.
+        """
         super().__init__(name, [], {})
         self._p_keep = p_keep
 
@@ -375,14 +517,63 @@ class DropoutLayer(SimpleForwardLayer):
         return X
 
     def _training_forward(self, X):
-        return tf.nn.dropout(X, self._p_keep)
+        return tf.nn.dropout(X, self._p_keep,
+                            noise_shape=self.noise_shape, 
+                            seed=self.seed, 
+                            rate=self.rate,
+        )
 
     def to_dict(self):
         return {
             'type': 'DropoutLayer',
             'params': {
                 'name': self._name,
-                'p_keep': self._p_keep
+                'p_keep': self._p_keep,
+                'noise_shape': self.noise_shape,
+                'seed': self.seed,
+                'rate': self.rate,
+            }
+        }
+
+class Bilinear_resize(SimpleForwardLayer):
+    def __init__(self, new_shape: list, name, align_corners=False, half_pixel_centers=False):
+        """
+        Bilinear_resize resize input MakiTensor to new_shape shape.
+
+        Parameters
+        ----------
+        new_shape : list
+            List the number of new shape tensor (Height and Width).
+        name : str
+            Name of this layer.
+        """
+        assert (len(new_shape) == 2)
+        self.new_shape = new_shape
+        self.name = name
+        self.align_corners = align_corners
+        self.half_pixel_centers = half_pixel_centers
+
+        super().__init__(name,[],{})
+
+    def _forward(self,X):
+        return tf.image.resize_bilinear(X,
+                self.new_shape,
+                align_corners=self.align_corners,
+                name=self.name,
+                half_pixel_centers=self.half_pixel_centers,
+        )
+    
+    def _training_forward(self,X):
+        return self._forward(X)
+    
+    def to_dict(self):
+        return {
+            'type': 'BilinearResizeLayer',
+            'params':{
+                'name': self.name,
+                'new_shape': self.new_shape,
+                'align_corners': self.align_corners,
+                'half_pixel_centers': self.half_pixel_centers,
             }
         }
 
