@@ -118,7 +118,7 @@ class MulByAlphaLayer(SimpleForwardLayer):
 class SumLayer(MakiLayer):
     def __init__(self, name):
         """
-        SumLayer is used sum input MakiTensor and give one output MakiTensor.
+        SumLayer is used sum inputs MakiTensors and give one output MakiTensor.
 
         Parameters
         ----------
@@ -163,7 +163,7 @@ class SumLayer(MakiLayer):
 class ConcatLayer(MakiLayer):
     def __init__(self, name, axis=3):
         """
-        ConcatLayer is used concatenate input MakiTensors on certain axis.
+        ConcatLayer is used concatenate input MakiTensors along certain axis.
 
         Parameters
         ----------
@@ -212,7 +212,7 @@ class ConcatLayer(MakiLayer):
 class ZeroPaddingLayer(SimpleForwardLayer):
     def __init__(self, padding, name):
         """
-        ZeroPaddingLayer can add rows and columns of zeros
+        ZeroPaddingLayer adds rows and columns of zeros
         at the top, bottom, left and right side of an image tensor.
 
         Parameters
@@ -250,7 +250,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 class GlobalMaxPoolLayer(SimpleForwardLayer):
     def __init__(self, name):
         """
-        Global max pooling operation for temporal data.
+        Performs global maxpooling.
         NOTICE! After this operation tensor will be flatten.
 
         Parameters
@@ -279,7 +279,7 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
 class GlobalAvgPoolLayer(SimpleForwardLayer):
     def __init__(self, name):
         """
-        Global average pooling operation for temporal data.
+        Performs global avgpooling.
         NOTICE! After this operation tensor will be flatten.
 
         Parameters
@@ -397,7 +397,7 @@ class UpSamplingLayer(SimpleForwardLayer):
     def __init__(self, name, size=(2, 2)):
         """
         Upsampling layer which changes height and width of MakiTensor.
-        For example: input MakiTensor have shape [N1, H1, W1, C1], after this operation it would be [N1, H2, W2, C1], 
+        Example: input MakiTensor have shape [N1, H1, W1, C1], after this operation it would be [N1, H2, W2, C1], 
         where H2 = H1 * size[0], W2 = W2 * size[1]
         
         Parameters
@@ -468,7 +468,7 @@ class FlattenLayer(SimpleForwardLayer):
     def __init__(self, name):
         """
         Flattens the input.
-        For example: if input is [B1, H1, W1, C1], after this operation it would be [B1, C2], where C2 = H1 * W1 * C1
+        Example: if input is [B1, H1, W1, C1], after this operation it would be [B1, C2], where C2 = H1 * W1 * C1
         
         Parameters
         ----------
