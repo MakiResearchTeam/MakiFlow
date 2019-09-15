@@ -173,17 +173,19 @@ class Builder:
             'ReshapeLayer': Builder.__reshape_layer_from_dict,
             'UpSamplingLayer': Builder.__upsampling_layer_from_dict,
             'BiasLayer': Builder.__bias_layer_from_dict,
-            'BilinearResizeLayer': Builder.__bilinear_resize_layer_from_dict,
+            'ResizeLayer': Builder.__resize_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
 
     @staticmethod
-    def __bilinear_resize_layer_from_dict(params):
+    def __resize_layer_from_dict(params):
         new_shape = params['new_shape']
         name = params['name']
         align_corners = params['align_corners']
         half_pixel_centers = params['half_pixel_centers']
-        return Bilinear_resize(new_shape=new_shape, name=name, align_corners=align_corners, half_pixel_centers=half_pixel_centers)
+        interpolation = params['interpolation']
+        return ResizeLayer(interpolation=interpolation,new_shape=new_shape, name=name, 
+                            align_corners=align_corners, half_pixel_centers=half_pixel_centers)
 
     @staticmethod
     def __bias_layer_from_dict(params):

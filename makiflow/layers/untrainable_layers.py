@@ -56,7 +56,7 @@ class InputLayer(MakiTensor):
 class ReshapeLayer(SimpleForwardLayer):
     def __init__(self, new_shape: list, name):
         """
-        ReshapeLayer is used to chanche size from some input_shape to new_shape (include batch_size and color dimension).
+        ReshapeLayer is used to changes size from some input_shape to new_shape (include batch_size and color dimension).
 
         Parameters
         ----------
@@ -506,7 +506,9 @@ class DropoutLayer(SimpleForwardLayer):
         seed : int
             A Python integer. Used to create random seeds.
         noise_shape : list
-            Representing the shape for randomly generated keep/drop flags.
+            1D list of int representing the shape of the binary dropout mask that will be multiplied with the input MakiTensor. 
+            For example, if shape(x) = [k, l, m, n] (BHWC) and noise_shape = [k, 1, 1, n], each batch and channel component will be kept
+            independently and each row and column will be kept or not kept together.
         name : str
             Name of this layer.
         """
@@ -535,13 +537,15 @@ class DropoutLayer(SimpleForwardLayer):
             }
         }
 
-class Bilinear_resize(SimpleForwardLayer):
-    def __init__(self, new_shape: list, name, align_corners=False, half_pixel_centers=False):
+class ResizeLayer(SimpleForwardLayer):
+    def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False, half_pixel_centers=False):
         """
-        Bilinear_resize resize input MakiTensor to new_shape shape.
-
+        ResizeLayer resize input MakiTensor to new_shape shape.
+        NOTICE! area interpolation don't have half_pixel_centers parameter
         Parameters
         ----------
+        interpolation : str
+            One of type resize images. ('bilinear', 'nearest_neighbor', 'area', 'bicubic')
         new_shape : list
             List the number of new shape tensor (Height and Width).
         name : str
@@ -552,25 +556,50 @@ class Bilinear_resize(SimpleForwardLayer):
         self.name = name
         self.align_corners = align_corners
         self.half_pixel_centers = half_pixel_centers
+        self.interpolation = interpolation
 
         super().__init__(name,[],{})
 
     def _forward(self,X):
-        return tf.image.resize_bilinear(X,
+        if self.interpolation == 'bilinear':
+            return tf.image.resize_bilinear(X,
+                    self.new_shape,
+                    align_corners=self.align_corners,
+                    name=self.name,
+                    half_pixel_centers=self.half_pixel_centers,
+            )
+        elif self.interpolation == 'nearest_neighbor':
+            return tf.image.resize_nearest_neighbor(X,
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
                 half_pixel_centers=self.half_pixel_centers,
-        )
+            )
+        elif self.interpolation == 'area':
+            return tf.image.resize_area(X,
+                self.new_shape,
+                align_corners=self.align_corners,
+                name=self.name,
+            )
+        elif self.interpolation == 'bicubic':
+            return tf.image.resize_bicubic(X,
+                self.new_shape,
+                align_corners=self.align_corners,
+                name=self.name,
+                half_pixel_centers=self.half_pixel_centers,
+            )
+        else:
+            raise Exception(f"Interpolation {interpolation} don't exist")
     
     def _training_forward(self,X):
         return self._forward(X)
     
     def to_dict(self):
         return {
-            'type': 'BilinearResizeLayer',
+            'type': 'ResizeLayer',
             'params':{
                 'name': self.name,
+                'interpolation' : self.interpolation,
                 'new_shape': self.new_shape,
                 'align_corners': self.align_corners,
                 'half_pixel_centers': self.half_pixel_centers,
