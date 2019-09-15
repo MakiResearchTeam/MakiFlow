@@ -24,13 +24,17 @@ class ConvLayer(SimpleForwardLayer):
         stride : int
             Defines the stride of the convolution.
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensetive). 
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
         activation : tensorflow function
             Activation function. Set None if you don't need activation.
         W : numpy array
             Filter's weights. This value is used for the filter initialization with pretrained filters.
         b : numpy array
             Bias' weights. This value is used for the bias initialization with pretrained bias.
+        use_bias : bool
+            Add bias to the output tensor.
+        name : str
+            Name of this layer.
         """
         self.shape = (kw, kh, in_f, out_f)
         self.stride = stride
@@ -106,13 +110,15 @@ class UpConvLayer(SimpleForwardLayer):
             output feature map of size (a*n, b*m) after performing up-convolution
             with `size` (a, b).
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensetive). 
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
         activation : tensorflow function
             Activation function. Set None if you don't need activation.
         W : numpy array
             Filter's weights. This value is used for the filter initialization with pretrained filters.
         b : numpy array
             Bias' weights. This value is used for the bias initialization with pretrained bias.
+        use_bias : bool
+            Add bias to the output tensor.
         """
         # Shape is different from normal convolution since it's required by 
         # transposed convolution. Output feature maps go before input ones.
@@ -147,7 +153,8 @@ class UpConvLayer(SimpleForwardLayer):
         out_shape = X.get_shape().as_list()
         out_shape[1] *= self.size[0]
         out_shape[2] *= self.size[1]
-        out_shape[3] = self.shape[2]  # out_f
+        # out_f
+        out_shape[3] = self.shape[2]
         conv_out = tf.nn.conv2d_transpose(
             X, self.W,
             output_shape=out_shape, strides=self.strides, padding=self.padding
@@ -177,7 +184,17 @@ class UpConvLayer(SimpleForwardLayer):
         }
 
 class BiasLayer(SimpleForwardLayer):
-    def __init__(self,D,name):
+    def __init__(self, D, name):
+        """
+        BiasLayer adds a bias vector of dimension D to a tensor.
+
+        Parameters
+        ----------
+        D : int
+            Dimension of bias vector.
+        name : str
+            Name of this layer.
+        """
         self.D = D
         self.name = name
 
@@ -223,11 +240,15 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         stride : int
             Defines the stride of the convolution.
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensetive). 
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
         activation : tensorflow function
             Activation function. Set None if you don't need activation.
         W : numpy array
             Filter's weights. This value is used for the filter initialization with pretrained filters.
+        use_bias : bool
+            Add bias to the output tensor. 
+        name : str
+            Name of this layer.
         """
         assert (len(rate) == 2)
         self.shape = (kw, kh, in_f, multiplier)
@@ -313,11 +334,15 @@ class SeparableConvLayer(SimpleForwardLayer):
         stride : int
             Defines the stride of the convolution.
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensetive). 
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
         activation : tensorflow function
             Activation function. Set None if you don't need activation.
         W_dw : numpy array
             Filter's weights. This value is used for the filter initialization.
+        use_bias : bool
+            Add bias to the output tensor.
+        name : str
+            Name of this layer.  
         """
         self.dw_shape = (kw, kh, in_f, multiplier)
         self.out_f = out_f
@@ -404,6 +429,10 @@ class DenseLayer(SimpleForwardLayer):
             Used for initialization the weight matrix.
         b : numpy ndarray
             Used for initialisation the bias vector.
+        use_bias : bool
+            Add bias to the output tensor.
+        name : str
+            Name of this layer.
         """
 
         self.input_shape = in_d
@@ -456,9 +485,38 @@ class DenseLayer(SimpleForwardLayer):
         }
 
 
-class AtrousConvLayer(SimpleForwardLayer):
+class AtrousConvLayer(SimpleForwardLayer):   
     def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=tf.nn.relu,
                  kernel_initializer='he', use_bias=True, W=None, b=None):
+        """
+        Parameters
+        ----------
+        kw : int
+            Kernel width.
+        kh : int
+            Kernel height.
+        in_f : int
+            Number of input feature maps. Treat as color channels if this layer
+            is first one.
+        out_f : int 
+            Number of output feature maps (number of filters).
+        rate : int
+            A positive int. The stride with which we sample input values across the height and width dimensions
+        stride : int
+            Defines the stride of the convolution.
+        padding : str
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
+        activation : tensorflow function
+            Activation function. Set None if you don't need activation.
+        W : numpy array
+            Filter's weights. This value is used for the filter initialization with pretrained filters.
+        b : numpy array
+            Bias' weights. This value is used for the bias initialization with pretrained bias.
+        use_bias : bool
+            Add bias to the output tensor.
+        name : str
+            Name of this layer.
+        """
         self.shape = (kw, kh, in_f, out_f)
         self.rate = rate
         self.padding = padding
@@ -516,7 +574,6 @@ class BatchNormLayer(SimpleForwardLayer):
     def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
                     use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
-        :param D - number of tensors to be normalized.
         :param mean - batch mean value. Used for initialization mean with pretrained value.
         :param var - batch variance value. Used for initialization variance with pretrained value.
         :param gamma - batchnorm gamma value. Used for initialization gamma with pretrained value.
@@ -525,6 +582,21 @@ class BatchNormLayer(SimpleForwardLayer):
             X_normed = (X - mean) / variance
             X_final = X*gamma + beta
         gamma and beta are defined by the NN, e.g. they are trainable.
+
+        Parameters
+        ----------
+        D : int
+            Number of tensors to be normalized.
+        decay : float
+            Decay (momentum) for the moving mean and the moving variance.
+        eps : float
+            A small float number to avoid dividing by 0.
+        use_gamma : bool
+            Use gamma in batchnorm or not.
+        use_beta : bool
+            Use beta in batchnorm or not.
+        name : str
+            Name of this layer. 
         """
         self.D = D
         self.decay = decay
@@ -631,7 +703,8 @@ class BatchNormLayer(SimpleForwardLayer):
             }
         }
 
-
+# Some initializate methods
+# Initializations define the way to set the initial random weights of MakiFlow layers.
 def init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer):
     W = np.random.randn(kw, kh, in_f, out_f)
     if kernel_initializer == 'xavier_gaussian_avg':

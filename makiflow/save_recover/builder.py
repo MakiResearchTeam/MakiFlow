@@ -181,7 +181,9 @@ class Builder:
     def __bilinear_resize_layer_from_dict(params):
         new_shape = params['new_shape']
         name = params['name']
-        return Bilinear_resize(new_shape=new_shape, name=name)
+        align_corners = params['align_corners']
+        half_pixel_centers = params['half_pixel_centers']
+        return Bilinear_resize(new_shape=new_shape, name=name, align_corners=align_corners, half_pixel_centers=half_pixel_centers)
 
     @staticmethod
     def __bias_layer_from_dict(params):
@@ -365,7 +367,11 @@ class Builder:
     def __dropout_layer_from_dict(params):
         p_keep = params['p_keep']
         name = params['name']
-        return DropoutLayer(p_keep=p_keep, name=name)
+        noise_shape = params['noise_shape']
+        seed = params['seed']
+        rate = params['rate']
+        return DropoutLayer(p_keep=p_keep, name=name, noise_shape=noise_shape,
+                            seed=seed, rate=rate)
 
     @staticmethod
     def __gru_layer_from_dict(params):
