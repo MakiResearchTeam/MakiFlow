@@ -514,6 +514,9 @@ class DropoutLayer(SimpleForwardLayer):
         """
         super().__init__(name, [], {})
         self._p_keep = p_keep
+        self.noise_shape = noise_shape
+        self.seed = seed
+        self.rate = rate
 
     def _forward(self, X):
         return X
