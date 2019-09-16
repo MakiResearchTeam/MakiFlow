@@ -113,8 +113,9 @@ def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
 
 def confusion_mat(
         p, l,
-        use_argmax_p=False, use_argmax_l=False, to_flatten=False, normalize=True,
-        save_path=None, dpi=150, annot=True):
+        use_argmax_p=False, use_argmax_l=False, to_flatten=False, normalize=[0, 1],
+        save_path=None, dpi=150, annot=True
+    ):
     """
     Creates confusion matrix for the given predictions `p` and labels `l`.
     Parameters
@@ -129,14 +130,22 @@ def confusion_mat(
         Set to True if labels aren't sparse (one-hot encoded), i.e. `l` is an array of shape [..., num_classes].
     to_flatten : bool
         Set to True if `p' and `l` are high-dimensional arrays.
-    normalize : bool 
-        Set to True if you want to ge normalized matrix.
+    normalize : list 
+        List of axes. The matrix will be normalized along these axes.
+        Axis 1 - normalizing by the number of true samples per class.
+        Axis 0 - normalizing by the number of the network predictions per class.
+        Leave the list empty if you unnormalized matrix.
     save_path : str
         Saving path for the confusion matrix picture.
     dpi : int
         Affects the size of the saved confusion matrix picture.
     annot : bool
-        Set to true if want to see actual numbers on the matrix picture.
+        Set to true if you want to see actual numbers (classes) on the matrix picture.
+    
+    Returns
+    -------
+    list
+        Confusion matrices.
     """
     if use_argmax_p:
         p = p.argmax(axis=-1)
@@ -149,14 +158,37 @@ def confusion_mat(
         l = l.reshape(-1)
 
     mat = np.asarray(confusion_matrix(l, p), dtype=np.float32)
-    if normalize:
-        mat /= mat.sum(axis=1)
-        mat = np.round(mat, decimals=2)
     del p
     del l
+    
+    assert(len(normalize) < 3)
+    
+    if len(normalize) == 2:
+        
+        mats = []
+        for ax in normalize:
+            temp_mat = mat / mat.sum(axis=ax)
+            temp_mat = np.round(temp_mat, decimals=2)
+            mats += [temp_mat]
+            
+        if save_path is not None:
+            fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(16, 6.4))
+            sns.heatmap(mats[0], annot=annot, ax=axes[0])
+            axes[0].set_title(f'Axis {normalize[0]}')
+            sns.heatmap(mats[1], annot=annot, ax=axes[1])
+            axes[1].set_title(f'Axis {normalize[1]}')
+            fig.savefig(save_path)
+            plt.close(fig)
+        
+        return mats
+        
+    
+    if len(normalize) == 1:
+        mat /= mat.sum(axis=normalize[0])
+        mat = np.round(mat, decimals=2)
 
     if save_path is not None:
         conf_mat = sns.heatmap(mat, annot=annot)
         conf_mat.figure.savefig(save_path, dpi=dpi)
         plt.close(conf_mat.figure)
-    return mat
+    return [mat]
