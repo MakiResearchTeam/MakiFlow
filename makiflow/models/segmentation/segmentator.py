@@ -55,7 +55,7 @@ class Segmentator(MakiModel):
         self._focal_loss_is_build = False
         self._weighted_focal_loss_is_build = False
         self._weighted_ce_loss_is_build = False
-        self._maki_loss_is_build = True
+        self._maki_loss_is_build = False
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------FOCAL LOSS--------------------------------------------------
