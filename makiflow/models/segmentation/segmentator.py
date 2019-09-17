@@ -206,8 +206,8 @@ class Segmentator(MakiModel):
             self._prepare_training_vars()
 
         if not self._maki_loss_is_build:
-            self._maki_gamma = gamma
             self._setup_maki_loss_inputs()
+            self._maki_gamma = gamma
             self._build_maki_loss()
             self._maki_optimizer = optimizer
             self._maki_train_op = optimizer.minimize(
