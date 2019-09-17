@@ -230,17 +230,17 @@ class SegmentatorTrainer:
     def _run_experiment(self, exp_params):
         model = self._restore_model(exp_params)
         self._prepare_test_vars(model.name, exp_params)
-
+        model.set_common_l2_weight_decay(decay=4e-5)
         lr = exp_params['lr']
         gamma = exp_params['gamma']
         epochs = exp_params['epochs']
         test_period = exp_params['test_period']
         save_period = exp_params['save_period']
-        optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+        optimizer = tf.train.RMSPropOptimizer(learning_rate=lr, momentum=0.99)
         # Catch InterruptException
         try:
             for i in range(epochs):
-                sub_train_info = model.fit_focal(
+                sub_train_info = model.fit_maki(
                     images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
                     num_positives=self.num_pos, optimizer=optimizer, epochs=1
                 )
