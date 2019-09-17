@@ -185,7 +185,7 @@ class Segmentator(MakiModel):
         # [batch_sz, total_predictions]
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
         # Create Maki Polynomial
-        maki_polynomial = tf.constant(0)
+        maki_polynomial = tf.constant(0.0)
         for i in range(1, self._maki_gamma+1):
             maki_polynomial += sparse_confidences**i * \
                                tf.constant(
