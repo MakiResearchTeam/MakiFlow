@@ -219,22 +219,24 @@ class Segmentator(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self._maki_gamma != gamma:
+            print('New gamma is used.')
             self._maki_gamma = gamma
             self._build_maki_loss()
+            self._maki_optimizer = optimizer
             self._maki_train_op = optimizer.minimize(
-                self._maki_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_weighted_maki_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
-        if self._focal_optimizer != optimizer:
+        if self._maki_optimizer != optimizer:
             print('New optimizer is used.')
-            self._focal_optimizer = optimizer
-            self._focal_train_op = optimizer.minimize(
-                self._focal_loss, var_list=self._trainable_vars, global_step=global_step
+            self._maki_optimizer = optimizer
+            self._maki_train_op = optimizer.minimize(
+                self._final_weighted_maki_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
-        return self._focal_train_op
+        return self._maki_train_op
 
     def fit_maki(self, images, labels, gamma: int, num_positives, optimizer, epochs=1, global_step=None):
         """
