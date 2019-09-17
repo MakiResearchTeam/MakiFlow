@@ -187,7 +187,10 @@ class Segmentator(MakiModel):
         # Create Maki Polynomial
         maki_polynomial = tf.constant(0)
         for i in range(1, self._maki_gamma+1):
-            maki_polynomial += sparse_confidences**i * fac(self._maki_gamma) // (fac(i) * fac(self._maki_gamma - i))
+            maki_polynomial += sparse_confidences**i * \
+                               tf.constant(
+                                   fac(self._maki_gamma) // (fac(i) * fac(self._maki_gamma - i)), dtype=tf.float32
+                               )
 
         num_positives = tf.reduce_sum(self._maki_num_positives)
         self._maki_loss = tf.reduce_sum(maki_polynomial + self._ce_loss) / num_positives
