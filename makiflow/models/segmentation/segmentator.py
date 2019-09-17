@@ -279,16 +279,15 @@ class Segmentator(MakiModel):
                     Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
                     Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
                     NPbatch = num_positives[j * self.batch_sz:(j + 1) * self.batch_sz]
-                    batch_focal_loss, _ = self._session.run(
-                        [self._focal_loss, train_op],
+                    batch_maki_loss, _ = self._session.run(
+                        [self._final_weighted_maki_loss, train_op],
                         feed_dict={
                             self._images: Ibatch,
                             self._labels: Lbatch,
-                            self._focal_gamma: gamma,
-                            self._focal_num_positives: NPbatch
+                            self._maki_num_positives: NPbatch
                         })
                     # Use exponential decay for calculating loss and error
-                    focal_loss = 0.1 * batch_focal_loss + 0.9 * focal_loss
+                    focal_loss = 0.1 * batch_maki_loss + 0.9 * focal_loss
 
                 train_focal_losses.append(focal_loss)
 
