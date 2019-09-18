@@ -206,6 +206,8 @@ class SegmentatorTrainer:
 
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
+
+        # Compute and save matrix
         conf_mat_path = self.to_save_folder + f'/mat_epoch={epoch}.png'
         print('Computing confusion matrix...')
         confusion_mat(
@@ -221,8 +223,10 @@ class SegmentatorTrainer:
         # COLLECT DATA
         self.epochs_list.append(epoch)
         self.v_dice_test_list.append(v_dice_val)
+        print('V-Dice:', v_dice_val)
         for i, class_name in enumerate(exp_params['class_names']):
             self.dices_for_each_class[class_name] += [dices[i]]
+            print(f'{class_name}:', dices[i])
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ------------------------------------EXPERIMENT LOOP-------------------------------------------------------------------
