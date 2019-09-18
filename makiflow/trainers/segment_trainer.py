@@ -112,7 +112,8 @@ class SegmentatorTrainer:
             'epochs': experiment['epochs'],
             'test_period': experiment['test period'],
             'class_names': experiment['class names'],
-            'save_period': experiment['save period']
+            'save_period': experiment['save period'],
+            'loss_type': experiment['loss type']
         }
         for opt_info in experiment['optimizers']:
             for b_sz in experiment['batch sizes']:
