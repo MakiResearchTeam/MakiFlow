@@ -1,9 +1,11 @@
+from __future__ import absolute_import
 import json
 import os
 import tensorflow as tf
 import numpy as np
 import pandas as pd
 from makiflow.metrics import categorical_dice_coeff, confusion_mat
+from makiflow.trainers.optimizer_builder import OptimizerBuilder
 from sklearn.utils import shuffle
 from makiflow.save_recover.builder import Builder
 from makiflow.tools.test_visualizer import TestVisualizer
@@ -17,9 +19,19 @@ experiment_params = {
     'epochs': 50,
     'test period': 10,
     'save period': None or int,
-    'learning rates': [1e-4],
+    'optimizers': [
+        { 
+            type: ...
+            params: {}
+        }, 
+        { 
+            type: ...
+            params: {}
+        }
+    ]
+    'loss type': 'MakiLoss' or 'FocalLoss',
     'batch sizes': [10],
-    'gammas': [0.5, 0.75, 1, 1.5, 2],
+    'gammas': [2, 4],
     'class names': [],
     'weights': ../weights/weights.ckpt,
     'path to arch': path,
@@ -102,13 +114,13 @@ class SegmentatorTrainer:
             'class_names': experiment['class names'],
             'save_period': experiment['save period']
         }
-        for lr in experiment['learning rates']:
+        for opt_info in experiment['optimizers']:
             for b_sz in experiment['batch sizes']:
                 for g in experiment['gammas']:
-                    exp_params['lr'] = lr
+                    exp_params['opt_info'] = opt_info
                     exp_params['batch_sz'] = b_sz
                     exp_params['gamma'] = g
-                    self._run_experiment(exp_params)
+                    self._run_focal_experiment(exp_params)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # -----------------------------------PREPARING THE EXPERIMENT-----------------------------------------------------------
@@ -152,12 +164,12 @@ class SegmentatorTrainer:
     def _prepare_test_vars(self, model_name, exp_params):
         print('Preparing test variables...')
         # Create the test folder
-        lr = exp_params['lr']
+        opt_name = exp_params['opt_info']['params']['name']
         gamma = exp_params['gamma']
         batch_size = exp_params['batch_sz']
         self.to_save_folder = os.path.join(
             self._exp_folder,
-            f'{model_name}_gamma={gamma}_lr={lr}_bsz={batch_size}'
+            f'{model_name}_gamma={gamma}_opt_name={opt_name}_bsz={batch_size}'
         )
         os.makedirs(self.to_save_folder, exist_ok=True)
 
@@ -227,23 +239,33 @@ class SegmentatorTrainer:
 # ----------------------------------------------------------------------------------------------------------------------
 # ------------------------------------EXPERIMENT LOOP-------------------------------------------------------------------
 
-    def _run_experiment(self, exp_params):
+    def _run_focal_experiment(self, exp_params):
         model = self._restore_model(exp_params)
         self._prepare_test_vars(model.name, exp_params)
 
-        lr = exp_params['lr']
+        loss_type = exp_params['loss_type']
+        opt_info = exp_params['opt_info']
         gamma = exp_params['gamma']
         epochs = exp_params['epochs']
         test_period = exp_params['test_period']
         save_period = exp_params['save_period']
-        optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+        optimizer = OptimizerBuilder.build_optimizer(opt_info)
         # Catch InterruptException
         try:
             for i in range(epochs):
-                sub_train_info = model.fit_focal(
-                    images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
-                    num_positives=self.num_pos, optimizer=optimizer, epochs=1
-                )
+                if loss_type == 'FocalLoss':
+                    sub_train_info = model.fit_focal(
+                        images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
+                        num_positives=self.num_pos, optimizer=optimizer, epochs=1
+                    )
+                elif loss_type == 'MakiLoss':
+                    sub_train_info = model.fit_maki(
+                        images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
+                        num_positives=self.num_pos, optimizer=optimizer, epochs=1
+                    )
+                else:
+                    raise ValueError('Unknown loss type!')
+
                 self.loss_list += sub_train_info['train losses']
 
                 if i % test_period == 0:
@@ -255,7 +277,7 @@ class SegmentatorTrainer:
                     )
                     model.save_weights(f'{self.to_save_folder}/epoch_{i}/weights.ckpt')
                 print('Epochs:', i)
-        except Exception as ex:
+        except KeyboardInterrupt as ex:
             traceback.print_exc()
             print("SAVING GAINED DATA")
         finally:
