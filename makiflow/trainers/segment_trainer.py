@@ -234,8 +234,10 @@ class SegmentatorTrainer:
         # COLLECT DATA
         self.epochs_list.append(epoch)
         self.v_dice_test_list.append(v_dice_val)
+        print('V-Dice:', v_dice_val)
         for i, class_name in enumerate(exp_params['class_names']):
             self.dices_for_each_class[class_name] += [dices[i]]
+            print(f'{class_name}:', dices[i])
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ------------------------------------EXPERIMENT LOOP-------------------------------------------------------------------
