@@ -195,7 +195,8 @@ class Segmentator(MakiModel):
             # Do subtraction because gradient must be with minus as well
             # Maki loss grad: -(1 - p)^gamma / p
             # CE loss grad: - 1 / p
-            maki_polynomial -= self._create_maki_polynom_part(k, sparse_confidences)
+            maki_polynomial -= self._create_maki_polynom_part(k, sparse_confidences) - \
+                self._create_maki_polynom_part(k, tf.ones_like(sparse_confidences))
 
         num_positives = tf.reduce_sum(self._maki_num_positives)
         self._maki_loss = tf.reduce_sum(maki_polynomial + self._ce_loss) / num_positives
