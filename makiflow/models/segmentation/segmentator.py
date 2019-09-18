@@ -5,7 +5,7 @@ from sklearn.utils import shuffle
 import tensorflow as tf
 from tqdm import tqdm
 
-from math import factorial as fac
+from scipy.special import binom
 
 class Segmentator(MakiModel):
     def __init__(self, input_s: InputLayer, output: MakiTensor, name='MakiSegmentator'):
@@ -175,6 +175,11 @@ class Segmentator(MakiModel):
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------MAKI LOSS---------------------------------------------------
 
+    def _create_maki_polynom_part(self, k, sparse_confidences):
+        binomial_coeff = binom(self._maki_gamma, k)
+        powered_p = (-1.0 * sparse_confidences)**k
+        return binomial_coeff * powered_p / (1.0 * k)
+
     def _build_maki_loss(self):
         # [batch_sz, total_predictions, num_classes]
         train_confidences = tf.nn.softmax(self._flattened_logits)
@@ -184,13 +189,13 @@ class Segmentator(MakiModel):
         filtered_confidences = train_confidences * one_hot_labels
         # [batch_sz, total_predictions]
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
-        # Create Maki Polynomial
+        # Create Maki polynomial
         maki_polynomial = tf.constant(0.0)
-        for i in range(1, self._maki_gamma+1):
-            maki_polynomial += sparse_confidences**i * \
-                               tf.constant(
-                                   fac(self._maki_gamma) // (fac(i) * fac(self._maki_gamma - i)), dtype=tf.float32
-                               )
+        for k in range(1, self._maki_gamma+1):
+            # Do subtraction because gradient must be with minus as well
+            # Maki loss grad: -(1 - p)^gamma / p
+            # CE loss grad: - 1 / p
+            maki_polynomial -= self._create_maki_polynom_part(k, sparse_confidences)
 
         num_positives = tf.reduce_sum(self._maki_num_positives)
         self._maki_loss = tf.reduce_sum(maki_polynomial + self._ce_loss) / num_positives
