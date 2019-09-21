@@ -582,7 +582,8 @@ class Segmentator(MakiModel):
 
     def _build_quadratic_ce_loss(self):
         # [batch_sz, total_predictions, num_classes]
-        self._quadratic_ce = self._ce_loss * self._ce_loss / 2.0
+        quadratic_ce = self._ce_loss * self._ce_loss / 2.0
+        self._quadratic_ce = tf.reduce_mean(quadratic_ce)
         self._final_quadratic_ce_loss = self._build_final_loss(self._quadratic_ce)
         self._quadratic_ce_loss_is_build = True
 
