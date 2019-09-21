@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from scipy.special import binom
 
+
 class Segmentator(MakiModel):
     def __init__(self, input_s: InputLayer, output: MakiTensor, name='MakiSegmentator'):
         self.name = str(name)
@@ -56,6 +57,7 @@ class Segmentator(MakiModel):
         self._weighted_focal_loss_is_build = False
         self._weighted_ce_loss_is_build = False
         self._maki_loss_is_build = False
+        self._quadratic_ce_loss_is_build = False
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------FOCAL LOSS--------------------------------------------------
@@ -177,7 +179,7 @@ class Segmentator(MakiModel):
 
     def _create_maki_polynom_part(self, k, sparse_confidences):
         binomial_coeff = binom(self._maki_gamma, k)
-        powered_p = (-1.0 * sparse_confidences)**k
+        powered_p = tf.pow(-1.0 * sparse_confidences, k)
         return binomial_coeff * powered_p / (1.0 * k)
 
     def _build_maki_loss(self):
@@ -564,6 +566,123 @@ class Segmentator(MakiModel):
                     'Epoch:', i,
                     'Total loss: {:0.4f}'.format(total_loss),
                     'CE loss: {:0.4f}'.format(weighted_ce_loss)
+                )
+        except Exception as ex:
+            print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {
+                'total losses': train_total_losses,
+                'ce losses': train_weighted_ce_losses
+            }
+
+# ----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------QUADRATIC CROSSENTROPY LOSS---------------------------------
+
+    def _build_quadratic_ce_loss(self):
+        # [batch_sz, total_predictions, num_classes]
+        self._quadratic_ce = self._ce_loss * self._ce_loss / 2.0
+        self._final_quadratic_ce_loss = self._build_final_loss(self._quadratic_ce)
+        self._quadratic_ce_loss_is_build = True
+
+    def _setup_quadratic_ce_loss_inputs(self):
+        pass
+
+    def _minimize_quadratic_ce_loss(self, optimizer, global_step):
+        if not self._set_for_training:
+            super()._setup_for_training()
+
+        if not self._training_vars_are_ready:
+            self._prepare_training_vars()
+
+        if not self._quadratic_ce_loss_is_build:
+            self._setup_quadratic_ce_loss_inputs()
+            self._build_quadratic_ce_loss()
+            self._quadratic_ce_optimizer = optimizer
+            self._quadratic_ce_train_op = optimizer.minimize(
+                self._final_quadratic_ce_loss, var_list=self._trainable_vars, global_step=global_step
+            )
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        if self._quadratic_ce_optimizer != optimizer:
+            print('New optimizer is used.')
+            self._quadratic_ce_optimizer = optimizer
+            self._quadratic_ce_train_op = optimizer.minimize(
+                self._final_quadratic_ce_loss, var_list=self._trainable_vars, global_step=global_step
+            )
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        return self._quadratic_ce_train_op
+
+    def fit_quadratic_ce(
+            self, images, labels, optimizer, epochs=1, global_step=None
+    ):
+        """
+        Method for training the model. Works faster than `verbose_fit` method because
+        it uses exponential decay in order to speed up training. It produces less accurate
+        train error mesurement.
+
+        Parameters
+        ----------
+            Xtrain : numpy array
+                Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
+            Ytrain : numpy array
+                Training label for each image in `Xtrain` array with shape (num_images).
+                IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
+            Xtest : numpy array
+                Same as `Xtrain` but for testing.
+            Ytest : numpy array
+                Same as `Ytrain` but for testing.
+            optimizer : tensorflow optimizer
+                Model uses tensorflow optimizers in order train itself.
+            epochs : int
+                Number of epochs.
+            test_period : int
+                Test begins each `test_period` epochs. You can set a larger number in order to
+                speed up training.
+
+        Returns
+        -------
+            python dictionary
+                Dictionary with all testing data(train error, train cost, test error, test cost)
+                for each test period.
+        """
+        assert (optimizer is not None)
+        assert (self._session is not None)
+
+        train_op = self._minimize_weighted_ce_loss(optimizer, global_step)
+
+        n_batches = len(images) // self.batch_sz
+        iterator = None
+        train_total_losses = []
+        train_weighted_ce_losses = []
+        try:
+            for i in range(epochs):
+                images, labels = shuffle(images, labels)
+                total_loss = 0
+                quadratic_ce_loss = 0
+                iterator = tqdm(range(n_batches))
+                for j in iterator:
+                    Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    batch_quadratic_ce_loss, batch_total_loss, _ = self._session.run(
+                        [self._final_quadratic_ce_loss, self._quadratic_ce, train_op],
+                        feed_dict={
+                            self._images: Ibatch,
+                            self._labels: Lbatch
+                        }
+                    )
+                    # Use exponential decay for calculating loss and error
+                    total_loss = 0.1*batch_total_loss + 0.9*total_loss
+                    quadratic_ce_loss = 0.1*batch_quadratic_ce_loss + 0.9*quadratic_ce_loss
+
+                train_total_losses.append(total_loss)
+                train_weighted_ce_losses.append(quadratic_ce_loss)
+                print(
+                    'Epoch:', i,
+                    'Total loss: {:0.4f}'.format(total_loss),
+                    'CE loss: {:0.4f}'.format(quadratic_ce_loss)
                 )
         except Exception as ex:
             print(ex)
