@@ -651,7 +651,7 @@ class Segmentator(MakiModel):
         assert (optimizer is not None)
         assert (self._session is not None)
 
-        train_op = self._minimize_weighted_ce_loss(optimizer, global_step)
+        train_op = self._minimize_quadratic_ce_loss(optimizer, global_step)
 
         n_batches = len(images) // self.batch_sz
         iterator = None
