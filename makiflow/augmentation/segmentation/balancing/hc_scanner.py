@@ -15,7 +15,7 @@ class HCScanner:
             Dictionary case: contains pairs 'mask name : mask'.
             List case: contains paths to the masks.
         """
-        if isinstance(masks[0], str):
+        if isinstance(masks, list):
             self.__load_masks(masks)
         else:
             self.masks = masks
