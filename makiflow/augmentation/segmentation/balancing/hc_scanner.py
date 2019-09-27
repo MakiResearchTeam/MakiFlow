@@ -46,5 +46,5 @@ class HCScanner:
 
     def save_info(self, uniq_hvc_path, masks_hcvg_path):
         pd.DataFrame(self.uniq_hcv).to_csv(uniq_hvc_path)
-        pd.DataFrame(self.masks_hcvg).to_csv(masks_hcvg_path)
+        pd.DataFrame.from_dict(self.masks_hcvg, orient='index').to_csv(masks_hcvg_path)
         print('Saved!')
