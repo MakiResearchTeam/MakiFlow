@@ -144,7 +144,7 @@ class GDBalancer:
         config = {}
         for i in range(len(cardinalities)):
             config[cardinalities[i]] = hcv_to_num(self.hcv_groups[i])
-        pd.DataFrame(config).to_csv(path)
+        pd.DataFrame(config).from_dict(config, orient='index').to_csv(path)
 
     def get_percentage(self):
         percentage = self.get_scaled_vecs() / self.get_vec_num()
