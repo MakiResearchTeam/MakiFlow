@@ -100,8 +100,8 @@ class GDBalancer:
     def _build_train_op(self, optimizer):
         if self.optimizer != optimizer:
             self.optimizer = optimizer
-            self.train_op = self.optimizer.minimize(self.cardinalities)
-            self.sess.run(self.optimizer.variables())
+            self.train_op = self.optimizer.minimize(self.objective)
+            self.sess.run(tf.variables_initializer(self.optimizer.variables()))
         return self.train_op
 
     def optimize(self, pi_vec, optimizer, iterations=10, print_period=5):
