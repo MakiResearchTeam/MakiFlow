@@ -143,7 +143,7 @@ class GDBalancer:
         cardinalities = np.round(cardinalities).astype(np.int32)
         config = {}
         for i in range(len(cardinalities)):
-            config[cardinalities[i]] = hcv_to_num(self.hcv_groups[i])
+            config[hcv_to_num(self.hcv_groups[i])] = cardinalities[i]
         pd.DataFrame.from_dict(config, orient='index').to_csv(path)
 
     def get_percentage(self):
