@@ -1,6 +1,8 @@
+from __future__ import absolute_import
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+from makiflow.augmentation.segmentation.balancing.utils import hcv_to_num
 
 
 def vec_len(vec):
@@ -48,6 +50,7 @@ class GDBalancer:
         self._setup_initial_values(hcv_groups)
 
         # Setup the algorithm
+        self.initial_c = initial_c
         self.reset(initial_c, objective)
 
     def _setup_initial_values(self, hcv_groups):
@@ -55,7 +58,7 @@ class GDBalancer:
             # `hv_groups` is a path to config file
             df = pd.DataFrame.from_csv(hcv_groups)
             hcv_groups = df.get_values()
-
+        self.hcv_groups = hcv_groups
         self.vecs = tf.constant(hcv_groups.T, dtype=tf.float32)
         self.dest_v = tf.placeholder(dtype=tf.float32, shape=[hcv_groups.shape[1], 1])
 
@@ -65,7 +68,7 @@ class GDBalancer:
         self.sess.run(tf.variables_initializer([self.cardinalities]))
 
     # noinspection PyAttributeOutsideInit
-    def reset(self, initial_c, objective):
+    def reset(self, initial_c=None, objective='alpha'):
         """
         Parameters
         ----------
@@ -76,6 +79,9 @@ class GDBalancer:
             - alpha - normalize LAMBA vector by the sum of HCVGs' cardinalities.
             - geo - normalize LAMBA vector as a normal vector.
         """
+        if initial_c is None:
+            initial_c = self.initial_c
+
         self.cardinalities = tf.Variable(
             np.reshape(initial_c, [-1, 1]),
             trainable=True,
@@ -111,8 +117,8 @@ class GDBalancer:
         Parameters
         ----------
         pi_vec : ndarray
-            Optimal class ratio vector.
-            ith element in `pi_vec` stand for number of HCVs that has class i
+            Optimal class ratio vector. Ndarray of shape (num_classes).
+            ith element in `pi_vec` stands for number of HCVs that has class i
             divided by total number of HCVs.
         optimizer : TensorFlow optimizer
             Optimizer for the algorithm.
@@ -121,6 +127,8 @@ class GDBalancer:
         print_period : int
             After each `print_period` iterations supplementary info will be printed.
         """
+        # Do reshape since the balancer does matrix multiplication.
+        pi_vec = pi_vec.reshape(-1, 1)
         for i in range(iterations):
             _, d = self.sess.run([self._build_train_op(optimizer), self.objective],
                                  feed_dict={self.dest_v: pi_vec}
@@ -133,7 +141,10 @@ class GDBalancer:
         cardinalities = self.get_weights()
         cardinalities = cardinalities.reshape(-1)
         cardinalities = np.round(cardinalities).astype(np.int32)
-        pd.DataFrame(cardinalities).to_csv(path)
+        config = {}
+        for i in range(len(cardinalities)):
+            config[cardinalities[i]] = hcv_to_num(self.hcv_groups[i])
+        pd.DataFrame(config).to_csv(path)
 
     def get_percentage(self):
         percentage = self.get_scaled_vecs() / self.get_vec_num()
