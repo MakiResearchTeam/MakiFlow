@@ -32,8 +32,8 @@ class FlipAugment(AugmentOp):
         flip_type_list : list or tuple
             Add to final dataset image with entered type of flip
             Available options:
-                RotateAugment.FLIP_HORIZONTALLY;
-                RotateAugment.FLIP_VERTICALLY
+                FlipAugment.FLIP_HORIZONTALLY;
+                FlipAugment.FLIP_VERTICALLY
         keep_old_data : bool
             Set to false if you don't want to include unaugmented images into the final data set.
         """
