@@ -28,19 +28,18 @@ class GD2BBuilder:
 
     # noinspection PyAttributeOutsideInit
     def _load_masks_images(self, path_to_mi, resize):
-        MASK = 'mask'
         IMAGE = 'image'
         mi = pd.DataFrame.from_csv(path_to_mi)
 
         self.masks_images = {}
-        for row_ind, row in mi.iterrows():
+        for mask_name, row in mi.iterrows():
             image = cv2.imread(row[IMAGE])
-            mask = cv2.imread(row[MASK])
+            mask = cv2.imread(mask_name)
             if resize is not None:
                 image = cv2.resize(image, resize)
                 mask = cv2.resize(mask, resize)
 
-            self.masks_images[row[MASK]] = (mask, image)
+            self.masks_images[mask_name] = (mask, image)
 
     def _group_images_masks_by_id(self):
         HCVG = 'hcvg'
@@ -51,7 +50,8 @@ class GD2BBuilder:
     # noinspection PyAttributeOutsideInit
     def set_elastic_aug_params(
             self, alpha=500, std=8, noise_invert_scale=5,
-            img_inter='linear', mask_inter='nearest', border_mode='reflect',):
+            img_inter='linear', mask_inter='nearest', border_mode='reflect'
+    ):
         self.aug_alpha = alpha
         self.aug_std = std
         self.aug_noise_invert_scale = noise_invert_scale
