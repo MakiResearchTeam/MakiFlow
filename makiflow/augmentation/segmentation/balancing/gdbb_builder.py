@@ -86,6 +86,7 @@ class GD2BBuilder:
             print(f'{hcv_group} ready')
 
     def _balance_group(self, hcv_group):
+        print(f'Balancing group {hcv_group}...')
         imgs, masks = [], []
         img_ind = 0
         hcvg_cardinality = self._balance_c['0'][hcv_group]
@@ -101,6 +102,7 @@ class GD2BBuilder:
                 self._create_augment()
 
         self._aug = None
+        print(f'Finished.')
         return imgs, masks
 
     def _save_imgs(self, imgs, masks, hcv_group, path_to_save):
