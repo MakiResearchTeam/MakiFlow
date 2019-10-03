@@ -53,7 +53,8 @@ class GD2BBuilder:
 
     # noinspection PyAttributeOutsideInit
     def set_elastic_aug_params(
-            self, alpha=500, std=8, noise_invert_scale=5,
+            self, img_shape,
+            alpha=500, std=8, noise_invert_scale=5,
             img_inter='linear', mask_inter='nearest', border_mode='reflect'
     ):
         self._aug_alpha = alpha
@@ -62,6 +63,7 @@ class GD2BBuilder:
         self._aug_img_inter = img_inter
         self._aug_mask_inter = mask_inter
         self._aug_border_mode = border_mode
+        self._img_shape = img_shape
 
     def _create_augment(self):
         self._aug = ElasticAugment(
@@ -73,6 +75,7 @@ class GD2BBuilder:
             mask_inter=self._aug_mask_inter,
             border_mode=self._aug_border_mode
         )
+        self._aug.setup_augmentor(self._img_shape)
 
     def create_batch(self, path_to_save):
         """
