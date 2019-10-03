@@ -109,7 +109,7 @@ class GD2BBuilder:
         return imgs, masks
 
     def _save_imgs(self, imgs, masks, hcv_group, path_to_save):
-        for i, img, mask in enumerate(zip(imgs, masks)):
+        for i, (img, mask) in enumerate(zip(imgs, masks)):
             cv2.imwrite(path_to_save+f'/_{hcv_group}_{i}_mask.bmp', mask)
             cv2.imwrite(path_to_save + f'/_{hcv_group}_{i}_img.bmp', img)
 
