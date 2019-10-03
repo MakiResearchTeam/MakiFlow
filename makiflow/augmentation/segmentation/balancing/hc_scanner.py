@@ -42,8 +42,6 @@ class HCScanner:
             if self.hcv_groups[hc_id] == 1:
                 self.uniq_hcv[hc_id] = hc_vec
 
-        self.uniq_hcv = np.vstack(self.uniq_hcv)
-
     def save_info(self, uniq_hvc_path, masks_hcvg_path):
         pd.DataFrame.from_dict(self.uniq_hcv, orient='index').to_csv(uniq_hvc_path)
         pd.DataFrame.from_dict(self.masks_hcvg, orient='index', columns=['hcvg']).to_csv(masks_hcvg_path)
