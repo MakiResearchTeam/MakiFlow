@@ -76,6 +76,7 @@ class GD2BBuilder:
             border_mode=self._aug_border_mode
         )
         self._aug.setup_augmentor(self._img_shape)
+        print('Augmentor created.')
 
     def create_batch(self, path_to_save):
         """
@@ -102,6 +103,7 @@ class GD2BBuilder:
             img_ind += 1
             if img_ind == len(self._groups[hcv_group]):
                 img_ind = 0
+                print('Update augmentor...')
                 self._create_augment()
 
         self._aug = None
