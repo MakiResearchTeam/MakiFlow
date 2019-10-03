@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import cv2
 from makiflow.augmentation.segmentation import ElasticAugment, Data
-
+import os
 
 class GD2BBuilder:
     def __init__(self, path_to_hc_list, path_to_balance_config, path_to_mi, resize=None):
@@ -109,9 +109,13 @@ class GD2BBuilder:
         return imgs, masks
 
     def _save_imgs(self, imgs, masks, hcv_group, path_to_save):
+        masks_path = os.path.join(path_to_save, 'masks')
+        imgs_path = os.path.join(path_to_save, 'images')
+        os.makedirs(masks_path, exist_ok=True)
+        os.makedirs(imgs_path, exist_ok=True)
         for i, (img, mask) in enumerate(zip(imgs, masks)):
-            cv2.imwrite(path_to_save+f'/_{hcv_group}_{i}_mask.bmp', mask)
-            cv2.imwrite(path_to_save + f'/_{hcv_group}_{i}_img.bmp', img)
+            cv2.imwrite(masks_path+f'/{hcv_group}_{i}.bmp', mask)
+            cv2.imwrite(imgs_path + f'/{hcv_group}_{i}.bmp', img)
 
     def _augment(self, im, mask):
         if self._aug is None:
