@@ -76,7 +76,6 @@ class GD2BBuilder:
             border_mode=self._aug_border_mode
         )
         self._aug.setup_augmentor(self._img_shape)
-        print('Augmentor created.')
 
     def create_batch(self, path_to_save):
         """
@@ -93,6 +92,7 @@ class GD2BBuilder:
         print(f'Balancing group {hcv_group}...')
         imgs, masks = [], []
         img_ind = 0
+        aug_updates = 0
         hcvg_cardinality = self._balance_c['0'][hcv_group]
         while hcvg_cardinality > 0:
             im, mask = self._groups[hcv_group][img_ind]
@@ -103,10 +103,11 @@ class GD2BBuilder:
             img_ind += 1
             if img_ind == len(self._groups[hcv_group]):
                 img_ind = 0
-                print('Update augmentor...')
                 self._create_augment()
+                aug_updates += 1
 
         self._aug = None
+        print(f'Augmentor updated {aug_updates} times.')
         print(f'Finished.')
         return imgs, masks
 
