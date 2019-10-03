@@ -32,7 +32,7 @@ class GD2BBuilder:
         IMAGE = 'image'
         mi = pd.DataFrame.from_csv(path_to_mi)
 
-        self._masks_images = {}
+        self._images_masks = {}
         for mask_name, row in mi.iterrows():
             image = cv2.imread(row[IMAGE])
             mask = cv2.imread(mask_name)
@@ -40,7 +40,7 @@ class GD2BBuilder:
                 image = cv2.resize(image, resize, cv2.INTER_CUBIC)
                 mask = cv2.resize(mask, resize, cv2.INTER_NEAREST)
 
-            self._masks_images[mask_name] = (mask, image)
+            self._images_masks[mask_name] = (image, mask)
         print('Finished.')
 
     def _group_images_masks_by_id(self):
@@ -48,7 +48,7 @@ class GD2BBuilder:
         HCVG = 'hcvg'
         self._groups = {}
         for row_ind, row in self._hc_list.iterrows():
-            self._groups[row[HCVG]] = [self._masks_images[row_ind]] + self._groups.get(row[HCVG], [])
+            self._groups[row[HCVG]] = [self._images_masks[row_ind]] + self._groups.get(row[HCVG], [])
         print('Finished.')
 
     # noinspection PyAttributeOutsideInit
