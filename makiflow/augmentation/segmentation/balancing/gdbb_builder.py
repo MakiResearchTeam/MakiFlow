@@ -49,6 +49,8 @@ class GD2BBuilder:
         self._groups = {}
         for row_ind, row in self._hc_list.iterrows():
             self._groups[row[HCVG]] = [self._images_masks[row_ind]] + self._groups.get(row[HCVG], [])
+        for hcvg in self._groups:
+            print(f'{hcvg} cardinality is {len(self._groups[hcvg])}')
         print('Finished.')
 
     # noinspection PyAttributeOutsideInit
