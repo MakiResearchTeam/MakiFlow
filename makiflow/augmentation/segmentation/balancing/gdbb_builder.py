@@ -37,8 +37,8 @@ class GD2BBuilder:
             image = cv2.imread(row[IMAGE])
             mask = cv2.imread(mask_name)
             if resize is not None:
-                image = cv2.resize(image, resize, cv2.INTER_CUBIC)
-                mask = cv2.resize(mask, resize, cv2.INTER_NEAREST)
+                image = cv2.resize(image, resize, interpolation=cv2.INTER_CUBIC)
+                mask = cv2.resize(mask, resize, interpolation=cv2.INTER_NEAREST)
 
             self._images_masks[mask_name] = (image, mask)
         print('Finished.')

@@ -227,8 +227,13 @@ class ElasticAugment(AugmentOp):
         new_imgs, new_masks = [], []
         for img, mask in zip(imgs, masks):
             for mapx, mapy in self._maps:
-                new_imgs.append(cv2.remap(img, mapx, mapy, self.img_inter, borderMode=self.border_mode))
-                new_masks.append(cv2.remap(mask, mapx, mapy, self.mask_inter, borderMode=self.border_mode))
+                new_imgs.append(
+                    cv2.remap(
+                        img, mapx, mapy, interpolation=self.img_inter, borderMode=self.border_mode
+                    )
+                )
+                new_masks.append(
+                    cv2.remap(mask, mapx, mapy, interpolation=self.mask_inter, borderMode=self.border_mode))
 
         if self.keep_old_data:
             new_imgs += imgs
