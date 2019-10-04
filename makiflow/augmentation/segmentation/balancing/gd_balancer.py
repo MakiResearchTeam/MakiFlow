@@ -89,6 +89,9 @@ class GDBalancer:
             constraint=lambda x: tf.clip_by_value(x, self.min_amount, self.max_amount),
             dtype=tf.float32
         )
+        if self.sess is not None:
+            self.sess.run(tf.variables_initializer([self.cardinalities]))
+
         self.scaled_hcvgs = tf.matmul(self.vecs, self.cardinalities)
         self._build_objective(objective)
         self.optimizer = None
