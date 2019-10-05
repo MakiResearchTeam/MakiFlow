@@ -4,11 +4,12 @@ import setuptools
 setup(
     name='MakiFlow',
     packages=setuptools.find_packages(),
-    version='0.0.1',
-    description='todo',
-    long_description='todo',
-    author='todo',
-    author_email='todo',
+    version='1.0.0',
+    description='Machine learning framework made by students of Samara National Research University.'
+                'It is made primarily to extend our knowledge and get an instrument that accelerates out studies.',
+    long_description='...',
+    author='Kilbas Igor, Mukhin Artem, Gribanov Danil',
+    author_email='igor.kilbas@mail.ru',
     url='https://github.com/oKatanaaa/MakiFlow',
     include_package_data=True,  # This will include all files in MANIFEST.in in the package when installing.
     classifiers=[
