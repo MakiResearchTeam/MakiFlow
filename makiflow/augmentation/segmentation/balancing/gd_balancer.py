@@ -51,6 +51,7 @@ class GDBalancer:
 
         # Setup the algorithm
         self.initial_c = initial_c
+        self.sess = None
         self.reset(initial_c, objective)
 
     def _setup_initial_values(self, hcv_groups):
