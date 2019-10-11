@@ -151,6 +151,7 @@ class Builder:
         uni_dict = {
             'UpConvLayer': Builder.__upconv_layer_from_dict,
             'SeparableConvLayer': Builder.__separableconv_layer_from_dict,
+            'AtrousConvLayer': Builder.__atrousconv_layer_from_dict,
             'ConvLayer': Builder.__conv_layer_from_dict,
             'DenseLayer': Builder.__dense_layer_from_dict,
             'BatchNormLayer': Builder.__batchnorm_layer_from_dict,
@@ -290,6 +291,26 @@ class Builder:
             dw_kernel_initializer=dw_init_type, pw_kernel_initializer=pw_init_type,
             use_bias=use_bias, name=name
         )
+
+    @staticmethod
+    def __atrousconv_layer_from_dict(params):
+        name = params['name']
+        kw = params['shape'][0]
+        kh = params['shape'][1]
+        in_f = params['shape'][2]
+        out_f = params['shape'][3]
+        rate = params['rate']
+        padding = params['padding']
+        init_type = params['init_type']
+        use_bias = params['use_bias']
+        activation = ActivationConverter.str_to_activation(params['activation'])
+        return AtrousConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f, rate=rate,
+            padding=padding, activation=activation,
+            kernel_initializer=init_type,
+            use_bias=use_bias, name=name
+        )
+
     
     @staticmethod
     def __dense_layer_from_dict(params):
