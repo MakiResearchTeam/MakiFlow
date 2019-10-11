@@ -224,6 +224,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
             Name of this layer.
         """
         assert(len(padding) == 2)
+        self.input_padding = padding
         self.padding = [ [0,0], padding[0], padding[1], [0,0]]
         super().__init__(name,[],{})
     
@@ -242,7 +243,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
             'type': 'ZeroPaddingLayer',
             'params': {
                 'name': self._name,
-                'padding': self.padding,
+                'padding': self.input_padding,
             }
         }
 
