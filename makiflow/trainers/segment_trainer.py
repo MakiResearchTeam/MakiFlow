@@ -268,6 +268,11 @@ class SegmentatorTrainer:
                         images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
                         num_positives=self.num_pos, optimizer=optimizer, epochs=1
                     )
+                elif loss_type == 'QuadraticCELoss':
+                    sub_train_info = model.fit_quadratic_ce(
+                        images=self.Xtrain, labels=self.Ytrain,
+                        optimizer=optimizer, epochs=1
+                    )
                 else:
                     raise ValueError('Unknown loss type!')
 

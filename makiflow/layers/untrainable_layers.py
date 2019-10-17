@@ -83,7 +83,7 @@ class ReshapeLayer(SimpleForwardLayer):
             }
         }
 
-        
+
 class MulByAlphaLayer(SimpleForwardLayer):
     def __init__(self, alpha, name):
         """
@@ -97,18 +97,18 @@ class MulByAlphaLayer(SimpleForwardLayer):
             Name of this layer.
         """
         self.alpha = tf.constant(alpha)
-        super().__init__(name,[],{})
-    
+        super().__init__(name, [], {})
+
     def _forward(self, X):
         return X * self.alpha
-    
+
     def _training_forward(self, X):
         return self._forward(X)
-    
+
     def to_dict(self):
         return {
-            'type' : 'MulByAlphaLayer',
-            'params' : {
+            'type': 'MulByAlphaLayer',
+            'params': {
                 'name': self.get_name(),
                 'alpha': self.alpha,
             }
@@ -223,11 +223,11 @@ class ZeroPaddingLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        assert(len(padding) == 2)
+        assert (len(padding) == 2)
         self.input_padding = padding
-        self.padding = [ [0,0], padding[0], padding[1], [0,0]]
-        super().__init__(name,[],{})
-    
+        self.padding = [[0, 0], padding[0], padding[1], [0, 0]]
+        super().__init__(name, [], {})
+
     def _forward(self, X):
         return tf.pad(
             tensor=X,
@@ -260,10 +260,10 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
             Name of this layer.
         """
         super().__init__(name, [], {})
-    
+
     def _forward(self, X):
-        assert(len(X.shape) == 4)
-        return tf.reduce_max(X, axis=[1,2])
+        assert (len(X.shape) == 4)
+        return tf.reduce_max(X, axis=[1, 2])
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -289,19 +289,19 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
             Name of this layer.
         """
         super().__init__(name, [], {})
-    
+
     def _forward(self, X):
-        assert(len(X.shape) == 4)
+        assert (len(X.shape) == 4)
         return tf.reduce_mean(X, axis=[1, 2])
-    
+
     def _training_forward(self, x):
         return self._forward(x)
-    
+
     def to_dict(self):
         return {
-            'type' : 'GlobalAvgPoolLayer',
-            'params' : {
-                'name' : self._name,
+            'type': 'GlobalAvgPoolLayer',
+            'params': {
+                'name': self._name,
             }
         }
 
@@ -413,7 +413,7 @@ class UpSamplingLayer(SimpleForwardLayer):
 
     def _forward(self, X):
         t_shape = X.get_shape()
-        im_size = (t_shape[1]*self.size[0], t_shape[2]*self.size[1])
+        im_size = (t_shape[1] * self.size[0], t_shape[2] * self.size[1])
         return tf.image.resize_nearest_neighbor(
             X,
             im_size
@@ -524,10 +524,10 @@ class DropoutLayer(SimpleForwardLayer):
 
     def _training_forward(self, X):
         return tf.nn.dropout(X, self._p_keep,
-                            noise_shape=self.noise_shape, 
-                            seed=self.seed, 
-                            rate=self.rate,
-        )
+                             noise_shape=self.noise_shape,
+                             seed=self.seed,
+                             rate=self.rate,
+                             )
 
     def to_dict(self):
         return {
@@ -540,6 +540,7 @@ class DropoutLayer(SimpleForwardLayer):
                 'rate': self.rate,
             }
         }
+
 
 class ResizeLayer(SimpleForwardLayer):
     def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False, half_pixel_centers=False):
@@ -562,51 +563,54 @@ class ResizeLayer(SimpleForwardLayer):
         self.half_pixel_centers = half_pixel_centers
         self.interpolation = interpolation
 
-        super().__init__(name,[],{})
+        super().__init__(name, [], {})
 
-    def _forward(self,X):
+    def _forward(self, X):
         if self.interpolation == 'bilinear':
-            return tf.image.resize_bilinear(X,
-                    self.new_shape,
-                    align_corners=self.align_corners,
-                    name=self.name,
-                    half_pixel_centers=self.half_pixel_centers,
+            return tf.image.resize_bilinear(
+                X,
+                self.new_shape,
+                align_corners=self.align_corners,
+                name=self.name,
+                half_pixel_centers=self.half_pixel_centers,
             )
         elif self.interpolation == 'nearest_neighbor':
-            return tf.image.resize_nearest_neighbor(X,
+            return tf.image.resize_nearest_neighbor(
+                X,
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
                 half_pixel_centers=self.half_pixel_centers,
             )
         elif self.interpolation == 'area':
-            return tf.image.resize_area(X,
+            return tf.image.resize_area(
+                X,
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
             )
         elif self.interpolation == 'bicubic':
-            return tf.image.resize_bicubic(X,
+            return tf.image.resize_bicubic(
+                X,
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
                 half_pixel_centers=self.half_pixel_centers,
             )
         else:
-            raise Exception(f"Interpolation {interpolation} don't exist")
-    
-    def _training_forward(self,X):
+            raise Exception(f"Interpolation {self.interpolation} don't exist")
+
+    def _training_forward(self, X):
         return self._forward(X)
-    
+
     def to_dict(self):
         return {
             'type': 'ResizeLayer',
-            'params':{
+            'params': {
                 'name': self.name,
-                'interpolation' : self.interpolation,
+                'interpolation': self.interpolation,
                 'new_shape': self.new_shape,
                 'align_corners': self.align_corners,
                 'half_pixel_centers': self.half_pixel_centers,
             }
         }
-

@@ -626,22 +626,15 @@ class Segmentator(MakiModel):
 
         Parameters
         ----------
-            Xtrain : numpy array
+            images : numpy array
                 Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
-            Ytrain : numpy array
+            labels : numpy array
                 Training label for each image in `Xtrain` array with shape (num_images).
                 IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
-            Xtest : numpy array
-                Same as `Xtrain` but for testing.
-            Ytest : numpy array
-                Same as `Ytrain` but for testing.
             optimizer : tensorflow optimizer
                 Model uses tensorflow optimizers in order train itself.
             epochs : int
                 Number of epochs.
-            test_period : int
-                Test begins each `test_period` epochs. You can set a larger number in order to
-                speed up training.
 
         Returns
         -------
@@ -657,7 +650,7 @@ class Segmentator(MakiModel):
         n_batches = len(images) // self.batch_sz
         iterator = None
         train_total_losses = []
-        train_weighted_ce_losses = []
+        train_quadratic_ce_losses = []
         try:
             for i in range(epochs):
                 images, labels = shuffle(images, labels)
@@ -679,7 +672,7 @@ class Segmentator(MakiModel):
                     quadratic_ce_loss = 0.1*batch_quadratic_ce_loss + 0.9*quadratic_ce_loss
 
                 train_total_losses.append(total_loss)
-                train_weighted_ce_losses.append(quadratic_ce_loss)
+                train_quadratic_ce_losses.append(quadratic_ce_loss)
                 print(
                     'Epoch:', i,
                     'Total loss: {:0.4f}'.format(total_loss),
@@ -691,6 +684,6 @@ class Segmentator(MakiModel):
             if iterator is not None:
                 iterator.close()
             return {
-                'total losses': train_total_losses,
-                'ce losses': train_weighted_ce_losses
+                'train losses': train_total_losses,
+                'qudratic ce losses': train_quadratic_ce_losses
             }
