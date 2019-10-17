@@ -543,7 +543,7 @@ class DropoutLayer(SimpleForwardLayer):
 
 
 class ResizeLayer(SimpleForwardLayer):
-    def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False, half_pixel_centers=False):
+    def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False):
         """
         ResizeLayer resize input MakiTensor to new_shape shape.
         NOTICE! area interpolation don't have half_pixel_centers parameter
@@ -560,7 +560,6 @@ class ResizeLayer(SimpleForwardLayer):
         self.new_shape = new_shape
         self.name = name
         self.align_corners = align_corners
-        self.half_pixel_centers = half_pixel_centers
         self.interpolation = interpolation
 
         super().__init__(name, [], {})
@@ -572,7 +571,6 @@ class ResizeLayer(SimpleForwardLayer):
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
-                half_pixel_centers=self.half_pixel_centers,
             )
         elif self.interpolation == 'nearest_neighbor':
             return tf.image.resize_nearest_neighbor(
@@ -580,7 +578,6 @@ class ResizeLayer(SimpleForwardLayer):
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
-                half_pixel_centers=self.half_pixel_centers,
             )
         elif self.interpolation == 'area':
             return tf.image.resize_area(
@@ -595,7 +592,6 @@ class ResizeLayer(SimpleForwardLayer):
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
-                half_pixel_centers=self.half_pixel_centers,
             )
         else:
             raise Exception(f"Interpolation {self.interpolation} don't exist")
@@ -611,6 +607,5 @@ class ResizeLayer(SimpleForwardLayer):
                 'interpolation': self.interpolation,
                 'new_shape': self.new_shape,
                 'align_corners': self.align_corners,
-                'half_pixel_centers': self.half_pixel_centers,
             }
         }

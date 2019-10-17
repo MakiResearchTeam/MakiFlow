@@ -26,13 +26,13 @@ class Builder:
         model_name = json_info['model_info']['name']
 
         graph_info = json_info['graph_info']
-        
+
         inputs_outputs = Builder.restore_graph([output_tensor_name], graph_info, batch_size)
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
         return Classificator(input=in_x, output=out_x, name=model_name)
-    
+
     @staticmethod
     def ssd_from_json(json_path, batch_size=None):
         """Creates and returns SSDModel from json.json file contains its architecture"""
@@ -55,11 +55,11 @@ class Builder:
             reg_x = inputs_outputs[dc_dict['reg_x']]
             class_x = inputs_outputs[dc_dict['class_x']]
             dcs.append(Builder.__detector_classifier_from_dict(dc_dict, reg_x, class_x))
-        input_name =architecture_dict['input_s']
+        input_name = architecture_dict['input_s']
         input_s = inputs_outputs[input_name]
-            
+
         print('Model is recovered.')
-            
+
         return SSDModel(dcs=dcs, input_s=input_s, name=name)
 
     @staticmethod
@@ -77,7 +77,7 @@ class Builder:
         ckw = params['ckw']
         ckh = params['ckh']
         cin_f = params['cin_f']
-        
+
         return DetectorClassifier(
             reg_fms=reg_x, rkw=rkw, rkh=rkh, rin_f=rin_f,
             class_fms=reg_x, ckw=ckw, ckh=ckh, cin_f=cin_f,
@@ -117,7 +117,7 @@ class Builder:
             decoder_type=decoder_type,
             name=name
         )
-    
+
     @staticmethod
     def segmentator_from_json(json_path, batch_size=None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
@@ -138,13 +138,11 @@ class Builder:
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
         return Segmentator(input_s=in_x, output=out_x, name=model_name)
-    
-    
 
-#-----------------------------------------------------------LAYERS RESTORATION----------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------LAYERS RESTORATION----------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    @staticmethod       
+    @staticmethod
     def __layer_from_dict(layer_dict):
         """Creates and returns Layer from dictionary"""
         params = layer_dict['params']
@@ -183,10 +181,9 @@ class Builder:
         new_shape = params['new_shape']
         name = params['name']
         align_corners = params['align_corners']
-        half_pixel_centers = params['half_pixel_centers']
         interpolation = params['interpolation']
-        return ResizeLayer(interpolation=interpolation,new_shape=new_shape, name=name, 
-                            align_corners=align_corners, half_pixel_centers=half_pixel_centers)
+        return ResizeLayer(interpolation=interpolation, new_shape=new_shape, name=name,
+                           align_corners=align_corners)
 
     @staticmethod
     def __bias_layer_from_dict(params):
@@ -198,7 +195,7 @@ class Builder:
     def __concat_layer_from_dict(params):
         name = params['name']
         axis = params['axis']
-        return ConcatLayer(name=name,axis=axis)
+        return ConcatLayer(name=name, axis=axis)
 
     @staticmethod
     def __sum_layer_from_dict(params):
@@ -214,8 +211,8 @@ class Builder:
     def __input_layer_from_dict(params):
         input_shape = params['input_shape']
         name = params['name']
-        return InputLayer(name=name,input_shape = input_shape)    
-        
+        return InputLayer(name=name, input_shape=input_shape)
+
     @staticmethod
     def __conv_layer_from_dict(params):
         name = params['name']
@@ -229,11 +226,11 @@ class Builder:
         init_type = params['init_type']
         use_bias = params['use_bias']
         return ConvLayer(
-            kw=kw, kh=kh, in_f=in_f, out_f=out_f, 
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f,
             stride=stride, name=name, padding=padding, activation=activation,
             kernel_initializer=init_type, use_bias=use_bias
         )
-        
+
     @staticmethod
     def __upconv_layer_from_dict(params):
         name = params['name']
@@ -269,8 +266,8 @@ class Builder:
             kw=kw, kh=kh, in_f=in_f, multiplier=multiplier, padding=padding,
             stride=stride, activation=activation, name=name, rate=rate,
             kernel_initializer=init_type, use_bias=use_bias,
-        )         
-    
+        )
+
     @staticmethod
     def __separableconv_layer_from_dict(params):
         name = params['name']
@@ -311,7 +308,6 @@ class Builder:
             use_bias=use_bias, name=name
         )
 
-    
     @staticmethod
     def __dense_layer_from_dict(params):
         name = params['name']
@@ -325,7 +321,7 @@ class Builder:
             activation=activation, name=name,
             mat_initializer=init_type, use_bias=use_bias
         )
-    
+
     @staticmethod
     def __batchnorm_layer_from_dict(params):
         name = params['name']
@@ -334,9 +330,9 @@ class Builder:
         eps = params['eps']
         use_beta = params['use_beta']
         use_gamma = params['use_gamma']
-        return BatchNormLayer(D=D, name=name, decay=decay, eps=eps, 
-                                                use_beta=use_beta, use_gamma=use_gamma)
-    
+        return BatchNormLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma)
+
     @staticmethod
     def __upsampling_layer_from_dict(params):
         name = params['name']
@@ -347,7 +343,7 @@ class Builder:
     def __globalmaxpoollayer_from_dict(params):
         name = params['name']
         return GlobalMaxPoolLayer(name=name)
-    
+
     @staticmethod
     def __globalavgpoollayer_from_dict(params):
         name = params['name']
@@ -364,11 +360,11 @@ class Builder:
         name = params['name']
         alpha = params['alpha']
         return MulByAlphaLayer(alpha=alpha, name=name)
-    
+
     @staticmethod
     def __maxpool_layer_from_dict(params):
         return MaxPoolLayer(**params)
-    
+
     @staticmethod
     def __avgpool_layer_from_dict(params):
         ksize = params['ksize']
@@ -379,13 +375,13 @@ class Builder:
             ksize=ksize, strides=strides,
             padding=padding, name=name
         )
-    
+
     @staticmethod
     def __activation_layer_from_dict(params):
         activation = ActivationConverter.str_to_activation(params['activation'])
         name = params['name']
         return ActivationLayer(activation=activation, name=name)
-    
+
     @staticmethod
     def __dropout_layer_from_dict(params):
         p_keep = params['p_keep']
@@ -467,8 +463,8 @@ class Builder:
             name=name
         )
 
-#-----------------------------------------------------------GRAPH RESTORATION-----------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------GRAPH RESTORATION--------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
     def restore_graph(outputs, graph_info_json, batch_sz=None):
@@ -477,7 +473,7 @@ class Builder:
 
         for tensor in graph_info_json:
             graph_info[tensor['name']] = tensor
-        
+
         used = {}
         coll_tensors = {}
 
@@ -489,7 +485,7 @@ class Builder:
                 # like "to"
                 all_parent_names = parent_layer_info['parent_tensor_names']
                 # store ready tensors
-                takes = [] 
+                takes = []
                 answer = None
                 if len(all_parent_names) != 0:
                     # All layer except input layer
@@ -501,9 +497,9 @@ class Builder:
                     # Input layer
                     temp = {}
                     temp.update({
-                        'type':parent_layer_info['type'],
-                        'params':parent_layer_info['params']}
-                        )
+                        'type': parent_layer_info['type'],
+                        'params': parent_layer_info['params']}
+                    )
                     if batch_sz is not None:
                         temp['params']['input_shape'][0] = batch_sz
                     answer = Builder.__layer_from_dict(temp)
@@ -517,7 +513,3 @@ class Builder:
             restore_in_and_out_x(name_output)
 
         return coll_tensors
-    
-    
-
-        
