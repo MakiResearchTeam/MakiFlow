@@ -170,13 +170,13 @@ class SegmentatorTrainer:
             model.set_layers_trainable(layers)
 
         # Set l1 regularization
-        l1_reg = exp_params['l1_reg']
+        l1_reg = np.float32(exp_params['l1_reg'])
         l1_reg_layers = exp_params['l1_reg_layers']
         reg_config = [(layer, l1_reg) for layer in l1_reg_layers]
         model.set_l1_reg(reg_config)
 
         # Set l2 regularization
-        l2_reg = exp_params['l2_reg']
+        l2_reg = np.float32(exp_params['l2_reg'])
         l2_reg_layers = exp_params['l2_reg_layers']
         reg_config = [(layer, l2_reg) for layer in l2_reg_layers]
         model.set_l2_reg(reg_config)
