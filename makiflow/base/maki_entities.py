@@ -278,13 +278,13 @@ class MakiModel:
         self._l2_reg_loss_is_build = False
         self._l2_regularized_layers = {}
         for layer_name in self._trainable_layers:
-            self._l2_regularized_layers[layer_name] = 1e-5 # This value seems to be proper as a default
+            self._l2_regularized_layers[layer_name] = 1e-6  # This value seems to be proper as a default
 
         self._uses_l1_regularization = False
         self._l1_reg_loss_is_build = False
         self._l1_regularized_layers = {}
         for layer_name in self._trainable_layers:
-            self._l1_regularized_layers[layer_name] = 1e-5 # This value seems to be proper as a default
+            self._l1_regularized_layers[layer_name] = 1e-6  # This value seems to be proper as a default
         
         self._build_training_graph()
 
@@ -311,10 +311,13 @@ class MakiModel:
         for layer_name, decay in layers:
             self._l2_regularized_layers[layer_name] = decay
     
-    def set_common_l2_weight_decay(self, decay=1e-5):
+    def set_common_l2_weight_decay(self, decay=1e-6):
         """
         Enables L2 regularization while training. 
         `decay` will be set as decay for each regularized weight.
+        If you haven't used `set_l2_reg` method and did not turn off
+        the regularization on certain layers, the regularization will be
+        set on all the trainable layers.
 
         Parameters
         ----------
@@ -365,10 +368,13 @@ class MakiModel:
         for layer_name, decay in layers:
             self._l1_regularized_layers[layer_name] = decay
     
-    def set_common_l1_weight_decay(self, decay=1e-5):
+    def set_common_l1_weight_decay(self, decay=1e-6):
         """
         Enables L2 regularization while training. 
         `decay` will be set as decay for each regularized weight.
+        If you haven't used `set_l1_reg` method and did not turn off
+        the regularization on certain layers, the regularization will be
+        set on all the trainable layers.
 
         Parameters
         ----------

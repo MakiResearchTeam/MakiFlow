@@ -36,7 +36,11 @@ experiment_params = {
     'weights': ../weights/weights.ckpt,
     'path to arch': path,
     'pretrained layers': [layer_name],
-    'utrainable layers': [layer_name]
+    'utrainable layers': [layer_name],
+    'l1 reg': 1e-6,
+    'l1 reg layers': [layer_name],
+    'l2 reg': 1e-6,
+    'l2 reg layers': [layer_name]
 }"""
 
 
@@ -113,7 +117,11 @@ class SegmentatorTrainer:
             'test_period': experiment['test period'],
             'class_names': experiment['class names'],
             'save_period': experiment['save period'],
-            'loss_type': experiment['loss type']
+            'loss_type': experiment['loss type'],
+            'l1_reg': experiment['l1 reg'],
+            'l1_reg_layers': experiment['l1 reg layers'],
+            'l2_reg': experiment['l2 reg'],
+            'l2_reg_layers': experiment['l2 reg layers']
         }
         for opt_info in experiment['optimizers']:
             for b_sz in experiment['batch sizes']:
@@ -160,6 +168,19 @@ class SegmentatorTrainer:
             for layer_name in untrainable_layers:
                 layers += [(layer_name, False)]
             model.set_layers_trainable(layers)
+
+        # Set l1 regularization
+        l1_reg = exp_params['l1_reg']
+        l1_reg_layers = exp_params['l1_reg_layer']
+        reg_config = [(layer, l1_reg) for layer in l1_reg_layers]
+        model.set_l1_reg(reg_config)
+
+        # Set l2 regularization
+        l2_reg = exp_params['l2_reg']
+        l2_reg_layers = exp_params['l2_reg_layer']
+        reg_config = [(layer, l2_reg) for layer in l2_reg_layers]
+        model.set_l2_reg(reg_config)
+
         return model
 
     def _prepare_test_vars(self, model_name, exp_params):
