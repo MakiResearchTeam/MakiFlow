@@ -100,9 +100,6 @@ def load_frozen_graph(protobuf_name):
     ----------
     protobuf_name : str
         Name of the protobuf file to load from.
-    sess : tf.Session
-        Set to your session if needed. Otherwise new
-        session will be created.
 
     Returns
     -------
