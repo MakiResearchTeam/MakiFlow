@@ -525,7 +525,7 @@ class AtrousConvLayer(SimpleForwardLayer):
         self.init_type = kernel_initializer
 
         name = str(name)
-        self.name_conv = f'AtrousConvKernel_{kw}x{kh}_in{in_f}_out{out_f}_rate{rate}_id_{name}'
+        self.name_conv = f'AtrousConvKernel_{kw}x{kh}_in{in_f}_out{out_f}_id_{name}'
 
         if W is None:
             W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
@@ -537,7 +537,7 @@ class AtrousConvLayer(SimpleForwardLayer):
         named_params_dict = {self.name_conv: self.W}
 
         if use_bias:
-            self.name_bias = f'AtrousConvBias_{kw}x{kh}_in{in_f}_out{out_f}_rate{rate}_id_{name}'
+            self.name_bias = f'AtrousConvBias_{kw}x{kh}_in{in_f}_out{out_f}_id_{name}'
             self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
             params += [self.b]
             named_params_dict[self.name_bias] = self.b
