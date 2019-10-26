@@ -32,7 +32,11 @@ class Segmentator(MakiModel):
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------SETTING UP TRAINING-----------------------------------------
 
-    def _prepare_training_vars(self):
+    def set_generator(self, generator):
+        self._generator = generator
+        self._prepare_training_vars(use_generator=True)
+
+    def _prepare_training_vars(self, use_generator=False):
         out_shape = self._outputs[0].get_shape()
         self.out_w = out_shape[1]
         self.out_h = out_shape[2]
@@ -41,6 +45,9 @@ class Segmentator(MakiModel):
         self.batch_sz = out_shape[0]
 
         self._images = self._input_data_tensors[0]
+        if use_generator:
+            self._labels = self._generator.labels
+
         self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
 
         training_out = self._training_outputs[0]
@@ -52,6 +59,7 @@ class Segmentator(MakiModel):
         )
 
         self._training_vars_are_ready = True
+        self._use_generator = use_generator
 
         self._focal_loss_is_build = False
         self._weighted_focal_loss_is_build = False
