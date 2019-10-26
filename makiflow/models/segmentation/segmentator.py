@@ -34,7 +34,10 @@ class Segmentator(MakiModel):
 
     def set_generator(self, generator):
         self._generator = generator
-        self._prepare_training_vars(use_generator=True)
+        if not self._set_for_training:
+            super()._setup_for_training()
+        if not self._training_vars_are_ready:
+            self._prepare_training_vars(use_generator=True)
 
     def _prepare_training_vars(self, use_generator=False):
         out_shape = self._outputs[0].get_shape()
@@ -47,8 +50,8 @@ class Segmentator(MakiModel):
         self._images = self._input_data_tensors[0]
         if use_generator:
             self._labels = self._generator.mask
-
-        self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
+        else:
+            self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
 
         training_out = self._training_outputs[0]
         self._flattened_logits = tf.reshape(training_out, shape=[-1, self.total_predictions, self.num_classes])
