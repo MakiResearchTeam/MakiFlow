@@ -23,16 +23,13 @@ class SegmentGeneratorTrainingLayer(MakiTensor):
         self.prefetch_size = prefetch_size
         self.batch_size = batch_size
         self.image, self.mask = self.build_iterator(generator, map_operation)
-        self.__name = name
+        self._name = name
         super().__init__(
             data_tensor=self.image,
             parent_layer=self,
             parent_tensor_names=None,
             previous_tensors={}
         )
-    
-    def get_name(self):
-        return self.__name
         
     def build_iterator(self, gen: SegmentationGenerator, map_operation):
         dataset = tf.data.Dataset.from_generator(
@@ -64,3 +61,14 @@ class SegmentGeneratorTrainingLayer(MakiTensor):
         mask.set_shape(self.mask_shape)
         return img, mask
 
+    def get_shape(self):
+        return [self.batch_size, *self.image_shape]
+
+    def get_name(self):
+        return self._name
+
+    def get_params(self):
+        return []
+
+    def get_params_dict(self):
+        return {}
