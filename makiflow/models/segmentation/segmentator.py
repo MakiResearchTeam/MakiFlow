@@ -727,7 +727,6 @@ class Segmentator(MakiModel):
         train_quadratic_ce_losses = []
         try:
             for i in range(epochs):
-                images, labels = shuffle(images, labels)
                 total_loss = 0
                 quadratic_ce_loss = 0
                 iterator = tqdm(range(iterations))
