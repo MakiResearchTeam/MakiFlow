@@ -695,3 +695,63 @@ class Segmentator(MakiModel):
                 'train losses': train_total_losses,
                 'qudratic ce losses': train_quadratic_ce_losses
             }
+
+    def genfit_quadratic_ce(
+            self, optimizer, epochs=1, iterations=10, global_step=None
+    ):
+        """
+        Method for training the model. Works faster than `verbose_fit` method because
+        it uses exponential decay in order to speed up training. It produces less accurate
+        train error mesurement.
+
+        Parameters
+        ----------
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+
+        Returns
+        -------
+        python dictionary
+            Dictionary with all testing data(train error, train cost, test error, test cost)
+            for each test period.
+        """
+        assert (optimizer is not None)
+        assert (self._session is not None)
+
+        train_op = self._minimize_quadratic_ce_loss(optimizer, global_step)
+
+        iterator = None
+        train_total_losses = []
+        train_quadratic_ce_losses = []
+        try:
+            for i in range(epochs):
+                images, labels = shuffle(images, labels)
+                total_loss = 0
+                quadratic_ce_loss = 0
+                iterator = tqdm(range(iterations))
+                for j in iterator:
+                    batch_quadratic_ce_loss, batch_total_loss, _ = self._session.run(
+                        [self._final_quadratic_ce_loss, self._quadratic_ce, train_op]
+                    )
+                    # Use exponential decay for calculating loss and error
+                    total_loss = 0.1*batch_total_loss + 0.9*total_loss
+                    quadratic_ce_loss = 0.1*batch_quadratic_ce_loss + 0.9*quadratic_ce_loss
+
+                train_total_losses.append(total_loss)
+                train_quadratic_ce_losses.append(quadratic_ce_loss)
+                print(
+                    'Epoch:', i,
+                    'Total loss: {:0.4f}'.format(total_loss),
+                    'CE loss: {:0.4f}'.format(quadratic_ce_loss)
+                )
+        except Exception as ex:
+            print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {
+                'train losses': train_total_losses,
+                'qudratic ce losses': train_quadratic_ce_losses
+            }
