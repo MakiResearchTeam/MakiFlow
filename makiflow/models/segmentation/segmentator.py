@@ -46,7 +46,7 @@ class Segmentator(MakiModel):
 
         self._images = self._input_data_tensors[0]
         if use_generator:
-            self._labels = self._generator.labels
+            self._labels = self._generator.mask
 
         self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
 
@@ -731,7 +731,7 @@ class Segmentator(MakiModel):
                 total_loss = 0
                 quadratic_ce_loss = 0
                 iterator = tqdm(range(iterations))
-                for j in iterator:
+                for _ in iterator:
                     batch_quadratic_ce_loss, batch_total_loss, _ = self._session.run(
                         [self._final_quadratic_ce_loss, self._quadratic_ce, train_op]
                     )
