@@ -60,7 +60,7 @@ class SegmentGeneratorTrainingLayer(MakiTensor):
         img = tf.image.decode_image(img_file)
         mask = tf.image.decode_image(mask_file)
         
-        img.set_shape([self.image_shape])
-        mask.set_shape([self.mask_shape])
+        img.set_shape(self.image_shape)
+        mask.set_shape(self.mask_shape)
         return img, mask
 
