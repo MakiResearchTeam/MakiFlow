@@ -9,7 +9,7 @@ from makiflow.layers.sf_layer import SimpleForwardLayer
 class InputLayer(MakiTensor):
     def __init__(self, input_shape, name):
         """
-        InputLayer is used to instantiate a MakiFlow tensor.
+        InputLayer is used to instantiate MakiFlow tensor.
 
         Parameters
         ----------

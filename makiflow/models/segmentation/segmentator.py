@@ -32,6 +32,7 @@ class Segmentator(MakiModel):
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------SETTING UP TRAINING-----------------------------------------
 
+    # noinspection PyAttributeOutsideInit
     def set_generator(self, generator):
         self._generator = generator
         if not self._set_for_training:
@@ -121,24 +122,25 @@ class Segmentator(MakiModel):
 
     def fit_focal(self, images, labels, gamma, num_positives, optimizer, epochs=1, global_step=None):
         """
-        Method for training the model. Works faster than `verbose_fit` method because
-        it uses exponential decay in order to speed up training. It produces less accurate
-        train error mesurement.
+        Method for training the model.
 
         Parameters
         ----------
-        images : numpy array
-            Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
-            labels : numpy array
-            Training label for each image in `Xtrain` array with shape (num_images).
-            IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
-        optimizer : tensorflow optimizer
-            Model uses tensorflow optimizers in order train itself.
+        images : list
+            Training images.
+        labels : list
+            Training masks.
+        gamma : int
+            Hyper parameter for FocalLoss.
+        num_positives : list
+            List of ints. Contains number of `positive samples` per image. `Positive sample` is a pixel
+            that is responsible for a class other that background.
+        optimizer : TensorFlow optimizer
+            Model uses TensorFlow optimizers in order train itself.
         epochs : int
             Number of epochs.
-        test_period : int
-            Test begins each `test_period` epochs. You can set a larger number in order to
-            speed up training.
+        global_step
+            Please refer to TensorFlow documentation about global step for more info.
 
         Returns
         -------
@@ -171,6 +173,61 @@ class Segmentator(MakiModel):
                             self._labels: Lbatch,
                             self._focal_gamma: gamma,
                             self._focal_num_positives: NPbatch
+                        })
+                    # Use exponential decay for calculating loss and error
+                    focal_loss = 0.1*batch_focal_loss + 0.9*focal_loss
+
+                train_focal_losses.append(focal_loss)
+
+                print('Epoch:', i, 'Focal loss: {:0.4f}'.format(focal_loss))
+        except Exception as ex:
+            print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {'train losses': train_focal_losses}
+
+    def genfit_focal(self, gamma, optimizer, epochs=1, iterations=10, global_step=None):
+        """
+        Method for training the model.
+
+        Parameters
+        ----------
+        gamma : int
+            Hyper parameter for MakiLoss.
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+        iterations : int
+            Defines how ones epoch is. One operation is a forward pass
+            using one batch.
+        global_step
+            Please refer to TensorFlow documentation about global step for more info.
+
+        Returns
+        -------
+        python dictionary
+            Dictionary with all testing data(train error, train cost, test error, test cost)
+            for each test period.
+        """
+        assert (optimizer is not None)
+        assert (self._session is not None)
+
+        train_op = self._minimize_focal_loss(optimizer, global_step)
+
+        train_focal_losses = []
+        iterator = None
+        try:
+            for i in range(epochs):
+                focal_loss = 0
+                iterator = tqdm(range(iterations))
+
+                for _ in iterator:
+                    batch_focal_loss, _ = self._session.run(
+                        [self._focal_loss, train_op],
+                        feed_dict={
+                            self._focal_gamma: gamma
                         })
                     # Use exponential decay for calculating loss and error
                     focal_loss = 0.1*batch_focal_loss + 0.9*focal_loss
@@ -218,7 +275,10 @@ class Segmentator(MakiModel):
 
     def _setup_maki_loss_inputs(self):
         self._maki_gamma = None
-        self._maki_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
+        if self._use_generator:
+            self._maki_num_positives = self._generator.num_positives
+        else:
+            self._maki_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
 
     def _minimize_maki_loss(self, optimizer, global_step, gamma):
         if not self._set_for_training:
@@ -259,24 +319,25 @@ class Segmentator(MakiModel):
 
     def fit_maki(self, images, labels, gamma: int, num_positives, optimizer, epochs=1, global_step=None):
         """
-        Method for training the model. Works faster than `verbose_fit` method because
-        it uses exponential decay in order to speed up training. It produces less accurate
-        train error mesurement.
+        Method for training the model.
 
         Parameters
         ----------
-        images : numpy array
-            Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
-            labels : numpy array
-            Training label for each image in `Xtrain` array with shape (num_images).
-            IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
+        images : list
+            Training images.
+        labels : list
+            Training masks.
+        gamma : int
+            Hyper parameter for MakiLoss.
+        num_positives : list
+            List of ints. Contains number of `positive samples` per image. `Positive sample` is a pixel
+            that is responsible for a class other that background.
         optimizer : tensorflow optimizer
             Model uses tensorflow optimizers in order train itself.
         epochs : int
             Number of epochs.
-        test_period : int
-            Test begins each `test_period` epochs. You can set a larger number in order to
-            speed up training.
+        global_step
+            Please refer to TensorFlow documentation about global step for more info.
 
         Returns
         -------
@@ -322,6 +383,60 @@ class Segmentator(MakiModel):
             if iterator is not None:
                 iterator.close()
             return {'train losses': train_focal_losses}
+
+    def genfit_maki(self, gamma: int, optimizer, epochs=1, iterations=10, global_step=None):
+        """
+        Method for training the model.
+
+        Parameters
+        ----------
+        gamma : int
+            Hyper parameter for MakiLoss.
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+        iterations : int
+            Defines how ones epoch is. One operation is a forward pass
+            using one batch.
+        global_step
+            Please refer to TensorFlow documentation about global step for more info.
+
+        Returns
+        -------
+        python dictionary
+            Dictionary with all testing data(train error, train cost, test error, test cost)
+            for each test period.
+        """
+        assert (optimizer is not None)
+        assert (self._session is not None)
+        assert (type(gamma) == int)
+
+        train_op = self._minimize_maki_loss(optimizer, global_step, gamma)
+
+        train_maki_losses = []
+        iterator = None
+        try:
+            for i in range(epochs):
+                maki_loss = 0
+                iterator = tqdm(range(iterations))
+
+                for _ in iterator:
+                    batch_maki_loss, _ = self._session.run(
+                        [self._final_weighted_maki_loss, train_op]
+                    )
+                    # Use exponential decay for calculating loss and error
+                    maki_loss = 0.1 * batch_maki_loss + 0.9 * maki_loss
+
+                train_maki_losses.append(maki_loss)
+
+                print('Epoch:', i, 'Maki loss: {:0.4f}'.format(maki_loss))
+        except Exception as ex:
+            print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {'train losses': train_maki_losses}
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------WEIGHTED FOCAL LOSS-----------------------------------------
@@ -383,34 +498,33 @@ class Segmentator(MakiModel):
             self, images, labels, gamma, num_positives, weight_maps, optimizer, epochs=1, global_step=None
     ):
         """
-        Method for training the model. Works faster than `verbose_fit` method because
-        it uses exponential decay in order to speed up training. It produces less accurate
-        train error mesurement.
+        Method for training the model.
 
         Parameters
         ----------
-            Xtrain : numpy array
-                Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
-            Ytrain : numpy array
-                Training label for each image in `Xtrain` array with shape (num_images).
-                IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
-            Xtest : numpy array
-                Same as `Xtrain` but for testing.
-            Ytest : numpy array
-                Same as `Ytrain` but for testing.
-            optimizer : tensorflow optimizer
-                Model uses tensorflow optimizers in order train itself.
-            epochs : int
-                Number of epochs.
-            test_period : int
-                Test begins each `test_period` epochs. You can set a larger number in order to
-                speed up training.
+        images : list
+            Training images.
+        labels : list
+            Training masks.
+        gamma : int
+            Hyper parameter for FocalLoss.
+        num_positives : list
+            List of ints. Contains number of `positive samples` per image. `Positive sample` is a pixel
+            that is responsible for a class other that background.
+        weight_maps : list
+            Maps for weighting the loss.
+        optimizer : TensorFlow optimizer
+            Model uses TensorFlow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+        global_step
+            Please refer to TensorFlow documentation about global step for more info.
 
         Returns
         -------
-            python dictionary
-                Dictionary with all testing data(train error, train cost, test error, test cost)
-                for each test period.
+        python dictionary
+            Dictionary with all testing data(train error, train cost, test error, test cost)
+            for each test period.
         """
         assert (optimizer is not None)
         assert (self._session is not None)
@@ -511,28 +625,22 @@ class Segmentator(MakiModel):
             self, images, labels, weight_maps, optimizer, epochs=1, global_step=None
     ):
         """
-        Method for training the model. Works faster than `verbose_fit` method because
-        it uses exponential decay in order to speed up training. It produces less accurate
-        train error mesurement.
+        Method for training the model.
 
         Parameters
         ----------
-            Xtrain : numpy array
-                Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
-            Ytrain : numpy array
-                Training label for each image in `Xtrain` array with shape (num_images).
-                IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
-            Xtest : numpy array
-                Same as `Xtrain` but for testing.
-            Ytest : numpy array
-                Same as `Ytrain` but for testing.
-            optimizer : tensorflow optimizer
-                Model uses tensorflow optimizers in order train itself.
-            epochs : int
-                Number of epochs.
-            test_period : int
-                Test begins each `test_period` epochs. You can set a larger number in order to
-                speed up training.
+        images : list
+            Training images.
+        labels : list
+            Training masks.
+        weight_maps : list
+            Maps for weighting the loss.
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+        global_step
+            Please refer to TensorFlow documentation about global step for more info.
 
         Returns
         -------
@@ -631,27 +739,26 @@ class Segmentator(MakiModel):
             self, images, labels, optimizer, epochs=1, global_step=None
     ):
         """
-        Method for training the model. Works faster than `verbose_fit` method because
-        it uses exponential decay in order to speed up training. It produces less accurate
-        train error mesurement.
+        Method for training the model.
 
         Parameters
         ----------
-            images : numpy array
-                Training images stacked into one big array with shape (num_images, image_w, image_h, image_depth).
-            labels : numpy array
-                Training label for each image in `Xtrain` array with shape (num_images).
-                IMPORTANT: ALL LABELS MUST BE NOT ONE-HOT ENCODED, USE SPARSE TRAINING DATA INSTEAD.
-            optimizer : tensorflow optimizer
-                Model uses tensorflow optimizers in order train itself.
-            epochs : int
-                Number of epochs.
+        images : list
+            Training images.
+        labels : list
+            Training masks.
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+        global_step
+            Please refer to TensorFlow documentation about global step for more info.
 
         Returns
         -------
-            python dictionary
-                Dictionary with all testing data(train error, train cost, test error, test cost)
-                for each test period.
+        python dictionary
+            Dictionary with all testing data(train error, train cost, test error, test cost)
+            for each test period.
         """
         assert (optimizer is not None)
         assert (self._session is not None)
@@ -703,9 +810,7 @@ class Segmentator(MakiModel):
             self, optimizer, epochs=1, iterations=10, global_step=None
     ):
         """
-        Method for training the model. Works faster than `verbose_fit` method because
-        it uses exponential decay in order to speed up training. It produces less accurate
-        train error mesurement.
+        Method for training the model using generator.
 
         Parameters
         ----------
@@ -713,6 +818,11 @@ class Segmentator(MakiModel):
             Model uses tensorflow optimizers in order train itself.
         epochs : int
             Number of epochs.
+        iterations : int
+            Defines how ones epoch is. One operation is a forward pass
+            using one batch.
+        global_step
+            Please refer to TensorFlow documentation about global step for more info.
 
         Returns
         -------

@@ -1,7 +1,5 @@
 from __future__ import absolute_import
-from makiflow.base import MakiTensor
 from abc import abstractmethod
-import tensorflow as tf
 
 
 class SegmentationGenerator(object):
@@ -16,7 +14,8 @@ class SegmentationGenerator(object):
 class MapMethod:
     image = 'image'
     mask = 'mask'
+
     @abstractmethod
-    def load_data(self, paths) -> dict:
+    def load_data(self, data_paths) -> dict:
         pass
 
