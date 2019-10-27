@@ -4,7 +4,7 @@ import setuptools
 setup(
     name='MakiFlow',
     packages=setuptools.find_packages(),
-    version='1.0.4',
+    version='1.0.5',
     description='Machine learning framework made by students of Samara National Research University.'
                 'It is made primarily to extend our knowledge and get an instrument that accelerates our studies.',
     long_description='...',

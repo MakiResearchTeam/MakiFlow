@@ -32,7 +32,14 @@ class Segmentator(MakiModel):
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------SETTING UP TRAINING-----------------------------------------
 
-    def _prepare_training_vars(self):
+    def set_generator(self, generator):
+        self._generator = generator
+        if not self._set_for_training:
+            super()._setup_for_training()
+        if not self._training_vars_are_ready:
+            self._prepare_training_vars(use_generator=True)
+
+    def _prepare_training_vars(self, use_generator=False):
         out_shape = self._outputs[0].get_shape()
         self.out_w = out_shape[1]
         self.out_h = out_shape[2]
@@ -41,7 +48,10 @@ class Segmentator(MakiModel):
         self.batch_sz = out_shape[0]
 
         self._images = self._input_data_tensors[0]
-        self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
+        if use_generator:
+            self._labels = self._generator.mask
+        else:
+            self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
 
         training_out = self._training_outputs[0]
         self._flattened_logits = tf.reshape(training_out, shape=[-1, self.total_predictions, self.num_classes])
@@ -52,6 +62,7 @@ class Segmentator(MakiModel):
         )
 
         self._training_vars_are_ready = True
+        self._use_generator = use_generator
 
         self._focal_loss_is_build = False
         self._weighted_focal_loss_is_build = False
@@ -666,6 +677,65 @@ class Segmentator(MakiModel):
                             self._images: Ibatch,
                             self._labels: Lbatch
                         }
+                    )
+                    # Use exponential decay for calculating loss and error
+                    total_loss = 0.1*batch_total_loss + 0.9*total_loss
+                    quadratic_ce_loss = 0.1*batch_quadratic_ce_loss + 0.9*quadratic_ce_loss
+
+                train_total_losses.append(total_loss)
+                train_quadratic_ce_losses.append(quadratic_ce_loss)
+                print(
+                    'Epoch:', i,
+                    'Total loss: {:0.4f}'.format(total_loss),
+                    'CE loss: {:0.4f}'.format(quadratic_ce_loss)
+                )
+        except Exception as ex:
+            print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {
+                'train losses': train_total_losses,
+                'qudratic ce losses': train_quadratic_ce_losses
+            }
+
+    def genfit_quadratic_ce(
+            self, optimizer, epochs=1, iterations=10, global_step=None
+    ):
+        """
+        Method for training the model. Works faster than `verbose_fit` method because
+        it uses exponential decay in order to speed up training. It produces less accurate
+        train error mesurement.
+
+        Parameters
+        ----------
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+
+        Returns
+        -------
+        python dictionary
+            Dictionary with all testing data(train error, train cost, test error, test cost)
+            for each test period.
+        """
+        assert (optimizer is not None)
+        assert (self._session is not None)
+
+        train_op = self._minimize_quadratic_ce_loss(optimizer, global_step)
+
+        iterator = None
+        train_total_losses = []
+        train_quadratic_ce_losses = []
+        try:
+            for i in range(epochs):
+                total_loss = 0
+                quadratic_ce_loss = 0
+                iterator = tqdm(range(iterations))
+                for _ in iterator:
+                    batch_quadratic_ce_loss, batch_total_loss, _ = self._session.run(
+                        [self._final_quadratic_ce_loss, self._quadratic_ce, train_op]
                     )
                     # Use exponential decay for calculating loss and error
                     total_loss = 0.1*batch_total_loss + 0.9*total_loss
