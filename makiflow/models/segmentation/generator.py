@@ -2,15 +2,10 @@ from __future__ import absolute_import
 from makiflow.base import MakiTensor
 from abc import abstractmethod
 import tensorflow as tf
+from makiflow.models.segmentation.gen_api import SegmentationGenerator
 
 
-class SegmentationGenerator(object):
-    image = 'image'
-    mask = 'mask'
-    
-    @abstractmethod
-    def next_element(self):
-        pass
+
 
 
 class SegmentGeneratorTrainingLayer(MakiTensor):
