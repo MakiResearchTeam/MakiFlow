@@ -92,7 +92,10 @@ class Segmentator(MakiModel):
 
     def _setup_focal_loss_inputs(self):
         self._focal_gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
-        self._focal_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
+        if self._use_generator:
+            self._focal_num_positives = self._generator.num_positives
+        else:
+            self._focal_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
 
     def _minimize_focal_loss(self, optimizer, global_step):
         if not self._set_for_training:

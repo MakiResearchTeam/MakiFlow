@@ -37,9 +37,9 @@ experiment_params = {
     'path to arch': path,
     'pretrained layers': [layer_name],
     'utrainable layers': [layer_name],
-    'l1 reg': 1e-6,
+    'l1 reg': 1e-6 or None,
     'l1 reg layers': [layer_name],
-    'l2 reg': 1e-6,
+    'l2 reg': 1e-6 or None,
     'l2 reg layers': [layer_name]
 }"""
 
