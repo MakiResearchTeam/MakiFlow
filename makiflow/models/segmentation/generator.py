@@ -1,23 +1,19 @@
 from __future__ import absolute_import
-from makiflow.base import MakiTensor
 import tensorflow as tf
-from makiflow.models.segmentation.gen_api import SegmentationGenerator, MapMethod
+from makiflow.models.segmentation.gen_api import SegmentationGenerator, MapMethod, GenTrainLayer
 
 
-class GenTrainLayer(MakiTensor):
+class GenTrainLayerBasic(GenTrainLayer):
     def __init__(
             self, prefetch_size, batch_size, generator: SegmentationGenerator, name,
             map_operation: MapMethod
     ):
         self.prefetch_size = prefetch_size
         self.batch_size = batch_size
-        self.image, self.mask = self.build_iterator(generator, map_operation)
-        self._name = name
+        image, self.mask = self.build_iterator(generator, map_operation)
         super().__init__(
-            data_tensor=self.image,
-            parent_layer=self,
-            parent_tensor_names=None,
-            previous_tensors={}
+            name=name,
+            image=image
         )
 
     def build_iterator(self, gen: SegmentationGenerator, map_operation: MapMethod):
@@ -37,33 +33,18 @@ class GenTrainLayer(MakiTensor):
         element = iterator.get_next()
         return element[MapMethod.image], element[MapMethod.mask]
 
-    def get_shape(self):
-        return self.image.get_shape().to_list()
 
-    def get_name(self):
-        return self._name
-
-    def get_params(self):
-        return []
-
-    def get_params_dict(self):
-        return {}
-
-
-class GenTrainNPLayer(MakiTensor):
+class GenTrainNPLayer(GenTrainLayer):
     def __init__(
             self, prefetch_size, batch_size, generator: SegmentationGenerator, name,
             map_operation: MapMethod
     ):
         self.prefetch_size = prefetch_size
         self.batch_size = batch_size
-        self.image, self.mask, self.num_positives = self.build_iterator(generator, map_operation)
-        self._name = name
+        image, self.mask, self.num_positives = self.build_iterator(generator, map_operation)
         super().__init__(
-            data_tensor=self.image,
-            parent_layer=self,
-            parent_tensor_names=None,
-            previous_tensors={}
+            name=name,
+            image=image
         )
 
     def build_iterator(self, gen: SegmentationGenerator, map_operation: MapMethod):
@@ -81,16 +62,5 @@ class GenTrainNPLayer(MakiTensor):
         iterator = dataset.make_one_shot_iterator()
 
         element = iterator.get_next()
-        return element[MapMethod.image], element[MapMethod.mask]
+        return element[MapMethod.image], element[MapMethod.mask], element[MapMethod.num_positives]
 
-    def get_shape(self):
-        return self.image.get_shape().as_list()
-
-    def get_name(self):
-        return self._name
-
-    def get_params(self):
-        return []
-
-    def get_params_dict(self):
-        return {}

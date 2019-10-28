@@ -120,3 +120,22 @@ class SqueezeMaskPostMethod(PostMapMethod):
         mask = mask[:, :, 0]
         element[MapMethod.mask] = mask
         return element
+
+
+class ComputePositivesPostMethod(PostMapMethod):
+    def __init__(self, background_class=0, dtype=tf.float32):
+        super().__init__()
+        self.background = tf.constant(background_class, dtype=dtype)
+
+    def load_data(self, data_paths):
+        element = self._parent_method.load_data(data_paths)
+
+        mask = element[MapMethod.mask]
+        mask_shape = mask.get_shape().as_list()
+        area = mask_shape[1] * mask_shape[2]
+        num_neg = tf.reduce_sum(tf.cast(tf.equal(mask, self.background), dtype=tf.float32))
+
+        num_positives = area - num_neg
+
+        element[MapMethod.num_positives] = num_positives
+        return element
