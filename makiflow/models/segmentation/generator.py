@@ -25,8 +25,10 @@ class GenTrainLayerBasic(GenTrainLayer):
             }
         )
 
-        dataset = dataset.map(map_operation.load_data)
-        dataset = dataset.batch(self.batch_size)
+        dataset = dataset.map(map_operation.load_data,)
+        # Set `drop_remainder` to True since otherwise the batch dimension
+        # would be None. Example: [None, 1024, 1024, 3]
+        dataset = dataset.batch(self.batch_size, drop_remainder=True)
         dataset = dataset.prefetch(self.prefetch_size)
         iterator = dataset.make_one_shot_iterator()
 
