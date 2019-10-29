@@ -120,7 +120,7 @@ class Builder:
         )
 
     @staticmethod
-    def segmentator_from_json(json_path, batch_size=None):
+    def segmentator_from_json(json_path, batch_size=None, generator=None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
@@ -133,15 +133,15 @@ class Builder:
         MakiTensors_of_model = json_info['graph_info']
 
         inputs_outputs = Builder.restore_graph(
-            [output_tensor_name], MakiTensors_of_model, batch_size
+            [output_tensor_name], MakiTensors_of_model, batch_size, generator
         )
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
         return Segmentator(input_s=in_x, output=out_x, name=model_name)
 
-    # -----------------------------------------------------------LAYERS RESTORATION----------------------------------------------------------------------------------
-    # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------LAYERS RESTORATION-----------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
     def __layer_from_dict(layer_dict):
@@ -468,7 +468,7 @@ class Builder:
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def restore_graph(outputs, graph_info_json, batch_sz=None):
+    def restore_graph(outputs, graph_info_json, batch_sz=None, generator=None):
         # dict {NameTensor : Info about this tensor}
         graph_info = {}
 
@@ -503,7 +503,10 @@ class Builder:
                     )
                     if batch_sz is not None:
                         temp['params']['input_shape'][0] = batch_sz
-                    answer = Builder.__layer_from_dict(temp)
+                    if generator is not None:
+                        answer = generator
+                    else:
+                        answer = Builder.__layer_from_dict(temp)
 
                 coll_tensors[from_] = answer
                 return answer
