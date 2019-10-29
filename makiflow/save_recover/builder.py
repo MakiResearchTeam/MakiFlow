@@ -137,8 +137,11 @@ class Builder:
         )
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
+        model = Segmentator(input_s=in_x, output=out_x, name=model_name)
+        if generator is not None:
+            model.set_generator(generator)
         print('Model is restored!')
-        return Segmentator(input_s=in_x, output=out_x, name=model_name)
+        return model
 
 # -----------------------------------------------------------LAYERS RESTORATION-----------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------

@@ -52,6 +52,7 @@ class SegmentatorTrainer:
             self._exp_params = self._load_exp_params(exp_params)
         self._path_to_save = path_to_save
         self._sess = None
+        self.generator = None
 
     def _load_exp_params(self, json_path):
         with open(json_path) as json_file:
@@ -88,6 +89,15 @@ class SegmentatorTrainer:
         """
         self.Xtest = Xtest
         self.Ytest = Ytest
+
+    def set_generator(self, generator=None, iterations=10):
+        """
+        Parameters
+        ----------
+        generator :
+        """
+        self.generator = generator
+        self.iterations= iterations
 
     def start_experiments(self):
         """
@@ -283,23 +293,40 @@ class SegmentatorTrainer:
         # Catch InterruptException
         try:
             for i in range(epochs):
-                if loss_type == 'FocalLoss':
-                    sub_train_info = model.fit_focal(
-                        images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
-                        num_positives=self.num_pos, optimizer=optimizer, epochs=1
-                    )
-                elif loss_type == 'MakiLoss':
-                    sub_train_info = model.fit_maki(
-                        images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
-                        num_positives=self.num_pos, optimizer=optimizer, epochs=1
-                    )
-                elif loss_type == 'QuadraticCELoss':
-                    sub_train_info = model.fit_quadratic_ce(
-                        images=self.Xtrain, labels=self.Ytrain,
-                        optimizer=optimizer, epochs=1
-                    )
+                if self.generator is None:
+                    if loss_type == 'FocalLoss':
+                        sub_train_info = model.fit_focal(
+                            images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
+                            num_positives=self.num_pos, optimizer=optimizer, epochs=1
+                        )
+                    elif loss_type == 'MakiLoss':
+                        sub_train_info = model.fit_maki(
+                            images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
+                            num_positives=self.num_pos, optimizer=optimizer, epochs=1
+                        )
+                    elif loss_type == 'QuadraticCELoss':
+                        sub_train_info = model.fit_quadratic_ce(
+                            images=self.Xtrain, labels=self.Ytrain,
+                            optimizer=optimizer, epochs=1
+                        )
+                    else:
+                        raise ValueError('Unknown loss type!')
                 else:
-                    raise ValueError('Unknown loss type!')
+                    if loss_type == 'FocalLoss':
+                        sub_train_info = model.genfit_focal(
+                            gamma=gamma, optimizer=optimizer, epochs=1, iterations=self.iterations
+                        )
+                    elif loss_type == 'MakiLoss':
+                        sub_train_info = model.genfit_maki(
+                            gamma=gamma, num_positives=self.num_pos, optimizer=optimizer, epochs=1,
+                            iterations=self.iterations
+                        )
+                    elif loss_type == 'QuadraticCELoss':
+                        sub_train_info = model.genfit_quadratic_ce(
+                            optimizer=optimizer, epochs=1, iterations=self.iterations
+                        )
+                    else:
+                        raise ValueError('Unknown loss type!')
 
                 self.loss_list += sub_train_info['train losses']
 
