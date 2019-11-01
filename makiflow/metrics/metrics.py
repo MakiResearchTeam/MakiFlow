@@ -43,7 +43,7 @@ def categorical_dice_coeff(P, L, use_argmax=False, ind_norm=True):
     L = L.reshape(batch_sz, -1)
 
     class_dices = np.zeros(num_classes)
-    class_counts = np.zeros(num_classes) + EPSILON
+    class_counts = np.zeros(num_classes) + EPSILON  # Smoothing to avoid division by zero
     for i in range(batch_sz):
         sample_actual = L[i]
         sample_pred = P[i]

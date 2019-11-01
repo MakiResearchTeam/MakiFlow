@@ -36,7 +36,11 @@ experiment_params = {
     'weights': ../weights/weights.ckpt,
     'path to arch': path,
     'pretrained layers': [layer_name],
-    'utrainable layers': [layer_name]
+    'utrainable layers': [layer_name],
+    'l1 reg': 1e-6 or None,
+    'l1 reg layers': [layer_name],
+    'l2 reg': 1e-6 or None,
+    'l2 reg layers': [layer_name]
 }"""
 
 
@@ -48,6 +52,7 @@ class SegmentatorTrainer:
             self._exp_params = self._load_exp_params(exp_params)
         self._path_to_save = path_to_save
         self._sess = None
+        self.generator = None
 
     def _load_exp_params(self, json_path):
         with open(json_path) as json_file:
@@ -85,6 +90,15 @@ class SegmentatorTrainer:
         self.Xtest = Xtest
         self.Ytest = Ytest
 
+    def set_generator(self, generator=None, iterations=10):
+        """
+        Parameters
+        ----------
+        generator :
+        """
+        self.generator = generator
+        self.iterations= iterations
+
     def start_experiments(self):
         """
         Starts all the experiments.
@@ -113,7 +127,11 @@ class SegmentatorTrainer:
             'test_period': experiment['test period'],
             'class_names': experiment['class names'],
             'save_period': experiment['save period'],
-            'loss_type': experiment['loss type']
+            'loss_type': experiment['loss type'],
+            'l1_reg': experiment['l1 reg'],
+            'l1_reg_layers': experiment['l1 reg layers'],
+            'l2_reg': experiment['l2 reg'],
+            'l2_reg_layers': experiment['l2 reg layers']
         }
         for opt_info in experiment['optimizers']:
             for b_sz in experiment['batch sizes']:
@@ -160,6 +178,23 @@ class SegmentatorTrainer:
             for layer_name in untrainable_layers:
                 layers += [(layer_name, False)]
             model.set_layers_trainable(layers)
+
+        # Set l1 regularization
+        l1_reg = exp_params['l1_reg']
+        if l1_reg is not None:
+            l1_reg = np.float32(l1_reg)
+            l1_reg_layers = exp_params['l1_reg_layers']
+            reg_config = [(layer, l1_reg) for layer in l1_reg_layers]
+            model.set_l1_reg(reg_config)
+
+        # Set l2 regularization
+        l2_reg = exp_params['l2_reg']
+        if l2_reg is not None:
+            l2_reg = np.float32(l2_reg)
+            l2_reg_layers = exp_params['l2_reg_layers']
+            reg_config = [(layer, l2_reg) for layer in l2_reg_layers]
+            model.set_l2_reg(reg_config)
+
         return model
 
     def _prepare_test_vars(self, model_name, exp_params):
@@ -219,6 +254,8 @@ class SegmentatorTrainer:
 
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
+
+        # Compute and save matrix
         conf_mat_path = self.to_save_folder + f'/mat_epoch={epoch}.png'
         print('Computing confusion matrix...')
         confusion_mat(
@@ -256,18 +293,40 @@ class SegmentatorTrainer:
         # Catch InterruptException
         try:
             for i in range(epochs):
-                if loss_type == 'FocalLoss':
-                    sub_train_info = model.fit_focal(
-                        images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
-                        num_positives=self.num_pos, optimizer=optimizer, epochs=1
-                    )
-                elif loss_type == 'MakiLoss':
-                    sub_train_info = model.fit_maki(
-                        images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
-                        num_positives=self.num_pos, optimizer=optimizer, epochs=1
-                    )
+                if self.generator is None:
+                    if loss_type == 'FocalLoss':
+                        sub_train_info = model.fit_focal(
+                            images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
+                            num_positives=self.num_pos, optimizer=optimizer, epochs=1
+                        )
+                    elif loss_type == 'MakiLoss':
+                        sub_train_info = model.fit_maki(
+                            images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
+                            num_positives=self.num_pos, optimizer=optimizer, epochs=1
+                        )
+                    elif loss_type == 'QuadraticCELoss':
+                        sub_train_info = model.fit_quadratic_ce(
+                            images=self.Xtrain, labels=self.Ytrain,
+                            optimizer=optimizer, epochs=1
+                        )
+                    else:
+                        raise ValueError('Unknown loss type!')
                 else:
-                    raise ValueError('Unknown loss type!')
+                    if loss_type == 'FocalLoss':
+                        sub_train_info = model.genfit_focal(
+                            gamma=gamma, optimizer=optimizer, epochs=1, iterations=self.iterations
+                        )
+                    elif loss_type == 'MakiLoss':
+                        sub_train_info = model.genfit_maki(
+                            gamma=gamma, num_positives=self.num_pos, optimizer=optimizer, epochs=1,
+                            iterations=self.iterations
+                        )
+                    elif loss_type == 'QuadraticCELoss':
+                        sub_train_info = model.genfit_quadratic_ce(
+                            optimizer=optimizer, epochs=1, iterations=self.iterations
+                        )
+                    else:
+                        raise ValueError('Unknown loss type!')
 
                 self.loss_list += sub_train_info['train losses']
 
