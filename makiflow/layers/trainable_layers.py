@@ -612,7 +612,9 @@ class BatchNormLayer(BatchNormBaseLayer):
         self.name_var = 'BatchVar_{}_id_'.format(self.D) + name
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
+        self._named_params_dict[self.name_mean] = self.running_mean
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
+        self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
         return tf.nn.batch_normalization(
