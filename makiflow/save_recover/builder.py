@@ -177,8 +177,45 @@ class Builder:
             'UpSamplingLayer': Builder.__upsampling_layer_from_dict,
             'BiasLayer': Builder.__bias_layer_from_dict,
             'ResizeLayer': Builder.__resize_layer_from_dict,
+            'GroupNormLayer': Builder.__groupnorm_layer_from_dict,
+            'NormalizationLayer': Builder.__normalizate_layer_from_dict,
+            'InstanceNormLayer': Builder.__instancenorm_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
+
+    @staticmethod
+    def __groupnorm_layer_from_dict(params):
+        G = params['G']
+        name = params['name']
+        D = params['D']
+        decay = params['decay']
+        eps = params['eps']
+        use_beta = params['use_beta']
+        use_gamma = params['use_gamma']
+        return GroupNormLayer(D=D, G=G, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma)
+
+    @staticmethod
+    def __normalizate_layer_from_dict(params):
+        name = params['name']
+        D = params['D']
+        decay = params['decay']
+        eps = params['eps']
+        use_beta = params['use_beta']
+        use_gamma = params['use_gamma']
+        return NormalizationLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma)
+
+    @staticmethod
+    def __instancenorm_layer_from_dict(params):
+        name = params['name']
+        D = params['D']
+        decay = params['decay']
+        eps = params['eps']
+        use_beta = params['use_beta']
+        use_gamma = params['use_gamma']
+        return InstanceNormLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma)
 
     @staticmethod
     def __resize_layer_from_dict(params):

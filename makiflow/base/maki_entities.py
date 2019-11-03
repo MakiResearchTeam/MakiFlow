@@ -113,6 +113,10 @@ class BatchNormBaseLayer(MakiLayer):
         )
         return maki_tensor
 
+    @abstractmethod
+    def _init_train_params(self, data):
+        pass
+
 
 class MakiTensor:
     def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list,

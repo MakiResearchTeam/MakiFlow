@@ -701,7 +701,6 @@ class GroupNormLayer(BatchNormBaseLayer):
             Name of this layer.
         """
         self.G = G
-        self.N = None
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, 
         				type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var, gamma=gamma, beta=beta)
 
@@ -732,9 +731,6 @@ class GroupNormLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_mean] = self.running_mean
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
-
-        self.N = int(N)
-
 
     def _forward(self, X):
         # These if statements check if we do batchnorm for convolution or dense
@@ -817,7 +813,6 @@ class GroupNormLayer(BatchNormBaseLayer):
                 'decay': self.decay,
                 'eps': self.eps,
                 'G': self.G,
-                'N': self.N,
                 'use_beta': self.use_beta,
                 'use_gamma': self.use_gamma,
             }
@@ -851,7 +846,6 @@ class NormalizationLayer(BatchNormBaseLayer):
         name : str
             Name of this layer.
         """
-        self.N = None
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
                          type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta)
 
@@ -882,8 +876,6 @@ class NormalizationLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_mean] = self.running_mean
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
-
-        self.N = int(N)
 
     def _forward(self, X):
 
@@ -937,7 +929,6 @@ class NormalizationLayer(BatchNormBaseLayer):
                 'D': self.D,
                 'decay': self.decay,
                 'eps': self.eps,
-                'N': self.N,
                 'use_beta': self.use_beta,
                 'use_gamma': self.use_gamma,
             }
@@ -971,7 +962,6 @@ class InstanceNormLayer(BatchNormBaseLayer):
         name : str
             Name of this layer.
         """
-        self.N = None
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
                          type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta)
 
@@ -1003,8 +993,6 @@ class InstanceNormLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_mean] = self.running_mean
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
-
-        self.N = int(N)
 
     def _forward(self, X):
 
@@ -1058,7 +1046,6 @@ class InstanceNormLayer(BatchNormBaseLayer):
                 'D': self.D,
                 'decay': self.decay,
                 'eps': self.eps,
-                'N': self.N,
                 'use_beta': self.use_beta,
                 'use_gamma': self.use_gamma,
             }
