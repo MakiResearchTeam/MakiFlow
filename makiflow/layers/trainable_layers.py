@@ -602,16 +602,16 @@ class BatchNormLayer(BatchNormBaseLayer):
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean, var=var, gamma=gamma, beta=beta)
 
     def _init_train_params(self,data):
-        if mean is None:
-            mean = np.zeros(D)
-        if var is None:
-            var = np.ones(D)
+        if self.running_mean is None:
+            self.running_mean = np.zeros(D)
+        if self.running_variance is None:
+            self.running_variance = np.ones(D)
         name = str(name)
         self.name_mean = 'BatchMean_{}_id_'.format(D) + name
         self.name_var = 'BatchVar_{}_id_'.format(D) + name
 
-        self.running_mean = tf.Variable(mean.astype(np.float32), trainable=False, name=self.name_mean)
-        self.running_variance = tf.Variable(var.astype(np.float32), trainable=False, name=self.name_var)
+        self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
+        self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
 
     def _forward(self, X):
         return tf.nn.batch_normalization(
@@ -707,26 +707,26 @@ class GroupNormLayer(BatchNormBaseLayer):
         if self.running_mean is None:
             if len(shape) == 4:
                 # Conv
-                mean = np.zeros((N, 1, 1, self.G, 1))
+                self.running_mean = np.zeros((N, 1, 1, self.G, 1))
             elif len(shape) == 2:
                 # Dense
-                mean = np.zeros((N, self.G, 1))
+                self.running_mean = np.zeros((N, self.G, 1))
 
         if self.running_variance is None:
             if len(shape) == 4:
                 # Conv
-                var = np.ones((N, 1, 1, self.G, 1))
+                self.running_variance = np.ones((N, 1, 1, self.G, 1))
             elif len(shape) == 2:
                 # Dense
-                var = np.ones((N, self.G, 1))
+                self.running_variance = np.ones((N, self.G, 1))
 
         name = str(self._name)
         self.name_mean = 'GroupNormMean_{}_{}_id_'.format(N, self.G) + name
         self.name_var = 'GroupNormVar_{}_{}_id_'.format(N, self.G) + name
 
-        self.running_mean = tf.Variable(mean.astype(np.float32), trainable=False, name=self.name_mean)
+        self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
-        self.running_variance = tf.Variable(var.astype(np.float32), trainable=False, name=self.name_var)
+        self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
         self.N = int(N)
@@ -857,26 +857,26 @@ class NormalizationLayer(BatchNormBaseLayer):
         if self.running_mean is None:
             if len(shape) == 4:
                 # Conv
-                mean = np.zeros((N, 1, 1, 1))
+                self.running_mean = np.zeros((N, 1, 1, 1))
             elif len(shape) == 2:
                 # Dense
-                mean = np.zeros((N, 1))
+                self.running_mean = np.zeros((N, 1))
 
         if self.running_variance is None:
             if len(shape) == 4:
                 # Conv
-                var = np.ones((N, 1, 1, 1))
+                self.running_variance = np.ones((N, 1, 1, 1))
             elif len(shape) == 2:
                 # Dense
-                var = np.ones((N, 1))
+                self.running_variance = np.ones((N, 1))
 
         name = str(self._name)
         self.name_mean = 'GroupNormMean_{}_{}_id_'.format(N, self.G) + name
         self.name_var = 'GroupNormVar_{}_{}_id_'.format(N, self.G) + name
 
-        self.running_mean = tf.Variable(mean.astype(np.float32), trainable=False, name=self.name_mean)
+        self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
-        self.running_variance = tf.Variable(var.astype(np.float32), trainable=False, name=self.name_var)
+        self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
         self.N = int(N)
@@ -978,26 +978,26 @@ class InstanceNormLayer(BatchNormBaseLayer):
         if self.running_mean is None:
             if len(shape) == 4:
                 # Conv
-                mean = np.zeros((N, 1, 1, shape[-1]))
+                self.running_mean = np.zeros((N, 1, 1, shape[-1]))
             elif len(shape) == 2:
                 # Dense
-                mean = np.zeros((N, shape[-1]))
+                self.running_mean = np.zeros((N, shape[-1]))
 
         if self.running_variance is None:
             if len(shape) == 4:
                 # Conv
-                var = np.ones((N, 1, 1, shape[-1]))
+                self.running_variance = np.ones((N, 1, 1, shape[-1]))
             elif len(shape) == 2:
                 # Dense
-                var = np.ones((N, shape[-1]))
+                self.running_variance = np.ones((N, shape[-1]))
 
         name = str(self._name)
         self.name_mean = 'GroupNormMean_{}_{}_id_'.format(N, self.G) + name
         self.name_var = 'GroupNormVar_{}_{}_id_'.format(N, self.G) + name
 
-        self.running_mean = tf.Variable(mean.astype(np.float32), trainable=False, name=self.name_mean)
+        self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
-        self.running_variance = tf.Variable(var.astype(np.float32), trainable=False, name=self.name_var)
+        self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
         self.N = int(N)
