@@ -50,6 +50,69 @@ class MakiLayer:
         return self._name
 
 
+class BatchNormBaseLayer(MakiLayer):
+    def __init__(self, D, decay, eps, name, use_gamma, use_beta, mean, var, gamma, beta):
+
+        self.D = D
+        self.decay = decay
+        self.eps = eps
+        self.use_gamma = use_gamma
+        self.use_beta = use_beta
+        self.running_mean = mean
+        self.running_variance = var
+
+        # These variables are needed to change the mean and variance of the batch after
+        # the batchnormalization: result*gamma + beta
+        # beta - offset
+        # gamma - scale
+        if beta is None:
+            beta = np.zeros(D)
+        if gamma is None:
+            gamma = np.ones(D)
+
+        params = []
+        named_params_dict = {}
+        name = str(name)
+        # Create gamma
+
+        if use_gamma:
+            self.name_gamma = 'GroupNormGamma_{}_id_'.format(D) + name
+            self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)
+            named_params_dict[self.name_gamma] = self.gamma
+            params += [self.gamma]
+        else:
+            self.gamma = None
+
+        # Create beta
+        if use_beta:
+            self.name_beta = 'GroupNormBeta_{}_id_'.format(D) + name
+            self.beta = tf.Variable(beta.astype(np.float32), name=self.name_beta)
+            named_params_dict[self.name_beta] = self.beta
+            params += [self.beta]
+        else:
+            self.beta = None
+
+        super().__init__(name, params, named_params_dict)
+
+    def __call__(self, x):
+        data = x.get_data_tensor()
+
+        self._init_train_params(data)
+
+        data = self._forward(data)
+
+        parent_tensor_names = [x.get_name()]
+        previous_tensors = copy(x.get_previous_tensors())
+        previous_tensors.update(x.get_self_pair())
+        maki_tensor = MakiTensor(
+            data_tensor=data,
+            parent_layer=self,
+            parent_tensor_names=parent_tensor_names,
+            previous_tensors=previous_tensors,
+        )
+        return maki_tensor
+
+
 class MakiTensor:
     def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list,
                  previous_tensors: dict):
