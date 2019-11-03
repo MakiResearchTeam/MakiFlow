@@ -2,6 +2,7 @@ from abc import abstractmethod
 import tensorflow as tf
 import json
 from copy import copy
+import numpy as np
 
 
 class MakiLayer:
