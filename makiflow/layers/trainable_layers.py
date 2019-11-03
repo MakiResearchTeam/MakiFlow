@@ -793,13 +793,14 @@ class GroupNormLayer(BatchNormBaseLayer):
         with tf.control_dependencies([update_running_mean, update_running_variance]):
             X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
 
+            out = tf.reshape(X, old_shape)
+
             if self.gamma is not None:
-                X *= self.gamma
+                out *= self.gamma
 
             if self.beta is not None:
-                X += self.beta
+                out += self.beta
 
-            out = tf.reshape(X, old_shape)
 
         return out
 
