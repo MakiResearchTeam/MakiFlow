@@ -875,8 +875,8 @@ class NormalizationLayer(BatchNormBaseLayer):
                 self.running_variance = np.ones((N, 1))
 
         name = str(self._name)
-        self.name_mean = 'NormalizationLayerMean_{}_{}_id_'.format(N, self.G) + name
-        self.name_var = 'NormalizationLayerVar_{}_{}_id_'.format(N, self.G) + name
+        self.name_mean = 'NormalizationLayerMean_{}_id_'.format(N) + name
+        self.name_var = 'NormalizationLayerVar_{}__id_'.format(N) + name
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
@@ -996,8 +996,8 @@ class InstanceNormLayer(BatchNormBaseLayer):
                 self.running_variance = np.ones((N, shape[-1]))
 
         name = str(self._name)
-        self.name_mean = 'InstanceNormMean_{}_{}_id_'.format(N, self.G) + name
-        self.name_var = 'InstanceNormVar_{}_{}_id_'.format(N, self.G) + name
+        self.name_mean = 'InstanceNormMean_{}_{}_id_'.format(N, shape[-1]) + name
+        self.name_var = 'InstanceNormVar_{}_{}_id_'.format(N, shape[-1]) + name
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
