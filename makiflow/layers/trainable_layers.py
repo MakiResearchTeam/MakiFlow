@@ -599,16 +599,17 @@ class BatchNormLayer(BatchNormBaseLayer):
         name : str
             Name of this layer. 
         """
-        super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean, var=var, gamma=gamma, beta=beta)
+        super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta,
+        					type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta)
 
     def _init_train_params(self,data):
         if self.running_mean is None:
-            self.running_mean = np.zeros(D)
+            self.running_mean = np.zeros(self.D)
         if self.running_variance is None:
-            self.running_variance = np.ones(D)
+            self.running_variance = np.ones(self.D)
         name = str(name)
-        self.name_mean = 'BatchMean_{}_id_'.format(D) + name
-        self.name_var = 'BatchVar_{}_id_'.format(D) + name
+        self.name_mean = 'BatchMean_{}_id_'.format(self.D) + name
+        self.name_var = 'BatchVar_{}_id_'.format(self.D) + name
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
@@ -699,7 +700,8 @@ class GroupNormLayer(BatchNormBaseLayer):
         """
         self.G = G
         self.N = None
-        super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean, var=var, gamma=gamma, beta=beta)
+        super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, 
+        				type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var, gamma=gamma, beta=beta)
 
     def _init_train_params(self, data):
         N = data.shape[0]
@@ -849,7 +851,7 @@ class NormalizationLayer(BatchNormBaseLayer):
         """
         self.N = None
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
-                         var=var, gamma=gamma, beta=beta)
+                         type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta)
 
     def _init_train_params(self, data):
         N = data.shape[0]
@@ -871,8 +873,8 @@ class NormalizationLayer(BatchNormBaseLayer):
                 self.running_variance = np.ones((N, 1))
 
         name = str(self._name)
-        self.name_mean = 'GroupNormMean_{}_{}_id_'.format(N, self.G) + name
-        self.name_var = 'GroupNormVar_{}_{}_id_'.format(N, self.G) + name
+        self.name_mean = 'NormalizationLayerMean_{}_{}_id_'.format(N, self.G) + name
+        self.name_var = 'NormalizationLayerVar_{}_{}_id_'.format(N, self.G) + name
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
@@ -969,7 +971,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
         """
         self.N = None
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
-                         var=var, gamma=gamma, beta=beta)
+                         type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta)
 
     def _init_train_params(self, data):
         N = data.shape[0]
@@ -992,8 +994,8 @@ class InstanceNormLayer(BatchNormBaseLayer):
                 self.running_variance = np.ones((N, shape[-1]))
 
         name = str(self._name)
-        self.name_mean = 'GroupNormMean_{}_{}_id_'.format(N, self.G) + name
-        self.name_var = 'GroupNormVar_{}_{}_id_'.format(N, self.G) + name
+        self.name_mean = 'InstanceNormMean_{}_{}_id_'.format(N, self.G) + name
+        self.name_var = 'InstanceNormVar_{}_{}_id_'.format(N, self.G) + name
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
