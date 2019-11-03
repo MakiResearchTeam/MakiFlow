@@ -797,16 +797,16 @@ class GroupNormLayer(BatchNormBaseLayer):
         with tf.control_dependencies([update_running_mean, update_running_variance]):
             X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
 
-            out = tf.reshape(X, old_shape)
+            X = tf.reshape(X, old_shape)
 
             if self.gamma is not None:
-                out *= self.gamma
+                X *= self.gamma
 
             if self.beta is not None:
-                out += self.beta
+                X += self.beta
 
 
-        return out
+        return X
 
     def to_dict(self):
         return {
@@ -927,7 +927,7 @@ class NormalizationLayer(BatchNormBaseLayer):
             if self.beta is not None:
                 X += self.beta
 
-        return out
+        return X
 
     def to_dict(self):
         return {
@@ -1048,7 +1048,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
             if self.beta is not None:
                 X += self.beta
 
-        return out
+        return X
 
     def to_dict(self):
         return {
