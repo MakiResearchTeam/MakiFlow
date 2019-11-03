@@ -607,7 +607,7 @@ class BatchNormLayer(BatchNormBaseLayer):
             self.running_mean = np.zeros(self.D)
         if self.running_variance is None:
             self.running_variance = np.ones(self.D)
-        name = str(name)
+        name = str(self._name)
         self.name_mean = 'BatchMean_{}_id_'.format(self.D) + name
         self.name_var = 'BatchVar_{}_id_'.format(self.D) + name
 
