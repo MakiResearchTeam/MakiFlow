@@ -738,15 +738,15 @@ class GroupNormLayer(BatchNormBaseLayer):
             # conv
             axes = [1,2,4]
 
-            H, W, H, C = X.shape
-            old_shape = [H, W, H, C]
-            X = tf.reshape(X, [N, W, H, self.G, C // self.G])
+            N, H, W, C = X.shape
+            old_shape = [N, H, W, C]
+            X = tf.reshape(X, [N, H, W, self.G, C // self.G])
         else:
             # dense
             axes = [2]
 
             N, F = X.shape
-            old_shape = [H, F]
+            old_shape = [N, F]
             X = tf.reshape(X, [N, self.G, F // self.G])
 
         X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
@@ -767,15 +767,15 @@ class GroupNormLayer(BatchNormBaseLayer):
             # conv
             axes = [1,2,4]
 
-            H, W, H, C = X.shape
-            old_shape = [H, W, H, C]
-            X = tf.reshape(X, [N, W, H, self.G, C // self.G])
+            N, H, W, C = X.shape
+            old_shape = [N, H, W, C]
+            X = tf.reshape(X, [N, H, W, self.G, C // self.G])
         else:
             # dense
             axes = [2]
 
-            H, F = X.shape
-            old_shape = [H, F]
+            N, F = X.shape
+            old_shape = [N, F]
             X = tf.reshape(X, [N, self.G, F // self.G])
 
         # Output shape [N, 1, 1, self.G, 1] for Conv and [N, G, 1] for Dense
