@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.ops import math_ops
+from tensorflow.python.framework import ops
 
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
@@ -797,7 +799,7 @@ class GroupNormLayer(BatchNormBaseLayer):
         )
 
         with tf.control_dependencies([update_running_mean, update_running_variance]):
-            X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
+            X = (X - batch_mean) / tf.sqrt(batch_var + self.eps)
 
             X = tf.reshape(X, old_shape)
 
