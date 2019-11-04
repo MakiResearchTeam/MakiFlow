@@ -675,7 +675,7 @@ class BatchNormLayer(BatchNormBaseLayer):
 
 
 class GroupNormLayer(BatchNormBaseLayer):
-    def __init__(self, D, name, G=32, decay=0.9, eps=1e-4, use_gamma=True,
+    def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
         :param mean - batch mean value. Used for initialization mean with pretrained value.
@@ -824,7 +824,7 @@ class GroupNormLayer(BatchNormBaseLayer):
         }
 
 class NormalizationLayer(BatchNormBaseLayer):
-    def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
+    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
         :param mean - batch mean value. Used for initialization mean with pretrained value.
@@ -939,7 +939,7 @@ class NormalizationLayer(BatchNormBaseLayer):
         }
 
 class InstanceNormLayer(BatchNormBaseLayer):
-    def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
+    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
         :param mean - batch mean value. Used for initialization mean with pretrained value.
