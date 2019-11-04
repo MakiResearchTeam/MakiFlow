@@ -2,6 +2,7 @@ from abc import abstractmethod
 import tensorflow as tf
 import json
 from copy import copy
+import numpy as np
 
 
 class MakiLayer:
@@ -261,11 +262,13 @@ class MakiModel:
         for layer_name in self._trainable_layers:
             layer = self._graph_tensors[layer_name].get_parent_layer()
             self._trainable_vars += layer.get_params()
+        # Create graph or refresh it
+        self._build_training_graph()
 
     def _setup_for_training(self):
         self._set_for_training = True
         
-        # Collect all the layers' names since all of them are trainable from 
+        # Collect all the layers names since all of them are trainable from
         # the beginning.
         self._trainable_layers = []
         for layer_name in self._graph_tensors:
@@ -278,15 +281,13 @@ class MakiModel:
         self._l2_reg_loss_is_build = False
         self._l2_regularized_layers = {}
         for layer_name in self._trainable_layers:
-            self._l2_regularized_layers[layer_name] = 1e-5 # This value seems to be proper as a default
+            self._l2_regularized_layers[layer_name] = 1e-6  # This value seems to be proper as a default
 
         self._uses_l1_regularization = False
         self._l1_reg_loss_is_build = False
         self._l1_regularized_layers = {}
         for layer_name in self._trainable_layers:
-            self._l1_regularized_layers[layer_name] = 1e-5 # This value seems to be proper as a default
-        
-        self._build_training_graph()
+            self._l1_regularized_layers[layer_name] = 1e-6  # This value seems to be proper as a default
 
     # L2 REGULARIZATION
 
@@ -311,10 +312,13 @@ class MakiModel:
         for layer_name, decay in layers:
             self._l2_regularized_layers[layer_name] = decay
     
-    def set_common_l2_weight_decay(self, decay=1e-5):
+    def set_common_l2_weight_decay(self, decay=1e-6):
         """
         Enables L2 regularization while training. 
         `decay` will be set as decay for each regularized weight.
+        If you haven't used `set_l2_reg` method and did not turn off
+        the regularization on certain layers, the regularization will be
+        set on all the trainable layers.
 
         Parameters
         ----------
@@ -365,10 +369,13 @@ class MakiModel:
         for layer_name, decay in layers:
             self._l1_regularized_layers[layer_name] = decay
     
-    def set_common_l1_weight_decay(self, decay=1e-5):
+    def set_common_l1_weight_decay(self, decay=1e-6):
         """
         Enables L2 regularization while training. 
         `decay` will be set as decay for each regularized weight.
+        If you haven't used `set_l1_reg` method and did not turn off
+        the regularization on certain layers, the regularization will be
+        set on all the trainable layers.
 
         Parameters
         ----------
@@ -426,7 +433,10 @@ class MakiModel:
                     for elem in from_.get_parent_tensors():
                         takes += [create_tensor(elem)]
 
-                    X = layer._training_forward(takes[0] if len(takes) == 1 else takes)
+                    if layer.get_name() in self._trainable_layers:
+                        X = layer._training_forward(takes[0] if len(takes) == 1 else takes)
+                    else:
+                        X = layer._forward(takes[0] if len(takes) == 1 else takes)
 
                 output_tensors[layer.get_name()] = X
                 return X

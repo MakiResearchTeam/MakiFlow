@@ -9,6 +9,7 @@ from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.models import DetectorClassifier
 from makiflow.models import SSDModel
 from makiflow.models import Segmentator
+from makiflow.models.segmentation.generator import SegmentationGenerator
 from makiflow.models import TextRecognizer
 
 
@@ -119,7 +120,7 @@ class Builder:
         )
 
     @staticmethod
-    def segmentator_from_json(json_path, batch_size=None):
+    def segmentator_from_json(json_path, batch_size=None, generator=None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
@@ -132,15 +133,18 @@ class Builder:
         MakiTensors_of_model = json_info['graph_info']
 
         inputs_outputs = Builder.restore_graph(
-            [output_tensor_name], MakiTensors_of_model, batch_size
+            [output_tensor_name], MakiTensors_of_model, batch_size, generator
         )
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
+        model = Segmentator(input_s=in_x, output=out_x, name=model_name)
+        if generator is not None:
+            model.set_generator(generator)
         print('Model is restored!')
-        return Segmentator(input_s=in_x, output=out_x, name=model_name)
+        return model
 
-    # -----------------------------------------------------------LAYERS RESTORATION----------------------------------------------------------------------------------
-    # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------LAYERS RESTORATION-----------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
     def __layer_from_dict(layer_dict):
@@ -173,8 +177,45 @@ class Builder:
             'UpSamplingLayer': Builder.__upsampling_layer_from_dict,
             'BiasLayer': Builder.__bias_layer_from_dict,
             'ResizeLayer': Builder.__resize_layer_from_dict,
+            'GroupNormLayer': Builder.__groupnorm_layer_from_dict,
+            'NormalizationLayer': Builder.__normalizate_layer_from_dict,
+            'InstanceNormLayer': Builder.__instancenorm_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
+
+    @staticmethod
+    def __groupnorm_layer_from_dict(params):
+        G = params['G']
+        name = params['name']
+        D = params['D']
+        decay = params['decay']
+        eps = params['eps']
+        use_beta = params['use_beta']
+        use_gamma = params['use_gamma']
+        return GroupNormLayer(D=D, G=G, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma)
+
+    @staticmethod
+    def __normalizate_layer_from_dict(params):
+        name = params['name']
+        D = params['D']
+        decay = params['decay']
+        eps = params['eps']
+        use_beta = params['use_beta']
+        use_gamma = params['use_gamma']
+        return NormalizationLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma)
+
+    @staticmethod
+    def __instancenorm_layer_from_dict(params):
+        name = params['name']
+        D = params['D']
+        decay = params['decay']
+        eps = params['eps']
+        use_beta = params['use_beta']
+        use_gamma = params['use_gamma']
+        return InstanceNormLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma)
 
     @staticmethod
     def __resize_layer_from_dict(params):
@@ -467,7 +508,7 @@ class Builder:
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def restore_graph(outputs, graph_info_json, batch_sz=None):
+    def restore_graph(outputs, graph_info_json, batch_sz=None, generator=None):
         # dict {NameTensor : Info about this tensor}
         graph_info = {}
 
@@ -502,7 +543,10 @@ class Builder:
                     )
                     if batch_sz is not None:
                         temp['params']['input_shape'][0] = batch_sz
-                    answer = Builder.__layer_from_dict(temp)
+                    if generator is not None:
+                        answer = generator
+                    else:
+                        answer = Builder.__layer_from_dict(temp)
 
                 coll_tensors[from_] = answer
                 return answer

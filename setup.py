@@ -4,9 +4,9 @@ import setuptools
 setup(
     name='MakiFlow',
     packages=setuptools.find_packages(),
-    version='1.0.2',
+    version='1.0.5',
     description='Machine learning framework made by students of Samara National Research University.'
-                'It is made primarily to extend our knowledge and get an instrument that accelerates out studies.',
+                'It is made primarily to extend our knowledge and get an instrument that accelerates our studies.',
     long_description='...',
     author='Kilbas Igor, Mukhin Artem, Gribanov Danil',
     author_email='igor.kilbas@mail.ru',
