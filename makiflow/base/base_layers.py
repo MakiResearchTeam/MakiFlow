@@ -2,7 +2,7 @@ from abc import abstractmethod
 import tensorflow as tf
 from copy import copy
 import numpy as np
-from makiflow.base.maki_entities import MakiLayer
+from makiflow.base.maki_entities import MakiLayer, MakiTensor
 
 
 class BatchNormBaseLayer(MakiLayer):
