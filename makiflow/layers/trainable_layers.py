@@ -4,7 +4,8 @@ import tensorflow as tf
 
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
-from makiflow.base import BatchNormBaseLayer
+from makiflow.base.base_layers import BatchNormBaseLayer
+from makiflow.layers.utils import init_conv_kernel, init_dense_mat
 
 
 class ConvLayer(SimpleForwardLayer):
@@ -602,17 +603,20 @@ class BatchNormLayer(BatchNormBaseLayer):
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta,
         					type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta)
 
-    def _init_train_params(self,data):
+    def _init_train_params(self, data):
         if self.running_mean is None:
             self.running_mean = np.zeros(self.D)
         if self.running_variance is None:
             self.running_variance = np.ones(self.D)
+
         name = str(self._name)
+
         self.name_mean = 'BatchMean_{}_id_'.format(self.D) + name
         self.name_var = 'BatchVar_{}_id_'.format(self.D) + name
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
+
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
@@ -709,7 +713,7 @@ class GroupNormLayer(BatchNormBaseLayer):
         shape = data.shape
         if self.running_mean is None:
             if len(shape) == 4:
-                # Conv
+                # Conv,
                 self.running_mean = np.zeros((N, 1, 1, self.G, 1))
             elif len(shape) == 2:
                 # Dense
@@ -724,11 +728,13 @@ class GroupNormLayer(BatchNormBaseLayer):
                 self.running_variance = np.ones((N, self.G, 1))
 
         name = str(self._name)
+
         self.name_mean = 'GroupNormMean_{}_{}_id_'.format(N, self.G) + name
         self.name_var = 'GroupNormVar_{}_{}_id_'.format(N, self.G) + name
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
+
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
@@ -800,7 +806,6 @@ class GroupNormLayer(BatchNormBaseLayer):
 
             if self.beta is not None:
                 X += self.beta
-
 
         return X
 
@@ -878,16 +883,14 @@ class NormalizationLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
-
-        X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
-
-        if self.gamma is not None:
-            X *= self.gamma
-
-        if self.beta is not None:
-            X += self.beta
-
-        return X
+        return tf.nn.batch_normalization(
+            X,
+            self.running_mean,
+            self.running_variance,
+            self.beta,
+            self.gamma,
+            self.eps
+        )
 
     def _training_forward(self, X):
         # These if statements check if we do batchnorm for convolution or dense
@@ -911,13 +914,14 @@ class NormalizationLayer(BatchNormBaseLayer):
         )
 
         with tf.control_dependencies([update_running_mean, update_running_variance]):
-            X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
-
-            if self.gamma is not None:
-                X *= self.gamma
-
-            if self.beta is not None:
-                X += self.beta
+            X =  tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
 
         return X
 
@@ -995,16 +999,14 @@ class InstanceNormLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
-
-        X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
-
-        if self.gamma is not None:
-            X *= self.gamma
-
-        if self.beta is not None:
-            X += self.beta
-
-        return X
+        return tf.nn.batch_normalization(
+            X,
+            self.running_mean,
+            self.running_variance,
+            self.beta,
+            self.gamma,
+            self.eps
+        )
 
     def _training_forward(self, X):
         # These if statements check if we do batchnorm for convolution or dense
@@ -1028,13 +1030,14 @@ class InstanceNormLayer(BatchNormBaseLayer):
         )
 
         with tf.control_dependencies([update_running_mean, update_running_variance]):
-            X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
-
-            if self.gamma is not None:
-                X *= self.gamma
-
-            if self.beta is not None:
-                X += self.beta
+            X = tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
 
         return X
 
@@ -1050,50 +1053,3 @@ class InstanceNormLayer(BatchNormBaseLayer):
                 'use_gamma': self.use_gamma,
             }
         }
-
-
-# Some initializate methods
-# Initializations define the way to set the initial random weights of MakiFlow layers.
-def init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer):
-    W = np.random.randn(kw, kh, in_f, out_f)
-    if kernel_initializer == 'xavier_gaussian_avg':
-        W *= np.sqrt(3. / (kw * kh * in_f + kw * kh * out_f))
-
-    elif kernel_initializer == 'xavier_gaussian_inf':
-        W *= np.sqrt(1. / (kw * kh * in_f))
-
-    elif kernel_initializer == 'xavier_uniform_avg':
-        W = np.random.uniform(low=-1., high=1.0, size=[kw, kh, in_f, out_f])
-        W *= np.sqrt(6. / (kw * kh * in_f + kw * kh * out_f))
-
-    elif kernel_initializer == 'xavier_uniform_inf':
-        W = np.random.uniform(low=-1., high=1.0, size=[kw, kh, in_f, out_f])
-        W *= np.sqrt(3. / (kw * kh * in_f))
-
-    elif kernel_initializer == 'he':
-        W *= np.sqrt(2. / (kw * kh * in_f))
-
-    elif kernel_initializer == 'lasange':
-        W = np.random.uniform(low=-1., high=1.0, size=[kw, kh, in_f, out_f])
-        W *= np.sqrt(12. / (kw * kh * in_f + kw * kh * out_f))
-
-    return W.astype(np.float32)
-
-
-def init_dense_mat(in_d, out_d, mat_initializer):
-    W = np.random.randn(in_d, out_d)
-    if mat_initializer == 'xavier_gaussian':
-        W *= np.sqrt(3. / (in_d + out_d))
-
-    elif mat_initializer == 'xavier_uniform':
-        W = np.random.uniform(low=-1., high=1.0, size=[in_d, out_d])
-        W *= np.sqrt(6. / (in_d + out_d))
-
-    elif mat_initializer == 'he':
-        W *= np.sqrt(2. / (in_d))
-
-    elif mat_initializer == 'lasange':
-        W = np.random.uniform(low=-1., high=1.0, size=[in_d, out_d])
-        W *= np.sqrt(12. / (in_d + out_d))
-
-    return W.astype(np.float32)
