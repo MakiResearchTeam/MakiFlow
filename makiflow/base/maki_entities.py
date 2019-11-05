@@ -255,6 +255,7 @@ class MakiModel:
                 self._trainable_layers.append(layer_name)
             elif not is_trainable and layer_name in self._trainable_layers:
                 self._trainable_layers.remove(layer_name)
+
         self._collect_train_params()
 
     def _collect_train_params(self):
