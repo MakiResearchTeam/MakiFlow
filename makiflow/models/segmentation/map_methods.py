@@ -29,10 +29,10 @@ class LoadResizeNormalize(MapMethod):
             mask = mask[:, :, 0]
 
         if self.image_size is not None:
-            img = tf.image.resize(images=img, method=tf.image.ResizeMethod.BILINEAR)
+            img = tf.image.resize(images=img, size=self.image_size, method=tf.image.ResizeMethod.BILINEAR)
 
         if self.mask_size is not None:
-            mask = tf.image.resize(images=mask, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+            mask = tf.image.resize(images=mask, size=self.mask_size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
         img = tf.cast(img, dtype=tf.float32)
 
