@@ -27,10 +27,14 @@ class BatchNormBaseLayer(MakiLayer):
             Use beta in batchnorm or not.
         name : str
             Name of this layer.
-        :param mean - batch mean value. Used for initialization mean with pretrained value.
-        :param var - batch variance value. Used for initialization variance with pretrained value.
-        :param gamma - batchnorm gamma value. Used for initialization gamma with pretrained value.
-        :param beta - batchnorm beta value. Used for initialization beta with pretrained value.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         self.D = D
         self.decay = decay
