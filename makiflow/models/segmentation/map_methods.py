@@ -1,5 +1,5 @@
 import tensorflow as tf
-from makiflow.models.segmentation.gen_api import PostMapMethod, MapMethod, SegmentationGenerator
+from makiflow.models.segmentation.gen_base import PostMapMethod, MapMethod, PathGenerator, SegmentIterator
 
 
 class LoadResizeNormalize(MapMethod):
@@ -16,8 +16,8 @@ class LoadResizeNormalize(MapMethod):
         self.calc_positives = calc_positives
 
     def load_data(self, data_paths):
-        img_file = tf.read_file(data_paths[SegmentationGenerator.image])
-        mask_file = tf.read_file(data_paths[SegmentationGenerator.mask])
+        img_file = tf.read_file(data_paths[PathGenerator.image])
+        mask_file = tf.read_file(data_paths[PathGenerator.mask])
 
         img = tf.image.decode_image(img_file)
         mask = tf.image.decode_image(mask_file)
@@ -41,8 +41,8 @@ class LoadResizeNormalize(MapMethod):
 
         mask = tf.cast(mask, dtype=tf.int32)
         return {
-            MapMethod.image: img,
-            MapMethod.mask: mask
+            SegmentIterator.image: img,
+            SegmentIterator.mask: mask
         }
 
 
@@ -52,8 +52,8 @@ class LoadDataMethod(MapMethod):
         self.mask_shape = mask_shape
 
     def load_data(self, data_paths):
-        img_file = tf.read_file(data_paths[SegmentationGenerator.image])
-        mask_file = tf.read_file(data_paths[SegmentationGenerator.mask])
+        img_file = tf.read_file(data_paths[PathGenerator.image])
+        mask_file = tf.read_file(data_paths[PathGenerator.mask])
 
         img = tf.image.decode_image(img_file)
         mask = tf.image.decode_image(mask_file)
@@ -64,8 +64,8 @@ class LoadDataMethod(MapMethod):
         img = tf.cast(img, dtype=tf.float32)
         mask = tf.cast(mask, dtype=tf.int32)
         return {
-            MapMethod.image: img,
-            MapMethod.mask: mask
+            SegmentIterator.image: img,
+            SegmentIterator.mask: mask
         }
 
 
@@ -90,8 +90,8 @@ class ResizePostMethod(PostMapMethod):
             mask = tf.image.resize(images=mask, size=self.mask_size, method=self.mask_resize_method)
 
         return {
-            MapMethod.image: img,
-            MapMethod.mask: mask
+            SegmentIterator.image: img,
+            SegmentIterator.mask: mask
         }
 
 
@@ -102,11 +102,11 @@ class NormalizePostMethod(PostMapMethod):
 
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
-        img = element[MapMethod.image]
+        img = element[SegmentIterator.image]
 
         img = tf.divide(img, self.divider)
 
-        element[MapMethod.image] = img
+        element[SegmentIterator.image] = img
         return element
 
 
@@ -116,9 +116,9 @@ class SqueezeMaskPostMethod(PostMapMethod):
 
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
-        mask = element[MapMethod.mask]
+        mask = element[SegmentIterator.mask]
         mask = mask[:, :, 0]
-        element[MapMethod.mask] = mask
+        element[SegmentIterator.mask] = mask
         return element
 
 
@@ -130,12 +130,12 @@ class ComputePositivesPostMethod(PostMapMethod):
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
 
-        mask = element[MapMethod.mask]
+        mask = element[SegmentIterator.mask]
         mask_shape = mask.get_shape().as_list()
         area = mask_shape[1] * mask_shape[2]
         num_neg = tf.reduce_sum(tf.cast(tf.equal(mask, self.background), dtype=tf.float32))
 
         num_positives = area - num_neg
 
-        element[MapMethod.num_positives] = num_positives
+        element[SegmentIterator.num_positives] = num_positives
         return element
