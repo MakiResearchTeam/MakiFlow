@@ -393,7 +393,19 @@ class SegmentatorTrainer:
 
             self._save_test_info()
             self._create_dice_loss_graphs()
-            print('Sub test is done')
+            print('Sub test is done.')
+            self._sess.close()
+
+            # Close the session since Generator yields unexpected behaviour otherwise.
+            # Process doesn't stop until KeyboardInterruptExceptions occurs.
+            # It also yield the following warning message:
+            # 'Error occurred when finalizing GeneratorDataset iterator:
+            # Failed precondition: Python interpreter state is not initialized. The process may be terminated.'
+
+            # Set the variable to None to avoid exceptions while closing the session again
+            # in the _update_session() method.
+            self._sess = None
+            print('Session is closed.')
 
 # ----------------------------------------------------------------------------------------------------------------------
 # -----------------------------------SAVING TRAINING RESULTS------------------------------------------------------------
