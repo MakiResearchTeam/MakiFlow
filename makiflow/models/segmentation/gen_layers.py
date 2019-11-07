@@ -5,18 +5,37 @@ from makiflow.models.segmentation.gen_base import PathGenerator, MapMethod, GenL
 
 class InputGenLayer(GenLayer):
     def __init__(
-            self, prefetch_size, batch_size, generator: PathGenerator, name,
-            map_operation: MapMethod
+            self, prefetch_size, batch_size, path_generator: PathGenerator, name,
+            map_operation: MapMethod, num_parallel_calls=None
     ):
+        """
+
+        Parameters
+        ----------
+        prefetch_size : int
+            Number of batches to prepare before feeding into the network.
+        batch_size : int
+            The batch size.
+        path_generator : PathGenerator
+            The path generator.
+        name : str
+            Name of the input layer of the model. You can find it in the
+            architecture file.
+        map_operation : MapMethod
+            Method for mapping paths to the actual data.
+        num_parallel_calls : int
+            Represents the number of elements to process asynchronously in parallel.
+            If not specified, elements will be processed sequentially.
+        """
         self.prefetch_size = prefetch_size
         self.batch_size = batch_size
-        self.iterator = self.build_iterator(generator, map_operation)
+        self.iterator = self.build_iterator(path_generator, map_operation, num_parallel_calls)
         super().__init__(
             name=name,
             input_image=self.iterator[SegmentIterator.image]
         )
 
-    def build_iterator(self, gen: PathGenerator, map_operation: MapMethod):
+    def build_iterator(self, gen: PathGenerator, map_operation: MapMethod, num_parallel_calls):
         dataset = tf.data.Dataset.from_generator(
             gen.next_element,
             output_types={
@@ -25,7 +44,7 @@ class InputGenLayer(GenLayer):
             }
         )
 
-        dataset = dataset.map(map_operation.load_data)
+        dataset = dataset.map(map_func=map_operation.load_data, num_parallel_calls=tf.int32(num_parallel_calls))
         # Set `drop_remainder` to True since otherwise the batch dimension
         # would be None. Example: [None, 1024, 1024, 3]
         dataset = dataset.batch(self.batch_size, drop_remainder=True)
