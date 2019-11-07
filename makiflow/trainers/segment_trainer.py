@@ -70,6 +70,12 @@ class SubExpField:
     gamma = 'gamma'
 
 
+class LossType:
+    FocalLoss = 'FocalLoss'
+    QuadraticCELoss = 'QuadraticCELoss'
+    MakiLoss = 'MakiLoss'
+
+
 # SEGMENTATOR IMPLIES THAT ALL NETWORK ARCHITECTURES HAVE THE SAME INPUT SHAPE
 class SegmentatorTrainer:
     def __init__(self, exp_params, path_to_save: str):
@@ -89,6 +95,7 @@ class SegmentatorTrainer:
 # ----------------------------------------------------------------------------------------------------------------------
 # ---------------------------------SETTING UP THE EXPERIMENTS-----------------------------------------------------------
 
+    # noinspection PyAttributeOutsideInit
     def set_train_data(self, Xtrain, Ytrain, num_pos):
         """
         Parameters
@@ -328,17 +335,17 @@ class SegmentatorTrainer:
         try:
             for i in range(epochs):
                 if self.generator is None:
-                    if loss_type == 'FocalLoss':
+                    if loss_type == LossType.FocalLoss:
                         sub_train_info = model.fit_focal(
                             images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
                             num_positives=self.num_pos, optimizer=optimizer, epochs=1
                         )
-                    elif loss_type == 'MakiLoss':
+                    elif loss_type == LossType.MakiLoss:
                         sub_train_info = model.fit_maki(
                             images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
                             num_positives=self.num_pos, optimizer=optimizer, epochs=1
                         )
-                    elif loss_type == 'QuadraticCELoss':
+                    elif loss_type == LossType.QuadraticCELoss:
                         sub_train_info = model.fit_quadratic_ce(
                             images=self.Xtrain, labels=self.Ytrain,
                             optimizer=optimizer, epochs=1
@@ -346,16 +353,16 @@ class SegmentatorTrainer:
                     else:
                         raise ValueError('Unknown loss type!')
                 else:
-                    if loss_type == 'FocalLoss':
+                    if loss_type == LossType.FocalLoss:
                         sub_train_info = model.genfit_focal(
                             gamma=gamma, optimizer=optimizer, epochs=1, iterations=self.iterations
                         )
-                    elif loss_type == 'MakiLoss':
+                    elif loss_type == LossType.MakiLoss:
                         sub_train_info = model.genfit_maki(
                             gamma=gamma, num_positives=self.num_pos, optimizer=optimizer, epochs=1,
                             iterations=self.iterations
                         )
-                    elif loss_type == 'QuadraticCELoss':
+                    elif loss_type == LossType.QuadraticCELoss:
                         sub_train_info = model.genfit_quadratic_ce(
                             optimizer=optimizer, epochs=1, iterations=self.iterations
                         )
