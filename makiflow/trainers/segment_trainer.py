@@ -267,7 +267,7 @@ class SegmentatorTrainer:
         }
         # Add sublists for each class
         self.dices_for_each_class = {}
-        for class_name in exp_params['class_names']:
+        for class_name in exp_params[ExpField.class_names]:
             self.dices_for_each_class[class_name] = []
         self.test_info.update(self.dices_for_each_class)
 
@@ -279,7 +279,7 @@ class SegmentatorTrainer:
         print('Testing the model...')
         print('Collecting predictions...')
 
-        batch_sz = exp_params['batch_sz']
+        batch_sz = exp_params[SubExpField.batch_sz]
         Xtest, Ytest = shuffle(self.Xtest, self.Ytest)
         predictions = []
         labels = []
@@ -296,7 +296,7 @@ class SegmentatorTrainer:
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
 
         print('V-Dice:', v_dice_val)
-        for i, class_name in enumerate(exp_params['class_names']):
+        for i, class_name in enumerate(exp_params[ExpField.class_names]):
             self.dices_for_each_class[class_name] += [dices[i]]
             print(f'{class_name}:', dices[i])
 
