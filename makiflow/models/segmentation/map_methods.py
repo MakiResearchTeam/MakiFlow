@@ -48,6 +48,15 @@ class LoadResizeNormalize(MapMethod):
 
 class LoadDataMethod(MapMethod):
     def __init__(self, image_shape, mask_shape):
+        """
+
+        Parameters
+        ----------
+        image_shape : list
+            [image width, image height].
+        mask_shape : list
+            [mask width, mask height].
+        """
         self.image_shape = image_shape
         self.mask_shape = mask_shape
 

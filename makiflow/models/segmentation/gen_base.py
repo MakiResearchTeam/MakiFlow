@@ -13,10 +13,6 @@ class PathGenerator(object):
 
 
 class MapMethod:
-    image = 'image'
-    mask = 'mask'
-    num_positives = 'num_positives'
-
     @abstractmethod
     def load_data(self, data_paths) -> dict:
         pass
@@ -32,6 +28,7 @@ class PostMapMethod(MapMethod):
 
     def __call__(self, parent_method: MapMethod):
         self._parent_method = parent_method
+        return self
 
 
 class SegmentIterator:
