@@ -120,10 +120,14 @@ class SegmentatorTrainer:
         """
         Parameters
         ----------
-        generator :
+        generator : GenLayer
+            The generator layer.
+        iterations : int
+            Defines how long 1 epoch is. One iteration equals processing one batch.
         """
         self.generator = generator
-        self.iterations= iterations
+        # noinspection PyAttributeOutsideInit
+        self.iterations = iterations
 
     def start_experiments(self):
         """
@@ -189,7 +193,10 @@ class SegmentatorTrainer:
         self._update_session()
         arch_path = exp_params[ExpField.path_to_arch]
         batch_sz = exp_params[SubExpField.batch_sz]
-        model = Builder.segmentator_from_json(arch_path, batch_size=batch_sz)
+        if self.generator is None:
+            model = Builder.segmentator_from_json(arch_path, batch_size=batch_sz)
+        else:
+            model = Builder.segmentator_from_json(arch_path, generator=self.generator)
 
         weights_path = exp_params[ExpField.weights]
         pretrained_layers = exp_params[ExpField.pretrained_layers]
@@ -281,6 +288,11 @@ class SegmentatorTrainer:
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
 
+        print('V-Dice:', v_dice_val)
+        for i, class_name in enumerate(exp_params['class_names']):
+            self.dices_for_each_class[class_name] += [dices[i]]
+            print(f'{class_name}:', dices[i])
+
         # Compute and save matrix
         conf_mat_path = self.to_save_folder + f'/mat_epoch={epoch}.png'
         print('Computing confusion matrix...')
@@ -297,10 +309,6 @@ class SegmentatorTrainer:
         # COLLECT DATA
         self.epochs_list.append(epoch)
         self.v_dice_test_list.append(v_dice_val)
-        print('V-Dice:', v_dice_val)
-        for i, class_name in enumerate(exp_params['class_names']):
-            self.dices_for_each_class[class_name] += [dices[i]]
-            print(f'{class_name}:', dices[i])
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ------------------------------------EXPERIMENT LOOP-------------------------------------------------------------------
