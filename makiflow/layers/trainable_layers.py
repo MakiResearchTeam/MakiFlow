@@ -1,9 +1,13 @@
 from __future__ import absolute_import
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.ops import math_ops
+from tensorflow.python.framework import ops
 
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
+from makiflow.base.base_layers import BatchNormBaseLayer
+from makiflow.layers.utils import init_conv_kernel, init_dense_mat
 
 
 class ConvLayer(SimpleForwardLayer):
@@ -525,7 +529,7 @@ class AtrousConvLayer(SimpleForwardLayer):
         self.init_type = kernel_initializer
 
         name = str(name)
-        self.name_conv = f'AtrousConvKernel_{kw}x{kh}_in{in_f}_out{out_f}_rate{rate}_id_{name}'
+        self.name_conv = f'AtrousConvKernel_{kw}x{kh}_in{in_f}_out{out_f}_id_{name}'
 
         if W is None:
             W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
@@ -537,7 +541,7 @@ class AtrousConvLayer(SimpleForwardLayer):
         named_params_dict = {self.name_conv: self.W}
 
         if use_bias:
-            self.name_bias = f'AtrousConvBias_{kw}x{kh}_in{in_f}_out{out_f}_rate{rate}_id_{name}'
+            self.name_bias = f'AtrousConvBias_{kw}x{kh}_in{in_f}_out{out_f}_id_{name}'
             self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
             params += [self.b]
             named_params_dict[self.name_bias] = self.b
@@ -570,14 +574,10 @@ class AtrousConvLayer(SimpleForwardLayer):
         }
 
 
-class BatchNormLayer(SimpleForwardLayer):
+class BatchNormLayer(BatchNormBaseLayer):
     def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
                     use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
-        :param mean - batch mean value. Used for initialization mean with pretrained value.
-        :param var - batch variance value. Used for initialization variance with pretrained value.
-        :param gamma - batchnorm gamma value. Used for initialization gamma with pretrained value.
-        :param beta - batchnorm beta value. Used for initialization beta with pretrained value.
         Batch Noramlization Procedure:
             X_normed = (X - mean) / variance
             X_final = X*gamma + beta
@@ -596,55 +596,35 @@ class BatchNormLayer(SimpleForwardLayer):
         use_beta : bool
             Use beta in batchnorm or not.
         name : str
-            Name of this layer. 
+            Name of this layer.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
         """
-        self.D = D
-        self.decay = decay
-        self.eps = eps
-        self.use_gamma = use_gamma
-        self.use_beta = use_beta
+        super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta,
+        					type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta)
 
-        if mean is None:
-            mean = np.zeros(D)
-        if var is None:
-            var = np.ones(D)
+    def _init_train_params(self, data):
+        if self.running_mean is None:
+            self.running_mean = np.zeros(self.D)
+        if self.running_variance is None:
+            self.running_variance = np.ones(self.D)
 
-        # These variables are needed to change the mean and variance of the batch after
-        # the batchnormalization: result*gamma + beta
-        # beta - offset
-        # gamma - scale
-        if beta is None:
-            beta = np.zeros(D)
-        if gamma is None:
-            gamma = np.ones(D)
+        name = str(self._name)
 
-        name = str(name)
-        self.name_mean = 'BatchMean_{}_id_'.format(D) + name
-        self.name_var = 'BatchVar_{}_id_'.format(D) + name
+        self.name_mean = 'BatchMean_{}_id_'.format(self.D) + name
+        self.name_var = 'BatchVar_{}_id_'.format(self.D) + name
 
-        self.running_mean = tf.Variable(mean.astype(np.float32), trainable=False, name=self.name_mean)
-        self.running_variance = tf.Variable(var.astype(np.float32), trainable=False, name=self.name_var)
+        self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
+        self._named_params_dict[self.name_mean] = self.running_mean
 
-        params = []
-        named_params_dict = {self.name_mean: self.running_mean, self.name_var: self.running_variance}
-        
-        # Create gamma
-        self.name_gamma = 'BatchGamma_{}_id_'.format(D) + name
-        self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)
-        named_params_dict[self.name_gamma] = self.gamma
-
-        if use_gamma:
-            params += [self.gamma]
-        
-        # Create beta
-        self.name_beta = 'BatchBeta_{}_id_'.format(D) + name
-        self.beta = tf.Variable(beta.astype(np.float32), name=self.name_beta)
-        named_params_dict[self.name_beta] = self.beta
-
-        if use_beta: 
-            params += [self.beta]   
-
-        super().__init__(name, params, named_params_dict)
+        self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
+        self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
         return tf.nn.batch_normalization(
@@ -657,10 +637,6 @@ class BatchNormLayer(SimpleForwardLayer):
         )
 
     def _training_forward(self, X):
-        """
-        :param decay - this argument is responsible for how fast batchnorm layer is trained. Values between 0.9 and 0.999 are
-        commonly used.
-        """
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
             # conv
@@ -703,48 +679,398 @@ class BatchNormLayer(SimpleForwardLayer):
             }
         }
 
-# Some initializate methods
-# Initializations define the way to set the initial random weights of MakiFlow layers.
-def init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer):
-    W = np.random.randn(kw, kh, in_f, out_f)
-    if kernel_initializer == 'xavier_gaussian_avg':
-        W *= np.sqrt(3. / (kw * kh * in_f + kw * kh * out_f))
 
-    elif kernel_initializer == 'xavier_gaussian_inf':
-        W *= np.sqrt(1. / (kw * kh * in_f))
+class GroupNormLayer(BatchNormBaseLayer):
+    def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True,
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+        """
+        GroupNormLayer Procedure:
+            X_normed = (X - mean) / variance
+            X_final = X*gamma + beta
+        There X (as original) have shape [N, H, W, C], but in this operation it will be [N, H, W, G, C // G].
+        GroupNormLayer normilized input on N and C // G axis.
+        gamma and beta are learned using gradient descent.
+        Parameters
+        ----------
+        D : int
+            Number of tensors to be normalized.
+        decay : float
+            Decay (momentum) for the moving mean and the moving variance.
+        eps : float
+            A small float number to avoid dividing by 0.
+        G : int
+            The number of groups that normalized. NOTICE! The number D must be divisible by G without remainder
+        use_gamma : bool
+            Use gamma in batchnorm or not.
+        use_beta : bool
+            Use beta in batchnorm or not.
+        name : str
+            Name of this layer.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
+        """
+        self.G = G
+        super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, 
+        				type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var, gamma=gamma, beta=beta)
 
-    elif kernel_initializer == 'xavier_uniform_avg':
-        W = np.random.uniform(low=-1., high=1.0, size=[kw, kh, in_f, out_f])
-        W *= np.sqrt(6. / (kw * kh * in_f + kw * kh * out_f))
+    def _init_train_params(self, data):
+        N = data.shape[0]
+        shape = data.shape
+        if self.running_mean is None:
+            if len(shape) == 4:
+                # Conv,
+                self.running_mean = np.zeros((N, 1, 1, self.G, 1))
+            elif len(shape) == 2:
+                # Dense
+                self.running_mean = np.zeros((N, self.G, 1))
 
-    elif kernel_initializer == 'xavier_uniform_inf':
-        W = np.random.uniform(low=-1., high=1.0, size=[kw, kh, in_f, out_f])
-        W *= np.sqrt(3. / (kw * kh * in_f))
+        if self.running_variance is None:
+            if len(shape) == 4:
+                # Conv
+                self.running_variance = np.ones((N, 1, 1, self.G, 1))
+            elif len(shape) == 2:
+                # Dense
+                self.running_variance = np.ones((N, self.G, 1))
 
-    elif kernel_initializer == 'he':
-        W *= np.sqrt(2. / (kw * kh * in_f))
+        name = str(self._name)
 
-    elif kernel_initializer == 'lasange':
-        W = np.random.uniform(low=-1., high=1.0, size=[kw, kh, in_f, out_f])
-        W *= np.sqrt(12. / (kw * kh * in_f + kw * kh * out_f))
+        self.name_mean = 'GroupNormMean_{}_{}_id_'.format(N, self.G) + name
+        self.name_var = 'GroupNormVar_{}_{}_id_'.format(N, self.G) + name
 
-    return W.astype(np.float32)
+        self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
+        self._named_params_dict[self.name_mean] = self.running_mean
 
+        self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
+        self._named_params_dict[self.name_var] = self.running_variance
 
-def init_dense_mat(in_d, out_d, mat_initializer):
-    W = np.random.randn(in_d, out_d)
-    if mat_initializer == 'xavier_gaussian':
-        W *= np.sqrt(3. / (in_d + out_d))
+    def _forward(self, X):
+        # These if statements check if we do batchnorm for convolution or dense
+        if len(X.shape) == 4:
+            # conv
+            axes = [1,2,4]
 
-    elif mat_initializer == 'xavier_uniform':
-        W = np.random.uniform(low=-1., high=1.0, size=[in_d, out_d])
-        W *= np.sqrt(6. / (in_d + out_d))
+            N, H, W, C = X.shape
+            old_shape = [N, H, W, C]
+            X = tf.reshape(X, [N, H, W, self.G, C // self.G])
+        else:
+            # dense
+            axes = [2]
 
-    elif mat_initializer == 'he':
-        W *= np.sqrt(2. / (in_d))
+            N, F = X.shape
+            old_shape = [N, F]
+            X = tf.reshape(X, [N, self.G, F // self.G])
 
-    elif mat_initializer == 'lasange':
-        W = np.random.uniform(low=-1., high=1.0, size=[in_d, out_d])
-        W *= np.sqrt(12. / (in_d + out_d))
+        X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
 
-    return W.astype(np.float32)
+        X = tf.reshape(X, old_shape)
+
+        if self.gamma is not None:
+            X *= self.gamma
+
+        if self.beta is not None:
+            X += self.beta
+
+        return X
+
+    def _training_forward(self, X):
+        # These if statements check if we do batchnorm for convolution or dense
+        if len(X.shape) == 4:
+            # conv
+            axes = [1,2,4]
+
+            N, H, W, C = X.shape
+            old_shape = [N, H, W, C]
+            X = tf.reshape(X, [N, H, W, self.G, C // self.G])
+        else:
+            # dense
+            axes = [2]
+
+            N, F = X.shape
+            old_shape = [N, F]
+            X = tf.reshape(X, [N, self.G, F // self.G])
+
+        # Output shape [N, 1, 1, self.G, 1] for Conv and [N, G, 1] for Dense
+        batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+
+        update_running_mean = tf.assign(
+            self.running_mean,
+            self.running_mean * self.decay + batch_mean * (1 - self.decay)
+        )
+        update_running_variance = tf.assign(
+            self.running_variance,
+            self.running_variance * self.decay + batch_var * (1 - self.decay)
+        )
+
+        with tf.control_dependencies([update_running_mean, update_running_variance]):
+            X = (X - batch_mean) / tf.sqrt(batch_var + self.eps)
+
+            X = tf.reshape(X, old_shape)
+
+            if self.gamma is not None:
+                X *= self.gamma
+
+            if self.beta is not None:
+                X += self.beta
+
+        return X
+
+    def to_dict(self):
+        return {
+            'type': 'GroupNormLayer',
+            'params': {
+                'name': self._name,
+                'D': self.D,
+                'decay': self.decay,
+                'eps': self.eps,
+                'G': self.G,
+                'use_beta': self.use_beta,
+                'use_gamma': self.use_gamma,
+            }
+        }
+
+class NormalizationLayer(BatchNormBaseLayer):
+    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+        """
+        NormalizationLayer Procedure:
+            X_normed = (X - mean) / variance
+            X_final = X*gamma + beta
+        There X have shape [N, H, W, C]. NormalizationLayer normilized input on N axis
+        gamma and beta are learned using gradient descent.
+        Parameters
+        ----------
+        D : int
+            Number of tensors to be normalized.
+        decay : float
+            Decay (momentum) for the moving mean and the moving variance.
+        eps : float
+            A small float number to avoid dividing by 0.
+        use_gamma : bool
+            Use gamma in batchnorm or not.
+        use_beta : bool
+            Use beta in batchnorm or not.
+        name : str
+            Name of this layer.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
+        """
+        super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
+                         type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta)
+
+    def _init_train_params(self, data):
+        N = data.shape[0]
+        shape = data.shape
+        if self.running_mean is None:
+            if len(shape) == 4:
+                # Conv
+                self.running_mean = np.zeros((N, 1, 1, 1))
+            elif len(shape) == 2:
+                # Dense
+                self.running_mean = np.zeros((N, 1))
+
+        if self.running_variance is None:
+            if len(shape) == 4:
+                # Conv
+                self.running_variance = np.ones((N, 1, 1, 1))
+            elif len(shape) == 2:
+                # Dense
+                self.running_variance = np.ones((N, 1))
+
+        name = str(self._name)
+        self.name_mean = 'NormalizationLayerMean_{}_id_'.format(N) + name
+        self.name_var = 'NormalizationLayerVar_{}__id_'.format(N) + name
+
+        self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
+        self._named_params_dict[self.name_mean] = self.running_mean
+        self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
+        self._named_params_dict[self.name_var] = self.running_variance
+
+    def _forward(self, X):
+        return tf.nn.batch_normalization(
+            X,
+            self.running_mean,
+            self.running_variance,
+            self.beta,
+            self.gamma,
+            self.eps
+        )
+
+    def _training_forward(self, X):
+        # These if statements check if we do batchnorm for convolution or dense
+        if len(X.shape) == 4:
+            # conv
+            axes = [1, 2, 3]
+        else:
+            # dense
+            axes = [1]
+
+        # Output shape [N, 1, 1, 1] for Conv and [N, 1] for Dense
+        batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+
+        update_running_mean = tf.assign(
+            self.running_mean,
+            self.running_mean * self.decay + batch_mean * (1 - self.decay)
+        )
+        update_running_variance = tf.assign(
+            self.running_variance,
+            self.running_variance * self.decay + batch_var * (1 - self.decay)
+        )
+
+        with tf.control_dependencies([update_running_mean, update_running_variance]):
+            X =  tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
+
+        return X
+
+    def to_dict(self):
+        return {
+            'type': 'NormalizationLayer',
+            'params': {
+                'name': self._name,
+                'D': self.D,
+                'decay': self.decay,
+                'eps': self.eps,
+                'use_beta': self.use_beta,
+                'use_gamma': self.use_gamma,
+            }
+        }
+
+class InstanceNormLayer(BatchNormBaseLayer):
+    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+        """
+        InstanceNormLayer Procedure:
+            X_normed = (X - mean) / variance
+            X_final = X*gamma + beta
+
+        There X have shape [N, H, W, C]. InstanceNormLayer normilized input on N and C axis
+        gamma and beta are learned using gradient descent.
+
+        Parameters
+        ----------
+        D : int
+            Number of tensors to be normalized.
+        decay : float
+            Decay (momentum) for the moving mean and the moving variance.
+        eps : float
+            A small float number to avoid dividing by 0.
+        use_gamma : bool
+            Use gamma in batchnorm or not.
+        use_beta : bool
+            Use beta in batchnorm or not.
+        name : str
+            Name of this layer.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
+        """
+        super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
+                         type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta)
+
+    def _init_train_params(self, data):
+        N = data.shape[0]
+        # [N H W C] shape
+        shape = data.shape
+        if self.running_mean is None:
+            if len(shape) == 4:
+                # Conv
+                self.running_mean = np.zeros((N, 1, 1, shape[-1]))
+            elif len(shape) == 2:
+                # Dense
+                self.running_mean = np.zeros((N, shape[-1]))
+
+        if self.running_variance is None:
+            if len(shape) == 4:
+                # Conv
+                self.running_variance = np.ones((N, 1, 1, shape[-1]))
+            elif len(shape) == 2:
+                # Dense
+                self.running_variance = np.ones((N, shape[-1]))
+
+        name = str(self._name)
+        self.name_mean = 'InstanceNormMean_{}_{}_id_'.format(N, shape[-1]) + name
+        self.name_var = 'InstanceNormVar_{}_{}_id_'.format(N, shape[-1]) + name
+
+        self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
+        self._named_params_dict[self.name_mean] = self.running_mean
+        self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False, name=self.name_var)
+        self._named_params_dict[self.name_var] = self.running_variance
+
+    def _forward(self, X):
+        return tf.nn.batch_normalization(
+            X,
+            self.running_mean,
+            self.running_variance,
+            self.beta,
+            self.gamma,
+            self.eps
+        )
+
+    def _training_forward(self, X):
+        # These if statements check if we do batchnorm for convolution or dense
+        if len(X.shape) == 4:
+            # conv
+            axes = [1, 2]
+        else:
+            # dense
+            axes = [1]
+
+        # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
+        batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+
+        update_running_mean = tf.assign(
+            self.running_mean,
+            self.running_mean * self.decay + batch_mean * (1 - self.decay)
+        )
+        update_running_variance = tf.assign(
+            self.running_variance,
+            self.running_variance * self.decay + batch_var * (1 - self.decay)
+        )
+
+        with tf.control_dependencies([update_running_mean, update_running_variance]):
+            X = tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
+
+        return X
+
+    def to_dict(self):
+        return {
+            'type': 'InstanceNormLayer',
+            'params': {
+                'name': self._name,
+                'D': self.D,
+                'decay': self.decay,
+                'eps': self.eps,
+                'use_beta': self.use_beta,
+                'use_gamma': self.use_gamma,
+            }
+        }
