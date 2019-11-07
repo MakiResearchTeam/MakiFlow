@@ -3,20 +3,7 @@ from abc import abstractmethod
 from makiflow.base.maki_entities import MakiTensor
 
 
-class SegmentationGenerator(object):
-    image = 'image'
-    mask = 'mask'
-    
-    @abstractmethod
-    def next_element(self) -> dict:
-        pass
-
-
 class MapMethod:
-    image = 'image'
-    mask = 'mask'
-    num_positives = 'num_positives'
-
     @abstractmethod
     def load_data(self, data_paths) -> dict:
         pass
@@ -32,12 +19,28 @@ class PostMapMethod(MapMethod):
 
     def __call__(self, parent_method: MapMethod):
         self._parent_method = parent_method
+        return self
 
 
-class GenTrainLayer(MakiTensor):
-    def __init__(self, name, image):
+class SegmentIterator:
+    image = 'image'
+    mask = 'mask'
+    num_positives = 'num_positives'
+
+
+class PathGenerator(object):
+    image = 'image'
+    mask = 'mask'
+    
+    @abstractmethod
+    def next_element(self) -> dict:
+        pass
+
+
+class GenLayer(MakiTensor):
+    def __init__(self, name, input_image):
         self._name = name
-        self.image = image
+        self.image = input_image
         # noinspection PyTypeChecker
         super().__init__(
             data_tensor=self.image,

@@ -44,6 +44,38 @@ experiment_params = {
 }"""
 
 
+class ExpField:
+    name = 'name'
+    path_to_arch = 'path to arch'
+    pretrained_layers = 'pretrained layers'
+    weights = 'weights'
+    untrainable_layers = 'untrainable layers'
+    epochs = 'epochs'
+    test_period = 'test period'
+    class_names = 'class names'
+    save_period = 'save period'
+    loss_type = 'loss type'
+    l1_reg = 'l1 reg'
+    l1_reg_layers = 'l1 reg layers'
+    l2_reg = 'l2 reg'
+    l2_reg_layers = 'l2 reg layers'
+    optimizers = 'optimizers'
+    batch_sizes = 'batch sizes'
+    gammas = 'gammas'
+
+
+class SubExpField:
+    opt_info = 'opt_info'
+    batch_sz = 'batch_sz'
+    gamma = 'gamma'
+
+
+class LossType:
+    FocalLoss = 'FocalLoss'
+    QuadraticCELoss = 'QuadraticCELoss'
+    MakiLoss = 'MakiLoss'
+
+
 # SEGMENTATOR IMPLIES THAT ALL NETWORK ARCHITECTURES HAVE THE SAME INPUT SHAPE
 class SegmentatorTrainer:
     def __init__(self, exp_params, path_to_save: str):
@@ -63,6 +95,7 @@ class SegmentatorTrainer:
 # ----------------------------------------------------------------------------------------------------------------------
 # ---------------------------------SETTING UP THE EXPERIMENTS-----------------------------------------------------------
 
+    # noinspection PyAttributeOutsideInit
     def set_train_data(self, Xtrain, Ytrain, num_pos):
         """
         Parameters
@@ -90,14 +123,18 @@ class SegmentatorTrainer:
         self.Xtest = Xtest
         self.Ytest = Ytest
 
-    def set_generator(self, generator=None, iterations=10):
+    def set_generator(self, generator=None, iterations=30):
         """
         Parameters
         ----------
-        generator :
+        generator : GenLayer
+            The generator layer.
+        iterations : int
+            Defines how long 1 epoch is. One iteration equals processing one batch.
         """
         self.generator = generator
-        self.iterations= iterations
+        # noinspection PyAttributeOutsideInit
+        self.iterations = iterations
 
     def start_experiments(self):
         """
@@ -116,29 +153,29 @@ class SegmentatorTrainer:
 # ---------------------------------START THE EXPERIMENTS----------------------------------------------------------------
 
     def _start_exp(self, experiment):
-        self._create_experiment_folder(experiment['name'])
+        self._create_experiment_folder(experiment[ExpField.name])
         exp_params = {
-            'name': experiment['name'],
-            'path_to_arch': experiment['path to arch'],
-            'pretrained_layers': experiment['pretrained layers'],
-            'weights': experiment['weights'],
-            'utrainable_layers': experiment['untrainable layers'],
-            'epochs': experiment['epochs'],
-            'test_period': experiment['test period'],
-            'class_names': experiment['class names'],
-            'save_period': experiment['save period'],
-            'loss_type': experiment['loss type'],
-            'l1_reg': experiment['l1 reg'],
-            'l1_reg_layers': experiment['l1 reg layers'],
-            'l2_reg': experiment['l2 reg'],
-            'l2_reg_layers': experiment['l2 reg layers']
+            ExpField.name: experiment[ExpField.name],
+            ExpField.path_to_arch: experiment[ExpField.path_to_arch],
+            ExpField.pretrained_layers: experiment[ExpField.pretrained_layers],
+            ExpField.weights: experiment[ExpField.weights],
+            ExpField.untrainable_layers: experiment[ExpField.untrainable_layers],
+            ExpField.epochs: experiment[ExpField.epochs],
+            ExpField.test_period: experiment[ExpField.test_period],
+            ExpField.class_names: experiment[ExpField.class_names],
+            ExpField.save_period: experiment[ExpField.save_period],
+            ExpField.loss_type: experiment[ExpField.loss_type],
+            ExpField.l1_reg: experiment[ExpField.l1_reg],
+            ExpField.l1_reg_layers: experiment[ExpField.l1_reg_layers],
+            ExpField.l2_reg: experiment[ExpField.l2_reg],
+            ExpField.l2_reg_layers: experiment[ExpField.l2_reg_layers]
         }
-        for opt_info in experiment['optimizers']:
-            for b_sz in experiment['batch sizes']:
-                for g in experiment['gammas']:
-                    exp_params['opt_info'] = opt_info
-                    exp_params['batch_sz'] = b_sz
-                    exp_params['gamma'] = g
+        for opt_info in experiment[ExpField.optimizers]:
+            for b_sz in experiment[ExpField.batch_sizes]:
+                for g in experiment[ExpField.gammas]:
+                    exp_params[SubExpField.opt_info] = opt_info
+                    exp_params[SubExpField.batch_sz] = b_sz
+                    exp_params[SubExpField.gamma] = g
                     self._run_focal_experiment(exp_params)
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -161,13 +198,16 @@ class SegmentatorTrainer:
         # _update_session also resets the default TF graph
         # what causes deletion of every computational graph was ever built.
         self._update_session()
-        arch_path = exp_params['path_to_arch']
-        batch_sz = exp_params['batch_sz']
-        model = Builder.segmentator_from_json(arch_path, batch_size=batch_sz)
+        arch_path = exp_params[ExpField.path_to_arch]
+        batch_sz = exp_params[SubExpField.batch_sz]
+        if self.generator is None:
+            model = Builder.segmentator_from_json(arch_path, batch_size=batch_sz)
+        else:
+            model = Builder.segmentator_from_json(arch_path, generator=self.generator)
 
-        weights_path = exp_params['weights']
-        pretrained_layers = exp_params['pretrained_layers']
-        untrainable_layers = exp_params['utrainable_layers']
+        weights_path = exp_params[ExpField.weights]
+        pretrained_layers = exp_params[ExpField.pretrained_layers]
+        untrainable_layers = exp_params[ExpField.untrainable_layers]
 
         model.set_session(self._sess)
         if weights_path is not None:
@@ -180,18 +220,18 @@ class SegmentatorTrainer:
             model.set_layers_trainable(layers)
 
         # Set l1 regularization
-        l1_reg = exp_params['l1_reg']
+        l1_reg = exp_params[ExpField.l1_reg]
         if l1_reg is not None:
             l1_reg = np.float32(l1_reg)
-            l1_reg_layers = exp_params['l1_reg_layers']
+            l1_reg_layers = exp_params[ExpField.l1_reg_layers]
             reg_config = [(layer, l1_reg) for layer in l1_reg_layers]
             model.set_l1_reg(reg_config)
 
         # Set l2 regularization
-        l2_reg = exp_params['l2_reg']
+        l2_reg = exp_params[ExpField.l2_reg]
         if l2_reg is not None:
             l2_reg = np.float32(l2_reg)
-            l2_reg_layers = exp_params['l2_reg_layers']
+            l2_reg_layers = exp_params[ExpField.l2_reg_layers]
             reg_config = [(layer, l2_reg) for layer in l2_reg_layers]
             model.set_l2_reg(reg_config)
 
@@ -200,9 +240,9 @@ class SegmentatorTrainer:
     def _prepare_test_vars(self, model_name, exp_params):
         print('Preparing test variables...')
         # Create the test folder
-        opt_name = exp_params['opt_info']['params']['name']
-        gamma = exp_params['gamma']
-        batch_size = exp_params['batch_sz']
+        opt_name = exp_params[SubExpField.opt_info]['params']['name']
+        gamma = exp_params[SubExpField.gamma]
+        batch_size = exp_params[SubExpField.batch_sz]
         self.to_save_folder = os.path.join(
             self._exp_folder,
             f'{model_name}_gamma={gamma}_opt_name={opt_name}_bsz={batch_size}'
@@ -227,7 +267,7 @@ class SegmentatorTrainer:
         }
         # Add sublists for each class
         self.dices_for_each_class = {}
-        for class_name in exp_params['class_names']:
+        for class_name in exp_params[ExpField.class_names]:
             self.dices_for_each_class[class_name] = []
         self.test_info.update(self.dices_for_each_class)
 
@@ -239,7 +279,7 @@ class SegmentatorTrainer:
         print('Testing the model...')
         print('Collecting predictions...')
 
-        batch_sz = exp_params['batch_sz']
+        batch_sz = exp_params[SubExpField.batch_sz]
         Xtest, Ytest = shuffle(self.Xtest, self.Ytest)
         predictions = []
         labels = []
@@ -254,6 +294,11 @@ class SegmentatorTrainer:
 
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
+
+        print('V-Dice:', v_dice_val)
+        for i, class_name in enumerate(exp_params[ExpField.class_names]):
+            self.dices_for_each_class[class_name] += [dices[i]]
+            print(f'{class_name}:', dices[i])
 
         # Compute and save matrix
         conf_mat_path = self.to_save_folder + f'/mat_epoch={epoch}.png'
@@ -271,10 +316,6 @@ class SegmentatorTrainer:
         # COLLECT DATA
         self.epochs_list.append(epoch)
         self.v_dice_test_list.append(v_dice_val)
-        print('V-Dice:', v_dice_val)
-        for i, class_name in enumerate(exp_params['class_names']):
-            self.dices_for_each_class[class_name] += [dices[i]]
-            print(f'{class_name}:', dices[i])
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ------------------------------------EXPERIMENT LOOP-------------------------------------------------------------------
@@ -283,28 +324,28 @@ class SegmentatorTrainer:
         model = self._restore_model(exp_params)
         self._prepare_test_vars(model.name, exp_params)
 
-        loss_type = exp_params['loss_type']
-        opt_info = exp_params['opt_info']
-        gamma = exp_params['gamma']
-        epochs = exp_params['epochs']
-        test_period = exp_params['test_period']
-        save_period = exp_params['save_period']
+        loss_type = exp_params[ExpField.loss_type]
+        opt_info = exp_params[SubExpField.opt_info]
+        gamma = exp_params[SubExpField.gamma]
+        epochs = exp_params[ExpField.epochs]
+        test_period = exp_params[ExpField.test_period]
+        save_period = exp_params[ExpField.save_period]
         optimizer = OptimizerBuilder.build_optimizer(opt_info)
         # Catch InterruptException
         try:
             for i in range(epochs):
                 if self.generator is None:
-                    if loss_type == 'FocalLoss':
+                    if loss_type == LossType.FocalLoss:
                         sub_train_info = model.fit_focal(
                             images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
                             num_positives=self.num_pos, optimizer=optimizer, epochs=1
                         )
-                    elif loss_type == 'MakiLoss':
+                    elif loss_type == LossType.MakiLoss:
                         sub_train_info = model.fit_maki(
                             images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
                             num_positives=self.num_pos, optimizer=optimizer, epochs=1
                         )
-                    elif loss_type == 'QuadraticCELoss':
+                    elif loss_type == LossType.QuadraticCELoss:
                         sub_train_info = model.fit_quadratic_ce(
                             images=self.Xtrain, labels=self.Ytrain,
                             optimizer=optimizer, epochs=1
@@ -312,16 +353,16 @@ class SegmentatorTrainer:
                     else:
                         raise ValueError('Unknown loss type!')
                 else:
-                    if loss_type == 'FocalLoss':
+                    if loss_type == LossType.FocalLoss:
                         sub_train_info = model.genfit_focal(
                             gamma=gamma, optimizer=optimizer, epochs=1, iterations=self.iterations
                         )
-                    elif loss_type == 'MakiLoss':
+                    elif loss_type == LossType.MakiLoss:
                         sub_train_info = model.genfit_maki(
-                            gamma=gamma, num_positives=self.num_pos, optimizer=optimizer, epochs=1,
+                            gamma=gamma, optimizer=optimizer, epochs=1,
                             iterations=self.iterations
                         )
-                    elif loss_type == 'QuadraticCELoss':
+                    elif loss_type == LossType.QuadraticCELoss:
                         sub_train_info = model.genfit_quadratic_ce(
                             optimizer=optimizer, epochs=1, iterations=self.iterations
                         )
