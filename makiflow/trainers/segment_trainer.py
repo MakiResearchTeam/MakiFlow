@@ -49,7 +49,7 @@ class ExpField:
     path_to_arch = 'path to arch'
     pretrained_layers = 'pretrained layers'
     weights = 'weights'
-    utrainable_layers = 'utrainable layers'
+    untrainable_layers = 'untrainable layers'
     epochs = 'epochs'
     test_period = 'test period'
     class_names = 'class names'
@@ -159,7 +159,7 @@ class SegmentatorTrainer:
             ExpField.path_to_arch: experiment[ExpField.path_to_arch],
             ExpField.pretrained_layers: experiment[ExpField.pretrained_layers],
             ExpField.weights: experiment[ExpField.weights],
-            ExpField.utrainable_layers: experiment[ExpField.utrainable_layers],
+            ExpField.untrainable_layers: experiment[ExpField.untrainable_layers],
             ExpField.epochs: experiment[ExpField.epochs],
             ExpField.test_period: experiment[ExpField.test_period],
             ExpField.class_names: experiment[ExpField.class_names],
@@ -207,7 +207,7 @@ class SegmentatorTrainer:
 
         weights_path = exp_params[ExpField.weights]
         pretrained_layers = exp_params[ExpField.pretrained_layers]
-        untrainable_layers = exp_params[ExpField.utrainable_layers]
+        untrainable_layers = exp_params[ExpField.untrainable_layers]
 
         model.set_session(self._sess)
         if weights_path is not None:
