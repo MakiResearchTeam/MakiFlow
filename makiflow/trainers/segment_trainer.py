@@ -123,7 +123,7 @@ class SegmentatorTrainer:
         self.Xtest = Xtest
         self.Ytest = Ytest
 
-    def set_generator(self, generator=None, iterations=10):
+    def set_generator(self, generator=None, iterations=30):
         """
         Parameters
         ----------
@@ -359,7 +359,7 @@ class SegmentatorTrainer:
                         )
                     elif loss_type == LossType.MakiLoss:
                         sub_train_info = model.genfit_maki(
-                            gamma=gamma, num_positives=self.num_pos, optimizer=optimizer, epochs=1,
+                            gamma=gamma, optimizer=optimizer, epochs=1,
                             iterations=self.iterations
                         )
                     elif loss_type == LossType.QuadraticCELoss:
