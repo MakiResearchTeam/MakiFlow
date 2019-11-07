@@ -56,3 +56,60 @@ def get_fraction_memory_sess(fraction=0.5, new_sess=False):
         config.gpu_options.per_process_gpu_memory_fraction = fraction
         FRACTION_MEMORY_SESS = tf.Session(config=config)
     return FRACTION_MEMORY_SESS
+
+
+def freeze_model(checkpoint_path, protobuf_name, output_node_names):
+    """
+    Freezes model by converting its weights to constants and saves
+    it to protobuf (.pb) file.
+
+    Parameters
+    ----------
+    checkpoint_path : str
+        Path to the model's checkpoint file.
+        There must be `.meta` file with the graph info.
+        Example: 'model_folder/weights.ckpt'
+    protobuf_name : str
+        Name of the protobuf file which model will be
+        saved to.
+    output_node_names : list
+        List of strings. Contains names of the output nodes
+        of your model.
+    """
+    sess = tf.Session()
+    saver = tf.train.import_meta_graph(checkpoint_path + '.meta')
+    saver.restore(sess, checkpoint_path)
+
+    output_graph_def = tf.graph_util.convert_variables_to_constants(
+        sess,
+        sess.graph.as_graph_def(),
+        output_node_names=output_node_names
+    )
+
+    with tf.gfile.GFile(protobuf_name, 'wb') as f:
+        f.write(output_graph_def.SerializeToString())
+        print(f'Serialized to {protobuf_name}.')
+
+
+def load_frozen_graph(protobuf_name):
+    """
+    Loads frozen graph from protobuf file.
+    Loaded graph will become the default graph.
+
+    Parameters
+    ----------
+    protobuf_name : str
+        Name of the protobuf file to load from.
+
+    Returns
+    -------
+    tf.Graph
+    list
+        List of Tensors or Operations in the graph.
+    """
+    with tf.gfile.GFile(protobuf_name, 'rb') as f:
+        graph_def = tf.GraphDef()
+        graph_def.ParseFromString(f.read())
+
+    tensors_ops = tf.import_graph_def(graph_def, name='')
+    return tf.get_default_graph(), tensors_ops
