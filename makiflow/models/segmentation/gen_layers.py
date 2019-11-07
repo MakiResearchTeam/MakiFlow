@@ -44,7 +44,7 @@ class InputGenLayer(GenLayer):
             }
         )
 
-        dataset = dataset.map(map_func=map_operation.load_data, num_parallel_calls=tf.int32(num_parallel_calls))
+        dataset = dataset.map(map_func=map_operation.load_data, num_parallel_calls=num_parallel_calls)
         # Set `drop_remainder` to True since otherwise the batch dimension
         # would be None. Example: [None, 1024, 1024, 3]
         dataset = dataset.batch(self.batch_size, drop_remainder=True)
