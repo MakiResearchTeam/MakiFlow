@@ -141,10 +141,10 @@ class ComputePositivesPostMethod(PostMapMethod):
 
         mask = element[SegmentIterator.mask]
         mask_shape = mask.get_shape().as_list()
-        area = mask_shape[0] * mask_shape[1]
-        num_neg = tf.reduce_sum(tf.cast(tf.equal(mask, self.background), dtype=tf.float32))
+        area = mask_shape[0] * mask_shape[1] # tf.int32
+        num_neg = tf.reduce_sum(tf.cast(tf.equal(mask, self.background), dtype=tf.int32))
 
-        num_positives = area - num_neg
+        num_positives = tf.cast(area - num_neg, dtype=tf.float32)
 
         element[SegmentIterator.num_positives] = num_positives
         return element
