@@ -61,8 +61,8 @@ class LoadDataMethod(MapMethod):
         self.mask_shape = mask_shape
 
     def load_data(self, data_paths):
-        img_file = tf.read_file(data_paths[PathGenerator.image])
-        mask_file = tf.read_file(data_paths[PathGenerator.mask])
+        img_file = tf.read_file(data_paths[SegmentIterator.image])
+        mask_file = tf.read_file(data_paths[SegmentIterator.mask])
 
         img = tf.image.decode_image(img_file)
         mask = tf.image.decode_image(mask_file)
@@ -89,8 +89,8 @@ class ResizePostMethod(PostMapMethod):
 
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
-        img = element[MapMethod.image]
-        mask = element[MapMethod.mask]
+        img = element[SegmentIterator.image]
+        mask = element[SegmentIterator.mask]
 
         if self.image_size is not None:
             img = tf.image.resize(images=img, size=self.image_size, method=self.image_resize_method)

@@ -3,15 +3,6 @@ from abc import abstractmethod
 from makiflow.base.maki_entities import MakiTensor
 
 
-class PathGenerator(object):
-    image = 'image'
-    mask = 'mask'
-    
-    @abstractmethod
-    def next_element(self) -> dict:
-        pass
-
-
 class MapMethod:
     @abstractmethod
     def load_data(self, data_paths) -> dict:
@@ -35,6 +26,15 @@ class SegmentIterator:
     image = 'image'
     mask = 'mask'
     num_positives = 'num_positives'
+
+
+class PathGenerator(object):
+    image = 'image'
+    mask = 'mask'
+    
+    @abstractmethod
+    def next_element(self) -> dict:
+        pass
 
 
 class GenLayer(MakiTensor):
