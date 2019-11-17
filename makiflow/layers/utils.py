@@ -1,6 +1,7 @@
 import numpy as np
 
-# Some initializate methods
+
+# Some initialize methods
 # Initializations define the way to set the initial random weights of MakiFlow layers.
 def init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer):
     W = np.random.randn(kw, kh, in_f, out_f)

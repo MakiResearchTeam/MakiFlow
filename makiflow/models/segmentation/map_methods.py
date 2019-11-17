@@ -120,22 +120,34 @@ class ResizePostMethod(PostMapMethod):
 
 
 class NormalizePostMethod(PostMapMethod):
-    def __init__(self, divider=255):
+    def __init__(self, divider=255, use_float64=False):
         """
-        Normalizes the image by dividing it by `divider`.
+        Normalizes the image by dividing it by the `divider`.
         Parameters
         ----------
         divider : float or int
             The number to divide the image by.
+        use_float64 : bool
+            Set to True if you want the image to be converted to float64 during normalization.
+            It is used for getting more accurate division result during normalization.
         """
         super().__init__()
-        self.divider = tf.constant(divider, dtype=tf.float32)
+        self.use_float64 = use_float64
+        if use_float64:
+            self.divider = tf.constant(divider, dtype=tf.float64)
+        else:
+            self.divider = tf.constant(divider, dtype=tf.float32)
 
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
         img = element[SegmentIterator.image]
 
-        img = tf.divide(img, self.divider)
+        if self.use_float64:
+            img = tf.cast(img, dtype=tf.float64)
+            img = tf.divide(img, self.divider)
+            img = tf.cast(img, dtype=tf.float32)
+        else:
+            img = tf.divide(img, self.divider)
 
         element[SegmentIterator.image] = img
         return element
