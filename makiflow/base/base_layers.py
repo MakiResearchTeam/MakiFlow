@@ -8,10 +8,6 @@ from makiflow.base.maki_entities import MakiLayer, MakiTensor
 class BatchNormBaseLayer(MakiLayer):
     def __init__(self, D, decay, eps, name, use_gamma, use_beta,type_norm, mean, var, gamma, beta):
         """
-        :param mean - batch mean value. Used for initialization mean with pretrained value.
-        :param var - batch variance value. Used for initialization variance with pretrained value.
-        :param gamma - batchnorm gamma value. Used for initialization gamma with pretrained value.
-        :param beta - batchnorm beta value. Used for initialization beta with pretrained value.
         Batch Noramlization Procedure:
             X_normed = (X - mean) / variance
             X_final = X*gamma + beta
@@ -31,6 +27,14 @@ class BatchNormBaseLayer(MakiLayer):
             Use beta in batchnorm or not.
         name : str
             Name of this layer.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         self.D = D
         self.decay = decay
@@ -52,8 +56,8 @@ class BatchNormBaseLayer(MakiLayer):
         params = []
         named_params_dict = {}
         name = str(name)
-        # Create gamma
 
+        # Create gamma
         if use_gamma:
             self.name_gamma = '{}Gamma_{}_id_'.format(type_norm,D) + name
             self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)

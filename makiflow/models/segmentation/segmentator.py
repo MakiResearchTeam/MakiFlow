@@ -240,7 +240,7 @@ class Segmentator(MakiModel):
 
                 train_focal_losses.append(focal_loss)
 
-                print('Epoch:', i, 'Focal loss: {:0.4f}'.format(focal_loss))
+                print('Epoch:', i, 'Focal loss: {:0.4f}'.format(float(focal_loss)))
         except Exception as ex:
             print(ex)
         finally:

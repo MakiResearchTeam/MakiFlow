@@ -168,7 +168,7 @@ class Builder:
             'InputLayer': Builder.__input_layer_from_dict,
             'SumLayer': Builder.__sum_layer_from_dict,
             'ConcatLayer': Builder.__concat_layer_from_dict,
-            'MultiOnAlphaLayer': Builder.__mulbyalpha_layer_from_dict,
+            'MulByAlphaLayer': Builder.__mulbyalpha_layer_from_dict,
             'ZeroPaddingLayer': Builder.__zeropadding_layer_from_dict,
             'GlobalMaxPoolLayer': Builder.__globalmaxpoollayer_from_dict,
             'GlobalAvgPoolLayer': Builder.__globalavgpoollayer_from_dict,

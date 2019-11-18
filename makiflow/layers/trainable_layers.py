@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.ops import math_ops
+from tensorflow.python.framework import ops
 
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
@@ -576,10 +578,6 @@ class BatchNormLayer(BatchNormBaseLayer):
     def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
                     use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
-        :param mean - batch mean value. Used for initialization mean with pretrained value.
-        :param var - batch variance value. Used for initialization variance with pretrained value.
-        :param gamma - batchnorm gamma value. Used for initialization gamma with pretrained value.
-        :param beta - batchnorm beta value. Used for initialization beta with pretrained value.
         Batch Noramlization Procedure:
             X_normed = (X - mean) / variance
             X_final = X*gamma + beta
@@ -598,7 +596,15 @@ class BatchNormLayer(BatchNormBaseLayer):
         use_beta : bool
             Use beta in batchnorm or not.
         name : str
-            Name of this layer. 
+            Name of this layer.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta,
         					type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta)
@@ -678,15 +684,12 @@ class GroupNormLayer(BatchNormBaseLayer):
     def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
-        :param mean - batch mean value. Used for initialization mean with pretrained value.
-        :param var - batch variance value. Used for initialization variance with pretrained value.
-        :param gamma - batchnorm gamma value. Used for initialization gamma with pretrained value.
-        :param beta - batchnorm beta value. Used for initialization beta with pretrained value.
-        Batch Noramlization Procedure:
+        GroupNormLayer Procedure:
             X_normed = (X - mean) / variance
             X_final = X*gamma + beta
-        gamma and beta are defined by the NN, e.g. they are trainable.
-
+        There X (as original) have shape [N, H, W, C], but in this operation it will be [N, H, W, G, C // G].
+        GroupNormLayer normilized input on N and C // G axis.
+        gamma and beta are learned using gradient descent.
         Parameters
         ----------
         D : int
@@ -703,6 +706,14 @@ class GroupNormLayer(BatchNormBaseLayer):
             Use beta in batchnorm or not.
         name : str
             Name of this layer.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         self.G = G
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, 
@@ -797,7 +808,7 @@ class GroupNormLayer(BatchNormBaseLayer):
         )
 
         with tf.control_dependencies([update_running_mean, update_running_variance]):
-            X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
+            X = (X - batch_mean) / tf.sqrt(batch_var + self.eps)
 
             X = tf.reshape(X, old_shape)
 
@@ -827,15 +838,11 @@ class NormalizationLayer(BatchNormBaseLayer):
     def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
-        :param mean - batch mean value. Used for initialization mean with pretrained value.
-        :param var - batch variance value. Used for initialization variance with pretrained value.
-        :param gamma - batchnorm gamma value. Used for initialization gamma with pretrained value.
-        :param beta - batchnorm beta value. Used for initialization beta with pretrained value.
-        Batch Noramlization Procedure:
+        NormalizationLayer Procedure:
             X_normed = (X - mean) / variance
             X_final = X*gamma + beta
-        gamma and beta are defined by the NN, e.g. they are trainable.
-
+        There X have shape [N, H, W, C]. NormalizationLayer normilized input on N axis
+        gamma and beta are learned using gradient descent.
         Parameters
         ----------
         D : int
@@ -850,6 +857,14 @@ class NormalizationLayer(BatchNormBaseLayer):
             Use beta in batchnorm or not.
         name : str
             Name of this layer.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
                          type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta)
@@ -942,14 +957,12 @@ class InstanceNormLayer(BatchNormBaseLayer):
     def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None):
         """
-        :param mean - batch mean value. Used for initialization mean with pretrained value.
-        :param var - batch variance value. Used for initialization variance with pretrained value.
-        :param gamma - batchnorm gamma value. Used for initialization gamma with pretrained value.
-        :param beta - batchnorm beta value. Used for initialization beta with pretrained value.
-        Batch Noramlization Procedure:
+        InstanceNormLayer Procedure:
             X_normed = (X - mean) / variance
             X_final = X*gamma + beta
-        gamma and beta are defined by the NN, e.g. they are trainable.
+
+        There X have shape [N, H, W, C]. InstanceNormLayer normilized input on N and C axis
+        gamma and beta are learned using gradient descent.
 
         Parameters
         ----------
@@ -965,6 +978,14 @@ class InstanceNormLayer(BatchNormBaseLayer):
             Use beta in batchnorm or not.
         name : str
             Name of this layer.
+        mean : float
+            Batch mean value. Used for initialization mean with pretrained value.
+        var : float
+            Batch variance value. Used for initialization variance with pretrained value.
+        gamma : float
+            Batchnorm gamma value. Used for initialization gamma with pretrained value.
+        beta : float
+            Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
                          type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta)

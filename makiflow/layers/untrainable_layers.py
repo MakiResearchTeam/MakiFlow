@@ -92,7 +92,7 @@ class MulByAlphaLayer(SimpleForwardLayer):
         Parameters
         ----------
         alpha : int
-            Сonstant.
+            The constant to multiply by.
         name : str
             Name of this layer.
         """
