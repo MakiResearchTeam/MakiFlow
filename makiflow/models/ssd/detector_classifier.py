@@ -14,22 +14,32 @@ class DetectorClassifier:
         """
         Parameters
         ----------
-        f_source : MakiTensor
-            Source of features for the predictor. It must be feature maps from the convolutional
-            network.
-        kw : int
-            Width of the predictor's kernel.
-        kh : int
-            Height of the predictor's kernel.
-        in_f : int
+        reg_fms : MakiTensor
+            Source of features for the bbox regressor.
+        rkw : int
+            Width of the regressor's kernel.
+        rkh : int
+            Height of the regressor's kernel.
+        rin_f : int
+            Number of the input feature maps for the regressor.
+        class_fms : MakiTensor
+            Source of features for the classificator.
+        ckw : int
+            Width of the classificator's kernel.
+        ckh : int
+            Height of the classificator's kernel.
+        cin_f : int
+            Number of the input feature maps for the classificator.
         num_classes : int
             Number of classes to be classified + 'no object' class. 'no object' class is used for
-        background.
+            background.
         dboxes : list
             List of tuples of the default boxes' characteristics (width and height). Each characteristic
             must be represented in relative coordinates. Boxes' coordinates are always in the center of
             the cell of the feature map. Example:
             [(1, 1), (0.5, 1.44), (1.44, 0.5)] - (1,1) - center box matches one cell of the feature map.
+        name : str or int
+            Will be used as conjugation for the names of the classificator and regressor.
         """
         self.reg_x = reg_fms
         self.rkw = rkw
