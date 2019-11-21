@@ -4,19 +4,19 @@ import copy
 
 def mutate_masks(masks, mapping):
     """
-    Remaps classes on the given `masks` according to `mapping`.
+    Remaps classes on the given `masks` according to the `mapping`.
 
     Parameters
     ----------
-    masks : List or numpy.array
+    masks : list or numpy.array
         List or numpy array of masks.
-    mapping : List
+    mapping : list
         List of tuples: [(source_class_number, new_class_number)],
-        where `source_class_number` will be changed to `new_class_number` in the mask.
+        where `source_class_number` will be changed to `new_class_number` in the `mask`.
 
     Returns
     ---------
-    new_masks : Type same as masks
+    new_masks : type same as `masks`
         New masks with changed class numbers.
     """
     if type(mapping) is not list or (len(mapping) != 0 and type(mapping[0]) is not tuple):
