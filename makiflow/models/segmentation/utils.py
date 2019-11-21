@@ -4,14 +4,14 @@ import copy
 
 def mutate_masks(masks, mapping):
     """
-    Remaps classes on the given masks according to mapping.
+    Remaps classes on the given `masks` according to `mapping`.
     Parameters
     ----------
     masks : list or numpy.array
-        List or numpy array of masks
-    mapping : list
+        List or numpy array of masks.
+    mapping : List
         list of tuples: [(source_class_number, new_class_number)]
-        where source_class_number will be changed to new_class_number in the mask
+        where source_class_number will be changed to new_class_number in the mask.
 
     Returns
     ---------
