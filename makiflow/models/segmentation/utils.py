@@ -22,7 +22,7 @@ def mutate_masks(masks, mapping):
     if type(mapping) is not list or (len(mapping) != 0 and type(mapping[0]) is not tuple):
         raise TypeError('mapping should be list of typles')
 
-    new_masks = copy.deepcopy(masks)
+    new_masks = np.asarray(copy.deepcopy(masks))
 
     for elem in mapping:
         old_value = elem[0]
