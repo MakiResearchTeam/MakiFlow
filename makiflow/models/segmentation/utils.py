@@ -12,11 +12,11 @@ def mutate_masks(masks, mapping):
         List or numpy array of masks.
     mapping : list
         List of tuples: [(source_class_number, new_class_number)],
-        where `source_class_number` will be changed to `new_class_number` in the `mask`.
+        where `source_class_number` will be changed to `new_class_number` in the `masks`.
 
     Returns
     ---------
-    new_masks : type same as `masks`
+    new_masks : the same type as `masks`
         New masks with changed class numbers.
     """
     if type(mapping) is not list or (len(mapping) != 0 and type(mapping[0]) is not tuple):
