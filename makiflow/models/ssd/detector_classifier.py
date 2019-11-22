@@ -38,6 +38,13 @@ class DetectorClassifier:
             must be represented in relative coordinates. Boxes' coordinates are always in the center of
             the cell of the feature map. Example:
             [(1, 1), (0.5, 1.44), (1.44, 0.5)] - (1,1) - center box matches one cell of the feature map.
+            We recommend to use the following configuration:
+            [
+                (1, 1), (1, 2), (2, 1),
+                (1.26, 1.26), (1.26, 2.52), (2.52, 1.26),
+                (1.59, 1.59), (1.59, 3.17), (3.17, 1.59)
+            ]
+            This configuration corresponds to bboxes in RetinaNet.
         name : str or int
             Will be used as conjugation for the names of the classificator and regressor.
         """

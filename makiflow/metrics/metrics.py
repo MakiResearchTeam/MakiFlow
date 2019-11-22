@@ -167,7 +167,14 @@ def confusion_mat(
         
         mats = []
         for ax in normalize:
-            temp_mat = mat / mat.sum(axis=ax)
+            # Normalizing along axis 0
+            if ax == 0:
+                temp_mat = mat / mat.sum(axis=0)
+            # Normalizing along axis 1
+            elif ax == 1:
+                temp_mat = (mat.T / mat.sum(axis=1)).T
+            else:
+                raise RuntimeError(f"Unknown axis: {ax}")
             temp_mat = np.round(temp_mat, decimals=2)
             mats += [temp_mat]
             
@@ -181,14 +188,22 @@ def confusion_mat(
             plt.close(fig)
         
         return mats
-        
-    
+
     if len(normalize) == 1:
-        mat /= mat.sum(axis=normalize[0])
+        ax = normalize[0]
+        # Normalizing along axis 0
+        if ax == 0:
+            mat = mat / mat.sum(axis=0)
+        # Normalizing along axis 1
+        elif ax == 1:
+            mat = (mat.T / mat.sum(axis=1)).T
+        else:
+            raise RuntimeError(f"Unknown axis: {ax}")
         mat = np.round(mat, decimals=2)
 
     if save_path is not None:
         conf_mat = sns.heatmap(mat, annot=annot)
         conf_mat.figure.savefig(save_path, dpi=dpi)
         plt.close(conf_mat.figure)
+
     return [mat]
