@@ -136,7 +136,7 @@ def confusion_mat(
         List of axes. The matrix will be normalized along these axes.
         Axis 1:
             Normalizing by the number of true samples per class.
-            C(i,j) - ratio of samples classified as j to the total number of samples that belong to class i.
+            C(i,j) - percentage of samples of class i that classified as class j.
             Diagonal elements stand for recall.
         Axis 0:
             Normalizing by the number of the network predictions per class.
