@@ -118,6 +118,8 @@ def confusion_mat(
     ):
     """
     Creates confusion matrix for the given predictions `p` and labels `l`.
+    The matrix consists of elements C(i,j). C(i,j) - number of samples of class i
+    classified as class j.
     Parameters
     ----------
     p : np.ndarray
@@ -132,9 +134,13 @@ def confusion_mat(
         Set to True if `p' and `l` are high-dimensional arrays.
     normalize : list 
         List of axes. The matrix will be normalized along these axes.
-        Axis 1 - normalizing by the number of true samples per class.
-        Axis 0 - normalizing by the number of the network predictions per class.
-        Leave the list empty if you unnormalized matrix.
+        Axis 1:
+            Normalizing by the number of true samples per class.
+            C(i,j) - ratio of samples classified as j to the total number of samples that belong to class i.
+        Axis 0:
+            Normalizing by the number of the network predictions per class.
+            C(i,j) - percentage of samples classified as j that actually belong to class i.
+        Leave the list empty if you want to get unnormalized matrix.
     save_path : str
         Saving path for the confusion matrix picture.
     dpi : int
