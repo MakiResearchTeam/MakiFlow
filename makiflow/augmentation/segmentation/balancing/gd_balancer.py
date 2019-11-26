@@ -126,7 +126,7 @@ class GDBalancer:
 
         cur_cardinalities = self.cardinalities / tf.reduce_sum(self.cardinalities)
 
-        self.deviation_vec = init_c - cur_cardinalities
+        self.deviation_vec = (init_c - cur_cardinalities) * 100.0
         reg_loss2 = vec_len(self.deviation_vec) * vec_len(self.deviation_vec)
         self.objective = self.objective + alpha * reg_loss2
 
