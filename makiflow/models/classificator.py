@@ -212,7 +212,7 @@ class Classificator(MakiModel):
             self._build_focal_loss()
             self._focal_optimizer = optimizer
             self._focal_train_op = optimizer.minimize(
-                self._focal_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -220,7 +220,7 @@ class Classificator(MakiModel):
             print('New optimizer is used.')
             self._focal_optimizer = optimizer
             self._focal_train_op = optimizer.minimize(
-                self._focal_loss, var_list=super()._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=super()._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -365,7 +365,7 @@ class Classificator(MakiModel):
             self._build_maki_loss(gamma)
             self._maki_optimizer = optimizer
             self._maki_train_op = optimizer.minimize(
-                self._maki_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_maki_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -373,7 +373,7 @@ class Classificator(MakiModel):
             print('New optimizer is used.')
             self._maki_optimizer = optimizer
             self._maki_train_op = optimizer.minimize(
-                self._maki_loss, var_list=super()._trainable_vars, global_step=global_step
+                self._final_maki_loss, var_list=super()._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -438,7 +438,7 @@ class Classificator(MakiModel):
                     Xbatch = Xtrain[j * self._batch_sz:(j + 1) * self._batch_sz]
                     Ybatch = Ytrain[j * self._batch_sz:(j + 1) * self._batch_sz]
                     y_ish, train_cost_batch, _ = self._session.run(
-                        [self._logits, self._final_focal_loss, train_op],
+                        [self._logits, self._final_maki_loss, train_op],
                         feed_dict={
                             self._images: Xbatch,
                             self._labels: Ybatch
