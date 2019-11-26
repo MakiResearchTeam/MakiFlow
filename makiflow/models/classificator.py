@@ -561,7 +561,7 @@ class Classificator(MakiModel):
         """
         assert (optimizer is not None)
         assert (self._session is not None)
-        train_op = self._minimize_maki_loss(optimizer, global_step)
+        train_op = self._minimize_quadratic_ce_loss(optimizer, global_step)
         # For testing
         Yish_test = tf.nn.softmax(self._inference_out)
 
