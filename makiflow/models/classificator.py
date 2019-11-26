@@ -259,7 +259,7 @@ class Classificator(MakiModel):
                 Dictionary with all testing data(train error, train cost, test error, test cost)
                 for each test period.
         """
-
+        assert (type(gamma) == float)
         assert (optimizer is not None)
         assert (self._session is not None)
         train_op = self._minimize_focal_loss(optimizer, global_step)
