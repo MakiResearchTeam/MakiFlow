@@ -25,5 +25,5 @@ class NewtonOptimizer:
         update_ops = []
         for var in train_vars:
             update = self._compute_update(var, objective)
-            update_ops += self._apply_update(var, update)
+            update_ops += [self._apply_update(var, update)]
         return update_ops
