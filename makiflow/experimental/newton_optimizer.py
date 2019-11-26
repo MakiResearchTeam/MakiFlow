@@ -11,8 +11,10 @@ class NewtonOptimizer:
         return self.grads + self.hesses
 
     def _compute_update(self, var, objective):
-        grad = tf.squeeze(tf.gradients(ys=objective, xs=[var]), axis=0)
-        hess = tf.squeeze(tf.hessians(ys=objective, xs=[var]))
+        grad = tf.gradients(ys=objective, xs=[var])[0]
+        hess = tf.hessians(ys=objective, xs=[var])[0]
+        self.grads += [grad]
+        self.hesses += [hess]
         return tf.matmul(tf.matrix_inverse(hess), grad)  # update
 
     def _apply_update(self, var, update):
