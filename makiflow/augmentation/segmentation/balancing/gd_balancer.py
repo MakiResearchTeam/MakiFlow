@@ -21,6 +21,7 @@ def normalize(vec):
     return vec / vec_l
 
 
+# noinspection PyAttributeOutsideInit
 class GDBalancer:
     def __init__(
             self, hcv_groups, initial_c, objective='alpha', min_c=5.0, max_c=10000.0
@@ -106,6 +107,40 @@ class GDBalancer:
             self.objective = distance(norm_vecs, self.dest_v)
         else:
             print('Unknowm objective. Call `reset` with the correct one.')
+
+    def show_deviation(self):
+        return self.sess.run(self.deviation_vec)
+
+    def add_reg1(self, alpha, initial_cardinalities):
+        init_c = initial_cardinalities.reshape(-1, 1).astype(np.float32)
+
+        ones = np.ones((len(init_c), 1), dtype=np.float32)
+
+        self.deviation_vec = self.cardinalities / init_c - ones
+        reg_loss1 = vec_len(self.deviation_vec) * vec_len(self.deviation_vec)
+        self.objective = self.objective + alpha * reg_loss1
+
+    def add_reg2(self, alpha, initial_cardinalities):
+        init_c = initial_cardinalities / np.sum(initial_cardinalities)
+        init_c = init_c.reshape(-1, 1).astype(np.float32)
+
+        cur_cardinalities = self.cardinalities / tf.reduce_sum(self.cardinalities)
+
+        self.deviation_vec = init_c - cur_cardinalities
+        reg_loss2 = vec_len(self.deviation_vec) * vec_len(self.deviation_vec)
+        self.objective = self.objective + alpha * reg_loss2
+
+    def add_reg3(self, alpha, initial_cardinalities):
+        init_c = initial_cardinalities / np.sum(initial_cardinalities)
+        init_c = init_c.reshape(-1, 1).astype(np.float32)
+
+        cur_cardinalities = self.cardinalities / tf.reduce_sum(self.cardinalities)
+
+        ones = np.ones((len(init_c), 1), dtype=np.float32)
+
+        self.deviation_vec = cur_cardinalities / init_c - ones
+        reg_loss3 = vec_len(self.deviation_vec) * vec_len(self.deviation_vec)
+        self.objective = self.objective + alpha * reg_loss3
 
     def _build_train_op(self, optimizer):
         if self.optimizer != optimizer:
