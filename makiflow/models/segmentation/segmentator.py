@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from makiflow.base import MakiModel, MakiTensor
-from makiflow.models.segmentation.gen_base import SegmentIterator
+from makiflow.generators.gen_base import SegmentIterator
 from makiflow.layers import InputLayer
 from sklearn.utils import shuffle
 import tensorflow as tf

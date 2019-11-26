@@ -1,0 +1,3 @@
+from __future__ import absolute_import
+
+from makiflow.tools.image_generators.image_generator_for_rnn import ImageFactoryForRNN

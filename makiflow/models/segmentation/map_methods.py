@@ -1,5 +1,5 @@
 import tensorflow as tf
-from makiflow.models.segmentation.gen_base import PostMapMethod, MapMethod, PathGenerator, SegmentIterator
+from makiflow.generators.gen_base import PostMapMethod, MapMethod, PathGenerator, SegmentIterator
 
 
 class LoadResizeNormalize(MapMethod):
