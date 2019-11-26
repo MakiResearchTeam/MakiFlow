@@ -166,6 +166,21 @@ class ElasticAugment(AugmentOp):
         self.img_inter = INTERPOLATION_TYPE[img_inter]
         self.mask_inter = INTERPOLATION_TYPE[mask_inter]
         self.border_mode = BORDER_MODE[border_mode]
+        self.prebuild_maps = False
+
+    def setup_augmentor(self, img_shape):
+        """
+        Prepares transformation maps manually.
+        Useful when you use ElasticAugment as a separate augmentor.
+
+        Parameters
+        ----------
+        img_shape : tuple
+            Shape of an input images. Use OpenCV order for dimensionalities:
+            (height, width, depth).
+        """
+        self._img_shape = img_shape
+        self._generate_maps()
 
     def _generate_maps(self):
         # List of tuples (xmap, ymap)
@@ -212,8 +227,13 @@ class ElasticAugment(AugmentOp):
         new_imgs, new_masks = [], []
         for img, mask in zip(imgs, masks):
             for mapx, mapy in self._maps:
-                new_imgs.append(cv2.remap(img, mapx, mapy, self.img_inter, borderMode=self.border_mode))
-                new_masks.append(cv2.remap(mask, mapx, mapy, self.mask_inter, borderMode=self.border_mode))
+                new_imgs.append(
+                    cv2.remap(
+                        img, mapx, mapy, interpolation=self.img_inter, borderMode=self.border_mode
+                    )
+                )
+                new_masks.append(
+                    cv2.remap(mask, mapx, mapy, interpolation=self.mask_inter, borderMode=self.border_mode))
 
         if self.keep_old_data:
             new_imgs += imgs
@@ -223,7 +243,8 @@ class ElasticAugment(AugmentOp):
 
     def __call__(self, data: Augmentor):
         super().__call__(data)
-        self._generate_maps()
+        if not self.prebuild_maps:
+            self._generate_maps()
         return self
 
 

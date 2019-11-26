@@ -49,7 +49,7 @@ class ImageCutter:
         dy = 0
 
         for index, (img, mask) in enumerate(zip(images, masks)):
-            assert (img.shape == mask.shape)
+            assert (img.shape[:2] == mask.shape[:2])
             current_height, current_width = img.shape[:2]
 
             while current_height > window_h and current_width > window_w:
