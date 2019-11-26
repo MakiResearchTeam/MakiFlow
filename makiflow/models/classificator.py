@@ -285,7 +285,12 @@ class Classificator(MakiModel):
                     Ybatch = Ytrain[j * self._batch_sz:(j + 1) * self._batch_sz]
                     y_ish, train_cost_batch, _ = self._session.run(
                         [self._logits, self._final_focal_loss, train_op],
-                        feed_dict={self._images: Xbatch, self._labels: Ybatch})
+                        feed_dict={
+                            self._images: Xbatch,
+                            self._labels: Ybatch,
+                            self._focal_gamma: gamma
+                        }
+                    )
                     # Use exponential decay for calculating loss and error
                     train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
                     train_error_batch = error_rate(np.argmax(y_ish, axis=1), Ybatch)
@@ -304,8 +309,7 @@ class Classificator(MakiModel):
                         Yish_test_done = self._session.run(
                             Yish_test,
                             feed_dict={
-                                self._images: Xtestbatch,
-                                self._focal_gamma: gamma
+                                self._images: Xtestbatch
                             }
                         ) + EPSILON
                         test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
