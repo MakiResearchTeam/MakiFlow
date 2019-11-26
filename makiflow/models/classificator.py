@@ -211,7 +211,7 @@ class Classificator(MakiModel):
             self._build_focal_loss()
             self._focal_optimizer = optimizer
             self._focal_train_op = optimizer.minimize(
-                self._focal_loss, var_list=super()._trainable_vars, global_step=global_step
+                self._focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
