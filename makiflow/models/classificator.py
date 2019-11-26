@@ -380,7 +380,7 @@ class Classificator(MakiModel):
         return self._maki_train_op
 
     # noinspection PyPep8Naming
-    def fit_ьфлш(
+    def fit_maki(
             self, Xtrain, Ytrain, Xtest, Ytest, optimizer=None, gamma=2, epochs=1, test_period=1, global_step=None
     ):
         """
