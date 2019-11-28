@@ -100,4 +100,3 @@ class SubCyclicGenerator(PathGenerator):
             current_batch += 1
 
             yield el
-
