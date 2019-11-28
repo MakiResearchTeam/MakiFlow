@@ -1,4 +1,4 @@
-from .gen_base import  PathGenerator, SegmentIterator
+from makiflow.generators.gen_base import SegmentIterator, PathGenerator
 
 from glob import glob
 import os
