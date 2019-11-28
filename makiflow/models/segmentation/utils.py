@@ -45,9 +45,11 @@ def merging_masks(masks, index_of_main_mask, priority):
     index_of_main_mask : int
         Index of base mask.
     priority : list
-        List of priority of classes. From highest priority to least priority.
-        Example: [9, 10, 3, 7], where 9 class have highest priority and will be put on others classes,
-        on the other hand the 7th class have the lowest priority and will be put on the others the latest.
+        List of priority of classes. Classes will be installed in the prescribed manner,
+        from highest priority to least priority in the list (from left to rigth in list).
+        Example: [9, 10, 3, 7], where 9th class have highest priority and will be put on others classes the first,
+        on the other hand the 7th class have the lowest priority and will be placed last in the mask,
+        but not including those that have already been replaced.
     Returns
     ---------
     main_mask : numpy.array

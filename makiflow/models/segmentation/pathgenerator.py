@@ -7,6 +7,16 @@ from sklearn.utils import shuffle
 
 class CyclicGenerator(PathGenerator):
     def __init__(self, path_images, path_masks):
+        """
+        Generator for pipeline, which gives next element in cycle order
+
+        Parameters
+        ----------
+        path_images : str
+            Path to the masks folder. Example: /home/mnt/data/batch_1/masks
+        path_masks : str
+            Path to the images folder. Example: /home/mnt/data/batch_1/images
+        """
         self.images = glob(os.path.join(path_images, '*.bmp'))
         self.masks = glob(os.path.join(path_masks, '*.bmp'))
 
@@ -27,6 +37,16 @@ class CyclicGenerator(PathGenerator):
 
 class RandomGenerator(PathGenerator):
     def __init__(self, path_images, path_masks):
+        """
+        Generator for pipeline, which gives next element in random order
+
+        Parameters
+        ----------
+        path_images : str
+            Path to the masks folder. Example: /home/mnt/data/batch_1/masks
+        path_masks : str
+            Path to the images folder. Example: /home/mnt/data/batch_1/images
+        """
         self.images = glob(os.path.join(path_images, '*.bmp'))
         self.masks = glob(os.path.join(path_masks, '*.bmp'))
 
@@ -44,13 +64,20 @@ class RandomGenerator(PathGenerator):
 
 class SubCyclicGenerator(PathGenerator):
     def __init__(self, path_batches_images, path_batches_masks):
+        """
+        Generator for pipeline, which gives next element in sub-cyclic order
+
+        Parameters
+        ----------
+        path_batches_masks : list
+            A list of groups of paths to masks.
+        path_batches_images : list
+            A list of groups of paths to images.
+        """
         assert (len(path_batches_images) == len(path_batches_masks))
 
-        self.batches_images = []
-        self.batches_masks = []
-        for i in range(len(path_batches_images)):
-            self.batches_images.append(glob(os.path.join(path_batches_images[i], '*.bmp')))
-            self.batches_masks.append(glob(os.path.join(path_batches_masks[i], '*.bmp')))
+        self.batches_images = path_batches_images
+        self.batches_masks = path_batches_masks
 
     def next_element(self):
         current_batch = 0
@@ -73,3 +100,4 @@ class SubCyclicGenerator(PathGenerator):
             current_batch += 1
 
             yield el
+
