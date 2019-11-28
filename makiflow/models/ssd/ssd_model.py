@@ -308,7 +308,7 @@ class SSDModel(MakiModel):
         epochs : int
             Number of epochs to run.
         global_step : tf.Variable
-            Used for learning rate exponential decay. See TensorFrow documentation on how to use
+            Used for learning rate exponential decay. See TensorFlow documentation on how to use
             exponential decay.
         """
         assert (type(loc_loss_weight) == float)
