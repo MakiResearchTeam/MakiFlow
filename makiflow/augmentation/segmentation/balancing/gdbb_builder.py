@@ -5,6 +5,7 @@ import cv2
 from makiflow.augmentation.segmentation import ElasticAugment, Data
 import os
 
+
 class GD2BBuilder:
     def __init__(self, path_to_hc_list, path_to_balance_config, path_to_mi, resize=None):
         """
