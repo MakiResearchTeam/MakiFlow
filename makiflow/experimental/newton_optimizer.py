@@ -7,7 +7,7 @@ class NewtonOptimizer:
         self.grads = []
         self.hesses = []
 
-    def get_variables(self):
+    def variables(self):
         return self.grads + self.hesses
 
     def _compute_update(self, var, objective):
