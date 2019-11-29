@@ -1,0 +1,102 @@
+from makiflow.generators.gen_base import SegmentIterator, PathGenerator
+
+from glob import glob
+import os
+import numpy as np
+from sklearn.utils import shuffle
+
+class CyclicGenerator(PathGenerator):
+    def __init__(self, path_images, path_masks):
+        """
+        Generator for pipeline, which gives next element in cycle order
+
+        Parameters
+        ----------
+        path_images : str
+            Path to the masks folder. Example: /home/mnt/data/batch_1/masks
+        path_masks : str
+            Path to the images folder. Example: /home/mnt/data/batch_1/images
+        """
+        self.images = glob(os.path.join(path_images, '*.bmp'))
+        self.masks = glob(os.path.join(path_masks, '*.bmp'))
+
+    def next_element(self):
+        index = 0
+        while True:
+            if index % len(self.images) == 0:
+                self.images, self.masks = shuffle(self.images, self.masks)
+                index = 0
+
+            el = {
+                SegmentIterator.image: self.images[index],
+                SegmentIterator.mask: self.masks[index]
+            }
+            index += 1
+
+            yield el
+
+class RandomGenerator(PathGenerator):
+    def __init__(self, path_images, path_masks):
+        """
+        Generator for pipeline, which gives next element in random order
+
+        Parameters
+        ----------
+        path_images : str
+            Path to the masks folder. Example: /home/mnt/data/batch_1/masks
+        path_masks : str
+            Path to the images folder. Example: /home/mnt/data/batch_1/images
+        """
+        self.images = glob(os.path.join(path_images, '*.bmp'))
+        self.masks = glob(os.path.join(path_masks, '*.bmp'))
+
+    def next_element(self):
+        while True:
+            index = np.random.randint(low=0, high=len(self.images))
+
+            el = {
+                SegmentIterator.image: self.images[index],
+                SegmentIterator.mask: self.masks[index]
+            }
+
+            yield el
+
+
+class SubCyclicGenerator(PathGenerator):
+    def __init__(self, path_batches_images, path_batches_masks):
+        """
+        Generator for pipeline, which gives next element in sub-cyclic order
+
+        Parameters
+        ----------
+        path_batches_masks : list
+            A list of groups of paths to masks.
+        path_batches_images : list
+            A list of groups of paths to images.
+        """
+        assert (len(path_batches_images) == len(path_batches_masks))
+
+        self.batches_images = path_batches_images
+        self.batches_masks = path_batches_masks
+
+    def next_element(self):
+        current_batch = 0
+        counter_batches = [0 for _ in range(len(self.batches_images))]
+        while True:
+            if current_batch == len(self.batches_images) and counter_batches[-1] == len(self.batches_images[-1]):
+                self.batches_images, self.batches_masks = shuffle(self.batches_images, self.batches_masks)
+
+                self.batches_images = [shuffle(elem) for elem in self.batches_images]
+                self.batches_masks = [shuffle(elem) for elem in self.batches_masks]
+
+                current_batch = 0
+                counter_batches = [0 for _ in range(len(self.batches_images))]
+
+            el = {
+                SegmentIterator.image: self.batches_images[current_batch][counter_batches[current_batch]],
+                SegmentIterator.mask: self.batches_masks[current_batch][counter_batches[current_batch]]
+            }
+            counter_batches[current_batch] += 1
+            current_batch += 1
+
+            yield el
