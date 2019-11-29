@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import tensorflow as tf
-from makiflow.models.segmentation.gen_base import PathGenerator, MapMethod, GenLayer, SegmentIterator
+from makiflow.generators.gen_base import PathGenerator, MapMethod, GenLayer, SegmentIterator
 
 
 class InputGenLayer(GenLayer):

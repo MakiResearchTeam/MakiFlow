@@ -118,6 +118,8 @@ def confusion_mat(
     ):
     """
     Creates confusion matrix for the given predictions `p` and labels `l`.
+    The matrix consists of elements C(i,j). C(i,j) - number of samples of class i
+    classified as class j.
     Parameters
     ----------
     p : np.ndarray
@@ -132,9 +134,15 @@ def confusion_mat(
         Set to True if `p' and `l` are high-dimensional arrays.
     normalize : list 
         List of axes. The matrix will be normalized along these axes.
-        Axis 1 - normalizing by the number of true samples per class.
-        Axis 0 - normalizing by the number of the network predictions per class.
-        Leave the list empty if you unnormalized matrix.
+        Axis 1:
+            Normalizing by the number of true samples per class.
+            C(i,j) - percentage of samples of class i that classified as class j.
+            Diagonal elements stand for recall.
+        Axis 0:
+            Normalizing by the number of the network predictions per class.
+            C(i,j) - percentage of samples classified as j that actually belong to class i.
+            Diagonal elements stand for precision.
+        Leave the list empty if you want to get unnormalized matrix.
     save_path : str
         Saving path for the confusion matrix picture.
     dpi : int
@@ -167,7 +175,14 @@ def confusion_mat(
         
         mats = []
         for ax in normalize:
-            temp_mat = mat / mat.sum(axis=ax)
+            # Normalizing along axis 0
+            if ax == 0:
+                temp_mat = mat / mat.sum(axis=0)
+            # Normalizing along axis 1
+            elif ax == 1:
+                temp_mat = (mat.T / mat.sum(axis=1)).T
+            else:
+                raise RuntimeError(f"Unknown axis: {ax}")
             temp_mat = np.round(temp_mat, decimals=2)
             mats += [temp_mat]
             
@@ -181,14 +196,22 @@ def confusion_mat(
             plt.close(fig)
         
         return mats
-        
-    
+
     if len(normalize) == 1:
-        mat /= mat.sum(axis=normalize[0])
+        ax = normalize[0]
+        # Normalizing along axis 0
+        if ax == 0:
+            mat = mat / mat.sum(axis=0)
+        # Normalizing along axis 1
+        elif ax == 1:
+            mat = (mat.T / mat.sum(axis=1)).T
+        else:
+            raise RuntimeError(f"Unknown axis: {ax}")
         mat = np.round(mat, decimals=2)
 
     if save_path is not None:
         conf_mat = sns.heatmap(mat, annot=annot)
         conf_mat.figure.savefig(save_path, dpi=dpi)
         plt.close(conf_mat.figure)
+
     return [mat]
