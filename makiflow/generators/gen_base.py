@@ -9,6 +9,12 @@ class MapMethod:
         pass
 
 
+class TFRMapMethod:
+    @abstractmethod
+    def read_record(self, serialized_example):
+        pass
+
+
 class PostMapMethod(MapMethod):
     def __init__(self):
         self._parent_method = None
@@ -20,6 +26,16 @@ class PostMapMethod(MapMethod):
     def __call__(self, parent_method: MapMethod):
         self._parent_method = parent_method
         return self
+
+
+class ImageIterator:
+    image = 'image'
+
+
+class SSDIterator(ImageIterator):
+    loc = 'loc'
+    loc_mask = 'loc_mask'
+    label = 'label'
 
 
 class SegmentIterator:
