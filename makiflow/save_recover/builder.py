@@ -53,9 +53,7 @@ class Builder:
         # Restore all the DetectorClassifiers
         dcs = []
         for dc_dict in architecture_dict['model_info']['dcs']:
-            reg_x = inputs_outputs[dc_dict['reg_x_name']]
-            class_x = inputs_outputs[dc_dict['class_x_name']]
-            dcs.append(Builder.__detector_classifier_from_dict(dc_dict, reg_x, class_x))
+            dcs.append(Builder.__detector_classifier_from_dict(dc_dict, inputs_outputs))
         input_name = architecture_dict['model_info']['input_s']
         input_s = inputs_outputs[input_name]
 
@@ -64,7 +62,7 @@ class Builder:
         return SSDModel(dcs=dcs, input_s=input_s, name=name)
 
     @staticmethod
-    def __detector_classifier_from_dict(dc_dict, reg_x, class_x):
+    def __detector_classifier_from_dict(dc_dict, graph_info):
         """Creates and returns DetectorClassifier from dictionary"""
         params = dc_dict['params']
         name = params['name']
@@ -79,9 +77,12 @@ class Builder:
         ckh = params['ckh']
         cin_f = params['cin_f']
 
+        reg_x = graph_info[params['reg_x_name']]
+        class_x = graph_info[params['class_x_name']]
+
         return DetectorClassifier(
             reg_fms=reg_x, rkw=rkw, rkh=rkh, rin_f=rin_f,
-            class_fms=reg_x, ckw=ckw, ckh=ckh, cin_f=cin_f,
+            class_fms=class_x, ckw=ckw, ckh=ckh, cin_f=cin_f,
             num_classes=class_number, dboxes=dboxes, name=name
         )
 
