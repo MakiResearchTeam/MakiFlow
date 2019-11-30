@@ -35,7 +35,7 @@ class Builder:
         return Classificator(input=in_x, output=out_x, name=model_name)
 
     @staticmethod
-    def ssd_from_json(json_path, batch_size=None):
+    def ssd_from_json(json_path, batch_size=None, generator=None):
         """Creates and returns SSDModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
@@ -50,7 +50,7 @@ class Builder:
             outputs += [params['reg_x_name'], params['class_x_name']]
 
         graph_info = architecture_dict['graph_info']
-        inputs_outputs = Builder.restore_graph(outputs, graph_info, batch_size)
+        inputs_outputs = Builder.restore_graph(outputs, graph_info, batch_size, generator)
         # Restore all the DetectorClassifiers
         dcs = []
         for dc_dict in architecture_dict['model_info']['dcs']:
