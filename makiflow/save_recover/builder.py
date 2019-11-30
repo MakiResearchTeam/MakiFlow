@@ -46,15 +46,15 @@ class Builder:
         dcs_dicts = architecture_dict['model_info']['dcs']
         outputs = []
         for dcs_dict in dcs_dicts:
-            outputs += [dcs_dict['reg_x'], dcs_dict['class_x']]
+            outputs += [dcs_dict['reg_x_name'], dcs_dict['class_x_name']]
 
         graph_info = architecture_dict['graph_info']
         inputs_outputs = Builder.restore_graph(outputs, graph_info, batch_size)
         # Restore all the DetectorClassifiers
         dcs = []
         for dc_dict in architecture_dict['model_info']['dcs']:
-            reg_x = inputs_outputs[dc_dict['reg_x']]
-            class_x = inputs_outputs[dc_dict['class_x']]
+            reg_x = inputs_outputs[dc_dict['reg_x_name']]
+            class_x = inputs_outputs[dc_dict['class_x_name']]
             dcs.append(Builder.__detector_classifier_from_dict(dc_dict, reg_x, class_x))
         input_name = architecture_dict['model_info']['input_s']
         input_s = inputs_outputs[input_name]
