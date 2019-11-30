@@ -63,7 +63,7 @@ class Builder:
         return SSDModel(dcs=dcs, input_s=input_s, name=name)
 
     @staticmethod
-    def __detector_classifier_from_dict(dc_dict, graph_info):
+    def __detector_classifier_from_dict(dc_dict, inputs_outputs):
         """Creates and returns DetectorClassifier from dictionary"""
         params = dc_dict['params']
         name = params['name']
@@ -78,8 +78,8 @@ class Builder:
         ckh = params['ckh']
         cin_f = params['cin_f']
 
-        reg_x = graph_info[params['reg_x_name']]
-        class_x = graph_info[params['class_x_name']]
+        reg_x = inputs_outputs[params['reg_x_name']]
+        class_x = inputs_outputs[params['class_x_name']]
 
         return DetectorClassifier(
             reg_fms=reg_x, rkw=rkw, rkh=rkh, rin_f=rin_f,
