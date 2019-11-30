@@ -12,10 +12,10 @@ LABEL_FNAME = 'LABEL'
 # Serialize Object Detection Data Point
 def serialize_od_data_point(image, loc_mask, loc, label):
     feature = {
-        'image': _tensor_to_byte_feature(image),
-        'loc_mask': _tensor_to_byte_feature(loc_mask),
-        'loc': _tensor_to_byte_feature(loc),
-        'label': _tensor_to_byte_feature(label)
+        IMAGE_FNAME: _tensor_to_byte_feature(image),
+        LOC_MASK_FNAME: _tensor_to_byte_feature(loc_mask),
+        LOC_FNAME: _tensor_to_byte_feature(loc),
+        LABEL_FNAME: _tensor_to_byte_feature(label)
     }
     features = tf.train.Features(feature=feature)
     example_proto = tf.train.Example(features=features)
