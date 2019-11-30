@@ -57,7 +57,7 @@ def merging_masks(masks, index_of_main_mask, priority):
     """
 
     # For easy access
-    main_mask = masks[index_of_main_mask]
+    main_mask = copy.deepcopy(masks[index_of_main_mask])
 
     # Thanks to the `boolean_mask` higher priority class will not be erased
     boolean_mask = np.ones(main_mask.shape).astype(np.bool)
@@ -67,7 +67,11 @@ def merging_masks(masks, index_of_main_mask, priority):
             continue
 
         for prior in priority:
-            main_mask[masks[i] == prior * boolean_mask] = prior
+            # Take indexes there `prior` class in `masks[i]` and multiply on our `boolean_mask` to remove used indexes
+            temp_bool_mask = masks[i] == prior
+            temp_bool_mask = temp_bool_mask * boolean_mask
+
+            main_mask[temp_bool_mask] = prior
             boolean_mask[masks[i] == prior] = False
 
     return main_mask
