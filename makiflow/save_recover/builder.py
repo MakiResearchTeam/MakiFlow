@@ -46,7 +46,8 @@ class Builder:
         dcs_dicts = architecture_dict['model_info']['dcs']
         outputs = []
         for dcs_dict in dcs_dicts:
-            outputs += [dcs_dict['reg_x_name'], dcs_dict['class_x_name']]
+            params = dcs_dict['params']
+            outputs += [params['reg_x_name'], params['class_x_name']]
 
         graph_info = architecture_dict['graph_info']
         inputs_outputs = Builder.restore_graph(outputs, graph_info, batch_size)
