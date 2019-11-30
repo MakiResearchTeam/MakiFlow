@@ -40,10 +40,10 @@ class Builder:
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
-        name = architecture_dict['name']
+        name = architecture_dict['model_info']['name']
         # Collect names of the MakiTensors that are inputs for the DetectorClassifiers
         # for restoring the graph.
-        dcs_dicts = architecture_dict['dcs']
+        dcs_dicts = architecture_dict['model_info']['dcs']
         outputs = []
         for dcs_dict in dcs_dicts:
             outputs += [dcs_dict['reg_x'], dcs_dict['class_x']]
@@ -52,11 +52,11 @@ class Builder:
         inputs_outputs = Builder.restore_graph(outputs, graph_info, batch_size)
         # Restore all the DetectorClassifiers
         dcs = []
-        for dc_dict in architecture_dict['dcs']:
+        for dc_dict in architecture_dict['model_info']['dcs']:
             reg_x = inputs_outputs[dc_dict['reg_x']]
             class_x = inputs_outputs[dc_dict['class_x']]
             dcs.append(Builder.__detector_classifier_from_dict(dc_dict, reg_x, class_x))
-        input_name = architecture_dict['input_s']
+        input_name = architecture_dict['model_info']['input_s']
         input_s = inputs_outputs[input_name]
 
         print('Model is recovered.')
