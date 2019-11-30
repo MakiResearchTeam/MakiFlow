@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+from makiflow.generators.gen_base import GenLayer, SSDIterator
 from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
 from makiflow.base import MakiModel
 import json
@@ -183,7 +185,15 @@ class SSDModel(MakiModel):
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------SETTING UP TRAINING-----------------------------------------
 
-    def _prepare_training_graph(self):
+    # noinspection PyAttributeOutsideInit
+    def set_generator(self, generator: GenLayer):
+        self._generator = generator
+        if not self._set_for_training:
+            super()._setup_for_training()
+        if not self._training_vars_are_ready:
+            self._prepare_training_vars(use_generator=True)
+
+    def _prepare_training_vars(self, use_generator=False):
         training_confidences = []
         training_offsets = []
         n_outs = len(self._training_outputs)
@@ -197,10 +207,16 @@ class SSDModel(MakiModel):
         self._train_confidences_ish = tf.concat(training_confidences, axis=1)
         self._train_offsets = tf.concat(training_offsets, axis=1)
 
-        # Create placeholders for the training data
-        self._input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
-        self._input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
-        self._input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
+        if use_generator:
+            self._input_labels = self._generator.get_iterator()[SSDIterator.label]
+            self._input_loc_loss_masks = self._generator.get_iterator()[SSDIterator.loc_mask]
+            self._input_loc = self._generator.get_iterator()[SSDIterator.loc]
+        else:
+            # Create placeholders for the training data
+            self._input_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
+            self._input_loc_loss_masks = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions])
+            self._input_loc = tf.placeholder(tf.float32, shape=[self.batch_sz, self.total_predictions, 4])
+
         self._loc_loss_weight = tf.placeholder(tf.float32, shape=[], name='loc_loss_weight')
 
         # DEFINE VARIABLES NECESSARY FOR BUILDING LOSSES
@@ -239,7 +255,7 @@ class SSDModel(MakiModel):
         # [batch_sz, total_predictions]
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
         ones_arr = tf.ones(shape=[self.batch_sz, self.total_predictions], dtype=tf.float32)
-        focal_weights = tf.pow(ones_arr - sparse_confidences, self._gamma)
+        focal_weights = tf.pow(ones_arr - sparse_confidences, self._focal_gamma)
         self._focal_loss = tf.reduce_sum(focal_weights * self._ce_loss) / self._num_positives
 
         self._build_loc_loss()
@@ -251,14 +267,14 @@ class SSDModel(MakiModel):
         self._focal_loss_is_build = True
 
     def _setup_focal_loss_inputs(self):
-        self._gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
+        self._focal_gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
 
     def _minimize_focal_loss(self, optimizer, global_step):
         if not self._set_for_training:
             super()._setup_for_training()
 
         if not self._training_vars_are_ready:
-            self._prepare_training_graph()
+            self._prepare_training_vars()
 
         if not self._focal_loss_is_build:
             self._setup_focal_loss_inputs()
@@ -348,7 +364,7 @@ class SSDModel(MakiModel):
                                     self._input_loc_loss_masks: loc_mask_batch,
                                     self._input_loc: gt_locs_batch,
                                     self._loc_loss_weight: loc_loss_weight,
-                                    self._gamma: gamma
+                                    self._focal_gamma: gamma
                                 })
                         except Exception as ex:
                             if ex is KeyboardInterrupt:
@@ -381,6 +397,51 @@ class SSDModel(MakiModel):
                 'focal losses': train_focal_losses,
                 'total losses': train_total_losses,
                 'loc losses': train_loc_losses,
+            }
+
+    def genfit_focal(self, optimizer, loc_loss_weight=1.0, gamma=2.0, epochs=1, iterations=10, global_step=None):
+        assert (optimizer is not None)
+        assert (self._session is not None)
+
+        train_op = self._minimize_focal_loss(optimizer, global_step)
+
+        train_total_losses = []
+        train_focal_losses = []
+        train_loc_losses = []
+        iterator = None
+        try:
+            for i in range(epochs):
+                total_loss = 0
+                focal_loss = 0
+                loc_loss = 0
+                iterator = tqdm(range(iterations))
+
+                for _ in iterator:
+                    batch_total_loss, batch_focal_loss, batch_loc_loss, _ = self._session.run(
+                        [self._final_focal_loss, self._focal_loss, self._loc_loss, train_op],
+                        feed_dict={
+                            self._loc_loss_weight: loc_loss_weight,
+                            self._focal_gamma: gamma
+                        })
+                    # Use exponential decay for calculating loss and error
+                    focal_loss = 0.1 * batch_focal_loss + 0.9 * focal_loss
+                    total_loss = 0.1 * batch_total_loss + 0.9 * total_loss
+                    loc_loss = 0.1 * batch_loc_loss + 0.9 * loc_loss
+
+                train_total_losses.append(total_loss)
+                train_focal_losses.append(focal_loss)
+                train_loc_losses.append(loc_loss)
+
+                print('Epoch:', i, 'Focal loss: {:0.4f}'.format(float(focal_loss)))
+        except Exception as ex:
+            print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {
+                'total loss': train_focal_losses,
+                'focal loss': train_focal_losses,
+                'loc loss': train_loc_losses
             }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -431,7 +492,7 @@ class SSDModel(MakiModel):
             super()._setup_for_training()
 
         if not self._training_vars_are_ready:
-            self._prepare_training_graph()
+            self._prepare_training_vars()
 
         if not self._top_k_loss_is_build:
             self._setup_top_k_loss_inputs()
@@ -622,7 +683,7 @@ class SSDModel(MakiModel):
             super()._setup_for_training()
 
         if not self._training_vars_are_ready:
-            self._prepare_training_graph()
+            self._prepare_training_vars()
 
         if not self._scan_loss_is_build:
             self._setup_scan_loss_inputs()

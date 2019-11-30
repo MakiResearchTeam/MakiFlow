@@ -65,6 +65,10 @@ class GenLayer(MakiTensor):
             previous_tensors={}
         )
 
+    @abstractmethod
+    def get_iterator(self):
+        pass
+
     def get_shape(self):
         return self.image.get_shape().to_list()
 
