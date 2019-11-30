@@ -115,11 +115,11 @@ class DetectorClassifier:
         return {
             'type': 'DetectorClassifier',
             'params': {
-                'regx_name': self.reg_x.get_name(),
+                'reg_x_name': self.reg_x.get_name(),
                 'rkw': self.rkw,
                 'rkh': self.rkh,
                 'rin_f': self.rin_f,
-                'classx_name': self.class_x.get_name(),
+                'class_x_name': self.class_x.get_name(),
                 'ckw': self.ckw,
                 'ckh': self.ckh,
                 'cin_f': self.cin_f,
