@@ -40,3 +40,41 @@ def record_od_train_data(images, loc_masks, locs, labels, tfrecord_path):
         for image, loc_mask, loc, label in zip(images, loc_masks, locs, labels):
             serialized_data_point = serialize_od_data_point(image, loc_mask, loc, label)
             writer.write(serialized_data_point)
+
+
+# Record data into multiple tfrecords
+def record_mp_od_train_data(images, loc_masks, locs, labels, prefix, dp_per_record):
+    """
+    Creates tfrecord dataset where each tfrecord contains `dp_per_second` data points.
+    Parameters
+    ----------
+    images : list or ndarray
+        Array of input images.
+    loc_masks : list or ndarray
+        Array of localization vector masks for positive and negative samples.
+    locs : list or ndarray
+        Array of localization vectors for each bounding box.
+    labels : list or ndarray
+        Array of the label vectors.
+    prefix : str
+        Prefix for the tfrecords' names. All the filenames will have the same naming pattern:
+        `prefix`_`tfrecord index`.tfrecord
+    dp_per_record : int
+        Data point per tfrecord. Defines how many images (locs, loc_masks, labels) will be
+        put into one tfrecord file. It's better to use such `dp_per_record` that
+        yields tfrecords of size 300-200 megabytes.
+    """
+    for i in range(len(images) // dp_per_record):
+        image_batch = images[dp_per_record*i: (i+1)*dp_per_record]
+        loc_mask_batch = loc_masks[dp_per_record*i: (i+1)*dp_per_record]
+        loc_batch = locs[dp_per_record*i: (i+1)*dp_per_record]
+        label_batch = labels[dp_per_record*i: (i+1)*dp_per_record]
+        tfrecord_name = f'{prefix}_{i}.tfrecord'
+        record_od_train_data(
+            images=image_batch,
+            loc_masks=loc_mask_batch,
+            locs=loc_batch,
+            labels=label_batch,
+            tfrecord_path=tfrecord_name
+        )
+

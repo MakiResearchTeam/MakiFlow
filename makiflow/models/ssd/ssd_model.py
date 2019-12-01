@@ -432,14 +432,19 @@ class SSDModel(MakiModel):
                 train_focal_losses.append(focal_loss)
                 train_loc_losses.append(loc_loss)
 
-                print('Epoch:', i, 'Focal loss: {:0.4f}'.format(float(focal_loss)))
+                print(
+                    'Epoch:', i,
+                    'Focal loss: {:0.4f}'.format(float(focal_loss)),
+                    'Total loss: {:0.4f}'.format(float(total_loss)),
+                    'Loc loss: {:0.4f}'.format(float(loc_loss))
+                )
         except Exception as ex:
             print(ex)
         finally:
             if iterator is not None:
                 iterator.close()
             return {
-                'total loss': train_focal_losses,
+                'total loss': train_total_losses,
                 'focal loss': train_focal_losses,
                 'loc loss': train_loc_losses
             }
