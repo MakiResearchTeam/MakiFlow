@@ -70,7 +70,7 @@ class GenLayer(MakiTensor):
         pass
 
     def get_shape(self):
-        return self.image.get_shape().to_list()
+        return self.image.get_shape().as_list()
 
     def get_name(self):
         return self._name
