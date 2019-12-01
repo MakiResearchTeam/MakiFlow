@@ -1029,8 +1029,8 @@ class SSDModel(MakiModel):
                 'loc losses': train_loc_losses,
             }
 
-    # ----------------------------------------------------------------------------------------------------------------------
-    # -----------------------------------------------------------MAKI LOSS--------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------MAKI LOSS--------------------------------------------------
 
     def _build_maki_loss(self):
         self._maki_loss = Loss.maki_loss(
@@ -1191,7 +1191,7 @@ class SSDModel(MakiModel):
         assert (optimizer is not None)
         assert (self._session is not None)
 
-        train_op = self._minimize_focal_loss(optimizer, global_step)
+        train_op = self._minimize_maki_loss(optimizer, global_step, gamma)
 
         train_total_losses = []
         train_maki_losses = []
@@ -1205,14 +1205,14 @@ class SSDModel(MakiModel):
                 iterator = tqdm(range(iterations))
 
                 for _ in iterator:
-                    batch_total_loss, batch_focal_loss, batch_loc_loss, _ = self._session.run(
-                        [self._final_focal_loss, self._focal_loss, self._loc_loss, train_op],
+                    batch_total_loss, batch_maki_loss, batch_loc_loss, _ = self._session.run(
+                        [self._final_maki_loss, self._maki_loss, self._loc_loss, train_op],
                         feed_dict={
                             self._loc_loss_weight: loc_loss_weight,
                             self._maki_gamma: gamma
                         })
                     # Use exponential decay for calculating loss and error
-                    maki_loss = 0.1 * batch_focal_loss + 0.9 * maki_loss
+                    maki_loss = 0.1 * batch_maki_loss + 0.9 * maki_loss
                     total_loss = 0.1 * batch_total_loss + 0.9 * total_loss
                     loc_loss = 0.1 * batch_loc_loss + 0.9 * loc_loss
 
@@ -1310,7 +1310,7 @@ class SSDModel(MakiModel):
         """
         assert (type(loc_loss_weight) == float)
 
-        train_op = self._minimize_maki_loss(optimizer, global_step)
+        train_op = self._minimize_quadratic_ce_loss(optimizer, global_step)
 
         n_batches = len(images) // self.batch_sz
 
@@ -1374,7 +1374,7 @@ class SSDModel(MakiModel):
                 iterator.close()
             return {
                 TL.TOTAL_LOSS: train_total_losses,
-                TL.QUADRATIC_CE: train_qce_losses,
+                TL.QUADRATIC_CE_LOSS: train_qce_losses,
                 TL.LOC_LOSS: train_loc_losses
             }
 
@@ -1382,38 +1382,38 @@ class SSDModel(MakiModel):
         assert (optimizer is not None)
         assert (self._session is not None)
 
-        train_op = self._minimize_focal_loss(optimizer, global_step)
+        train_op = self._minimize_quadratic_ce_loss(optimizer, global_step)
 
         train_total_losses = []
-        train_maki_losses = []
+        train_qce_losses = []
         train_loc_losses = []
         iterator = None
         try:
             for i in range(epochs):
                 total_loss = 0
-                maki_loss = 0
+                qce_loss = 0
                 loc_loss = 0
                 iterator = tqdm(range(iterations))
 
                 for _ in iterator:
-                    batch_total_loss, batch_focal_loss, batch_loc_loss, _ = self._session.run(
-                        [self._final_focal_loss, self._focal_loss, self._loc_loss, train_op],
+                    batch_total_loss, batch_qce_loss, batch_loc_loss, _ = self._session.run(
+                        [self._final_quadratic_ce_loss, self._quadratic_ce_loss, self._loc_loss, train_op],
                         feed_dict={
                             self._loc_loss_weight: loc_loss_weight,
                             self._maki_gamma: gamma
                         })
                     # Use exponential decay for calculating loss and error
-                    maki_loss = 0.1 * batch_focal_loss + 0.9 * maki_loss
+                    qce_loss = 0.1 * batch_qce_loss + 0.9 * qce_loss
                     total_loss = 0.1 * batch_total_loss + 0.9 * total_loss
                     loc_loss = 0.1 * batch_loc_loss + 0.9 * loc_loss
 
                 train_total_losses.append(total_loss)
-                train_maki_losses.append(maki_loss)
+                train_qce_losses.append(qce_loss)
                 train_loc_losses.append(loc_loss)
 
                 print(
                     'Epoch:', i,
-                    'Maki loss: {:0.4f}'.format(float(maki_loss)),
+                    'QCE loss: {:0.4f}'.format(float(qce_loss)),
                     'Total loss: {:0.4f}'.format(float(total_loss)),
                     'Loc loss: {:0.4f}'.format(float(loc_loss))
                 )
@@ -1424,6 +1424,6 @@ class SSDModel(MakiModel):
                 iterator.close()
             return {
                 TL.TOTAL_LOSS: train_total_losses,
-                TL.MAKI_LOSS: train_maki_losses,
+                TL.MAKI_LOSS: train_qce_losses,
                 TL.LOC_LOSS: train_loc_losses
             }
