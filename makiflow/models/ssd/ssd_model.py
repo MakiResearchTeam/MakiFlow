@@ -44,7 +44,7 @@ class SSDModel(MakiModel):
         # For training
         self._training_vars_are_ready = False
 
-    # -------------------------------------------------------SETTING UP DEFAULT BOXES---------------------------------------
+    # -------------------------------------------------------SETTING UP DEFAULT BOXES-----------------------------------
 
     def _generate_default_boxes(self):
         self.default_boxes_wh = []
@@ -185,8 +185,8 @@ class SSDModel(MakiModel):
             feed_dict={self._input_data_tensors[0]: X}
         )
 
-# ----------------------------------------------------------------------------------------------------------------------
-# ----------------------------------------------------------SETTING UP TRAINING-----------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------SETTING UP TRAINING-------------------------------------
 
     # noinspection PyAttributeOutsideInit
     def set_generator(self, generator: GenLayer):
@@ -455,8 +455,8 @@ class SSDModel(MakiModel):
                 'loc loss': train_loc_losses
             }
 
-    # ----------------------------------------------------------------------------------------------------------------------
-    # ----------------------------------------------------------TOP-K LOSS--------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------TOP-K LOSS----------------------------------------------
 
     def _build_top_k_positive_loss(self):
         positive_confidence_loss = self._ce_loss * self._input_loc_loss_masks
@@ -552,7 +552,7 @@ class SSDModel(MakiModel):
         epochs : int
             Number of epochs to run.
         global_step : tf.Variable
-            Used for learning rate exponential decay. See TensorFrow documentation on how to use
+            Used for learning rate exponential decay. See TensorFlow documentation on how to use
             exponential decay.
         """
         assert (type(loc_loss_weight) == float)
@@ -678,13 +678,11 @@ class SSDModel(MakiModel):
         train_total_losses = []
         try:
             for i in range(epochs):
-                print('Start shuffling...')
-                print('Finished shuffling.')
                 loc_loss = 0
                 neg_loss = 0
                 pos_loss = 0
                 total_loss = 0
-                iterator = range(iterations)
+                iterator = tqdm(range(iterations))
                 try:
                     for j in iterator:
                         # Don't know how to fix it yet.
@@ -738,8 +736,8 @@ class SSDModel(MakiModel):
                 'loc losses': train_loc_losses,
             }
 
-    # ----------------------------------------------------------------------------------------------------------------------
-    # -----------------------------------------------------------SCAN LOSS--------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------SCAN LOSS----------------------------------------------
 
     def _build_scan_positive_loss(self):
         positive_confidence_loss = self._ce_loss * self._input_loc_loss_masks
@@ -787,7 +785,7 @@ class SSDModel(MakiModel):
     def _setup_scan_loss_inputs(self):
         self.__scan_neg_samples_ratio = tf.placeholder(tf.float32, shape=[], name='scan_neg_samples_ratio')
 
-    def __minimize_scan_loss(self, optimizer, global_step):
+    def _minimize_scan_loss(self, optimizer, global_step):
         if not self._set_for_training:
             super()._setup_for_training()
 
@@ -848,7 +846,7 @@ class SSDModel(MakiModel):
         assert (type(loc_loss_weight) == float)
         assert (type(neg_samples_ratio) == float)
 
-        train_op = self.__minimize_scan_loss(optimizer, global_step)
+        train_op = self._minimize_scan_loss(optimizer, global_step)
 
         n_batches = len(images) // self.batch_sz
 
@@ -960,7 +958,7 @@ class SSDModel(MakiModel):
         assert (type(loc_loss_weight) == float)
         assert (type(neg_samples_ratio) == float)
 
-        train_op = self._minimize_top_k_loss(optimizer, global_step)
+        train_op = self._minimize_scan_loss(optimizer, global_step)
 
         iterator = None
         train_loc_losses = []
@@ -969,13 +967,11 @@ class SSDModel(MakiModel):
         train_total_losses = []
         try:
             for i in range(epochs):
-                print('Start shuffling...')
-                print('Finished shuffling.')
                 loc_loss = 0
                 neg_loss = 0
                 pos_loss = 0
                 total_loss = 0
-                iterator = range(iterations)
+                iterator = tqdm(range(iterations))
                 try:
                     for j in iterator:
                         # Don't know how to fix it yet.
@@ -1029,8 +1025,8 @@ class SSDModel(MakiModel):
                 'loc losses': train_loc_losses,
             }
 
-# ----------------------------------------------------------------------------------------------------------------------
-# -----------------------------------------------------------MAKI LOSS--------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------MAKI LOSS----------------------------------------------
 
     def _build_maki_loss(self):
         self._maki_loss = Loss.maki_loss(
@@ -1187,7 +1183,8 @@ class SSDModel(MakiModel):
                 TL.LOC_LOSS: train_loc_losses
             }
 
-    def genfit_maki(self, optimizer, loc_loss_weight=1.0, gamma=2.0, epochs=1, iterations=10, global_step=None):
+    def genfit_maki(self, optimizer, loc_loss_weight=1.0, gamma=2, epochs=1, iterations=10, global_step=None):
+        assert (type(gamma) is int)
         assert (optimizer is not None)
         assert (self._session is not None)
 
