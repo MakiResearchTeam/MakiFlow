@@ -633,6 +633,106 @@ class SSDModel(MakiModel):
                 'loc losses': train_loc_losses,
             }
 
+    def genfit_top_k(
+            self,
+            optimizer,
+            loc_loss_weight=1.0,
+            neg_samples_ratio=3.0,
+            epochs=1,
+            iterations=20,
+            global_step=None
+    ):
+        """
+                Function for training the SSD.
+
+                Parameters
+                ----------
+                loc_loss_weight : float
+                    Means how much localization loss influences total loss:
+                    loss = confidence_loss + loss_weight*localization_loss
+                neg_samples_ratio : float
+                    Affects amount of negative samples used for calculation of the negative loss.
+                    Note: number of negative samples = number of positive samples * `neg_samples_ratio`
+                optimizer : TensorFlow optimizer
+                    Used for minimizing the loss function.
+                epochs : int
+                    Number of epochs to run.
+                global_step : tf.Variable
+                    Used for learning rate exponential decay. See TensorFlow documentation on how to use
+                    exponential decay.
+                """
+        assert (type(loc_loss_weight) == float)
+        assert (type(neg_samples_ratio) == float)
+
+        train_op = self._minimize_top_k_loss(optimizer, global_step)
+
+        iterator = None
+        train_loc_losses = []
+        train_neg_losses = []
+        train_pos_losses = []
+        train_total_losses = []
+        try:
+            for i in range(epochs):
+                print('Start shuffling...')
+                print('Finished shuffling.')
+                loc_loss = 0
+                neg_loss = 0
+                pos_loss = 0
+                total_loss = 0
+                iterator = range(iterations)
+                try:
+                    for j in iterator:
+                        # Don't know how to fix it yet.
+                        try:
+                            batch_total_loss, batch_p_loss, batch_n_loss, batch_loc_loss, _ = self._session.run(
+                                [
+                                    self._final_top_k_loss,
+                                    self._top_k_positive_confidence_loss,
+                                    self._top_k_negative_confidence_loss,
+                                    self._loc_loss,
+                                    train_op
+                                ],
+                                feed_dict={
+                                    self._loc_loss_weight: loc_loss_weight,
+                                    self._top_k_neg_samples_ratio: neg_samples_ratio
+                                })
+                        except Exception as ex:
+                            if ex is KeyboardInterrupt:
+                                raise Exception('You have raised KeyboardInterrupt exception.')
+                            else:
+                                print(ex)
+                                continue
+
+                        # Calculate losses using exponential decay
+                        loc_loss = 0.1 * batch_loc_loss + 0.9 * loc_loss
+                        neg_loss = 0.1 * batch_n_loss + 0.9 * neg_loss
+                        pos_loss = 0.1 * batch_p_loss + 0.9 * pos_loss
+                        total_loss = 0.1 * batch_total_loss + 0.9 * total_loss
+
+                    train_loc_losses.append(loc_loss)
+                    train_neg_losses.append(neg_loss)
+                    train_pos_losses.append(pos_loss)
+                    train_total_losses.append(total_loss)
+                    print(
+                        'Epoch:', i,
+                        'Loc loss:', loc_loss,
+                        'Positive loss', pos_loss,
+                        'Negative loss', neg_loss,
+                        'Total loss', total_loss
+                    )
+                except Exception as ex:
+                    iterator.close()
+                    print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {
+                'positive losses': train_pos_losses,
+                'negative losses': train_neg_losses,
+                'total losses': train_total_losses,
+                'loc losses': train_loc_losses,
+            }
+
 # ----------------------------------------------------------------------------------------------------------------------
 # -----------------------------------------------------------SCAN LOSS--------------------------------------------------
 
@@ -824,3 +924,104 @@ class SSDModel(MakiModel):
                 'total losses': train_total_losses,
                 'loc losses': train_loc_losses,
             }
+
+    def genfit_scan(
+            self,
+            optimizer,
+            loc_loss_weight=1.0,
+            neg_samples_ratio=3.0,
+            epochs=1,
+            iterations=20,
+            global_step=None
+    ):
+        """
+                Function for training the SSD.
+
+                Parameters
+                ----------
+                loc_loss_weight : float
+                    Means how much localization loss influences total loss:
+                    loss = confidence_loss + loss_weight*localization_loss
+                neg_samples_ratio : float
+                    Affects amount of negative samples used for calculation of the negative loss.
+                    Note: number of negative samples = number of positive samples * `neg_samples_ratio`
+                optimizer : TensorFlow optimizer
+                    Used for minimizing the loss function.
+                epochs : int
+                    Number of epochs to run.
+                global_step : tf.Variable
+                    Used for learning rate exponential decay. See TensorFlow documentation on how to use
+                    exponential decay.
+                """
+        assert (type(loc_loss_weight) == float)
+        assert (type(neg_samples_ratio) == float)
+
+        train_op = self._minimize_top_k_loss(optimizer, global_step)
+
+        iterator = None
+        train_loc_losses = []
+        train_neg_losses = []
+        train_pos_losses = []
+        train_total_losses = []
+        try:
+            for i in range(epochs):
+                print('Start shuffling...')
+                print('Finished shuffling.')
+                loc_loss = 0
+                neg_loss = 0
+                pos_loss = 0
+                total_loss = 0
+                iterator = range(iterations)
+                try:
+                    for j in iterator:
+                        # Don't know how to fix it yet.
+                        try:
+                            batch_total_loss, batch_p_loss, batch_n_loss, batch_loc_loss, _ = self._session.run(
+                                [
+                                    self._final_scan_loss,
+                                    self._scan_positive_confidence_loss,
+                                    self._scan_negative_confidence_loss,
+                                    self._loc_loss,
+                                    train_op
+                                ],
+                                feed_dict={
+                                    self._loc_loss_weight: loc_loss_weight,
+                                    self.__scan_neg_samples_ratio: neg_samples_ratio
+                                })
+                        except Exception as ex:
+                            if ex is KeyboardInterrupt:
+                                raise Exception('You have raised KeyboardInterrupt exception.')
+                            else:
+                                print(ex)
+                                continue
+
+                        # Calculate losses using exponential decay
+                        loc_loss = 0.1 * batch_loc_loss + 0.9 * loc_loss
+                        neg_loss = 0.1 * batch_n_loss + 0.9 * neg_loss
+                        pos_loss = 0.1 * batch_p_loss + 0.9 * pos_loss
+                        total_loss = 0.1 * batch_total_loss + 0.9 * total_loss
+
+                    train_loc_losses.append(loc_loss)
+                    train_neg_losses.append(neg_loss)
+                    train_pos_losses.append(pos_loss)
+                    train_total_losses.append(total_loss)
+                    print(
+                        'Epoch:', i,
+                        'Loc loss:', loc_loss,
+                        'Positive loss', pos_loss,
+                        'Negative loss', neg_loss,
+                        'Total loss', total_loss
+                    )
+                except Exception as ex:
+                    iterator.close()
+                    print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {
+                'positive losses': train_pos_losses,
+                'negative losses': train_neg_losses,
+                'total losses': train_total_losses,
+                'loc losses': train_loc_losses,
+            }
+

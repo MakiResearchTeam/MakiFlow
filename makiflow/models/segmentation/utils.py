@@ -20,7 +20,7 @@ def mutate_masks(masks, mapping):
         New masks with changed class numbers.
     """
     if type(mapping) is not list or (len(mapping) != 0 and type(mapping[0]) is not tuple):
-        raise TypeError('mapping should be list of typles')
+        raise TypeError('mapping should be list of tuples')
 
     new_masks = copy.deepcopy(masks)
 
@@ -30,7 +30,7 @@ def mutate_masks(masks, mapping):
             new_value = elem[1]
             new_masks[i][masks[i] == old_value] = new_value
 
-    return  new_masks
+    return new_masks
 
 
 def merging_masks(masks, index_of_main_mask, priority):
@@ -46,7 +46,7 @@ def merging_masks(masks, index_of_main_mask, priority):
         Index of base mask.
     priority : list
         List of priority of classes. Classes will be installed in the prescribed manner,
-        from highest priority to least priority in the list (from left to rigth in list).
+        from highest priority to least priority in the list (from left to right in list).
         Example: [9, 10, 3, 7], where 9th class have highest priority and will be put on others classes the first,
         on the other hand the 7th class have the lowest priority and will be placed last in the mask,
         but not including those that have already been replaced.
