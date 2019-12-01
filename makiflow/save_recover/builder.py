@@ -35,28 +35,27 @@ class Builder:
         return Classificator(input=in_x, output=out_x, name=model_name)
 
     @staticmethod
-    def ssd_from_json(json_path, batch_size=None):
+    def ssd_from_json(json_path, batch_size=None, generator=None):
         """Creates and returns SSDModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
-        name = architecture_dict['name']
+        name = architecture_dict['model_info']['name']
         # Collect names of the MakiTensors that are inputs for the DetectorClassifiers
         # for restoring the graph.
-        dcs_dicts = architecture_dict['dcs']
+        dcs_dicts = architecture_dict['model_info']['dcs']
         outputs = []
         for dcs_dict in dcs_dicts:
-            outputs += [dcs_dict['reg_x'], dcs_dict['class_x']]
+            params = dcs_dict['params']
+            outputs += [params['reg_x_name'], params['class_x_name']]
 
         graph_info = architecture_dict['graph_info']
-        inputs_outputs = Builder.restore_graph(outputs, graph_info, batch_size)
+        inputs_outputs = Builder.restore_graph(outputs, graph_info, batch_size, generator)
         # Restore all the DetectorClassifiers
         dcs = []
-        for dc_dict in architecture_dict['dcs']:
-            reg_x = inputs_outputs[dc_dict['reg_x']]
-            class_x = inputs_outputs[dc_dict['class_x']]
-            dcs.append(Builder.__detector_classifier_from_dict(dc_dict, reg_x, class_x))
-        input_name = architecture_dict['input_s']
+        for dc_dict in architecture_dict['model_info']['dcs']:
+            dcs.append(Builder.__detector_classifier_from_dict(dc_dict, inputs_outputs))
+        input_name = architecture_dict['model_info']['input_s']
         input_s = inputs_outputs[input_name]
 
         print('Model is recovered.')
@@ -64,7 +63,7 @@ class Builder:
         return SSDModel(dcs=dcs, input_s=input_s, name=name)
 
     @staticmethod
-    def __detector_classifier_from_dict(dc_dict, reg_x, class_x):
+    def __detector_classifier_from_dict(dc_dict, inputs_outputs):
         """Creates and returns DetectorClassifier from dictionary"""
         params = dc_dict['params']
         name = params['name']
@@ -79,9 +78,12 @@ class Builder:
         ckh = params['ckh']
         cin_f = params['cin_f']
 
+        reg_x = inputs_outputs[params['reg_x_name']]
+        class_x = inputs_outputs[params['class_x_name']]
+
         return DetectorClassifier(
             reg_fms=reg_x, rkw=rkw, rkh=rkh, rin_f=rin_f,
-            class_fms=reg_x, ckw=ckw, ckh=ckh, cin_f=cin_f,
+            class_fms=class_x, ckw=ckw, ckh=ckh, cin_f=cin_f,
             num_classes=class_number, dboxes=dboxes, name=name
         )
 
