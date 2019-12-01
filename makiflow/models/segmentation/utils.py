@@ -67,8 +67,9 @@ def merging_masks(masks, index_of_main_mask, priority):
             continue
 
         for prior in priority:
-            # Take indexes there `prior` class in `masks[i]` and multiply on our `boolean_mask` to remove used indexes
+            # Take indexes there class `prior` is in `masks[i]`
             temp_bool_mask = masks[i] == prior
+            # Remove indexes that have already been used
             temp_bool_mask = temp_bool_mask * boolean_mask
 
             main_mask[temp_bool_mask] = prior
