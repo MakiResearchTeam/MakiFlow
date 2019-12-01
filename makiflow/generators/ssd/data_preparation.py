@@ -4,9 +4,22 @@ from makiflow.generators.ssd.utils import _tensor_to_byte_feature
 
 # Feature names
 IMAGE_FNAME = 'IMAGE'
+
+# We need to save features' shapes because after reading them from the tfrecord,
+# we get Tensors with `unknown` shape.
+# It can yield an error if some operations involve access to the shape of the tensors.
+IMAGE_H_FNAME = 'IMAGE_HEIGHT'
+IMAGE_W_FNAME = 'IMAGE_WIDTH'
+IMAGE_C_FNAME = 'IMAGE_CHANNELS'
+
 LOC_MASK_FNAME = 'LOC_MASK'
+LOC_MASK_LEN_FNAME = 'LOC_MASK_LEN'
+
 LOC_FNAME = 'LOC'
+LOC_LEN_FNAME = 'LOC_LEN'
+
 LABEL_FNAME = 'LABEL'
+LABEL_LEN_FNAME = 'LABEL_LEN'
 
 
 # Serialize Object Detection Data Point

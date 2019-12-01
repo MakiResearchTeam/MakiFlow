@@ -14,13 +14,14 @@ def _bytes_feature(value):
     -------
 
     """
-    if isinstance(value, type(tf.constant(0))):
+    if isinstance(value, type(tf.constant(0))) and tf.executing_eagerly():
         value = value.numpy()
+    print('TensorFlow does not run in the eager mode.')
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
-def _tensor_to_byte_feature(image):
-    serialized_image = tf.io.serialize_tensor(image)
+def _tensor_to_byte_feature(tensor):
+    serialized_image = tf.io.serialize_tensor(tensor)
     return _bytes_feature(serialized_image)
 
 
