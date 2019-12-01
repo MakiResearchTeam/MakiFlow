@@ -1208,8 +1208,7 @@ class SSDModel(MakiModel):
                     batch_total_loss, batch_maki_loss, batch_loc_loss, _ = self._session.run(
                         [self._final_maki_loss, self._maki_loss, self._loc_loss, train_op],
                         feed_dict={
-                            self._loc_loss_weight: loc_loss_weight,
-                            self._maki_gamma: gamma
+                            self._loc_loss_weight: loc_loss_weight
                         })
                     # Use exponential decay for calculating loss and error
                     maki_loss = 0.1 * batch_maki_loss + 0.9 * maki_loss
@@ -1378,7 +1377,7 @@ class SSDModel(MakiModel):
                 TL.LOC_LOSS: train_loc_losses
             }
 
-    def genfit_quadratic_ce(self, optimizer, loc_loss_weight=1.0, gamma=2.0, epochs=1, iterations=10, global_step=None):
+    def genfit_quadratic_ce(self, optimizer, loc_loss_weight=1.0, epochs=1, iterations=10, global_step=None):
         assert (optimizer is not None)
         assert (self._session is not None)
 
@@ -1399,8 +1398,7 @@ class SSDModel(MakiModel):
                     batch_total_loss, batch_qce_loss, batch_loc_loss, _ = self._session.run(
                         [self._final_quadratic_ce_loss, self._quadratic_ce_loss, self._loc_loss, train_op],
                         feed_dict={
-                            self._loc_loss_weight: loc_loss_weight,
-                            self._maki_gamma: gamma
+                            self._loc_loss_weight: loc_loss_weight
                         })
                     # Use exponential decay for calculating loss and error
                     qce_loss = 0.1 * batch_qce_loss + 0.9 * qce_loss
