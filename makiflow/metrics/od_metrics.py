@@ -156,7 +156,7 @@ def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name
     -------
 
     """
-    # PROCESS THE SSD PREDICTIONS
+    # PROCESS THE SSD
     filtered_preds = []
     for confidences, localisations in sdd_preds:
         for image_confs, image_locs in zip(confidences, localisations):
@@ -164,7 +164,7 @@ def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name
             # `bboxes` is a list of ndarrays
             # `classes` is a list of ints
             # `confidences` is a list of floats
-            filtered_preds += [nms(image_confs, image_locs, conf_threshold=conf_threshold, iou_threshold=iou_threshold)]
+            filtered_preds += [nms(image_locs, image_confs, conf_threshold=conf_threshold, iou_threshold=iou_threshold)]
     # Clear the NMS results from empty predictions
     filtered_preds = clear_filtered_preds(filtered_preds)
     # Convert NMS results to separate lists of numpy arrays

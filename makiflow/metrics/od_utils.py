@@ -300,3 +300,9 @@ def parse_dicts(data_dicts, name2class):
         true_classes += [np.array(image_classes, dtype=np.int32)]
     return true_boxes, true_classes
 
+
+def split_predictions(sdd_preds):
+    splitted_preds = []
+    for pred in sdd_preds:
+        splitted_preds += [[p, l] for p, l in zip(pred[0], pred[1])]
+    return splitted_preds
