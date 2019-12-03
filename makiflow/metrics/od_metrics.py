@@ -146,8 +146,8 @@ def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name
     ----------
     sdd_preds : list
         List of lists [confidences, locs]. In other words, list of the ssdmodel predictions.
-
-    iou_threshold
+    iou_threshold : float
+        IoU threshold.
     conf_threshold
     test_dict
     name2class

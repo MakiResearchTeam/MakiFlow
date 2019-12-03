@@ -206,6 +206,8 @@ def clear_filtered_preds(filtered_preds):
     for filtered_pred in filtered_preds:
         if len(filtered_pred[0]) != 0:
             cleared += [filtered_pred]
+        else:
+            cleared += [([np.array([1., 1., 1., 1.], dtype=np.float32)], [-1], [0.0])]
     return cleared
 
 
