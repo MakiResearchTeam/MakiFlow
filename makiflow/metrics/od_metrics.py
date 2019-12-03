@@ -86,7 +86,7 @@ def ap_per_class(tp, conf, pred_cls, target_cls):
     return p, r, ap, f1, unique_classes.astype("int32")
 
 
-def mAP(pred_boxes, pred_cs, pred_ps, true_boxes, true_cs, iou_th=0.5):
+def mAP(pred_boxes, pred_cs, pred_ps, true_boxes, true_cs, iou_threshold=0.5):
     """
     Parameters
     ----------
@@ -100,6 +100,8 @@ def mAP(pred_boxes, pred_cs, pred_ps, true_boxes, true_cs, iou_th=0.5):
         List of ndarrays of shape [total_preds, 4]. Contains true bboxes for one image.
     true_cs : list
         List of ndarrays of shape [total_preds]. Contains classes for `true_boxes`.
+    iou_threshold : float
+        IoU threshold.
 
     Returns
     -------
@@ -122,7 +124,7 @@ def mAP(pred_boxes, pred_cs, pred_ps, true_boxes, true_cs, iou_th=0.5):
             pred_classes=pred_cs[i],
             true_boxes=true_boxes[i],
             true_classes=true_cs[i],
-            iou_th=iou_th
+            iou_th=iou_threshold
         )]
 
     all_tps = np.concatenate(all_tps, axis=0)
