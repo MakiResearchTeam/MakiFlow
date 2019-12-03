@@ -16,7 +16,8 @@ def _bytes_feature(value):
     """
     if isinstance(value, type(tf.constant(0))) and tf.executing_eagerly():
         value = value.numpy()
-    print('TensorFlow does not run in the eager mode.')
+    else:
+        print('TensorFlow does not run in the eager mode.')
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 

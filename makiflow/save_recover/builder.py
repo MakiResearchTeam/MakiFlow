@@ -9,7 +9,6 @@ from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.models import DetectorClassifier
 from makiflow.models import SSDModel
 from makiflow.models import Segmentator
-from makiflow.models.segmentation.gen_layers import PathGenerator
 from makiflow.models import TextRecognizer
 
 
