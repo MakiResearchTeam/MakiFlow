@@ -183,7 +183,7 @@ def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name
     true_boxes, true_classes = parse_dicts(test_dict, name2class=name2class)
 
     # COMPUTE THE mAP
-    p, r, ap, f1, unique_classes = mAP(
+    return mAP(
         pred_boxes,
         pred_cs,
         pred_ps,
@@ -191,5 +191,4 @@ def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name
         true_classes,
         iou_threshold=iou_threshold
     )
-    return p, r, ap, f1, unique_classes
 
