@@ -111,6 +111,8 @@ def mAP(pred_boxes, pred_cs, pred_ps, true_boxes, true_cs, iou_th=0.5):
         Average precision for each class.
     f1-score : ndarray
         F1-score for each class.
+    unique_classes : ndarray
+        Array of unique classes found during mAP calculation.
     """
     num_images = len(pred_boxes)
     all_tps = []
@@ -138,14 +140,31 @@ def mAP(pred_boxes, pred_cs, pred_ps, true_boxes, true_cs, iou_th=0.5):
 
 
 def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name2class):
+    """
+    A shortcut for calculation mAP.
+    Parameters
+    ----------
+    sdd_preds : list
+        List of lists [confidences, locs]. In other words, list of the ssdmodel predictions.
+
+    iou_threshold
+    conf_threshold
+    test_dict
+    name2class
+
+    Returns
+    -------
+
+    """
     # PROCESS THE SSD PREDICTIONS
     filtered_preds = []
-    for pred in sdd_preds:
-        # bboxes, classes, confidences
-        # `bboxes` is a list of ndarrays
-        # `classes` is a list of ints
-        # `confidences` is a list of floats
-        filtered_preds += [nms(pred[1][0], pred[0][0], conf_threshold=conf_threshold, iou_threshold=iou_threshold)]
+    for confidences, localisations in sdd_preds:
+        for image_confs, image_locs in zip(confidences, localisations):
+            # bboxes, classes, confidences
+            # `bboxes` is a list of ndarrays
+            # `classes` is a list of ints
+            # `confidences` is a list of floats
+            filtered_preds += [nms(image_confs, image_locs, conf_threshold=conf_threshold, iou_threshold=iou_threshold)]
     # Clear the NMS results from empty predictions
     filtered_preds = clear_filtered_preds(filtered_preds)
     # Convert NMS results to separate lists of numpy arrays
@@ -159,7 +178,7 @@ def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name
         pred_ps += [confs]
 
     # PROCESS THE GROUND TRUE LABELS
-    true_boxes, true_classes = parse_dicts(sdd_preds, name2class=name2class)
+    true_boxes, true_classes = parse_dicts(test_dict, name2class=name2class)
 
     # COMPUTE THE mAP
     p, r, ap, f1, unique_classes = mAP(
