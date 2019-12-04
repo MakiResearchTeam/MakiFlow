@@ -80,8 +80,8 @@ class SubCyclicGenerator(PathGenerator):
 
         self.batches_images, self.batches_masks = shuffle(self.batches_images, self.batches_masks)
 
-        self.batches_images = [shuffle(elem) for elem in self.batches_images]
-        self.batches_masks = [shuffle(elem) for elem in self.batches_masks]
+        for i in range(len(self.batches_masks)):
+            self.batches_images[i], self.batches_masks[i] = shuffle(self.batches_images[i], self.batches_masks[i])
 
     def next_element(self):
         current_batch = 0
@@ -91,8 +91,8 @@ class SubCyclicGenerator(PathGenerator):
                     len(self.batches_images[-1]) - 1):
                 self.batches_images, self.batches_masks = shuffle(self.batches_images, self.batches_masks)
 
-                self.batches_images = [shuffle(elem) for elem in self.batches_images]
-                self.batches_masks = [shuffle(elem) for elem in self.batches_masks]
+                for i in range(len(self.batches_masks)):
+                    self.batches_images[i], self.batches_masks[i] = shuffle(self.batches_images[i], self.batches_masks[i])
 
                 current_batch = 0
                 counter_batches = [0 for _ in range(len(self.batches_images))]
