@@ -56,7 +56,7 @@ def merging_masks(masks, index_of_main_mask, priority):
         The base mask after merging other classes.
     """
 
-    # For easy access
+    # For easy access and stay `masks[index_of_main_mask]` unchanged
     main_mask = copy.deepcopy(masks[index_of_main_mask])
 
     # Thanks to the `boolean_mask` higher priority class will not be erased
@@ -76,8 +76,5 @@ def merging_masks(masks, index_of_main_mask, priority):
             boolean_mask[masks[i] == prior] = False
 
     return main_mask
-
-
-
 
 
