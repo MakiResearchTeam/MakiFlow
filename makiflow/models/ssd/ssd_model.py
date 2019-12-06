@@ -1039,6 +1039,7 @@ class SSDModel(MakiModel):
         )
         total_loss = self._loc_loss * self._loc_loss_weight + self._maki_loss
         self._final_maki_loss = self._build_final_loss(total_loss)
+        self._maki_loss_is_build = True
 
     def _setup_maki_loss_inputs(self):
         pass
@@ -1242,6 +1243,7 @@ class SSDModel(MakiModel):
         )
         total_loss = self._loc_loss * self._loc_loss_weight + self._quadratic_ce_loss
         self._final_quadratic_ce_loss = self._build_final_loss(total_loss)
+        self._quadratic_ce_loss_is_build = True
 
     def _setup_quadratic_ce_loss_inputs(self):
         pass

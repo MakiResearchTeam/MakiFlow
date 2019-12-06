@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from makiflow.augmentation.segmentation.base import Augmentor
+from makiflow.augmentation.base import Augmentor
 
 
 class Data(Augmentor):

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from makiflow.augmentation.segmentation.base import AugmentOp, Augmentor
+from makiflow.augmentation.base import AugmentOp, Augmentor
 from scipy.ndimage import gaussian_filter
 import numpy as np
 import cv2
