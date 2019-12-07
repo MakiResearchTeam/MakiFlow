@@ -109,7 +109,7 @@ class DataPreparatorV2:
         labels_arr = []
         loc_masks_arr = []
         locs_arr = []
-        for true_boxes, true_labels in zip(self._true_boxes, self._true_labels):
+        for true_boxes, true_labels in tqdm(zip(self._true_boxes, self._true_labels)):
             labels, locs, loc_mask = prepare_data_v2(true_boxes, true_labels, default_boxes, iou_threshold)
             labels_arr += [labels]
             locs_arr += [locs]
