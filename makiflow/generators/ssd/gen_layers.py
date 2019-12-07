@@ -37,9 +37,9 @@ class InputGenLayerV1(GenLayer):
         """
         self.prefetch_size = prefetch_size
         self.batch_size = batch_size
-        self.iterator = self.build_iterator(tf_records, map_operation, num_parallel_calls)
         self.shuffle = shuffle
         self.buffer_size = buffer_size
+        self.iterator = self.build_iterator(tf_records, map_operation, num_parallel_calls)
         super().__init__(
             name=name,
             input_image=self.iterator[ImageIterator.image]
