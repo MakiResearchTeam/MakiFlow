@@ -9,12 +9,6 @@ class MapMethod:
         pass
 
 
-class TFRMapMethod:
-    @abstractmethod
-    def read_record(self, serialized_example):
-        pass
-
-
 class PostMapMethod(MapMethod):
     def __init__(self):
         self._parent_method = None

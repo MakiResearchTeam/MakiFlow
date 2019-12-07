@@ -5,6 +5,7 @@ import os
 import numpy as np
 from sklearn.utils import shuffle
 
+
 class CyclicGenerator(PathGenerator):
     def __init__(self, path_images, path_masks):
         """
@@ -34,6 +35,7 @@ class CyclicGenerator(PathGenerator):
             index += 1
 
             yield el
+
 
 class RandomGenerator(PathGenerator):
     def __init__(self, path_images, path_masks):
