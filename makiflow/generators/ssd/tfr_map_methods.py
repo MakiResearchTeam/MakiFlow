@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import tensorflow as tf
-from makiflow.generators.gen_base import TFRMapMethod, SSDIterator
+from makiflow.generators.gen_base import SSDIterator
+from makiflow.generators.tfr_gen_base import TFRMapMethod
 from makiflow.generators.ssd.data_preparation import IMAGE_FNAME, LABEL_FNAME, LOC_FNAME, LOC_MASK_FNAME
 
 
