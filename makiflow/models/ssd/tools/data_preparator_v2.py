@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from makiflow.models.ssd.ssd_utils import resize_images_and_bboxes, prepare_data_v2
+from makiflow.models.ssd.ssd_utils import resize_images_and_bboxes_v2, prepare_data_v2
 from makiflow.metrics.od_utils import parse_dicts
 from tqdm import tqdm
 import cv2
@@ -76,7 +76,7 @@ class DataPreparatorV2:
         new_size : tuple
             Contains new width and height. Example: (300, 300).
         """
-        images, bboxes = resize_images_and_bboxes(self._images, self._bboxes, new_size)
+        images, bboxes = resize_images_and_bboxes_v2(self._images, self._bboxes, new_size)
         del self._images
         del self._bboxes
         self._images = images
