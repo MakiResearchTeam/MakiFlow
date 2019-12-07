@@ -123,7 +123,7 @@ class DataPreparatorV2:
 
         self._last_labels = np.vstack(labels_arr)
         self._last_masks = np.vstack(loc_masks_arr)
-        self._last_locs = np.vstack(locs_arr)
+        self._last_locs = np.concatenate(locs_arr, axis=0)
         return self._last_masks, self._last_labels, self._last_locs
 
     def get_last_masks_labels_locs(self):
