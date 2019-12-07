@@ -144,8 +144,8 @@ def prepare_data_v2(true_boxes, true_labels, dboxes, iou_threshold=0.5):
         Ndarray of localization masks (float32).
     """
     num_predictions = len(dboxes)
-    loc_mask = np.zeros(num_predictions, dtype=np.int8)
-    labels = np.zeros(num_predictions, dtype=np.int8)
+    loc_mask = np.zeros(num_predictions, dtype=np.int32)
+    labels = np.zeros(num_predictions, dtype=np.int32)
     # Difference between ground true box and default box. Need it for the later loss calculation.
     locs = np.zeros((num_predictions, 4), dtype=np.float32)
     for i in range(len(true_boxes)):
