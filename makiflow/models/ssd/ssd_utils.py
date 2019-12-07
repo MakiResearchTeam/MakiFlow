@@ -83,7 +83,7 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
                     }, 
         where class1, class2, class3 are ints.
     dboxes : array like
-        Default boxes array has taken from the SSD.
+        Default boxes array taken from the SSD.
     iou_trashhold : float
         Jaccard index dbox must exceed to be marked as positive.
          
@@ -117,6 +117,50 @@ def prepare_data(image_info, dboxes, iou_trashhold=0.5):
     return {'loc_mask': loc_mask,
             'labels': labels,
             'gt_locs': locs}
+
+
+def prepare_data_v2(true_boxes, true_labels, dboxes, iou_threshold=0.5):
+    """
+    Converts training data to appropriate format for the training.
+
+    Parameters
+    ----------
+    true_boxes : ndarray
+        Contains true bboxes for one image.
+    true_labels : ndarray
+        Contains labels for `true_boxes`.
+    dboxes : array like
+        Default boxes array taken from the SSD.
+    iou_threshold : float
+        Jaccard index dbox must exceed to be marked as positive.
+
+    Returns
+    -------
+    labels : ndarray
+        Ndarray of labels (int32).
+    locs : ndarray
+        Ndarray of binary localization masks (float32).
+    loc_mask : ndarray
+        Ndarray of localization masks (float32).
+    """
+    num_predictions = len(dboxes)
+    loc_mask = np.zeros(num_predictions, dtype=np.int8)
+    labels = np.zeros(num_predictions, dtype=np.int8)
+    # Difference between ground true box and default box. Need it for the later loss calculation.
+    locs = np.zeros((num_predictions, 4), dtype=np.float32)
+    for i in range(len(true_boxes)):
+        true_box_stack = np.vstack([true_boxes[i]] * num_predictions)
+        jaccard_indexes = jaccard_index(true_box_stack, dboxes)
+        # Choose positive dboxes
+        jaccard_boolean = jaccard_indexes > iou_threshold
+        # Mark positive dboxes
+        loc_mask = jaccard_boolean | loc_mask
+        # Mark positive dboxes with labels
+        labels[jaccard_boolean] = true_labels[i]
+        # Calculate localizations for positive dboxes
+        locs[jaccard_boolean] = true_boxes[i] - dboxes[jaccard_boolean]
+
+    return labels.astype(np.int32), locs, loc_mask.astype(np.float32)
 
 
 def draw_bounding_boxes(image, bboxes_with_classes):
@@ -193,6 +237,44 @@ def resize_images_and_bboxes(image_array, bboxes_array, new_size):
         i += 1
 
     return new_image_array, new_bboxes_array
+
+
+def resize_images_and_bboxes_v2(images, bboxes, new_size):
+    """
+    Resizes images accordingly to `new_size`.
+    Parameters
+    ----------
+    images : list
+        List of images (ndarrays).
+    bboxes : list
+        List of images (ndarrays).
+    new_size : tuple
+        (new_width, new_height).
+
+    Returns
+    -------
+    new_images : list
+        Resized images. Same structure as `images`.
+    new_bboxes : list
+        Resized bboxes. Same structure as `true_boxes`.
+    """
+    new_images = []
+    new_bboxes = []
+
+    for image, bboxes in tqdm(zip(images, bboxes)):
+        image_dims = image.shape[:2]
+        width_ratio = new_size[0] / image_dims[1]
+        height_ratio = new_size[1] / image_dims[0]
+        new_images += [cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)]
+        # Creating new bbox
+        n_bboxes = np.copy(bboxes)
+        n_bboxes[:, 0] *= width_ratio
+        n_bboxes[:, 2] *= width_ratio
+        n_bboxes[:, 1] *= height_ratio
+        n_bboxes[:, 3] *= height_ratio
+        new_bboxes += [n_bboxes]
+
+    return new_images, new_bboxes
 
 
 def nms(pred_bboxes, pred_confs, conf_trashhold=0.4, iou_trashhold=0.1, background_class=0):
