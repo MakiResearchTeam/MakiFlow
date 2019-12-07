@@ -136,15 +136,16 @@ def prepare_data_v2(true_boxes, true_labels, dboxes, iou_threshold=0.5):
 
     Returns
     -------
+    loc_mask : ndarray
+        Mask vector for positive in-image samples (float32).
     labels : ndarray
         Ndarray of labels (int32).
     locs : ndarray
         Ndarray of binary localization masks (float32).
-    loc_mask : ndarray
-        Ndarray of localization masks (float32).
+
     """
     num_predictions = len(dboxes)
-    loc_mask = np.zeros(num_predictions, dtype=np.int32)
+    mask = np.zeros(num_predictions, dtype=np.int32)
     labels = np.zeros(num_predictions, dtype=np.int32)
     # Difference between ground true box and default box. Need it for the later loss calculation.
     locs = np.zeros((num_predictions, 4), dtype=np.float32)
@@ -154,13 +155,13 @@ def prepare_data_v2(true_boxes, true_labels, dboxes, iou_threshold=0.5):
         # Choose positive dboxes
         jaccard_boolean = jaccard_indexes > iou_threshold
         # Mark positive dboxes
-        loc_mask = jaccard_boolean | loc_mask
+        mask = jaccard_boolean | mask
         # Mark positive dboxes with labels
         labels[jaccard_boolean] = true_labels[i]
         # Calculate localizations for positive dboxes
         locs[jaccard_boolean] = true_boxes[i] - dboxes[jaccard_boolean]
 
-    return labels.astype(np.int32), locs, loc_mask.astype(np.float32)
+    return mask.astype(np.float32), labels.astype(np.int32), locs
 
 
 def draw_bounding_boxes(image, bboxes_with_classes):

@@ -100,18 +100,18 @@ class DataPreparatorV2:
         -------
         masks : numpy array
             Mask vector for positive detections.
-        labels : numpy array
-            Vector with sparse labels of the classes. Labels are of type numpy.int32.
         locs : numpy array
             Vector contain differences in coordinates between ground truth boxes and default boxes which
             will be used for the calculation of the localization loss.
+        labels : numpy array
+            Vector with sparse labels of the classes. Labels are of type numpy.int32.
         """
         labels_arr = []
         loc_masks_arr = []
         locs_arr = []
         num_true_boxes = len(self._true_boxes)
         for i in tqdm(range(num_true_boxes)):
-            labels, locs, loc_mask = prepare_data_v2(
+            mask, labels, locs = prepare_data_v2(
                 self._true_boxes[i],
                 self._true_labels[i],
                 default_boxes,
@@ -119,15 +119,26 @@ class DataPreparatorV2:
             )
             labels_arr += [labels]
             locs_arr += [locs]
-            loc_masks_arr += [loc_mask]
+            loc_masks_arr += [mask]
 
         self._last_labels = np.vstack(labels_arr)
-        self._last_loc_masks = np.vstack(loc_masks_arr)
+        self._last_masks = np.vstack(loc_masks_arr)
         self._last_locs = np.vstack(locs_arr)
-        return self._last_loc_masks, self._last_labels, self._last_locs
+        return self._last_masks, self._last_labels, self._last_locs
 
     def get_last_masks_labels_locs(self):
-        return self._last_labels, self._last_loc_masks, self._last_locs
+        """
+        Returns
+        -------
+        masks : numpy array
+            Mask vector for positive detections.
+        labels : numpy array
+            Vector with sparse labels of the classes. Labels are of type numpy.int32.
+        locs : numpy array
+            Vector contain differences in coordinates between ground truth boxes and default boxes which
+            will be used for the calculation of the localization loss.
+        """
+        return self._last_masks, self._last_labels, self._last_locs
 
     def normalize_images(self):
         """
