@@ -14,8 +14,7 @@ class Augmentor(ABC):
         return self._img_shape
 
 
-class AugmentOp(Augmentor):
-    @abstractmethod
+class AugmentOp(Augmentor, ABC):
     def __call__(self, data: Augmentor)->Augmentor:
         self._data = data
         self._img_shape = data._get_shape()
