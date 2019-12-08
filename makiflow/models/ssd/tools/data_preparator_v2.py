@@ -70,7 +70,6 @@ class DataPreparatorV2:
         images, bboxes = resize_images_and_bboxes_v2(self._images, self._true_boxes, new_size)
         self._images = images
         self._true_boxes = bboxes
-        self._collect_image_info()
 
     def generate_masks_labels_locs(self, default_boxes, iou_threshold=0.5):
         """
@@ -153,7 +152,7 @@ class DataPreparatorV2:
         return self._images
 
     def get_bboxes(self):
-        return self._bboxes
+        return self._true_boxes
 
     def get_true_boxes_labels(self):
         return self._true_boxes, self._true_labels
