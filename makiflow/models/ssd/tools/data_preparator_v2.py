@@ -45,26 +45,17 @@ class DataPreparatorV2:
     def load_images(self):
         print('Loading images, bboxes and labels...')
         self._images = []
-        self._bboxes = []
-        self._labels = []
+
         # For later usage in normalizing method
         self._images_normalized = False
 
         for annotation in tqdm(self._annotation_dict):
             image = cv2.imread(self._path_to_data + annotation['filename'])
-            bboxes = []
-            labels = []
-
-            for gt_object in annotation['objects']:
-                bboxes.append(gt_object['box'])
-                labels.append(self._name2num[gt_object['name']])
-
             self._images.append(image)
-            self._bboxes.append(bboxes)
-            self._labels.append(labels)
+        self._collect_image_info()
         print('Images, bboxes and labels are loaded.')
 
-    def __collect_image_info(self):
+    def _collect_image_info(self):
         self._true_boxes, self._true_labels = parse_dicts(self._annotation_dict, self._name2num)
 
     def resize_images_and_bboxes(self, new_size):
@@ -76,12 +67,10 @@ class DataPreparatorV2:
         new_size : tuple
             Contains new width and height. Example: (300, 300).
         """
-        images, bboxes = resize_images_and_bboxes_v2(self._images, self._bboxes, new_size)
-        del self._images
-        del self._bboxes
+        images, bboxes = resize_images_and_bboxes_v2(self._images, self._true_boxes, new_size)
         self._images = images
-        self._bboxes = bboxes
-        self.__collect_image_info()
+        self._true_boxes = bboxes
+        self._collect_image_info()
 
     def generate_masks_labels_locs(self, default_boxes, iou_threshold=0.5):
         """
