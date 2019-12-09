@@ -114,6 +114,7 @@ class GaussianBlur(AugmentOp):
         std_y : float
             Gaussian kernel standard deviating in X direction. Higher the deviation, 'blurier' the image is.
         """
+        super().__init__()
         self.ksize = ksize
         self.std_x = std_x
         self.std_y = std_y
