@@ -2,12 +2,28 @@ from __future__ import absolute_import
 from makiflow.augmentation.base import AugmentOp, Augmentor
 import cv2
 import numpy as np
+from makiflow.augmentation.object_detection.utils import hor_flip_bboxes, ver_flip_bboxes, horver_flip_bboxes
+
+
+class FlipType:
+    FLIP_HORIZONTALLY = 1
+    FLIP_VERTICALLY = 0
+    FLIP_BOTH = -1
+
+    @staticmethod
+    def flip_bboxes(bboxes, flip_type, img_w, img_h):
+        if flip_type == FlipType.FLIP_HORIZONTALLY:
+            bboxes = hor_flip_bboxes(bboxes, img_w)
+        elif flip_type == FlipType.FLIP_VERTICALLY:
+            bboxes = ver_flip_bboxes(bboxes, img_h)
+        elif flip_type == FlipType.FLIP_BOTH:
+            bboxes = horver_flip_bboxes(bboxes, img_w, img_h)
+        else:
+            raise RuntimeError(f'Unknown flip type: {flip_type}. Allowed 1, 0, -1.')
+        return bboxes
 
 
 class FlipAugment(AugmentOp):
-    FLIP_HORIZONTALLY = 1
-    FLIP_VERTICALLY = 0
-
     def __init__(self, flip_type_list, keep_old_data=True):
         """
         Flips the image and the corresponding bounding boxes.
@@ -16,8 +32,9 @@ class FlipAugment(AugmentOp):
         flip_type_list : list or tuple
             Add to final dataset image with entered type of flip
             Available options:
-                FlipAugment.FLIP_HORIZONTALLY;
-                FlipAugment.FLIP_VERTICALLY
+                FlipType.FLIP_HORIZONTALLY;
+                FlipType.FLIP_VERTICALLY;
+                FlipType.FLIP_BOTH;
         keep_old_data : bool
             Set to false if you don't want to include unaugmented images into the final data set.
         """
@@ -33,7 +50,7 @@ class FlipAugment(AugmentOp):
         two arrays
             Augmented images and masks.
         """
-        img_w = self._img_shape[1]  # [img_h, img_w, channels]
+        img_h, img_w = self._img_shape[0], self._img_shape[1]  # [img_h, img_w, channels]
         old_imgs, old_bboxes, old_classes = self._data.get_data()
 
         new_imgs, new_bboxes, new_classes = [], [], []
@@ -42,9 +59,7 @@ class FlipAugment(AugmentOp):
                 # Append images
                 new_imgs.append(cv2.flip(img, flip_type))
                 # Flip bboxes
-                new_bboxs = np.copy(bboxes)
-                new_bboxs[:, 0] = img_w - bboxes[:, 2]
-                new_bboxs[:, 2] = img_w - bboxes[:, 0]
+                new_bboxs = FlipType.flip_bboxes(bboxes, flip_type, img_w, img_h)
                 new_bboxes.append(new_bboxs)
                 # Append classes
                 new_classes.append(classes)

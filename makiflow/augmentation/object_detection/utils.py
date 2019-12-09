@@ -9,8 +9,13 @@ def hor_flip_bboxes(bboxes, img_w):
 
 
 def ver_flip_bboxes(bboxes, img_h):
-    pass
+    new_bboxs = np.copy(bboxes)
+    new_bboxs[:, 1] = img_h - bboxes[:, 3]
+    new_bboxs[:, 3] = img_h - bboxes[:, 1]
+    return new_bboxs
 
 
 def horver_flip_bboxes(bboxes, img_w, img_h):
-    pass
+    bboxes = hor_flip_bboxes(bboxes, img_w)
+    bboxes = ver_flip_bboxes(bboxes, img_h)
+    return bboxes
