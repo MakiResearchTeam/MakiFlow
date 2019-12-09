@@ -176,7 +176,8 @@ class GaussianNoiseAugment(AugmentOp):
         image_shape = self._img_shape
         self.noise = []
         for _ in range(self.noise_tensors_num):
-            self.noise += [np.random.randn(*image_shape).astype(np.float32)]
+            noise = np.random.randn(*image_shape) * self.std + self.mean
+            self.noise += [noise.astype(np.float32)]
 
     def get_data(self):
         old_imgs, old_bboxes, old_classes = self._data.get_data()
