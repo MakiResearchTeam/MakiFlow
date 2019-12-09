@@ -1,3 +1,4 @@
 from __future__ import absolute_import
-from makiflow.augmentation.object_detection.augment_ops import FlipAugment
+from makiflow.augmentation.object_detection.augment_ops import FlipAugment, GaussianBlur, GaussianNoiseAugment, \
+    ContrastBrightnessAugment
 from makiflow.augmentation.object_detection.data_provider import Data
