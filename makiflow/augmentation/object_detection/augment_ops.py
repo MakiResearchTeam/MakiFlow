@@ -91,11 +91,50 @@ class ContrastBrightnessAugment(AugmentOp):
                 elif self.clip_type == ContrastBrightnessAugment.clip_float:
                     new_image = np.clip(new_image, 0.0, 1.0).astype(np.float32)
                 else:
-                    raise RuntimeError(f'Uknown clip type: {self.clip_type}')
+                    raise RuntimeError(f'Unknown clip type: {self.clip_type}')
                 new_imgs += [new_image]
 
         if self.keep_old_data:
             new_imgs += old_imgs
             new_bboxes += old_bboxes
             new_classes += old_classes
+        return new_imgs, new_bboxes, new_classes
+
+
+class GaussianBlur(AugmentOp):
+    def __init__(self, ksize=(3, 3), std_x=0.65, std_y=0.65, keep_old_data=True):
+        """
+        Blurs images using gaussian filter.
+        Parameters
+        ----------
+        ksize : tuple
+            Gaussian kernel size.
+        std_x : float
+            Gaussian kernel standard deviating in X direction. Higher the deviation, 'blurier' the image is.
+        std_y : float
+            Gaussian kernel standard deviating in X direction. Higher the deviation, 'blurier' the image is.
+        """
+        self.ksize = ksize
+        self.std_x = std_x
+        self.std_y = std_y
+        self.keep_old_data = keep_old_data
+
+    def get_data(self):
+        old_imgs, old_bboxes, old_classes = self._data.get_data()
+        new_imgs = []
+        new_bboxes = old_bboxes
+        new_classes = old_classes
+        for image in old_imgs:
+            new_imgs += [cv2.GaussianBlur(
+                src=image,
+                ksize=self.ksize,
+                sigmaX=self.std_x,
+                sigmaY=self.std_y
+            )]
+
+        if self.keep_old_data:
+            new_imgs += old_imgs
+            new_bboxes += old_bboxes
+            new_classes += old_classes
+
         return new_imgs, new_bboxes, new_classes
