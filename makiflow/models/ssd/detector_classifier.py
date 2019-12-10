@@ -9,8 +9,12 @@ class DetectorClassifier:
     conv layers -> detector -> confidences + localization regression.
     """
 
-    def __init__(self, reg_fms: MakiTensor, rkw, rkh, rin_f,
-                 class_fms: MakiTensor, ckw, ckh, cin_f, num_classes, dboxes: list, name):
+    def __init__(
+            self, reg_fms: MakiTensor, rkw, rkh, rin_f,
+            class_fms: MakiTensor, ckw, ckh, cin_f,
+            num_classes, dboxes: list, name,
+            use_reg_bias=True, use_class_bias=True
+    ):
         """
         Parameters
         ----------
@@ -59,12 +63,14 @@ class DetectorClassifier:
         self.class_number = num_classes
         self._dboxes = dboxes
         self.name = str(name)
+        self.use_class_bias = use_class_bias
+        self.use_reg_bias = use_reg_bias
 
         classifier_out_f = num_classes * len(dboxes)
         bb_regressor_out_f = 4 * len(dboxes)
-        self.classifier = ConvLayer(ckw, ckh, cin_f, classifier_out_f,
+        self.classifier = ConvLayer(ckw, ckh, cin_f, classifier_out_f, use_bias=use_class_bias,
                                     activation=None, padding='SAME', name='SSDClassifier_' + str(name))
-        self.bb_regressor = ConvLayer(rkw, rkh, rin_f, bb_regressor_out_f,
+        self.bb_regressor = ConvLayer(rkw, rkh, rin_f, bb_regressor_out_f, use_bias=use_reg_bias,
                                       activation=None, padding='SAME', name='SSDBBDetector_' + str(name))
         self._make_detections()
 
@@ -119,10 +125,12 @@ class DetectorClassifier:
                 'rkw': self.rkw,
                 'rkh': self.rkh,
                 'rin_f': self.rin_f,
+                'use_reg_bias': self.use_reg_bias,
                 'class_x_name': self.class_x.get_name(),
                 'ckw': self.ckw,
                 'ckh': self.ckh,
                 'cin_f': self.cin_f,
+                'use_class_bias': self.use_class_bias,
                 'class_number': self.class_number,
                 'dboxes': self._dboxes,
                 'name': self.name

@@ -72,10 +72,12 @@ class Builder:
         rkw = params['rkw']
         rkh = params['rkh']
         rin_f = params['rin_f']
+        use_reg_bias = params['use_reg_bias']
 
         ckw = params['ckw']
         ckh = params['ckh']
         cin_f = params['cin_f']
+        use_class_bias = params['use_class_bias']
 
         reg_x = inputs_outputs[params['reg_x_name']]
         class_x = inputs_outputs[params['class_x_name']]
@@ -83,7 +85,8 @@ class Builder:
         return DetectorClassifier(
             reg_fms=reg_x, rkw=rkw, rkh=rkh, rin_f=rin_f,
             class_fms=class_x, ckw=ckw, ckh=ckh, cin_f=cin_f,
-            num_classes=class_number, dboxes=dboxes, name=name
+            num_classes=class_number, dboxes=dboxes, name=name,
+            use_class_bias=use_class_bias, use_reg_bias=use_reg_bias
         )
 
     @staticmethod
