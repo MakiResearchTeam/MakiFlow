@@ -49,7 +49,7 @@ def prepare_data_wh(true_boxes, true_labels, dboxes_wh, iou_threshold=0.5):
 
 
 def _g_hat(gbox, bboxes_wh):
-    g_hat_cx = ((gbox[0] - bboxes_wh[:, 0]) / bboxes_wh[:, 2]).reshape(1, 1)
+    g_hat_cx = ((gbox[0] - bboxes_wh[:, 0]) / bboxes_wh[:, 2]).reshape(-1, 1)
     g_hat_cy = ((gbox[1] - bboxes_wh[:, 1]) / bboxes_wh[:, 3]).reshape(-1, 1)
     g_hat_w = np.log(gbox[2] / bboxes_wh[:, 2]).reshape(-1, 1)
     g_hat_h = np.log(gbox[:, :, 3] / bboxes_wh[:, 3]).reshape(-1, 1)
