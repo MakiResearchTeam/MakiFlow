@@ -3,7 +3,7 @@ from makiflow.metrics.od_utils import jaccard_index
 import numpy as np
 
 
-def prepare_data_wh(true_boxes, true_labels, dboxes_wh, iou_threshold=0.5):
+def prepare_data_wh(true_boxes, true_labels, dboxes_wh, dboxes_xy, iou_threshold=0.5):
     """
     Converts training data to appropriate format for the training.
 
@@ -35,7 +35,7 @@ def prepare_data_wh(true_boxes, true_labels, dboxes_wh, iou_threshold=0.5):
     offsets = np.zeros((num_predictions, 4), dtype=np.float32)
     for i in range(len(true_boxes)):
         true_box_stack = np.vstack([true_boxes[i]] * num_predictions)
-        jaccard_indexes = jaccard_index(true_box_stack, dboxes_wh)
+        jaccard_indexes = jaccard_index(true_box_stack, dboxes_xy)
         # Choose positive dboxes
         jaccard_boolean = jaccard_indexes > iou_threshold
         # Mark positive dboxes
