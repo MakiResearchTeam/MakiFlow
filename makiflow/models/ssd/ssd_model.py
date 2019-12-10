@@ -73,12 +73,10 @@ class SSDModel(MakiModel):
         # (x, y, w, h) -----> (x1, y1, x2, y2)
         self.dboxes_xy = bboxes_wh2xy(self.dboxes_wh)
         # Adjusting dboxes
-        self._correct_dboxes_xy()
-        # Reassign WH dboxes to corrected values.
-        self.dboxes_wh = bboxes_xy2wh(self.dboxes_xy)
+        self._correct_dboxes()
         self.total_predictions = len(self.dboxes_xy)
 
-    def _correct_dboxes_xy(self):
+    def _correct_dboxes(self):
         img_w = self.input_shape[2]
         img_h = self.input_shape[1]
 
@@ -86,6 +84,9 @@ class SSDModel(MakiModel):
         self.dboxes_xy[:, 1] = np.clip(self.dboxes_xy[:, 1], 0., img_h)  # y1
         self.dboxes_xy[:, 2] = np.clip(self.dboxes_xy[:, 2], 0., img_w)  # x2
         self.dboxes_xy[:, 3] = np.clip(self.dboxes_xy[:, 3], 0., img_h)  # x3
+
+        # Reassign WH dboxes to corrected values.
+        self.dboxes_wh = bboxes_xy2wh(self.dboxes_xy)
 
     # noinspection PyMethodMayBeStatic
     def _default_box_generator(self, image_width, image_height, width, height, dboxes):

@@ -8,6 +8,7 @@ from makiflow.layers import *
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.models import DetectorClassifier
 from makiflow.models import SSDModel
+from makiflow.models.ssd.ssd_model import OffsetRegression
 from makiflow.models import Segmentator
 from makiflow.models import TextRecognizer
 
@@ -34,7 +35,7 @@ class Builder:
         return Classificator(input=in_x, output=out_x, name=model_name)
 
     @staticmethod
-    def ssd_from_json(json_path, batch_size=None, generator=None):
+    def ssd_from_json(json_path, batch_size=None, generator=None, offset_reg_type=OffsetRegression.DUMMY):
         """Creates and returns SSDModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
@@ -59,7 +60,7 @@ class Builder:
 
         print('Model is recovered.')
 
-        return SSDModel(dcs=dcs, input_s=input_s, name=name)
+        return SSDModel(dcs=dcs, input_s=input_s, name=name, offset_reg_type=offset_reg_type)
 
     @staticmethod
     def __detector_classifier_from_dict(dc_dict, inputs_outputs):
