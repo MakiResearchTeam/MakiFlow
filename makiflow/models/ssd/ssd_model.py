@@ -190,7 +190,7 @@ class SSDModel(MakiModel):
         elif self.regression_type == OffsetRegression.RCNN_LIKE:
             cx = self.dboxes_wh[:, 2] * self.offsets_tensor[:, :, 0] + self.dboxes_wh[:, 0]  # db_w * p_cx + db_cx
             cy = self.dboxes_wh[:, 3] * self.offsets_tensor[:, :, 1] + self.dboxes_wh[:, 1]  # db_h * p_cy + db_cy
-            w_h = tf.exp(self.offsets_tensor[:, :, 2])  # exponentiate width and height, magic math
+            w_h = tf.exp(self.offsets_tensor[:, :, 2:])  # exponentiate width and height, magic math
             w = self.dboxes_wh[:, 2] * w_h[:, :, 0]  # times width
             h = self.dboxes_wh[:, 3] * w_h[:, :, 1]  # times height
             # [batch_sz, num_predictions] -> [batch_sz, num_predictions, 1]
