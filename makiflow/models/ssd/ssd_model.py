@@ -200,7 +200,16 @@ class SSDModel(MakiModel):
             w = tf.expand_dims(w, axis=-1)
             h = tf.expand_dims(h, axis=-1)
             predicted_bboxes_wh = tf.concat([cx, cy, w, h], axis=2)
-            self.predicted_boxes = bboxes_wh2xy(predicted_bboxes_wh)
+            # Convert predicted bboxes to XY format
+            up_x = predicted_bboxes_wh[:, 0] - predicted_bboxes_wh[:, 2] / 2.  # up_x
+            up_y = predicted_bboxes_wh[:, 1] - predicted_bboxes_wh[:, 3] / 2.  # up_y
+            bot_x = predicted_bboxes_wh[:, 0] + predicted_bboxes_wh[:, 2] / 2.  # bot_x
+            bot_y = predicted_bboxes_wh[:, 1] + predicted_bboxes_wh[:, 3] / 2.  # bot_y
+            up_x = tf.expand_dims(up_x, axis=-1)
+            up_y = tf.expand_dims(up_y, axis=-1)
+            bot_x = tf.expand_dims(bot_x, axis=-1)
+            bot_y = tf.expand_dims(bot_y, axis=-1)
+            self.predicted_boxes = tf.concat([up_x, up_y, bot_x, bot_y], axis=2)
         else:
             raise ValueError(f'Unknown offset regression type: {self.regression_type}')
 
