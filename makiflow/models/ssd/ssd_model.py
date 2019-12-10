@@ -73,22 +73,19 @@ class SSDModel(MakiModel):
         # (x, y, w, h) -----> (x1, y1, x2, y2)
         self.dboxes_xy = bboxes_wh2xy(self.dboxes_wh)
         # Adjusting dboxes
-        self._correct_default_boxes(self.dboxes_xy)
+        self._correct_dboxes_xy()
         # Reassign WH dboxes to corrected values.
         self.dboxes_wh = bboxes_xy2wh(self.dboxes_xy)
         self.total_predictions = len(self.dboxes_xy)
 
-    def _correct_default_boxes(self, dboxes):
-        max_x = self.input_shape[1]
-        max_y = self.input_shape[2]
+    def _correct_dboxes_xy(self):
+        img_w = self.input_shape[2]
+        img_h = self.input_shape[1]
 
-        for i in range(len(dboxes)):
-            # Check top left point
-            dboxes[i][0] = max(0, dboxes[i][0])
-            dboxes[i][1] = max(0, dboxes[i][1])
-            # Check bottom right point
-            dboxes[i][2] = min(max_x, dboxes[i][2])
-            dboxes[i][3] = min(max_y, dboxes[i][3])
+        self.dboxes_xy[:, 0] = np.clip(self.dboxes_xy[:, 0], 0., img_w)  # x1
+        self.dboxes_xy[:, 1] = np.clip(self.dboxes_xy[:, 1], 0., img_h)  # y1
+        self.dboxes_xy[:, 2] = np.clip(self.dboxes_xy[:, 2], 0., img_w)  # x2
+        self.dboxes_xy[:, 3] = np.clip(self.dboxes_xy[:, 3], 0., img_h)  # x3
 
     # noinspection PyMethodMayBeStatic
     def _default_box_generator(self, image_width, image_height, width, height, dboxes):
@@ -136,6 +133,12 @@ class SSDModel(MakiModel):
             boxes_list.append(boxes)
 
         return np.vstack(boxes_list)
+
+    def get_dboxes_xy(self):
+        return self.dboxes_xy
+
+    def get_dboxes_wh(self):
+        return self.dboxes_wh
 
     def get_dbox(self, dc_block_ind, dbox_category, x_pos, y_pos):
         dcblock_dboxes_to_pass = 0
