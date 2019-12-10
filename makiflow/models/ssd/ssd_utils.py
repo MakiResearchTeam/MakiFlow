@@ -398,4 +398,4 @@ def bboxes_wh2xy(bboxes_wh):
     bboxes_xy[:, 1] = bboxes_wh[:, 1] - bboxes_wh[:, 3] / 2  # up_y
     bboxes_xy[:, 2] = bboxes_wh[:, 0] + bboxes_wh[:, 2] / 2  # bot_x
     bboxes_xy[:, 3] = bboxes_wh[:, 1] + bboxes_wh[:, 3] / 2  # bot_y
-    return bboxes_wh
+    return bboxes_xy

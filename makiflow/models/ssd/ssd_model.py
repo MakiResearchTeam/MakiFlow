@@ -63,7 +63,7 @@ class SSDModel(MakiModel):
             height = fmap_shape[1]
             width = fmap_shape[2]
             dboxes = dc.get_dboxes()
-            default_boxes = self._default_box_generator(self.input_shape[1], self.input_shape[2],
+            default_boxes = self._default_box_generator(self.input_shape[2], self.input_shape[1],
                                                         width, height, dboxes)
             self.dboxes_wh.append(default_boxes)
             self.dc_block_feature_map_sizes.append((width, height))
