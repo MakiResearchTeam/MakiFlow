@@ -8,7 +8,7 @@ class InputGenLayerV1(GenLayer):
     def __init__(
             self, prefetch_size, batch_size, tf_records, name,
             map_operation: TFRMapMethod, num_parallel_calls=None,
-            shuffle=False, buffer_size=512
+            shuffle=False, buffer_size=512, tfr_buffer_size=None
     ):
         """
 
@@ -34,11 +34,16 @@ class InputGenLayerV1(GenLayer):
             A scalar, representing the number of elements from this dataset from which the new dataset will sample.
             Perfect shuffling is done by setting `buffer_size` to the size of the dataset itself, but it
             requires a buffer which has a size of the dataset.
+        tfr_buffer_size : int
+            A scalar representing the number of bytes in the read buffer. If your input pipeline is I/O
+            bottlenecked, consider setting this parameter to a value 1-100 MBs. If None, a sensible default for both
+            local and remote file systems is used.
         """
         self.prefetch_size = prefetch_size
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.buffer_size = buffer_size
+        self.tfr_buffer_size = tfr_buffer_size
         self.iterator = self.build_iterator(tf_records, map_operation, num_parallel_calls)
         super().__init__(
             name=name,
@@ -47,9 +52,10 @@ class InputGenLayerV1(GenLayer):
 
     def build_iterator(self, tf_records, map_operation: TFRMapMethod, num_parallel_calls):
         dataset = tf.data.TFRecordDataset(
-            tf_records
+            tf_records,
+            buffer_size=self.tfr_buffer_size
         )
-        dataset = dataset.repeat(-1)
+        dataset = dataset.repeat(-1)  # repeat infinitely
         dataset = dataset.map(map_func=map_operation.read_record, num_parallel_calls=num_parallel_calls)
         # Set `drop_remainder` to True since otherwise the batch dimension
         # would be None. Example: [None, 1024, 1024, 3]
