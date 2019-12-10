@@ -355,3 +355,47 @@ def nms(pred_bboxes, pred_confs, conf_trashhold=0.4, iou_trashhold=0.1, backgrou
             usage_mask[box] = False
 
     return final_boxes, final_conf_classes, final_conf_values
+
+
+def bboxes_xy2wh(bboxes_xy):
+    """
+    Converts bounding boxes from XY [x1, y1, x2, y2] to WH [cx, cy, w, h] format.
+
+    Parameters
+    ----------
+    bboxes_xy : ndarray
+        Ndarray of the bounding boxes.
+
+    Returns
+    -------
+    ndarray
+        Array of the bounding boxes converted to WH [cx, cy, w, h] format.
+    """
+    bboxes_wh = np.copy(bboxes_xy)
+    bboxes_wh[:, 0] = (bboxes_xy[:, 2] + bboxes_xy[:, 0]) / 2  # cx
+    bboxes_wh[:, 1] = (bboxes_xy[:, 3] + bboxes_xy[:, 1]) / 2  # cy
+    bboxes_wh[:, 2] = bboxes_xy[:, 2] - bboxes_xy[:, 0]  # w
+    bboxes_wh[:, 3] = bboxes_xy[:, 3] - bboxes_xy[:, 1]  # h
+    return bboxes_wh
+
+
+def bboxes_wh2xy(bboxes_wh):
+    """
+    Converts bounding boxes from WH [cx, cy, w, h] to XY [x1, y1, x2, y2] format.
+
+    Parameters
+    ----------
+    bboxes_wh : ndarray
+        Ndarray of the bounding boxes.
+
+    Returns
+    -------
+    ndarray
+        Array of the bounding boxes converted to XY [x1, y1, x2, y2] format.
+    """
+    bboxes_xy = np.copy(bboxes_wh)
+    bboxes_xy[:, 0] = bboxes_wh[:, 0] - bboxes_wh[:, 2] / 2  # up_x
+    bboxes_xy[:, 1] = bboxes_wh[:, 1] - bboxes_wh[:, 3] / 2  # up_y
+    bboxes_xy[:, 2] = bboxes_wh[:, 0] + bboxes_wh[:, 2] / 2  # bot_x
+    bboxes_xy[:, 3] = bboxes_wh[:, 1] + bboxes_wh[:, 3] / 2  # bot_y
+    return bboxes_wh
