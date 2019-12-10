@@ -189,7 +189,13 @@ class SSDModel(MakiModel):
             w_h = tf.exp(self.offsets_tensor[:, :2])  # exponentiate width and height, magic math
             w = self.dboxes_wh[:, 2] * w_h[0]  # times width
             h = self.dboxes_wh[:, 3] * w_h[1]  # times height
-            predicted_bboxes_wh = tf.concat([cx, cy, w, h], axis=3)
+            # [batch_sz, num_predictions] -> [batch_sz, num_predictions, 1]
+            # Do this for the proper concatenation.
+            cx = tf.expand_dims(cx, axis=-1)
+            cy = tf.expand_dims(cy, axis=-1)
+            w = tf.expand_dims(w, axis=-1)
+            h = tf.expand_dims(h, axis=-1)
+            predicted_bboxes_wh = tf.concat([cx, cy, w, h], axis=2)
             self.predicted_boxes = bboxes_wh2xy(predicted_bboxes_wh)
         else:
             raise ValueError(f'Unknown offset regression type: {self.regression_type}')
