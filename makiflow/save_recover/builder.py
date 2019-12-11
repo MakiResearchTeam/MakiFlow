@@ -35,7 +35,7 @@ class Builder:
         return Classificator(input=in_x, output=out_x, name=model_name)
 
     @staticmethod
-    def ssd_from_json(json_path, batch_size=None, generator=None, offset_reg_type=OffsetRegression.DUMMY):
+    def ssd_from_json(json_path, batch_size=None, generator=None):
         """Creates and returns SSDModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
@@ -57,7 +57,7 @@ class Builder:
             dcs.append(Builder.__detector_classifier_from_dict(dc_dict, inputs_outputs))
         input_name = architecture_dict['model_info']['input_s']
         input_s = inputs_outputs[input_name]
-
+        offset_reg_type = architecture_dict['model_info']['reg_type']
         print('Model is recovered.')
 
         return SSDModel(dcs=dcs, input_s=input_s, name=name, offset_reg_type=offset_reg_type)

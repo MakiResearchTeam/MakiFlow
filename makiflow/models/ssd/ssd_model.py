@@ -160,6 +160,7 @@ class SSDModel(MakiModel):
         model_dict = {
             'name': self.name,
             'input_s': self._inputs[0].get_name(),
+            'reg_type': self.regression_type,
             'dcs': []
         }
 
