@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 import tensorflow as tf
-from makiflow.generators.gen_base import PathGenerator, MapMethod, GenLayer, SegmentIterator
+from makiflow.generators.gen_base import SegmentPathGenerator, MapMethod, GenLayer, SegmentIterator
 
 
 class InputGenLayer(GenLayer):
     def __init__(
-            self, prefetch_size, batch_size, path_generator: PathGenerator, name,
+            self, prefetch_size, batch_size, path_generator: SegmentPathGenerator, name,
             map_operation: MapMethod, num_parallel_calls=None
     ):
         """
@@ -16,7 +16,7 @@ class InputGenLayer(GenLayer):
             Number of batches to prepare before feeding into the network.
         batch_size : int
             The batch size.
-        path_generator : PathGenerator
+        path_generator : SegmentPathGenerator
             The path generator.
         name : str
             Name of the input layer of the model. You can find it in the
@@ -35,12 +35,12 @@ class InputGenLayer(GenLayer):
             input_image=self.iterator[SegmentIterator.image]
         )
 
-    def build_iterator(self, gen: PathGenerator, map_operation: MapMethod, num_parallel_calls):
+    def build_iterator(self, gen: SegmentPathGenerator, map_operation: MapMethod, num_parallel_calls):
         dataset = tf.data.Dataset.from_generator(
             gen.next_element,
             output_types={
-                PathGenerator.image: tf.string,
-                PathGenerator.mask: tf.string
+                SegmentPathGenerator.image: tf.string,
+                SegmentPathGenerator.mask: tf.string
             }
         )
 

@@ -9,7 +9,7 @@ class TFRMapMethod:
 
 
 class TFRPathGenerator(object):
-    tfrecord = 'tfrecord'
+    TFRECORD = 'tfrecord'
 
     @abstractmethod
     def next_element(self) -> dict:

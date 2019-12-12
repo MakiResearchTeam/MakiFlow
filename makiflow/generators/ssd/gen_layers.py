@@ -123,7 +123,7 @@ class InputGenLayerV2(GenLayer):
         tf_records = tf.data.Dataset.from_generator(
             gen.next_element,
             output_types={
-                TFRPathGenerator.tfrecord: tf.string
+                TFRPathGenerator.TFRECORD: tf.string
             }
         )
         dataset = tf_records.interleave(

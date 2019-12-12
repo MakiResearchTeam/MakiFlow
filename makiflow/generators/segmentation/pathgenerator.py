@@ -1,4 +1,4 @@
-from makiflow.generators.gen_base import SegmentIterator, PathGenerator
+from makiflow.generators.gen_base import SegmentIterator, SegmentPathGenerator
 
 from glob import glob
 import os
@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.utils import shuffle
 
 
-class CyclicGenerator(PathGenerator):
+class CyclicGeneratorSegment(SegmentPathGenerator):
     def __init__(self, path_images, path_masks):
         """
         Generator for pipeline, which gives next element in cycle order
@@ -37,7 +37,7 @@ class CyclicGenerator(PathGenerator):
             yield el
 
 
-class RandomGenerator(PathGenerator):
+class RandomGeneratorSegment(SegmentPathGenerator):
     def __init__(self, path_images, path_masks):
         """
         Generator for pipeline, which gives next element in random order
@@ -64,7 +64,7 @@ class RandomGenerator(PathGenerator):
             yield el
 
 
-class SubCyclicGenerator(PathGenerator):
+class SubCyclicGeneratorSegment(SegmentPathGenerator):
     def __init__(self, path_batches_images, path_batches_masks):
         """
         Generator for pipeline, which gives next element in sub-cyclic order

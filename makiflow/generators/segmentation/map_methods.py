@@ -1,5 +1,5 @@
 import tensorflow as tf
-from makiflow.generators.gen_base import PostMapMethod, MapMethod, PathGenerator, SegmentIterator
+from makiflow.generators.gen_base import PostMapMethod, MapMethod, SegmentPathGenerator, SegmentIterator
 
 
 class LoadResizeNormalize(MapMethod):
@@ -16,8 +16,8 @@ class LoadResizeNormalize(MapMethod):
         self.calc_positives = calc_positives
 
     def load_data(self, data_paths):
-        img_file = tf.read_file(data_paths[PathGenerator.image])
-        mask_file = tf.read_file(data_paths[PathGenerator.mask])
+        img_file = tf.read_file(data_paths[SegmentPathGenerator.image])
+        mask_file = tf.read_file(data_paths[SegmentPathGenerator.mask])
 
         img = tf.image.decode_image(img_file)
         mask = tf.image.decode_image(mask_file)

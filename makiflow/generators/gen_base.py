@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from makiflow.base.maki_entities import MakiTensor
 
 
@@ -38,13 +38,15 @@ class SegmentIterator:
     num_positives = 'num_positives'
 
 
-class PathGenerator(object):
-    image = 'image'
-    mask = 'mask'
-    
+class PathGenerator(ABC):
     @abstractmethod
     def next_element(self) -> dict:
         pass
+
+
+class SegmentPathGenerator(PathGenerator, ABC):
+    image = 'image'
+    mask = 'mask'
 
 
 class GenLayer(MakiTensor):
