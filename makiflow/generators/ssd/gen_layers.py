@@ -127,7 +127,7 @@ class InputGenLayerV2(GenLayer):
             }
         )
         dataset = tf_records.interleave(
-            map_func=lambda x: tf.data.TFRecordDataset(x),
+            map_func=lambda x: tf.data.TFRecordDataset(x[TFRPathGenerator.TFRECORD]),
             cycle_length=self.cycle_length,
             block_length=self.block_length
         )
