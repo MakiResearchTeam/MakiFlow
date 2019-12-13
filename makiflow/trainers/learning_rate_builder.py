@@ -5,7 +5,7 @@ import tensorflow as tf
     'type': 'ExponentialDecay',
     'params': {
         'lr': ..
-        'momentum': ..
+        'decay_steps': ..
     }
 }
 """
