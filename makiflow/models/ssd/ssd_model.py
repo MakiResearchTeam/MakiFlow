@@ -49,6 +49,8 @@ class SSDModel(MakiModel):
         self._num_classes = self.dcs[0].class_number
         # For training
         self._training_vars_are_ready = False
+        # Used only for training
+        self._use_huber_loss = False
 
     # -------------------------------------------------------SETTING UP DEFAULT BOXES-----------------------------------
 
@@ -239,6 +241,10 @@ class SSDModel(MakiModel):
         if not self._training_vars_are_ready:
             self._prepare_training_vars(use_generator=True)
 
+    def set_huber_loss(self, delta=0.5):
+        self._huber_delta = delta
+        self._use_huber_loss = True
+
     def _prepare_training_vars(self, use_generator=False):
         training_confidences = []
         training_offsets = []
@@ -272,7 +278,10 @@ class SSDModel(MakiModel):
             logits=self._flattened_logits, labels=self._flattened_labels
         )
         self._num_positives = tf.reduce_sum(self._input_loc_loss_masks)
-        self._build_loc_loss()
+        if self._use_huber_loss:
+            self._build_huber_loc_loss()
+        else:
+            self._build_loc_loss()
         self._training_vars_are_ready = True
 
         self._focal_loss_is_build = False
@@ -292,6 +301,18 @@ class SSDModel(MakiModel):
         loc_loss_mask = tf.stack([self._input_loc_loss_masks] * 4, axis=2)
         loc_loss = loc_loss_mask * loc_loss
         self._loc_loss = tf.reduce_sum(loc_loss) / self._num_positives
+
+    def _build_huber_loc_loss(self):
+        loc_loss = tf.losses.huber_loss(
+            labels=self._input_loc,
+            predictions=self._train_offsets,
+            delta=self._huber_delta,
+            reduction=None
+        )
+        loc_loss_mask = tf.stack([self._input_loc_loss_masks] * 4, axis=2)
+        loc_loss = loc_loss_mask * loc_loss
+        self._loc_loss = tf.reduce_sum(loc_loss) / self._num_positives
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------FOCAL LOSS--------------------------------------------------
