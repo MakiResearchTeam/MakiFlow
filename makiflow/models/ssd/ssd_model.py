@@ -307,7 +307,7 @@ class SSDModel(MakiModel):
             labels=self._input_loc,
             predictions=self._train_offsets,
             delta=self._huber_delta,
-            reduction=None
+            reduction=tf.losses.Reduction.NONE
         )
         loc_loss_mask = tf.stack([self._input_loc_loss_masks] * 4, axis=2)
         loc_loss = loc_loss_mask * loc_loss
