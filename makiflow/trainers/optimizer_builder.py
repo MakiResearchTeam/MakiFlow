@@ -2,10 +2,10 @@ import tensorflow as tf
 
 """
 {
-    'type': 'MomentumOptimizer',
-    'params': {
-        'lr': ..
-        'momentum': ..
+    "type": "MomentumOptimizer",
+    "params": {
+        "lr": ..
+        "momentum": ..
     }
 }
 """

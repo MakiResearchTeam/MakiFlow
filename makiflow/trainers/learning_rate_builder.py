@@ -2,10 +2,10 @@ import tensorflow as tf
 
 """
 {
-    'type': 'ExponentialDecay',
-    'params': {
-        'lr': ..
-        'decay_steps': ..
+    "type": "ExponentialDecay",
+    "params": {
+        "lr": ..
+        "decay_steps": ..
     }
 }
 """
