@@ -434,9 +434,8 @@ class Builder:
         name = params['name']
         noise_shape = params['noise_shape']
         seed = params['seed']
-        rate = params['rate']
         return DropoutLayer(p_keep=p_keep, name=name, noise_shape=noise_shape,
-                            seed=seed, rate=rate)
+                            seed=seed)
 
     @staticmethod
     def __gru_layer_from_dict(params):
