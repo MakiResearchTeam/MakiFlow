@@ -502,8 +502,6 @@ class DropoutLayer(SimpleForwardLayer):
         ----------
         p_keep : float
             A deprecated alias for (1-rate).
-        rate : float
-            A scalar Tensor with the same type as input MakiTensor. The probability that each element of input MakiTensor is discarded.
         seed : int
             A Python integer. Used to create random seeds.
         noise_shape : list
