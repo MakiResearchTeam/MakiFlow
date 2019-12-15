@@ -517,9 +517,10 @@ class DropoutLayer(SimpleForwardLayer):
         self._p_keep = p_keep
         self.noise_shape = noise_shape
         self.seed = seed
+        self.forward_p_keep = tf.constant(p_keep, dtype=tf.float32)
 
     def _forward(self, X):
-        return X
+        return X * self.forward_p_keep
 
     def _training_forward(self, X):
         return tf.nn.dropout(X, self._p_keep,
