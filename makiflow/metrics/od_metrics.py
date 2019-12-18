@@ -141,7 +141,7 @@ def mAP(pred_boxes, pred_cs, pred_ps, true_boxes, true_cs, iou_threshold=0.5):
     return p, r, ap, f1, unique_classes
 
 
-def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name2class):
+def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, gboxes, glabels):
     """
     A shortcut for calculation mAP.
     Parameters
@@ -150,8 +150,10 @@ def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name
         List of lists [confidences, locs]. In other words, list of the ssdmodel predictions.
     iou_threshold : float
         IoU threshold.
-    conf_threshold
-    test_dict
+    conf_threshold : float
+        All bboxes that have confidences lower than `conf_threshold` will be cutted out.
+    gboxes : ndarray
+        Ndarray of
     name2class
 
     Returns
@@ -179,16 +181,13 @@ def mAP_maki_supported(sdd_preds, iou_threshold, conf_threshold, test_dict, name
         pred_cs += [classes]
         pred_ps += [confs]
 
-    # PROCESS THE GROUND TRUE LABELS
-    true_boxes, true_classes = parse_dicts(test_dict, name2class=name2class)
-
     # COMPUTE THE mAP
     return mAP(
         pred_boxes,
         pred_cs,
         pred_ps,
-        true_boxes,
-        true_classes,
+        gboxes,
+        glabels,
         iou_threshold=iou_threshold
     )
 
