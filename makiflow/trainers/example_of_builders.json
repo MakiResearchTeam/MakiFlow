@@ -1,0 +1,159 @@
+{
+  "optimizers": [
+    {
+      "type": "AdamOptimizer",
+      "params": {
+        "learning_rates": "lr_settings",
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "use_locking": false,
+        "epsilon": 1e-8,
+        "name": "adam1"
+      }
+    },
+    {
+      "type": "MomentumOptimizer",
+      "params": {
+        "learning_rate": "lr_settings",
+        "momentum": 0.9,
+        "use_locking": false,
+        "name": "Momentum",
+        "use_nesterov": false
+      }
+    },
+    {
+      "type": "RMSPropOptimizer",
+      "params": {
+        "learning_rate": "lr_settings",
+        "decay": 0.9,
+        "momentum": 0.0,
+        "epsilon": 1e-10,
+        "use_locking": false,
+        "centered": false,
+        "name": "RMSProp"
+      }
+    },
+    {
+      "type": "GradientDescentOptimizer",
+      "params": {
+        "learning_rate": "lr_settings",
+        "use_locking": false,
+        "name": "GradientDescent"
+      }
+    },
+    {
+      "type": "AdadeltaOptimizer",
+      "params": {
+        "learning_rate": 0.001,
+        "rho": 0.95,
+        "epsilon": 1e-08,
+        "use_locking": false,
+        "name": "Adadelta"
+      }
+    },
+    {
+      "type": "AdagradOptimizer",
+      "params": {
+        "learning_rate": "lr_settings",
+        "initial_accumulator_value": 0.1,
+        "use_locking": false,
+        "name": "Adagrad"
+      }
+    }
+  ],
+  "learning_rate_settings": [
+    {
+      "type": "ExponentialDecay",
+      "params": {
+        "lr": "value_of_lr",
+        "decay_steps": "value_of_param",
+        "decay_rate": "value_of_param",
+        "staircase": false,
+        "name": "ExponentialDecay"
+      }
+    },
+    {
+      "type": "CosineDecay",
+      "params": {
+        "lr": "value_of_lr",
+        "decay_steps": "value_of_param",
+        "alpha": 0.0,
+        "name": "CosineDecay"
+      }
+    },
+    {
+      "type": "CosineRestartsDecay",
+      "params": {
+        "lr": "value_of_lr",
+        "first_decay_steps": "value_of_param",
+        "t_mul": 2.0,
+        "m_mul": 1.0,
+        "alpha": 0.0,
+        "name": "CosineRestartsDecay"
+      }
+    },
+    {
+      "type": "InverseTimeDecay",
+      "params": {
+        "lr": "value_of_lr",
+        "decay_steps": "value_of_param",
+        "decay_rate": "value_of_param",
+        "staircase": false,
+        "name": "InverseTimeDecay"
+      }
+    },
+    {
+      "type": "LinearCosineDecay",
+      "params": {
+        "lr": "value_of_lr",
+        "decay_steps": "value_of_param",
+        "num_periods": 0.5,
+        "alpha": 0.0,
+        "beta": 0.001,
+        "name": "LinearCosineDecay"
+      }
+    },
+    {
+      "type": "NaturalExpDecay",
+      "params": {
+        "learning_rate": "value_of_lr",
+        "decay_steps": "value_of_param",
+        "decay_rate": "value_of_param",
+        "staircase": false,
+        "name": "NaturalExpDecay"
+      }
+    },
+    {
+      "type": "NoiseLinearCosineDecay",
+      "params": {
+        "learning_rate": "value_of_lr",
+        "decay_steps": "value_of_param",
+        "initial_variance": 1.0,
+        "variance_decay": 0.55,
+        "num_periods": 0.5,
+        "alpha": 0.0,
+        "beta": 0.001,
+        "name": "NoiseLinearCosineDecay"
+      }
+    },
+    {
+      "type": "PiecewiseConstantDecay",
+      "params": {
+        "boundaries": "value_of_param",
+        "values": "value_of_param",
+        "name": "PiecewiseConstantDecay"
+      }
+    },
+    {
+      "type": "PolynomialDecay",
+      "params": {
+        "learning_rate": "value_of_lr",
+        "decay_steps": "value_of_param",
+        "end_learning_rate": 0.0001,
+        "power": 1.0,
+        "cycle": false,
+        "name": "PolynomialDecay"
+      }
+    }
+  ]
+}

@@ -14,25 +14,28 @@ import tensorflow as tf
 class LearningRateBuilder:
     @staticmethod
     def build_learning_rate(learning_rate_info):
-        opt_type = learning_rate_info['type']
-        params = learning_rate_info['params']
-        global_step  = tf.Variable(0, trainable=False)
-        build_dict = {
-            'ExponentialDecay': LearningRateBuilder.__exponential_decay_learning_rate,
-            'CosineDecay': LearningRateBuilder.__cosine_decay_learning_rate,
-            'CosineRestartsDecay': LearningRateBuilder.__cosine_restarts_decay_learning_rate,
-            'InverseTimeDecay': LearningRateBuilder.__inverse_time_decay_learning_rate,
-            'LinearCosineDecay': LearningRateBuilder.__linear_cosine_decay_learning_rate,
-            'NaturalExpDecay': LearningRateBuilder.__natural_exp_decay_learning_rate,
-            'NoiseLinearCosineDecay': LearningRateBuilder.__noisy_linear_cosine_decay_learning_rate,
-            'PiecewiseConstantDecay': LearningRateBuilder.__piecewise_constant_decay_learning_rate,
-            'PolynomialDecay': LearningRateBuilder.__polynomial_decay_learning_rate,
-        }
-        return build_dict[opt_type](params, global_step), global_step
+        if type(learning_rate_info) is type(dict):
+            opt_type = learning_rate_info['type']
+            params = learning_rate_info['params']
+            global_step  = tf.Variable(0, trainable=False)
+            build_dict = {
+                'ExponentialDecay': LearningRateBuilder.__exponential_decay_learning_rate,
+                'CosineDecay': LearningRateBuilder.__cosine_decay_learning_rate,
+                'CosineRestartsDecay': LearningRateBuilder.__cosine_restarts_decay_learning_rate,
+                'InverseTimeDecay': LearningRateBuilder.__inverse_time_decay_learning_rate,
+                'LinearCosineDecay': LearningRateBuilder.__linear_cosine_decay_learning_rate,
+                'NaturalExpDecay': LearningRateBuilder.__natural_exp_decay_learning_rate,
+                'NoiseLinearCosineDecay': LearningRateBuilder.__noisy_linear_cosine_decay_learning_rate,
+                'PiecewiseConstantDecay': LearningRateBuilder.__piecewise_constant_decay_learning_rate,
+                'PolynomialDecay': LearningRateBuilder.__polynomial_decay_learning_rate,
+            }
+            return build_dict[opt_type](params, global_step), global_step
+        else:
+            return learning_rate_info, None
 
     @staticmethod
     def __exponential_decay_learning_rate(params, global_step):
-        lr = params['learning_rate']
+        lr = params['lr']
         decay_steps = params['decay_steps']
         decay_rate = params['decay_rate']
         staircase = params['staircase']
@@ -48,7 +51,7 @@ class LearningRateBuilder:
 
     @staticmethod
     def __cosine_decay_learning_rate(params, global_step):
-        lr = params['learning_rate']
+        lr = params['lr']
         decay_steps = params['decay_steps']
         alpha = params['alpha']
         name = params['name']
@@ -62,7 +65,7 @@ class LearningRateBuilder:
 
     @staticmethod
     def __cosine_restarts_decay_learning_rate(params, global_step):
-        lr = params['learning_rate']
+        lr = params['lr']
         decay_steps = params['decay_steps']
         t_mul = params['t_mul']
         m_mul = params['m_mul']
@@ -80,7 +83,7 @@ class LearningRateBuilder:
 
     @staticmethod
     def __inverse_time_decay_learning_rate(params, global_step):
-        lr = params['learning_rate']
+        lr = params['lr']
         decay_steps = params['decay_steps']
         decay_rate = params['decay_rate']
         staircase = params['staircase']
@@ -96,7 +99,7 @@ class LearningRateBuilder:
 
     @staticmethod
     def __linear_cosine_decay_learning_rate(params, global_step):
-        lr = params['learning_rate']
+        lr = params['lr']
         decay_steps = params['decay_steps']
         num_periods = params['num_periods']
         alpha = params['alpha']
@@ -114,7 +117,7 @@ class LearningRateBuilder:
 
     @staticmethod
     def __natural_exp_decay_learning_rate(params, global_step):
-        lr = params['learning_rate']
+        lr = params['lr']
         decay_steps = params['decay_steps']
         decay_rate = params['decay_rate']
         staircase = params['staircase']
@@ -130,7 +133,7 @@ class LearningRateBuilder:
 
     @staticmethod
     def __noisy_linear_cosine_decay_learning_rate(params, global_step):
-        lr = params['learning_rate']
+        lr = params['lr']
         decay_steps = params['decay_steps']
         initial_variance = params['initial_variance']
         variance_decay = params['variance_decay']
@@ -164,7 +167,7 @@ class LearningRateBuilder:
 
     @staticmethod
     def __polynomial_decay_learning_rate(params, global_step):
-        lr = params['learning_rate']
+        lr = params['lr']
         decay_steps = params['decay_steps']
         end_learning_rate = params['end_learning_rate']
         power = params['power']
@@ -179,3 +182,4 @@ class LearningRateBuilder:
             cycle=cycle,
             name=name
         )
+

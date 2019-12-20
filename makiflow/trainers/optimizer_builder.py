@@ -1,4 +1,5 @@
 import tensorflow as tf
+from .learning_rate_builder import LearningRateBuilder
 
 """
 {
@@ -9,7 +10,6 @@ import tensorflow as tf
     }
 }
 """
-
 
 class OptimizerBuilder:
     @staticmethod
@@ -28,7 +28,7 @@ class OptimizerBuilder:
 
     @staticmethod
     def __momentum_optimizer(params):
-        lr = params['learning_rate']
+        lr = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         momentum = params['momentum']
         use_locking = params['use_locking']
         use_nesterov = params['use_nesterov']
@@ -43,7 +43,7 @@ class OptimizerBuilder:
 
     @staticmethod
     def __adam_optimizer(params):
-        lr = params['learning_rate']
+        lr = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         beta1 = params['beta1']
         beta2 = params['beta2']
         epsilon = params['epsilon']
@@ -60,7 +60,7 @@ class OptimizerBuilder:
 
     @staticmethod
     def __rmsprop_optimizer(params):
-        lr = params['learning_rate']
+        lr = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         decay = params['decay']
         momentum = params['momentum']
         epsilon = params['epsilon']
@@ -79,7 +79,7 @@ class OptimizerBuilder:
 
     @staticmethod
     def __gradient_descent_optimizer(params):
-        lr = params['learning_rate']
+        lr = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         use_locking = params['use_locking']
         name = params['name']
         return tf.train.GradientDescentOptimizer(
@@ -90,7 +90,7 @@ class OptimizerBuilder:
 
     @staticmethod
     def __adadelta_optimizer(params):
-        lr = params['learning_rate']
+        lr = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         rho = params['rho']
         epsilon = params['epsilon']
         use_locking = params['use_locking']
@@ -105,7 +105,7 @@ class OptimizerBuilder:
 
     @staticmethod
     def __adagrad_optimizer(params):
-        lr = params['learning_rate']
+        lr = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         initial_accumulator_value = params['initial_accumulator_value']
         use_locking = params['use_locking']
         name = params['name']
@@ -115,3 +115,4 @@ class OptimizerBuilder:
             use_locking=use_locking,
             name=name
         )
+
