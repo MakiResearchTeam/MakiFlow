@@ -123,7 +123,7 @@ class ContrastBrightnessAugment(AugmentOp):
         return new_imgs, new_bboxes, new_classes
 
 
-class GaussianBlur(AugmentOp):
+class GaussianBlurAugment(AugmentOp):
     def __init__(self, ksize=(3, 3), std_x=0.65, std_y=0.65, keep_old_data=True):
         """
         Blurs images using gaussian filter.
