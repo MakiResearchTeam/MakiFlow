@@ -494,7 +494,7 @@ class FlattenLayer(SimpleForwardLayer):
 
 
 class DropoutLayer(SimpleForwardLayer):
-    def __init__(self, name, p_keep=0.9, noise_shape=None, seed=None, rate=None):
+    def __init__(self, name, p_keep=0.9, noise_shape=None, seed=None):
         """
         Applies Dropout to the input MakiTensor.
         
@@ -502,8 +502,6 @@ class DropoutLayer(SimpleForwardLayer):
         ----------
         p_keep : float
             A deprecated alias for (1-rate).
-        rate : float
-            A scalar Tensor with the same type as input MakiTensor. The probability that each element of input MakiTensor is discarded.
         seed : int
             A Python integer. Used to create random seeds.
         noise_shape : list
@@ -517,16 +515,15 @@ class DropoutLayer(SimpleForwardLayer):
         self._p_keep = p_keep
         self.noise_shape = noise_shape
         self.seed = seed
-        self.rate = rate
+        self.forward_p_keep = tf.constant(p_keep, dtype=tf.float32)
 
     def _forward(self, X):
-        return X
+        return X * self.forward_p_keep
 
     def _training_forward(self, X):
         return tf.nn.dropout(X, self._p_keep,
                              noise_shape=self.noise_shape,
                              seed=self.seed,
-                             rate=self.rate,
                              )
 
     def to_dict(self):
@@ -536,8 +533,7 @@ class DropoutLayer(SimpleForwardLayer):
                 'name': self._name,
                 'p_keep': self._p_keep,
                 'noise_shape': self.noise_shape,
-                'seed': self.seed,
-                'rate': self.rate,
+                'seed': self.seed
             }
         }
 

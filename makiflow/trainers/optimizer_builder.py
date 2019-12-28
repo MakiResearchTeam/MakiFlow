@@ -1,15 +1,15 @@
 import tensorflow as tf
+from .learning_rate_builder import LearningRateBuilder
 
 """
 {
-    'type': 'MomentumOptimizer',
-    'params': {
-        'lr': ..
-        'momentum': ..
+    "type": "MomentumOptimizer",
+    "params": {
+        "lr": ..
+        "momentum": ..
     }
 }
 """
-
 
 class OptimizerBuilder:
     @staticmethod
@@ -28,7 +28,7 @@ class OptimizerBuilder:
 
     @staticmethod
     def __momentum_optimizer(params):
-        lr = params['learning_rate']
+        lr, global_step = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         momentum = params['momentum']
         use_locking = params['use_locking']
         use_nesterov = params['use_nesterov']
@@ -39,11 +39,11 @@ class OptimizerBuilder:
             use_locking=use_locking,
             use_nesterov=use_nesterov,
             name=name
-        )
+        ), global_step
 
     @staticmethod
     def __adam_optimizer(params):
-        lr = params['learning_rate']
+        lr = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         beta1 = params['beta1']
         beta2 = params['beta2']
         epsilon = params['epsilon']
@@ -56,11 +56,11 @@ class OptimizerBuilder:
             epsilon=epsilon,
             use_locking=use_locking,
             name=name
-        )
+        ), global_step
 
     @staticmethod
     def __rmsprop_optimizer(params):
-        lr = params['learning_rate']
+        lr, global_step = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         decay = params['decay']
         momentum = params['momentum']
         epsilon = params['epsilon']
@@ -75,22 +75,22 @@ class OptimizerBuilder:
             use_locking=use_locking,
             centered=centered,
             name=name
-        )
+        ), global_step
 
     @staticmethod
     def __gradient_descent_optimizer(params):
-        lr = params['learning_rate']
+        lr, global_step = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         use_locking = params['use_locking']
         name = params['name']
         return tf.train.GradientDescentOptimizer(
             learning_rate=lr,
             use_locking=use_locking,
             name=name
-        )
+        ), global_step
 
     @staticmethod
     def __adadelta_optimizer(params):
-        lr = params['learning_rate']
+        lr, global_step = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         rho = params['rho']
         epsilon = params['epsilon']
         use_locking = params['use_locking']
@@ -101,11 +101,11 @@ class OptimizerBuilder:
             epsilon=epsilon,
             use_locking=use_locking,
             name=name
-        )
+        ), global_step
 
     @staticmethod
     def __adagrad_optimizer(params):
-        lr = params['learning_rate']
+        lr, global_step = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         initial_accumulator_value = params['initial_accumulator_value']
         use_locking = params['use_locking']
         name = params['name']
@@ -114,4 +114,5 @@ class OptimizerBuilder:
             initial_accumulator_value=initial_accumulator_value,
             use_locking=use_locking,
             name=name
-        )
+        ), global_step
+

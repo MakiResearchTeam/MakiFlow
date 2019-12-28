@@ -23,6 +23,7 @@ class FlipAugment(AugmentOp):
 
     FLIP_HORIZONTALLY = 1
     FLIP_VERTICALLY = 0
+    FLIP_HV = -1
 
     def __init__(self, flip_type_list, keep_old_data=True):
         """
@@ -33,7 +34,8 @@ class FlipAugment(AugmentOp):
             Add to final dataset image with entered type of flip
             Available options:
                 FlipAugment.FLIP_HORIZONTALLY;
-                FlipAugment.FLIP_VERTICALLY
+                FlipAugment.FLIP_VERTICALLY;
+                FlipAugment.FLIP_HV
         keep_old_data : bool
             Set to false if you don't want to include unaugmented images into the final data set.
         """
