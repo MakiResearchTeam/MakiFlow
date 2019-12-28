@@ -712,24 +712,24 @@ class SSDModel(MakiModel):
             global_step=None
     ):
         """
-                Function for training the SSD.
+        Function for training the SSD.
 
-                Parameters
-                ----------
-                loc_loss_weight : float
-                    Means how much localization loss influences total loss:
-                    loss = confidence_loss + loss_weight*localization_loss
-                neg_samples_ratio : float
-                    Affects amount of negative samples used for calculation of the negative loss.
-                    Note: number of negative samples = number of positive samples * `neg_samples_ratio`
-                optimizer : TensorFlow optimizer
-                    Used for minimizing the loss function.
-                epochs : int
-                    Number of epochs to run.
-                global_step : tf.Variable
-                    Used for learning rate exponential decay. See TensorFlow documentation on how to use
-                    exponential decay.
-                """
+        Parameters
+        ----------
+        loc_loss_weight : float
+            Means how much localization loss influences total loss:
+            loss = confidence_loss + loss_weight*localization_loss
+        neg_samples_ratio : float
+            Affects amount of negative samples used for calculation of the negative loss.
+            Note: number of negative samples = number of positive samples * `neg_samples_ratio`
+        optimizer : TensorFlow optimizer
+            Used for minimizing the loss function.
+        epochs : int
+            Number of epochs to run.
+        global_step : tf.Variable
+            Used for learning rate exponential decay. See TensorFlow documentation on how to use
+            exponential decay.
+        """
         assert (type(loc_loss_weight) == float)
         assert (type(neg_samples_ratio) == float)
 
