@@ -190,7 +190,7 @@ class Classificator(MakiModel):
         self._focal_loss = Loss.focal_loss(
             flattened_logits=self._logits,
             flattened_labels=self._labels,
-            focal_num_positives=tf.ones_like(self._labels, dtype=tf.float32),
+            num_positives=tf.ones_like(self._labels, dtype=tf.float32),
             num_classes=self._num_classes,
             focal_gamma=self._focal_gamma,
             ce_loss=self._ce_loss
@@ -343,7 +343,7 @@ class Classificator(MakiModel):
         self._maki_loss = Loss.maki_loss(
             flattened_logits=self._logits,
             flattened_labels=self._labels,
-            maki_num_positives=tf.ones_like(self._labels, dtype=tf.float32),
+            num_positives=tf.ones_like(self._labels, dtype=tf.float32),
             num_classes=self._num_classes,
             maki_gamma=gamma,
             ce_loss=self._ce_loss
