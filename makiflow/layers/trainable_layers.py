@@ -1118,3 +1118,4 @@ class ScaleLayer(SimpleForwardLayer):
                 'init_value': self.init_value
             }
         }
+
