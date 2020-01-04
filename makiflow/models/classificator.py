@@ -665,7 +665,7 @@ class Classificator(MakiModel):
 
         predictions = None
         for i in tqdm(range(n_batches)):
-            Xtestbatch = Xtest[i * batch_sz:(i + 1) * batch_sz]
+            Xtestbatch = Xtest[i * self._batch_sz:(i + 1) * self._batch_sz]
             Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
 
             if use_softmax_and_argmax:
