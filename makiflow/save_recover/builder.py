@@ -6,7 +6,7 @@ import json
 from makiflow.models.classificator import Classificator
 from makiflow.layers import *
 from makiflow.layers.activation_converter import ActivationConverter
-from makiflow.models import DetectorClassifier
+from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel
 from makiflow.models.ssd.ssd_model import OffsetRegression
 from makiflow.models import Segmentator
@@ -66,28 +66,31 @@ class Builder:
     def __detector_classifier_from_dict(dc_dict, inputs_outputs):
         """Creates and returns DetectorClassifier from dictionary"""
         params = dc_dict['params']
-        name = params['name']
-        class_number = params['class_number']
-        dboxes = params['dboxes']
+        name = params[DCParams.NAME]
+        class_number = params[DCParams.CLASS_NUMBER]
+        dboxes = params[DCParams.DBOXES]
 
-        rkw = params['rkw']
-        rkh = params['rkh']
-        rin_f = params['rin_f']
-        use_reg_bias = params['use_reg_bias']
+        rkw = params[DCParams.RKW]
+        rkh = params[DCParams.RKH]
+        rin_f = params[DCParams.RIN_F]
+        use_reg_bias = params[DCParams.USE_REG_BIAS]
+        reg_init_type = params[DCParams.REG_INIT_TYPE]
 
-        ckw = params['ckw']
-        ckh = params['ckh']
-        cin_f = params['cin_f']
-        use_class_bias = params['use_class_bias']
+        ckw = params[DCParams.CKW]
+        ckh = params[DCParams.CKH]
+        cin_f = params[DCParams.CIN_F]
+        use_class_bias = params[DCParams.USE_CLASS_BIAS]
+        class_init_type = params[DCParams.CLASS_INIT_TYPE]
 
-        reg_x = inputs_outputs[params['reg_x_name']]
-        class_x = inputs_outputs[params['class_x_name']]
+        reg_x = inputs_outputs[params[DCParams.REG_X_NAME]]
+        class_x = inputs_outputs[params[DCParams.CLASS_X_NAME]]
 
         return DetectorClassifier(
             reg_fms=reg_x, rkw=rkw, rkh=rkh, rin_f=rin_f,
             class_fms=class_x, ckw=ckw, ckh=ckh, cin_f=cin_f,
             num_classes=class_number, dboxes=dboxes, name=name,
-            use_class_bias=use_class_bias, use_reg_bias=use_reg_bias
+            use_class_bias=use_class_bias, use_reg_bias=use_reg_bias,
+            reg_init_type=reg_init_type, class_init_type=class_init_type
         )
 
     @staticmethod

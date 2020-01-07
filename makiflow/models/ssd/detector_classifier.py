@@ -3,6 +3,27 @@ from makiflow.layers import ConvLayer
 from makiflow.layers import ReshapeLayer
 
 
+class DCParams:
+    TYPE = 'DetectorClassifier'
+    NAME = 'NAME'
+    CLASS_NUMBER = 'CLASS_NUMBER'
+    DBOXES = 'DBOXES'
+
+    REG_X_NAME = 'REG_X_NAME'
+    RKW = 'RKW'
+    RKH = 'RKH'
+    RIN_F = 'RIN_F'
+    USE_REG_BIAS = 'USE_REG_BIAS'
+    REG_INIT_TYPE = 'REG_INIT_TYPE'
+
+    CLASS_X_NAME = 'CLASS_X_NAME'
+    CKW = 'CKW'
+    CKH = 'CKH'
+    CIN_F = 'CIN_F'
+    USE_CLASS_BIAS = 'USE_CLASS_BIAS'
+    CLASS_INIT_TYPE = 'CLASS_INIT_TYPE'
+
+
 class DetectorClassifier:
     """
     This class represents a part of SSD algorithm. It consists of several parts:
@@ -10,10 +31,12 @@ class DetectorClassifier:
     """
 
     def __init__(
-            self, reg_fms: MakiTensor, rkw, rkh, rin_f,
+            self,
+            reg_fms: MakiTensor, rkw, rkh, rin_f,
             class_fms: MakiTensor, ckw, ckh, cin_f,
             num_classes, dboxes: list, name,
-            use_reg_bias=True, use_class_bias=True
+            use_reg_bias=True, use_class_bias=True,
+            reg_init_type='he', class_init_type='he'
     ):
         """
         Parameters
@@ -65,13 +88,21 @@ class DetectorClassifier:
         self.name = str(name)
         self.use_class_bias = use_class_bias
         self.use_reg_bias = use_reg_bias
+        self.reg_init_type = reg_init_type
+        self.class_init_type = class_init_type
 
         classifier_out_f = num_classes * len(dboxes)
         bb_regressor_out_f = 4 * len(dboxes)
-        self.classifier = ConvLayer(ckw, ckh, cin_f, classifier_out_f, use_bias=use_class_bias,
-                                    activation=None, padding='SAME', name='SSDClassifier_' + str(name))
-        self.bb_regressor = ConvLayer(rkw, rkh, rin_f, bb_regressor_out_f, use_bias=use_reg_bias,
-                                      activation=None, padding='SAME', name='SSDBBDetector_' + str(name))
+        self.classifier = ConvLayer(
+            ckw, ckh, cin_f, classifier_out_f, use_bias=use_class_bias,
+            activation=None, padding='SAME', kernel_initializer=class_init_type,
+            name='SSDClassifier_' + str(name)
+        )
+        self.bb_regressor = ConvLayer(
+            rkw, rkh, rin_f, bb_regressor_out_f, use_bias=use_reg_bias,
+            activation=None, padding='SAME', kernel_initializer=reg_init_type,
+            name='SSDBBDetector_' + str(name)
+        )
         self._make_detections()
 
     def _make_detections(self):
@@ -119,20 +150,24 @@ class DetectorClassifier:
 
     def to_dict(self):
         return {
-            'type': 'DetectorClassifier',
+            'type': DCParams.TYPE,
             'params': {
-                'reg_x_name': self.reg_x.get_name(),
-                'rkw': self.rkw,
-                'rkh': self.rkh,
-                'rin_f': self.rin_f,
-                'use_reg_bias': self.use_reg_bias,
-                'class_x_name': self.class_x.get_name(),
-                'ckw': self.ckw,
-                'ckh': self.ckh,
-                'cin_f': self.cin_f,
-                'use_class_bias': self.use_class_bias,
-                'class_number': self.class_number,
-                'dboxes': self._dboxes,
-                'name': self.name
+                DCParams.REG_X_NAME: self.reg_x.get_name(),
+                DCParams.RKW: self.rkw,
+                DCParams.RKH: self.rkh,
+                DCParams.RIN_F: self.rin_f,
+                DCParams.USE_REG_BIAS: self.use_reg_bias,
+                DCParams.REG_INIT_TYPE: self.reg_init_type,
+
+                DCParams.CLASS_X_NAME: self.class_x.get_name(),
+                DCParams.CKW: self.ckw,
+                DCParams.CKH: self.ckh,
+                DCParams.CIN_F: self.cin_f,
+                DCParams.USE_CLASS_BIAS: self.use_class_bias,
+                DCParams.CLASS_INIT_TYPE: self.class_init_type,
+
+                DCParams.CLASS_NUMBER: self.class_number,
+                DCParams.DBOXES: self._dboxes,
+                DCParams.NAME: self.name
             }
         }

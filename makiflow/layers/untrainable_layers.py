@@ -605,3 +605,33 @@ class ResizeLayer(SimpleForwardLayer):
                 'align_corners': self.align_corners,
             }
         }
+
+
+class L2NormalizationLayer(SimpleForwardLayer):
+    def __init__(self, name, eps=1e-12):
+        """
+        This layer was introduced in 'PARSENET: LOOKING WIDER TO SEE BETTER'.
+        Performs L2 normalization along feature dimension.
+        """
+        self._eps = eps
+        self._name = name
+        super().__init__(name, params=[], named_params_dict={})
+
+    def _forward(self, X):
+        return tf.math.l2_normalize(
+            x=X, epsilon=self._eps, axis=-1
+        )
+
+    def _training_forward(self, x):
+        return tf.math.l2_normalize(
+            x=x, epsilon=self._eps, axis=-1, name=self._name
+        )
+
+    def to_dict(self):
+        return {
+            'type': 'L2NormalizationLayer',
+            'params': {
+                'name': self._name,
+                'eps': self._eps
+            }
+        }
