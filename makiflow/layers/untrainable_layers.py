@@ -605,3 +605,4 @@ class ResizeLayer(SimpleForwardLayer):
                 'align_corners': self.align_corners,
             }
         }
+

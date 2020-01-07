@@ -185,8 +185,15 @@ class Builder:
             'GroupNormLayer': Builder.__groupnorm_layer_from_dict,
             'NormalizationLayer': Builder.__normalizate_layer_from_dict,
             'InstanceNormLayer': Builder.__instancenorm_layer_from_dict,
+            'ScaleLayer': Builder.__scale_layer_from_dict,
         }
         return uni_dict[layer_dict['type']](params)
+
+    @staticmethod
+    def __scale_layer_from_dict(params):
+        name = params['name']
+        init_value = params['init_value']
+        return ScaleLayer(init_value=init_value, name=name)
 
     @staticmethod
     def __groupnorm_layer_from_dict(params):

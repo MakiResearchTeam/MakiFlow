@@ -1082,3 +1082,40 @@ class InstanceNormLayer(BatchNormBaseLayer):
                 'use_gamma': self.use_gamma,
             }
         }
+
+
+class ScaleLayer(SimpleForwardLayer):
+
+    def __init__(self, init_value, name):
+        """
+        ScaleLayer is used to multiply input MakiTensor on `init_value`, which is trainable variable.
+
+        Parameters
+        ----------
+        init_value : int
+            The initial value which need to multiply by input.
+        name : str
+            Name of this layer.
+        """
+        self.init_value = init_value
+        self.name_scale = 'ScaleValue_' + name
+
+        self.scale = tf.Variable(init_value, name=self.name_scale, dtype=tf.float32)
+
+        super().__init__(name, [self.scale], {self.name_scale: self.scale})
+
+    def _forward(self, x):
+        return x * self.scale
+
+    def _training_forward(self, x):
+        return self._forward(x)
+
+    def to_dict(self):
+        return {
+            'type': 'ScaleLayer',
+            'params': {
+                'name': self._name,
+                'init_value': self.init_value
+            }
+        }
+

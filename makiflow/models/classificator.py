@@ -635,18 +635,15 @@ class Classificator(MakiModel):
             return {'train costs': train_costs, 'train errors': train_errors,
                     'test costs': test_costs, 'test errors': test_errors}
 
-    def evaluate(self, Xtest, Ytest, batch_sz):
-        # TODO: for test can be delete
-        # Validating the network
+
+    def evaluate(self, Xtest, Ytest):
         Xtest = Xtest.astype(np.float32)
         Yish_test = tf.nn.softmax(self._inference_out)
-        n_batches = Xtest.shape[0] // batch_sz
+        n_batches = Xtest.shape[0] // self._batch_sz
 
-        # For train data
         test_cost = 0
         predictions = np.zeros(len(Xtest))
         for k in tqdm(range(n_batches)):
-            # Test data
             Xtestbatch = Xtest[k * batch_sz:(k + 1) * batch_sz]
             Ytestbatch = Ytest[k * batch_sz:(k + 1) * batch_sz]
             Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
@@ -657,4 +654,27 @@ class Classificator(MakiModel):
         test_cost = test_cost / (len(Xtest) // batch_sz)
         print('Accuracy:', 1 - error, 'Cost:', test_cost)
 
+
+    def predict(self, Xtest, use_softmax_and_argmax=True):
+        Xtest = Xtest.astype(np.float32)
+        if use_softmax_and_argmax:
+            Yish_test = tf.nn.softmax(self._inference_out)
+        else:
+            Yish_test = self._inference_out
+        n_batches = Xtest.shape[0] // self._batch_sz
+
+        predictions = None
+        for i in tqdm(range(n_batches)):
+            Xtestbatch = Xtest[i * self._batch_sz:(i + 1) * self._batch_sz]
+            Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
+
+            if use_softmax_and_argmax:
+                Yish_test_done = np.argmax(Yish_test_done, axis=1)
+
+            if predictions is None:
+                predictions = Yish_test_done
+            else:
+                predictions = np.concatenate((predictions, Yish_test_done))
+
+        return predictions
 
