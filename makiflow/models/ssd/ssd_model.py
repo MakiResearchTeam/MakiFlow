@@ -460,6 +460,10 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -510,6 +514,7 @@ class SSDModel(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -670,6 +675,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -692,6 +698,10 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -768,6 +778,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -790,6 +801,10 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -959,6 +974,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -981,6 +997,10 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -1057,6 +1077,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -1079,6 +1100,10 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -1220,6 +1245,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -1239,6 +1265,11 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -1289,6 +1320,7 @@ class SSDModel(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -1412,6 +1444,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -1431,6 +1464,10 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -1480,6 +1517,7 @@ class SSDModel(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
