@@ -619,13 +619,11 @@ class L2NormalizationLayer(SimpleForwardLayer):
 
     def _forward(self, X):
         return tf.math.l2_normalize(
-            x=X, epsilon=self._eps, axis=-1
+            x=X, epsilon=self._eps, axis=-1, name=self._name
         )
 
     def _training_forward(self, x):
-        return tf.math.l2_normalize(
-            x=x, epsilon=self._eps, axis=-1, name=self._name
-        )
+        return self._forward(x)
 
     def to_dict(self):
         return {

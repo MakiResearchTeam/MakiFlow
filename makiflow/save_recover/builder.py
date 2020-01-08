@@ -8,7 +8,6 @@ from makiflow.layers import *
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel
-from makiflow.models.ssd.ssd_model import OffsetRegression
 from makiflow.models import Segmentator
 from makiflow.models import TextRecognizer
 
@@ -189,8 +188,15 @@ class Builder:
             'NormalizationLayer': Builder.__normalizate_layer_from_dict,
             'InstanceNormLayer': Builder.__instancenorm_layer_from_dict,
             'ScaleLayer': Builder.__scale_layer_from_dict,
+            'L2NormalizationLayer': Builder.__l2_norm_layer_from_dict
         }
         return uni_dict[layer_dict['type']](params)
+
+    @staticmethod
+    def __l2_norm_layer_from_dict(params):
+        name = params['name']
+        eps = params['eps']
+        return L2NormalizationLayer(name=name, eps=eps)
 
     @staticmethod
     def __scale_layer_from_dict(params):

@@ -3,6 +3,12 @@ from scipy.special import binom
 
 
 class Loss:
+    MAKI_LOSS = 'MAKI_LOSS'
+    FOCAL_LOSS = 'FOCAL_LOSS'
+    CE_LOSS = 'CE_LOSS'
+    QCE_LOSS = 'QCE_LOSS'
+    POLY_LOSS = 'POLY_LOSS'
+
     @staticmethod
     def maki_loss(
             flattened_logits,
@@ -120,3 +126,38 @@ class Loss:
         """
         quadratic_ce = ce_loss * ce_loss / 2.0
         return tf.reduce_mean(quadratic_ce)
+
+    @staticmethod
+    def poly_loss(flattened_logits, flattened_labels, num_classes, num_positives, coeffs):
+        """
+        Creates Poly Loss from the polynomial coefficients.
+        Parameters
+        ----------
+        flattened_logits : tf.Tensor
+            Tensor of flattened logits with shape [batch_sz, total_predictions, num_classes].
+        flattened_labels : tf.Tensor
+            Tensor of flattened labels with shape [batch_sz, total_predictions].
+        num_classes : int
+            Number of classes.
+        num_positives : tf.Tensor
+            Tensor of shape [batch_sz]. Contains number of positive samples for each training sample.
+        coeffs : list
+            List of the polynomial coefficients.
+        Returns
+        -------
+        tf.Tensor
+            Constructed Poly loss.
+        """
+        # [batch_sz, total_predictions, num_classes]
+        train_confidences = tf.nn.softmax(flattened_logits)
+        # Create one-hot encoding for picking predictions we need
+        # [batch_sz, total_predictions, num_classes]
+        one_hot_labels = tf.one_hot(flattened_labels, depth=num_classes, on_value=1.0, off_value=0.0)
+        filtered_confidences = train_confidences * one_hot_labels
+        # [batch_sz, total_predictions]
+        sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
+        loss = 0.0
+        for i, c in enumerate(coeffs):
+            loss += tf.reduce_sum(tf.pow(sparse_confidences, i)) * c
+        num_positives = tf.reduce_sum(num_positives)
+        return loss / num_positives
