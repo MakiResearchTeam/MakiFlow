@@ -188,6 +188,7 @@ class Segmentator(MakiModel):
                 print('Epoch:', i, 'Focal loss: {:0.4f}'.format(focal_loss))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -243,6 +244,7 @@ class Segmentator(MakiModel):
                 print('Epoch:', i, 'Focal loss: {:0.4f}'.format(float(focal_loss)))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -385,6 +387,7 @@ class Segmentator(MakiModel):
                 print('Epoch:', i, 'Focal loss: {:0.4f}'.format(focal_loss))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -439,6 +442,7 @@ class Segmentator(MakiModel):
                 print('Epoch:', i, 'Maki loss: {:0.4f}'.format(maki_loss))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -576,6 +580,7 @@ class Segmentator(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -694,6 +699,7 @@ class Segmentator(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -804,6 +810,7 @@ class Segmentator(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -866,6 +873,7 @@ class Segmentator(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -873,3 +881,4 @@ class Segmentator(MakiModel):
                 'train losses': train_total_losses,
                 'qudratic ce losses': train_quadratic_ce_losses
             }
+
