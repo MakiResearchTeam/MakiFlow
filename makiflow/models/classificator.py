@@ -124,7 +124,7 @@ class Classificator(MakiModel):
         # For testing
         Yish_test = tf.nn.softmax(self._inference_out)
 
-        n_batches = Xtrain.shape[0] // self._batch_sz
+        n_batches = len(Xtrain) // self._batch_sz
 
         train_costs = []
         train_errors = []
@@ -267,7 +267,7 @@ class Classificator(MakiModel):
         # For testing
         Yish_test = tf.nn.softmax(self._inference_out)
 
-        n_batches = Xtrain.shape[0] // self._batch_sz
+        n_batches = len(Xtrain) // self._batch_sz
 
         train_costs = []
         train_errors = []
@@ -420,7 +420,7 @@ class Classificator(MakiModel):
         # For testing
         Yish_test = tf.nn.softmax(self._inference_out)
 
-        n_batches = Xtrain.shape[0] // self._batch_sz
+        n_batches = len(Xtrain) // self._batch_sz
 
         train_costs = []
         train_errors = []
@@ -565,7 +565,7 @@ class Classificator(MakiModel):
         # For testing
         Yish_test = tf.nn.softmax(self._inference_out)
 
-        n_batches = Xtrain.shape[0] // self._batch_sz
+        n_batches = len(Xtrain) // self._batch_sz
 
         train_costs = []
         train_errors = []
@@ -661,7 +661,7 @@ class Classificator(MakiModel):
             Yish_test = tf.nn.softmax(self._inference_out)
         else:
             Yish_test = self._inference_out
-        n_batches = Xtest.shape[0] // self._batch_sz
+        n_batches = len(Xtest) // self._batch_sz
 
         predictions = None
         for i in tqdm(range(n_batches)):
