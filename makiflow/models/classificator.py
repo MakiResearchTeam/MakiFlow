@@ -124,7 +124,7 @@ class Classificator(MakiModel):
         # For testing
         Yish_test = tf.nn.softmax(self._inference_out)
 
-        n_batches = Xtrain.shape[0] // self._batch_sz
+        n_batches = len(Xtrain) // self._batch_sz
 
         train_costs = []
         train_errors = []
@@ -177,6 +177,7 @@ class Classificator(MakiModel):
                           'Test accuracy: {:0.4f}'.format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -267,7 +268,7 @@ class Classificator(MakiModel):
         # For testing
         Yish_test = tf.nn.softmax(self._inference_out)
 
-        n_batches = Xtrain.shape[0] // self._batch_sz
+        n_batches = len(Xtrain) // self._batch_sz
 
         train_costs = []
         train_errors = []
@@ -330,6 +331,7 @@ class Classificator(MakiModel):
                           'Test accuracy: {:0.4f}'.format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -420,7 +422,7 @@ class Classificator(MakiModel):
         # For testing
         Yish_test = tf.nn.softmax(self._inference_out)
 
-        n_batches = Xtrain.shape[0] // self._batch_sz
+        n_batches = len(Xtrain) // self._batch_sz
 
         train_costs = []
         train_errors = []
@@ -482,6 +484,7 @@ class Classificator(MakiModel):
                           'Test accuracy: {:0.4f}'.format(1 - test_error), 'Test cost: {:0.4f}'.format(test_cost))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -565,7 +568,7 @@ class Classificator(MakiModel):
         # For testing
         Yish_test = tf.nn.softmax(self._inference_out)
 
-        n_batches = Xtrain.shape[0] // self._batch_sz
+        n_batches = len(Xtrain) // self._batch_sz
 
         train_costs = []
         train_errors = []
@@ -629,6 +632,7 @@ class Classificator(MakiModel):
                           'Test cost: {:0.4f}'.format(test_cost))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -644,14 +648,14 @@ class Classificator(MakiModel):
         test_cost = 0
         predictions = np.zeros(len(Xtest))
         for k in tqdm(range(n_batches)):
-            Xtestbatch = Xtest[k * batch_sz:(k + 1) * batch_sz]
-            Ytestbatch = Ytest[k * batch_sz:(k + 1) * batch_sz]
+            Xtestbatch = Xtest[k * self._batch_sz:(k + 1) * self._batch_sz]
+            Ytestbatch = Ytest[k * self._batch_sz:(k + 1) * self._batch_sz]
             Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
             test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
-            predictions[k * batch_sz:(k + 1) * batch_sz] = np.argmax(Yish_test_done, axis=1)
+            predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=1)
 
         error = error_rate(predictions, Ytest)
-        test_cost = test_cost / (len(Xtest) // batch_sz)
+        test_cost = test_cost / (len(Xtest) // self._batch_sz)
         print('Accuracy:', 1 - error, 'Cost:', test_cost)
 
 
@@ -661,7 +665,7 @@ class Classificator(MakiModel):
             Yish_test = tf.nn.softmax(self._inference_out)
         else:
             Yish_test = self._inference_out
-        n_batches = Xtest.shape[0] // self._batch_sz
+        n_batches = len(Xtest) // self._batch_sz
 
         predictions = None
         for i in tqdm(range(n_batches)):
