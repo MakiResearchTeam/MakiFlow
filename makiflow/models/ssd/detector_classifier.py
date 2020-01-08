@@ -5,23 +5,23 @@ from makiflow.layers import ReshapeLayer
 
 class DCParams:
     TYPE = 'DetectorClassifier'
-    NAME = 'NAME'
-    CLASS_NUMBER = 'CLASS_NUMBER'
-    DBOXES = 'DBOXES'
+    NAME = 'name'
+    CLASS_NUMBER = 'class_number'
+    DBOXES = 'dboxes'
 
-    REG_X_NAME = 'REG_X_NAME'
-    RKW = 'RKW'
-    RKH = 'RKH'
-    RIN_F = 'RIN_F'
-    USE_REG_BIAS = 'USE_REG_BIAS'
-    REG_INIT_TYPE = 'REG_INIT_TYPE'
+    REG_X_NAME = 'reg_x_name'
+    RKW = 'rkw'
+    RKH = 'rkh'
+    RIN_F = 'rin_f'
+    USE_REG_BIAS = 'use_reg_bias'
+    REG_INIT_TYPE = 'reg_init_type'
 
-    CLASS_X_NAME = 'CLASS_X_NAME'
-    CKW = 'CKW'
-    CKH = 'CKH'
-    CIN_F = 'CIN_F'
-    USE_CLASS_BIAS = 'USE_CLASS_BIAS'
-    CLASS_INIT_TYPE = 'CLASS_INIT_TYPE'
+    CLASS_X_NAME = 'class_x_name'
+    CKW = 'ckw'
+    CKH = 'ckh'
+    CIN_F = 'cin_f'
+    USE_CLASS_BIAS = 'use_class_bias'
+    CLASS_INIT_TYPE = 'class_init_type'
 
 
 class DetectorClassifier:
@@ -29,7 +29,6 @@ class DetectorClassifier:
     This class represents a part of SSD algorithm. It consists of several parts:
     conv layers -> detector -> confidences + localization regression.
     """
-
     def __init__(
             self,
             reg_fms: MakiTensor, rkw, rkh, rin_f,
