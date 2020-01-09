@@ -292,6 +292,7 @@ class SSDModel(MakiModel):
         self._scan_loss_is_build = False
         self._maki_loss_is_build = False
         self._quadratic_ce_loss_is_build = False
+        self._poly_loss_is_build = False
 
     def _build_loc_loss(self):
         diff = self._input_loc - self._train_offsets
@@ -1611,7 +1612,7 @@ class SSDModel(MakiModel):
         """
         assert (type(loc_loss_weight) == float)
 
-        train_op = self._minimize_quadratic_ce_loss(optimizer, global_step)
+        train_op = self._minimize_poly_loss(optimizer, global_step)
 
         n_batches = len(images) // self.batch_sz
 
@@ -1683,7 +1684,7 @@ class SSDModel(MakiModel):
         assert (optimizer is not None)
         assert (self._session is not None)
 
-        train_op = self._minimize_quadratic_ce_loss(optimizer, global_step)
+        train_op = self._minimize_poly_loss(optimizer, global_step)
 
         train_total_losses = []
         train_qce_losses = []
