@@ -1639,7 +1639,7 @@ class SSDModel(MakiModel):
                         # Don't know how to fix it yet.
                         try:
                             batch_total_loss, batch_maki_loss, batch_loc_loss, _ = self._session.run(
-                                [self._final_maki_loss, self._maki_loss, self._loc_loss, train_op],
+                                [self._final_poly_loss, self._poly_loss, self._loc_loss, train_op],
                                 feed_dict={
                                     self._input_data_tensors[0]: img_batch,
                                     self._flattened_labels: labels_batch,
@@ -1699,7 +1699,7 @@ class SSDModel(MakiModel):
 
                 for _ in iterator:
                     batch_total_loss, batch_qce_loss, batch_loc_loss, _ = self._session.run(
-                        [self._final_quadratic_ce_loss, self._quadratic_ce_loss, self._loc_loss, train_op],
+                        [self._final_poly_loss, self._poly_loss, self._loc_loss, train_op],
                         feed_dict={
                             self._loc_loss_weight: loc_loss_weight
                         })
