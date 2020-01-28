@@ -75,7 +75,6 @@ class LaplacianPyramidTextureLayer(SimpleForwardLayer):
 
     def _forward(self, X):
         # Normalize the input UV map so that its coordinates are within [-1, 1] range.
-        X = X * 2.0 - 1.0
         y = []
         for d in range(self._depth):
             y += [self._textures[d]._forward(X)]
