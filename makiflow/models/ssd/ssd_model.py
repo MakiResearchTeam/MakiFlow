@@ -15,8 +15,8 @@ from sklearn.utils import shuffle
 from tqdm import tqdm
 
 # Log messages
-
 MSG_NEW_OPTIMIZER_IS_USED = 'New optimizer is used.'
+
 
 class OffsetRegression:
     DUMMY = 0

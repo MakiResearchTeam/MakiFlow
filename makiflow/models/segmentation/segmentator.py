@@ -90,7 +90,7 @@ class Segmentator(MakiModel):
         focal_weights = tf.pow(ones_arr - sparse_confidences, self._focal_gamma)
         num_positives = tf.reduce_sum(self._focal_num_positives)
         self._focal_loss = tf.reduce_sum(focal_weights * self._ce_loss) / num_positives
-        self._final_weighted_focal_loss = self._build_final_loss(self._focal_loss)
+        self._final_focal_loss = self._build_final_loss(self._focal_loss)
         self._focal_loss_is_build = True
 
     def _setup_focal_loss_inputs(self):
@@ -120,7 +120,7 @@ class Segmentator(MakiModel):
             print('New optimizer is used.')
             self._focal_optimizer = optimizer
             self._focal_train_op = optimizer.minimize(
-                self._focal_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -467,7 +467,7 @@ class Segmentator(MakiModel):
         )
         num_positives = tf.reduce_sum(self._weighted_focal_num_positives)
         self._weighted_focal_loss = tf.reduce_sum(flattened_weights * focal_weights * self._ce_loss) / num_positives
-        self._final_weighted_focal_loss = self._build_final_loss(self._weighted_focal_loss)
+        self._final_focal_loss = self._build_final_loss(self._weighted_focal_loss)
 
         self._weighted_focal_loss_is_build = True
 
@@ -490,7 +490,7 @@ class Segmentator(MakiModel):
             self._build_weighted_focal_loss()
             self._weighted_focal_optimizer = optimizer
             self._weighted_focal_train_op = optimizer.minimize(
-                self._final_weighted_focal_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -498,7 +498,7 @@ class Segmentator(MakiModel):
             print('New optimizer is used.')
             self._weighted_focal_optimizer = optimizer
             self._weighted_focal_train_op = optimizer.minimize(
-                self._final_weighted_focal_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -558,7 +558,7 @@ class Segmentator(MakiModel):
                     NPbatch = num_positives[j * self.batch_sz:(j + 1) * self.batch_sz]
                     WMbatch = weight_maps[j * self.batch_sz:(j + 1) * self.batch_sz]
                     batch_total_loss, batch_focal_loss, _ = self._session.run(
-                        [self._final_weighted_focal_loss, self._weighted_focal_loss, train_op],
+                        [self._final_focal_loss, self._weighted_focal_loss, train_op],
                         feed_dict={
                             self._images: Ibatch,
                             self._labels: Lbatch,
