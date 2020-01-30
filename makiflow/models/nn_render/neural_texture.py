@@ -73,6 +73,7 @@ class LaplacianPyramidTextureLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
+    # noinspection PyProtectedMember
     def _forward(self, X):
         # Normalize the input UV map so that its coordinates are within [-1, 1] range.
         y = []
