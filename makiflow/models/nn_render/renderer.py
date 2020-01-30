@@ -11,6 +11,8 @@ class NeuralRenderer(MakiModel):
         graph_tensors.update(output.get_self_pair())
         super().__init__(graph_tensors, outputs=[output], inputs=[input_l])
 
+        self._training_vars_are_ready = False
+
     def predict(self, x):
         return self._session.run(
             self._output_data_tensors[0],
