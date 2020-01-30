@@ -36,7 +36,7 @@ class NeuralRenderer(MakiModel):
         self.batch_sz = out_shape[0]
 
         self._uv_maps = self._input_data_tensors[0]
-        self._images = tf.placeholder(tf.int32, shape=out_shape, name='images')
+        self._images = tf.placeholder(tf.float32, shape=out_shape, name='images')
 
         self._training_out = self._training_outputs[0]
 
