@@ -40,7 +40,7 @@ class MseTrainingModule(NeuralRendererBasis):
 
         return self._mse_train_op
 
-    def fit_mse(self, images, uv_maps, optimizer, epochs=1, global_step=None):
+    def fit_mse(self, images, uv_maps, optimizer, epochs=1, global_step=None, shuffle_data=True):
         """
         Method for training the model.
 
@@ -73,7 +73,8 @@ class MseTrainingModule(NeuralRendererBasis):
         iterator = None
         try:
             for i in range(epochs):
-                images, uv_maps = shuffle(images, uv_maps)
+                if shuffle_data:
+                    images, uv_maps = shuffle(images, uv_maps)
                 abs_loss = 0
                 iterator = tqdm(range(n_batches))
 

@@ -40,7 +40,7 @@ class AbsTrainingModule(NeuralRendererBasis):
 
         return self._abs_train_op
 
-    def fit_abs(self, images, uv_maps, optimizer, epochs=1, global_step=None):
+    def fit_abs(self, images, uv_maps, optimizer, epochs=1, global_step=None, shuffle_data=True):
         """
         Method for training the model.
 
@@ -73,7 +73,8 @@ class AbsTrainingModule(NeuralRendererBasis):
         iterator = None
         try:
             for i in range(epochs):
-                images, uv_maps = shuffle(images, uv_maps)
+                if shuffle_data:
+                    images, uv_maps = shuffle(images, uv_maps)
                 abs_loss = 0
                 iterator = tqdm(range(n_batches))
 
