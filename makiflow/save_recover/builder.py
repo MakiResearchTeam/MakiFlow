@@ -213,8 +213,9 @@ class Builder:
         eps = params['eps']
         use_beta = params['use_beta']
         use_gamma = params['use_gamma']
+        track_running_stats = params['track_running_stats']
         return GroupNormLayer(D=D, G=G, name=name, decay=decay, eps=eps,
-                              use_beta=use_beta, use_gamma=use_gamma)
+                              use_beta=use_beta, use_gamma=use_gamma, track_running_stats=track_running_stats)
 
     @staticmethod
     def __normalizate_layer_from_dict(params):
@@ -224,8 +225,9 @@ class Builder:
         eps = params['eps']
         use_beta = params['use_beta']
         use_gamma = params['use_gamma']
+        track_running_stats = params['track_running_stats']
         return NormalizationLayer(D=D, name=name, decay=decay, eps=eps,
-                              use_beta=use_beta, use_gamma=use_gamma)
+                              use_beta=use_beta, use_gamma=use_gamma, track_running_stats=track_running_stats)
 
     @staticmethod
     def __instancenorm_layer_from_dict(params):
@@ -235,8 +237,9 @@ class Builder:
         eps = params['eps']
         use_beta = params['use_beta']
         use_gamma = params['use_gamma']
+        track_running_stats = params['track_running_stats']
         return InstanceNormLayer(D=D, name=name, decay=decay, eps=eps,
-                              use_beta=use_beta, use_gamma=use_gamma)
+                              use_beta=use_beta, use_gamma=use_gamma, track_running_stats=track_running_stats)
 
     @staticmethod
     def __resize_layer_from_dict(params):
