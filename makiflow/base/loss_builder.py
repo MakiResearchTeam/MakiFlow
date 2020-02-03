@@ -161,3 +161,13 @@ class Loss:
             loss += tf.reduce_sum(tf.pow(sparse_confidences, i)) * c
         num_positives = tf.reduce_sum(num_positives)
         return loss / num_positives
+
+    @staticmethod
+    def abs_loss(labels, predictions):
+        diff = labels - predictions
+        return tf.reduce_mean(diff)
+
+    @staticmethod
+    def mse_loss(labels, predictions):
+        diff = tf.pow(labels - predictions, 2.0)
+        return tf.reduce_mean(diff)
