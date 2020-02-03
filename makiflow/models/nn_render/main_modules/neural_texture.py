@@ -29,7 +29,9 @@ class SingleTextureLayer(SimpleForwardLayer):
     def _forward(self, X):
         # Normalize the input UV map so that its coordinates are within [-1, 1] range.
         X = X * 2.0 - 1.0
-        return grid_sample(self._texture, X)
+        batch_size = X.get_shape().as_list()[0]
+        expanded_texture = tf.concat([self._texture] * batch_size, axis=0)
+        return grid_sample(expanded_texture, X)
 
     def _training_forward(self, x):
         return self._forward(x)

@@ -1028,7 +1028,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
             X_normed = (X - mean) / variance
             X_final = X*gamma + beta
 
-        There X have shape [N, H, W, C]. InstanceNormLayer normilized input on N and C axis
+        There X have shape [N, H, W, C]. InstanceNormLayer normalized input on N and C axis
         gamma and beta are learned using gradient descent.
 
         Parameters
