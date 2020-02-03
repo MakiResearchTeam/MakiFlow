@@ -578,7 +578,7 @@ class AtrousConvLayer(SimpleForwardLayer):
 
 class BatchNormLayer(BatchNormBaseLayer):
     def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         Batch Normalization Procedure:
             X_normed = (X - mean) / variance
@@ -609,7 +609,7 @@ class BatchNormLayer(BatchNormBaseLayer):
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta,
-                         type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta)
+                         type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
         if self.running_mean is None:
@@ -630,16 +630,39 @@ class BatchNormLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
-        return tf.nn.batch_normalization(
-            X,
-            self.running_mean,
-            self.running_variance,
-            self.beta,
-            self.gamma,
-            self.eps
-        )
+        if self._track_running_stats:
+            return tf.nn.batch_normalization(
+                X,
+                self.running_mean,
+                self.running_variance,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
+        else:
+            # These if statements check if we do batchnorm for convolution or dense
+            if len(X.shape) == 4:
+                # conv
+                axes = [0, 1, 2]
+            else:
+                # dense
+                axes = [0]
+
+            batch_mean, batch_var = tf.nn.moments(X, axes=axes)
+
+            return tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
 
     def _training_forward(self, X):
+        if not self._track_running_stats:
+            return self._forward(X)
+
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
             # conv
@@ -649,6 +672,7 @@ class BatchNormLayer(BatchNormBaseLayer):
             axes = [0]
 
         batch_mean, batch_var = tf.nn.moments(X, axes=axes)
+
         update_running_mean = tf.assign(
             self.running_mean,
             self.running_mean * self.decay + batch_mean * (1 - self.decay)
@@ -679,13 +703,14 @@ class BatchNormLayer(BatchNormBaseLayer):
                 'eps': self.eps,
                 'use_beta': self.use_beta,
                 'use_gamma': self.use_gamma,
+                'track_running_stats': self._track_running_stats,
             }
         }
 
 
 class GroupNormLayer(BatchNormBaseLayer):
     def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         GroupNormLayer Procedure:
             X_normed = (X - mean) / variance
@@ -720,7 +745,8 @@ class GroupNormLayer(BatchNormBaseLayer):
         """
         self.G = G
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma,
-                         type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var, gamma=gamma, beta=beta)
+                         type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var,
+                         gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
         N = data.shape[0]
@@ -770,7 +796,12 @@ class GroupNormLayer(BatchNormBaseLayer):
             old_shape = [N, F]
             X = tf.reshape(X, [N, self.G, F // self.G])
 
-        X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
+        if self._track_running_stats:
+            X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
+        else:
+            # Output shape [N, 1, 1, self.G, 1] for Conv and [N, G, 1] for Dense
+            batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+            X = (X - batch_mean) / tf.sqrt(batch_var + self.eps)
 
         X = tf.reshape(X, old_shape)
 
@@ -783,6 +814,9 @@ class GroupNormLayer(BatchNormBaseLayer):
         return X
 
     def _training_forward(self, X):
+        if not self._track_running_stats:
+            return self._forward(X)
+
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
             # conv
@@ -835,13 +869,14 @@ class GroupNormLayer(BatchNormBaseLayer):
                 'G': self.G,
                 'use_beta': self.use_beta,
                 'use_gamma': self.use_gamma,
+                'track_running_stats': self._track_running_stats,
             }
         }
 
 
 class NormalizationLayer(BatchNormBaseLayer):
     def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         NormalizationLayer Procedure:
             X_normed = (X - mean) / variance
@@ -872,7 +907,7 @@ class NormalizationLayer(BatchNormBaseLayer):
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
-                         type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta)
+                         type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
         N = data.shape[0]
@@ -904,16 +939,40 @@ class NormalizationLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
-        return tf.nn.batch_normalization(
-            X,
-            self.running_mean,
-            self.running_variance,
-            self.beta,
-            self.gamma,
-            self.eps
-        )
+        if self._track_running_stats:
+            return tf.nn.batch_normalization(
+                X,
+                self.running_mean,
+                self.running_variance,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
+        else:
+            # These if statements check if we do batchnorm for convolution or dense
+            if len(X.shape) == 4:
+                # conv
+                axes = [1, 2, 3]
+            else:
+                # dense
+                axes = [1]
+
+            # Output shape [N, 1, 1, 1] for Conv and [N, 1] for Dense
+            batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+
+            return tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
 
     def _training_forward(self, X):
+        if not self._track_running_stats:
+            return self._forward(X)
+
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
             # conv
@@ -956,13 +1015,14 @@ class NormalizationLayer(BatchNormBaseLayer):
                 'eps': self.eps,
                 'use_beta': self.use_beta,
                 'use_gamma': self.use_gamma,
+                'track_running_stats': self._track_running_stats,
             }
         }
 
 
 class InstanceNormLayer(BatchNormBaseLayer):
     def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         InstanceNormLayer Procedure:
             X_normed = (X - mean) / variance
@@ -995,7 +1055,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
-                         type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta)
+                         type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
         N = data.shape[0]
@@ -1028,16 +1088,40 @@ class InstanceNormLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
-        return tf.nn.batch_normalization(
-            X,
-            self.running_mean,
-            self.running_variance,
-            self.beta,
-            self.gamma,
-            self.eps
-        )
+        if self._track_running_stats:
+            return tf.nn.batch_normalization(
+                X,
+                self.running_mean,
+                self.running_variance,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
+        else:
+            # These if statements check if we do batchnorm for convolution or dense
+            if len(X.shape) == 4:
+                # conv
+                axes = [1, 2]
+            else:
+                # dense
+                axes = [1]
+
+            # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
+            batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+
+            return tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
 
     def _training_forward(self, X):
+        if not self._track_running_stats:
+            return self._forward(X)
+
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
             # conv
@@ -1080,6 +1164,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
                 'eps': self.eps,
                 'use_beta': self.use_beta,
                 'use_gamma': self.use_gamma,
+                'track_running_stats': self._track_running_stats,
             }
         }
 

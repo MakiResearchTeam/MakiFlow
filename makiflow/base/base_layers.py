@@ -6,7 +6,7 @@ from makiflow.base.maki_entities import MakiLayer, MakiTensor
 
 
 class BatchNormBaseLayer(MakiLayer):
-    def __init__(self, D, decay, eps, name, use_gamma, use_beta, type_norm, mean, var, gamma, beta):
+    def __init__(self, D, decay, eps, name, use_gamma, use_beta, type_norm, mean, var, gamma, beta, track_running_stats):
         """
         Batch Normalization Procedure:
             X_normed = (X - mean) / variance
@@ -43,9 +43,10 @@ class BatchNormBaseLayer(MakiLayer):
         self.use_beta = use_beta
         self.running_mean = mean
         self.running_variance = var
+        self._track_running_stats = track_running_stats
 
         # These variables are needed to change the mean and variance of the batch after
-        # the batchnormalization: result*gamma + beta
+        # the batchNormaization: result*gamma + beta
         # beta - offset
         # gamma - scale
         if beta is None:
@@ -80,7 +81,8 @@ class BatchNormBaseLayer(MakiLayer):
     def __call__(self, x):
         data = x.get_data_tensor()
 
-        self._init_train_params(data)
+        if self._track_running_stats:
+            self._init_train_params(data)
 
         data = self._forward(data)
 
