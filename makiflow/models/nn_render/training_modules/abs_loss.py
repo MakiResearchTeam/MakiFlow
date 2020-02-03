@@ -10,9 +10,6 @@ class AbsTrainingModule(NeuralRendererBasis):
         self._abs_loss_is_build = False
         super()._prepare_training_vars()
 
-    # ------------------------------------------------------------------------------------------------------------------
-    # ----------------------------------------------------------ABS LOSS------------------------------------------------
-
     def _build_abs_loss(self):
         self._abs_loss = Loss.abs_loss(self._images, self._training_out)
         self._final_abs_loss = self._build_final_loss(self._abs_loss)

@@ -10,9 +10,6 @@ class MseTrainingModule(NeuralRendererBasis):
         self._mse_loss_is_build = False
         super()._prepare_training_vars()
 
-    # ------------------------------------------------------------------------------------------------------------------
-    # ----------------------------------------------------------ABS LOSS------------------------------------------------
-
     def _build_mse_loss(self):
         self._mse_loss = Loss.mse_loss(self._images, self._training_out)
         self._final_mse_loss = self._build_final_loss(self._mse_loss)

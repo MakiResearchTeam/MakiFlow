@@ -164,7 +164,7 @@ class Loss:
 
     @staticmethod
     def abs_loss(labels, predictions):
-        diff = labels - predictions
+        diff = tf.abs(labels - predictions)
         return tf.reduce_mean(diff)
 
     @staticmethod
