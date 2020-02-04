@@ -70,7 +70,8 @@ class RandomCropMethod(TFRPostMapMethod):
         offset = tf.random_uniform(
             shape=[3],
             dtype=tf.int32,
-            maxval=1e6
+            # it is unlikely that a tensor with shape more that 10000 will appear
+            maxval=10000
         ) % limit
 
         cropped_image = tf.slice(image, offset, self._crop_size)
