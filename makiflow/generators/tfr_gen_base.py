@@ -13,7 +13,7 @@ class TFRPostMapMethod(TFRMapMethod):
         self._parent_method = None
 
     @abstractmethod
-    def load_data(self, data_paths) -> dict:
+    def read_record(self, serialized_example) -> dict:
         pass
 
     def __call__(self, parent_method: TFRMapMethod):
