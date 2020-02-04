@@ -78,6 +78,9 @@ class RandomCropMethod(TFRPostMapMethod):
 
         cropped_image = tf.slice(image, offset, self._image_crop_size)
         cropped_uvmap = tf.slice(uvmap, offset, self._uvmap_crop_size)
+        # After slicing the tensors doesn't have proper shape. They get instead [None, None, None]
+        cropped_image.set_shape(self._image_crop_size)
+        cropped_uvmap.set_shape(self._uvmap_crop_size)
 
         element[NNRIterator.IMAGE] = cropped_image
         element[NNRIterator.UVMAP] = cropped_uvmap
