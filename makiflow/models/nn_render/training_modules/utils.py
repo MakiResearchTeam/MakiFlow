@@ -1,4 +1,4 @@
-EPOCH = 'Epoch: '
+EPOCH = 'Epoch:'
 
 
 def print_train_info(epoch, *args):
