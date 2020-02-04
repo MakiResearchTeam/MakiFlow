@@ -14,15 +14,15 @@ def _bytes_feature(value):
     -------
 
     """
-    if isinstance(value, type(tf.constant(0))) and tf.executing_eagerly():
-        value = value.numpy()
-    else:
-        print('TensorFlow does not run in the eager mode.')
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
-def _tensor_to_byte_feature(tensor):
+def _tensor_to_byte_feature(tensor, sess=None):
     serialized_image = tf.io.serialize_tensor(tensor)
+    if sess is not None:
+        serialized_image = sess.run(serialized_image)
+    elif sess is None and not tf.executing_eagerly():
+        raise RuntimeError("TensorFlow is not executing eagerly. Please provide tf.Session to serialize tensors.")
     return _bytes_feature(serialized_image)
 
 
