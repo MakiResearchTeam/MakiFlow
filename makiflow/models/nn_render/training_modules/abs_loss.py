@@ -101,4 +101,57 @@ class AbsTrainingModule(NeuralRendererBasis):
                 iterator.close()
             return {'train losses': train_focal_losses}
 
+    def gen_fit_abs(self, optimizer, epochs=1, iterations=10, global_step=None):
+        """
+                Method for training the model.
+
+                Parameters
+                ----------
+                gamma : int
+                    Hyper parameter for MakiLoss.
+                optimizer : tensorflow optimizer
+                    Model uses tensorflow optimizers in order train itself.
+                epochs : int
+                    Number of epochs.
+                iterations : int
+                    Defines how ones epoch is. One operation is a forward pass
+                    using one batch.
+                global_step
+                    Please refer to TensorFlow documentation about global step for more info.
+
+                Returns
+                -------
+                python dictionary
+                    Dictionary with all testing data(train error, train cost, test error, test cost)
+                    for each test period.
+                """
+        assert (optimizer is not None)
+        assert (self._session is not None)
+
+        train_op = self._minimize_abs_loss(optimizer, global_step)
+
+        train_abs_losses = []
+        iterator = None
+        try:
+            for i in range(epochs):
+                focal_loss = 0
+                iterator = tqdm(range(iterations))
+
+                for _ in iterator:
+                    batch_focal_loss, _ = self._session.run(
+                        [self._final_abs_loss, train_op],)
+                    # Use exponential decay for calculating loss and error
+                    focal_loss = 0.1 * batch_focal_loss + 0.9 * focal_loss
+
+                train_abs_losses.append(focal_loss)
+
+                print('Epoch:', i, 'Focal loss: {:0.4f}'.format(float(focal_loss)))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {'train losses': train_abs_losses}
+
 

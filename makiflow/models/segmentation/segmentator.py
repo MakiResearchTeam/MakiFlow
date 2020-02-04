@@ -112,7 +112,7 @@ class Segmentator(MakiModel):
             self._build_focal_loss()
             self._focal_optimizer = optimizer
             self._focal_train_op = optimizer.minimize(
-                self._focal_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -173,7 +173,7 @@ class Segmentator(MakiModel):
                     Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
                     NPbatch = num_positives[j * self.batch_sz:(j + 1) * self.batch_sz]
                     batch_focal_loss, _ = self._session.run(
-                        [self._focal_loss, train_op],
+                        [self._final_focal_loss, train_op],
                         feed_dict={
                             self._images: Ibatch,
                             self._labels: Lbatch,
@@ -232,7 +232,7 @@ class Segmentator(MakiModel):
 
                 for _ in iterator:
                     batch_focal_loss, _ = self._session.run(
-                        [self._focal_loss, train_op],
+                        [self._final_focal_loss, train_op],
                         feed_dict={
                             self._focal_gamma: gamma
                         })
