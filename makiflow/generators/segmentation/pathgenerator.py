@@ -1,6 +1,6 @@
 from abc import ABC
 
-from makiflow.generators.main_modules.gen_base import PathGenerator
+from makiflow.generators.pipeline.gen_base import PathGenerator
 from makiflow.generators.segmentation.map_methods import SegmentIterator
 from glob import glob
 import os

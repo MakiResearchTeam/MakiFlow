@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from makiflow.generators.main_modules.gen_base import GenLayer
+from makiflow.generators.pipeline.gen_base import GenLayer
 from makiflow.generators.ssd.tfr_map_methods import SSDIterator
 from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
 from makiflow.base import MakiModel

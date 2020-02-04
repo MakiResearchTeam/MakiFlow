@@ -1,12 +1,10 @@
 from __future__ import absolute_import
 import tensorflow as tf
-
-from makiflow.generators.main_modules.gen_base import ImageIterator
-from makiflow.generators.main_modules.tfr_map_method import TFRMapMethod
+from makiflow.generators.pipeline.tfr.tfr_map_method import TFRMapMethod
 from makiflow.generators.ssd.data_preparation import IMAGE_FNAME, LABEL_FNAME, LOC_FNAME, LOC_MASK_FNAME
 
 
-class SSDIterator(ImageIterator):
+class SSDIterator:
     LOC = 'loc'
     LOC_MASK = 'loc_mask'
     LABEL = 'label'

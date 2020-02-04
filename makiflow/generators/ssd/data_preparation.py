@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import tensorflow as tf
-from makiflow.generators.main_modules.utils import _tensor_to_byte_feature
+from makiflow.generators.pipeline.tfr.utils import _tensor_to_byte_feature
 
 # Feature names
 IMAGE_FNAME = 'IMAGE'

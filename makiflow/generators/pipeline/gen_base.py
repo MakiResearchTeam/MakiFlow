@@ -3,10 +3,6 @@ from abc import abstractmethod, ABC
 from makiflow.base.maki_entities import MakiTensor
 
 
-class ImageIterator:
-    IMAGE = 'image'
-
-
 class PathGenerator(ABC):
     @abstractmethod
     def next_element(self) -> dict:

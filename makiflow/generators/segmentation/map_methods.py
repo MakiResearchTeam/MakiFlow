@@ -1,6 +1,6 @@
 import tensorflow as tf
 from makiflow.generators.segmentation.pathgenerator import SegmentPathGenerator
-from makiflow.generators.main_modules.map_method import MapMethod, PostMapMethod
+from makiflow.generators.pipeline.map_method import MapMethod, PostMapMethod
 
 
 class SegmentIterator:
