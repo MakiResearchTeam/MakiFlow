@@ -1,5 +1,6 @@
 import tensorflow as tf
 from makiflow.base.maki_entities import MakiModel, MakiTensor
+from makiflow.generators.nn_render.tfr_map_methods import NNRIterator
 
 
 class NeuralRendererBasis(MakiModel):
@@ -12,6 +13,7 @@ class NeuralRendererBasis(MakiModel):
 
         self._training_vars_are_ready = False
         self._learn_rgb_texture = False
+        self._generator = None
 
     def predict(self, x):
         return self._session.run(
@@ -32,18 +34,26 @@ class NeuralRendererBasis(MakiModel):
     def _prepare_training_vars(self):
         if not self._set_for_training:
             super()._setup_for_training()
-
+        # VARIABLES PREPARATION
         out_shape = self._outputs[0].get_shape()
-        self.out_h = out_shape[1]
-        self.out_w = out_shape[2]
-        self.batch_sz = out_shape[0]
+        self._out_h = out_shape[1]
+        self._out_w = out_shape[2]
+        self._batch_sz = out_shape[0]
 
         self._uv_maps = self._input_data_tensors[0]
-        self._images = tf.placeholder(tf.float32, shape=out_shape, name='images')
-
+        if self._generator is not None:
+            self._images = self._generator.get_iterator()[NNRIterator.image]
+        else:
+            self._images = tf.placeholder(tf.float32, shape=out_shape, name='images')
         self._training_out = self._training_outputs[0]
 
+        # OTHER PREPARATIONS
+        if self._learn_rgb_texture:
+            self._build_texture_loss()
         self._training_vars_are_ready = True
+
+    def set_generator(self, generator):
+        self._generator = generator
 
     # noinspection PyAttributeOutsideInit
     def set_learn_rgb_texture(self, scale):
@@ -58,8 +68,6 @@ class NeuralRendererBasis(MakiModel):
         """
         self._learn_rgb_texture = True
         self._texture_loss_scale = scale
-        self._prepare_training_vars()
-        self._build_texture_loss()
 
     def _build_texture_loss(self):
         texture_tensor = self._sampled_texture.get_data_tensor()

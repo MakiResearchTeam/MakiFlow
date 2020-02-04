@@ -1,8 +1,12 @@
 import tensorflow as tf
 from ..main_modules import NeuralRendererBasis
 from makiflow.base.loss_builder import Loss
+from makiflow.models.nn_render.training_modules.utils import print_train_info, moving_average
+from makiflow.models.nn_render.training_modules.utils import new_optimizer_used, loss_is_built
 from sklearn.utils import shuffle
 from tqdm import tqdm
+
+ABS_LOSS = 'ABS LOSS'
 
 
 class AbsTrainingModule(NeuralRendererBasis):
@@ -29,9 +33,10 @@ class AbsTrainingModule(NeuralRendererBasis):
                 self._final_abs_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
+            loss_is_built()
 
         if self._abs_optimizer != optimizer:
-            print('New optimizer is used.')
+            new_optimizer_used()
             self._abs_optimizer = optimizer
             self._abs_train_op = optimizer.minimize(
                 self._final_abs_loss, var_list=self._trainable_vars, global_step=global_step
@@ -56,6 +61,8 @@ class AbsTrainingModule(NeuralRendererBasis):
             Number of epochs.
         global_step
             Please refer to TensorFlow documentation about global step for more info.
+        shuffle_data : bool
+            Set to False if you don't want the data to be shuffled.
 
         Returns
         -------
@@ -68,8 +75,8 @@ class AbsTrainingModule(NeuralRendererBasis):
 
         train_op = self._minimize_abs_loss(optimizer, global_step)
 
-        n_batches = len(images) // self.batch_sz
-        train_focal_losses = []
+        n_batches = len(images) // self._batch_sz
+        train_abs_losses = []
         iterator = None
         try:
             for i in range(epochs):
@@ -79,8 +86,8 @@ class AbsTrainingModule(NeuralRendererBasis):
                 iterator = tqdm(range(n_batches))
 
                 for j in iterator:
-                    Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
-                    Lbatch = uv_maps[j * self.batch_sz:(j + 1) * self.batch_sz]
+                    Ibatch = images[j * self._batch_sz:(j + 1) * self._batch_sz]
+                    Lbatch = uv_maps[j * self._batch_sz:(j + 1) * self._batch_sz]
                     batch_abs_loss, _ = self._session.run(
                         [self._final_abs_loss, train_op],
                         feed_dict={
@@ -88,70 +95,68 @@ class AbsTrainingModule(NeuralRendererBasis):
                             self._uv_maps: Lbatch
                         })
                     # Use exponential decay for calculating loss and error
-                    abs_loss = 0.1 * batch_abs_loss + 0.9 * abs_loss
+                    abs_loss = moving_average(abs_loss, batch_abs_loss, j)
 
-                train_focal_losses.append(abs_loss)
+                train_abs_losses.append(abs_loss)
 
-                print('Epoch:', i, 'Abs loss: {:0.4f}'.format(abs_loss))
+                print_train_info(i, (ABS_LOSS, abs_loss))
         except Exception as ex:
             print(ex)
             print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
-            return {'train losses': train_focal_losses}
+            return {ABS_LOSS: train_abs_losses}
 
     def gen_fit_abs(self, optimizer, epochs=1, iterations=10, global_step=None):
         """
-                Method for training the model.
+        Method for training the model.
 
-                Parameters
-                ----------
-                gamma : int
-                    Hyper parameter for MakiLoss.
-                optimizer : tensorflow optimizer
-                    Model uses tensorflow optimizers in order train itself.
-                epochs : int
-                    Number of epochs.
-                iterations : int
-                    Defines how ones epoch is. One operation is a forward pass
-                    using one batch.
-                global_step
-                    Please refer to TensorFlow documentation about global step for more info.
+        Parameters
+        ----------
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+        iterations : int
+            Defines how long one epoch is. One operation is a forward pass
+            using one batch.
+        global_step
+            Please refer to TensorFlow documentation about global step for more info.
 
-                Returns
-                -------
-                python dictionary
-                    Dictionary with all testing data(train error, train cost, test error, test cost)
-                    for each test period.
-                """
+        Returns
+        -------
+        python dictionary
+            Dictionary with all testing data(train error, train cost, test error, test cost)
+            for each test period.
+        """
         assert (optimizer is not None)
         assert (self._session is not None)
 
         train_op = self._minimize_abs_loss(optimizer, global_step)
 
-        train_abs_losses = []
+        abs_losses = []
         iterator = None
         try:
             for i in range(epochs):
-                focal_loss = 0
+                abs_loss = 0
                 iterator = tqdm(range(iterations))
 
-                for _ in iterator:
-                    batch_focal_loss, _ = self._session.run(
+                for j in iterator:
+                    batch_abs_loss, _ = self._session.run(
                         [self._final_abs_loss, train_op],)
                     # Use exponential decay for calculating loss and error
-                    focal_loss = 0.1 * batch_focal_loss + 0.9 * focal_loss
+                    abs_loss = moving_average(abs_loss, batch_abs_loss, j)
 
-                train_abs_losses.append(focal_loss)
+                abs_losses.append(abs_loss)
 
-                print('Epoch:', i, 'Focal loss: {:0.4f}'.format(float(focal_loss)))
+                print_train_info(i, (ABS_LOSS, abs_loss))
         except Exception as ex:
             print(ex)
             print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
-            return {'train losses': train_abs_losses}
+            return {ABS_LOSS: abs_losses}
 
 

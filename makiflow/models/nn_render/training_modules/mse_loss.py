@@ -1,8 +1,11 @@
 import tensorflow as tf
 from ..main_modules import NeuralRendererBasis
 from makiflow.base.loss_builder import Loss
+from makiflow.models.nn_render.training_modules.utils import print_train_info
 from sklearn.utils import shuffle
 from tqdm import tqdm
+
+MSE_LOSS = 'MSE LOSS'
 
 
 class MseTrainingModule(NeuralRendererBasis):
@@ -68,8 +71,8 @@ class MseTrainingModule(NeuralRendererBasis):
 
         train_op = self._minimize_mse_loss(optimizer, global_step)
 
-        n_batches = len(images) // self.batch_sz
-        train_focal_losses = []
+        n_batches = len(images) // self._batch_sz
+        mse_losses = []
         iterator = None
         try:
             for i in range(epochs):
@@ -79,24 +82,24 @@ class MseTrainingModule(NeuralRendererBasis):
                 iterator = tqdm(range(n_batches))
 
                 for j in iterator:
-                    Ibatch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
-                    Lbatch = uv_maps[j * self.batch_sz:(j + 1) * self.batch_sz]
-                    batch_abs_loss, _ = self._session.run(
+                    Ibatch = images[j * self._batch_sz:(j + 1) * self._batch_sz]
+                    Lbatch = uv_maps[j * self._batch_sz:(j + 1) * self._batch_sz]
+                    batch_mse_loss, _ = self._session.run(
                         [self._final_mse_loss, train_op],
                         feed_dict={
                             self._images: Ibatch,
                             self._uv_maps: Lbatch
                         })
                     # Use exponential decay for calculating loss and error
-                    abs_loss = 0.1 * batch_abs_loss + 0.9 * abs_loss
+                    abs_loss = 0.1 * batch_mse_loss + 0.9 * abs_loss
 
-                train_focal_losses.append(abs_loss)
+                mse_losses.append(abs_loss)
 
-                print('Epoch:', i, 'Abs loss: {:0.4f}'.format(abs_loss))
+                print_train_info(i, (MSE_LOSS, abs_loss))
         except Exception as ex:
             print(ex)
             print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
-            return {'train losses': train_focal_losses}
+            return {MSE_LOSS: mse_losses}
