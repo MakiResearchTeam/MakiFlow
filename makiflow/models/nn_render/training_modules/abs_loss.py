@@ -33,6 +33,7 @@ class AbsTrainingModule(NeuralRenderBasis):
                 self._final_abs_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
+            self._abs_loss_is_build = True
             loss_is_built()
 
         if self._abs_optimizer != optimizer:

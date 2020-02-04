@@ -2,6 +2,7 @@ import tensorflow as tf
 from ..main_modules import NeuralRenderBasis
 from makiflow.base.loss_builder import Loss
 from makiflow.models.nn_render.training_modules.utils import print_train_info, moving_average
+from makiflow.models.nn_render.training_modules.utils import loss_is_built, new_optimizer_used
 from sklearn.utils import shuffle
 from tqdm import tqdm
 
@@ -32,9 +33,11 @@ class MseTrainingModule(NeuralRenderBasis):
                 self._final_mse_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
+            self._mse_loss_is_build = True
+            loss_is_built()
 
         if self._mse_optimizer != optimizer:
-            print('New optimizer is used.')
+            new_optimizer_used()
             self._mse_optimizer = optimizer
             self._mse_train_op = optimizer.minimize(
                 self._final_mse_loss, var_list=self._trainable_vars, global_step=global_step
