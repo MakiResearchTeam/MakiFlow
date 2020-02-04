@@ -23,8 +23,8 @@ class LoadResizeNormalize(MapMethod):
         self.calc_positives = calc_positives
 
     def load_data(self, data_paths):
-        img_file = tf.read_file(data_paths[SegmentPathGenerator.image])
-        mask_file = tf.read_file(data_paths[SegmentPathGenerator.mask])
+        img_file = tf.read_file(data_paths[SegmentPathGenerator.IMAGE])
+        mask_file = tf.read_file(data_paths[SegmentPathGenerator.MASK])
 
         img = tf.image.decode_image(img_file)
         mask = tf.image.decode_image(mask_file)

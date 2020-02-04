@@ -42,8 +42,8 @@ class InputGenLayer(GenLayer):
         dataset = tf.data.Dataset.from_generator(
             gen.next_element,
             output_types={
-                SegmentPathGenerator.image: tf.string,
-                SegmentPathGenerator.mask: tf.string
+                SegmentPathGenerator.IMAGE: tf.string,
+                SegmentPathGenerator.MASK: tf.string
             }
         )
 
