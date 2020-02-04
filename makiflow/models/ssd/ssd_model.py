@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from makiflow.generators.pipeline.gen_base import GenLayer
-from makiflow.generators.ssd.tfr_map_methods import SSDIterator
+from makiflow.generators.ssd import SSDIterator
 from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
 from makiflow.base import MakiModel
 from makiflow.models.ssd.training_literals import TL

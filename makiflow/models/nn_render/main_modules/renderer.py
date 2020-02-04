@@ -1,6 +1,6 @@
 import tensorflow as tf
 from makiflow.base.maki_entities import MakiModel, MakiTensor
-from makiflow.generators.nn_render.tfr_map_methods import NNRIterator
+from makiflow.generators.nn_render import NNRIterator
 
 
 class NeuralRenderBasis(MakiModel):
