@@ -1,5 +1,5 @@
 import tensorflow as tf
-from makiflow.generators.segmentation.pathgenerator import SegmentPathGenerator
+from makiflow.generators.segmentator.pathgenerator import SegmentPathGenerator
 from makiflow.generators.pipeline.map_method import MapMethod, PostMapMethod
 
 

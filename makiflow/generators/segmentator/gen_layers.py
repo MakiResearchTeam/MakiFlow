@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 import tensorflow as tf
 from makiflow.generators.pipeline.gen_base import GenLayer
-from makiflow.generators.segmentation.map_methods import SegmentIterator
-from makiflow.generators.segmentation.pathgenerator import SegmentPathGenerator
+from makiflow.generators.segmentator.map_methods import SegmentIterator
+from makiflow.generators.segmentator.pathgenerator import SegmentPathGenerator
 from makiflow.generators.pipeline.map_method import MapMethod
 
 
