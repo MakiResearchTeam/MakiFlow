@@ -8,25 +8,25 @@ UVMAP_FNAME = 'LOC_MASK'
 
 
 # Serialize Object Detection Data Point
-def serialize_nnr_data_point(image, uvmap):
+def serialize_nnr_data_point(image, uvmap, sess=None):
     feature = {
-        IMAGE_FNAME: _tensor_to_byte_feature(image),
-        UVMAP_FNAME: _tensor_to_byte_feature(uvmap)
+        IMAGE_FNAME: _tensor_to_byte_feature(image, sess),
+        UVMAP_FNAME: _tensor_to_byte_feature(uvmap, sess)
     }
     features = tf.train.Features(feature=feature)
     example_proto = tf.train.Example(features=features)
     return example_proto.SerializeToString()
 
 
-def record_nnr_train_data(images, uvmaps, tfrecord_path):
+def record_nnr_train_data(images, uvmaps, tfrecord_path, sess=None):
     with tf.io.TFRecordWriter(tfrecord_path) as writer:
         for image, loc_mask in zip(images, uvmaps):
-            serialized_data_point = serialize_nnr_data_point(image, loc_mask)
+            serialized_data_point = serialize_nnr_data_point(image, loc_mask, sess)
             writer.write(serialized_data_point)
 
 
 # Record data into multiple tfrecords
-def record_mp_nnr_train_data(images, uvmaps, prefix, dp_per_record):
+def record_mp_nnr_train_data(images, uvmaps, prefix, dp_per_record, sess=None):
     """
     Creates tfrecord dataset where each tfrecord contains `dp_per_second` data points.
     Parameters
@@ -42,6 +42,8 @@ def record_mp_nnr_train_data(images, uvmaps, prefix, dp_per_record):
         Data point per tfrecord. Defines how many images (locs, loc_masks, labels) will be
         put into one tfrecord file. It's better to use such `dp_per_record` that
         yields tfrecords of size 300-200 megabytes.
+    sess : tf.Session
+        In case if you can't or don't want to run TensorFlow eagerly, you can pass in the session object.
     """
     for i in range(len(images) // dp_per_record):
         image_batch = images[dp_per_record*i: (i+1)*dp_per_record]
@@ -50,5 +52,6 @@ def record_mp_nnr_train_data(images, uvmaps, prefix, dp_per_record):
         record_nnr_train_data(
             images=image_batch,
             uvmaps=loc_mask_batch,
-            tfrecord_path=tfrecord_name
+            tfrecord_path=tfrecord_name,
+            sess=sess
         )
