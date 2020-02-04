@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from abc import abstractmethod
 
 
@@ -19,11 +18,3 @@ class TFRPostMapMethod(TFRMapMethod):
     def __call__(self, parent_method: TFRMapMethod):
         self._parent_method = parent_method
         return self
-
-
-class TFRPathGenerator(object):
-    TFRECORD = 'tfrecord'
-
-    @abstractmethod
-    def next_element(self) -> dict:
-        pass

@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 
-from makiflow.generators.gen_base import GenLayer, SSDIterator
+from makiflow.generators.main_modules.gen_base import GenLayer
+from makiflow.generators.ssd.tfr_map_methods import SSDIterator
 from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
 from makiflow.base import MakiModel
 from makiflow.models.ssd.training_literals import TL
 from makiflow.models.ssd.ssd_utils import bboxes_wh2xy, bboxes_xy2wh
 from makiflow.base.loss_builder import Loss
-from copy import copy
 
 import numpy as np
 import tensorflow as tf
@@ -265,9 +265,9 @@ class SSDModel(MakiModel):
         self._train_offsets = tf.concat(training_offsets, axis=1)
 
         if use_generator:
-            self._flattened_labels = self._generator.get_iterator()[SSDIterator.label]
-            self._input_loc_loss_masks = self._generator.get_iterator()[SSDIterator.loc_mask]
-            self._input_loc = self._generator.get_iterator()[SSDIterator.loc]
+            self._flattened_labels = self._generator.get_iterator()[SSDIterator.LABEL]
+            self._input_loc_loss_masks = self._generator.get_iterator()[SSDIterator.LOC_MASK]
+            self._input_loc = self._generator.get_iterator()[SSDIterator.LOC]
         else:
             # Create placeholders for the training data
             self._flattened_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])

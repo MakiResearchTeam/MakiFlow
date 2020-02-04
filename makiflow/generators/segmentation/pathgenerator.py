@@ -1,9 +1,16 @@
-from makiflow.generators.gen_base import SegmentIterator, SegmentPathGenerator
+from abc import ABC
 
+from makiflow.generators.main_modules.gen_base import PathGenerator
+from makiflow.generators.segmentation.map_methods import SegmentIterator
 from glob import glob
 import os
 import numpy as np
 from sklearn.utils import shuffle
+
+
+class SegmentPathGenerator(PathGenerator, ABC):
+    image = 'image'
+    mask = 'mask'
 
 
 class CyclicGeneratorSegment(SegmentPathGenerator):
@@ -29,8 +36,8 @@ class CyclicGeneratorSegment(SegmentPathGenerator):
                 index = 0
 
             el = {
-                SegmentIterator.image: self.images[index],
-                SegmentIterator.mask: self.masks[index]
+                SegmentIterator.IMAGE: self.images[index],
+                SegmentIterator.MASK: self.masks[index]
             }
             index += 1
 
@@ -57,8 +64,8 @@ class RandomGeneratorSegment(SegmentPathGenerator):
             index = np.random.randint(low=0, high=len(self.images))
 
             el = {
-                SegmentIterator.image: self.images[index],
-                SegmentIterator.mask: self.masks[index]
+                SegmentIterator.IMAGE: self.images[index],
+                SegmentIterator.MASK: self.masks[index]
             }
 
             yield el
@@ -100,8 +107,8 @@ class SubCyclicGeneratorSegment(SegmentPathGenerator):
                 counter_batches = [0] * len(self.batches_masks)
 
             el = {
-                SegmentIterator.image: self.batches_images[current_batch][counter_batches[current_batch]],
-                SegmentIterator.mask: self.batches_masks[current_batch][counter_batches[current_batch]]
+                SegmentIterator.IMAGE: self.batches_images[current_batch][counter_batches[current_batch]],
+                SegmentIterator.MASK: self.batches_masks[current_batch][counter_batches[current_batch]]
             }
 
             counter_batches[current_batch] += 1

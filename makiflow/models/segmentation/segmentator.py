@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from makiflow.base import MakiModel, MakiTensor
-from makiflow.generators.gen_base import SegmentIterator
+from makiflow.generators.segmentation.map_methods import SegmentIterator
 from makiflow.layers import InputLayer
 from sklearn.utils import shuffle
 import tensorflow as tf
@@ -53,7 +53,7 @@ class Segmentator(MakiModel):
         # produced by the generator, since it's the input layer.
         self._images = self._input_data_tensors[0]
         if use_generator:
-            self._labels = self._generator.get_iterator()[SegmentIterator.mask]
+            self._labels = self._generator.get_iterator()[SegmentIterator.MASK]
         else:
             self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
 
@@ -96,7 +96,7 @@ class Segmentator(MakiModel):
     def _setup_focal_loss_inputs(self):
         self._focal_gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
         if self._use_generator:
-            self._focal_num_positives = self._generator.get_iterator()[SegmentIterator.num_positives]
+            self._focal_num_positives = self._generator.get_iterator()[SegmentIterator.NUM_POSITIVES]
         else:
             self._focal_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
 
@@ -284,7 +284,7 @@ class Segmentator(MakiModel):
     def _setup_maki_loss_inputs(self):
         self._maki_gamma = None
         if self._use_generator:
-            self._maki_num_positives = self._generator.get_iterator()[SegmentIterator.num_positives]
+            self._maki_num_positives = self._generator.get_iterator()[SegmentIterator.NUM_POSITIVES]
         else:
             self._maki_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
 

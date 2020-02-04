@@ -42,7 +42,7 @@ class NeuralRenderBasis(MakiModel):
 
         self._uv_maps = self._input_data_tensors[0]
         if self._generator is not None:
-            self._images = self._generator.get_iterator()[NNRIterator.image]
+            self._images = self._generator.get_iterator()[NNRIterator.IMAGE]
         else:
             self._images = tf.placeholder(tf.float32, shape=out_shape, name='images')
         self._training_out = self._training_outputs[0]

@@ -1,5 +1,12 @@
 import tensorflow as tf
-from makiflow.generators.gen_base import PostMapMethod, MapMethod, SegmentPathGenerator, SegmentIterator
+from makiflow.generators.segmentation.pathgenerator import SegmentPathGenerator
+from makiflow.generators.main_modules.map_method import MapMethod, PostMapMethod
+
+
+class SegmentIterator:
+    IMAGE = 'image'
+    MASK = 'mask'
+    NUM_POSITIVES = 'num_positives'
 
 
 class LoadResizeNormalize(MapMethod):
@@ -41,8 +48,8 @@ class LoadResizeNormalize(MapMethod):
 
         mask = tf.cast(mask, dtype=tf.int32)
         return {
-            SegmentIterator.image: img,
-            SegmentIterator.mask: mask
+            SegmentIterator.IMAGE: img,
+            SegmentIterator.MASK: mask
         }
 
 
@@ -64,8 +71,8 @@ class LoadDataMethod(MapMethod):
         self.mask_shape = mask_shape
 
     def load_data(self, data_paths):
-        img_file = tf.read_file(data_paths[SegmentIterator.image])
-        mask_file = tf.read_file(data_paths[SegmentIterator.mask])
+        img_file = tf.read_file(data_paths[SegmentIterator.IMAGE])
+        mask_file = tf.read_file(data_paths[SegmentIterator.MASK])
 
         img = tf.image.decode_image(img_file)
         mask = tf.image.decode_image(mask_file)
@@ -76,8 +83,8 @@ class LoadDataMethod(MapMethod):
         img = tf.cast(img, dtype=tf.float32)
         mask = tf.cast(mask, dtype=tf.int32)
         return {
-            SegmentIterator.image: img,
-            SegmentIterator.mask: mask
+            SegmentIterator.IMAGE: img,
+            SegmentIterator.MASK: mask
         }
 
 
@@ -105,8 +112,8 @@ class ResizePostMethod(PostMapMethod):
 
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
-        img = element[SegmentIterator.image]
-        mask = element[SegmentIterator.mask]
+        img = element[SegmentIterator.IMAGE]
+        mask = element[SegmentIterator.MASK]
 
         if self.image_size is not None:
             img = tf.image.resize(images=img, size=self.image_size, method=self.image_resize_method)
@@ -115,8 +122,8 @@ class ResizePostMethod(PostMapMethod):
             mask = tf.image.resize(images=mask, size=self.mask_size, method=self.mask_resize_method)
 
         return {
-            SegmentIterator.image: img,
-            SegmentIterator.mask: mask
+            SegmentIterator.IMAGE: img,
+            SegmentIterator.MASK: mask
         }
 
 
@@ -141,7 +148,7 @@ class NormalizePostMethod(PostMapMethod):
 
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
-        img = element[SegmentIterator.image]
+        img = element[SegmentIterator.IMAGE]
 
         if self.use_float64:
             img = tf.cast(img, dtype=tf.float64)
@@ -150,7 +157,7 @@ class NormalizePostMethod(PostMapMethod):
         else:
             img = tf.divide(img, self.divider, name='normalizing_image')
 
-        element[SegmentIterator.image] = img
+        element[SegmentIterator.IMAGE] = img
         return element
 
 
@@ -164,9 +171,9 @@ class SqueezeMaskPostMethod(PostMapMethod):
 
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
-        mask = element[SegmentIterator.mask]
+        mask = element[SegmentIterator.MASK]
         mask = mask[:, :, 0]
-        element[SegmentIterator.mask] = mask
+        element[SegmentIterator.MASK] = mask
         return element
 
 
@@ -189,14 +196,14 @@ class ComputePositivesPostMethod(PostMapMethod):
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
 
-        mask = element[SegmentIterator.mask]
+        mask = element[SegmentIterator.MASK]
         mask_shape = mask.get_shape().as_list()
         area = mask_shape[0] * mask_shape[1]  # tf.int32
         num_neg = tf.reduce_sum(tf.cast(tf.equal(mask, self.background), dtype=tf.int32))
 
         num_positives = tf.cast(area - num_neg, dtype=tf.float32)
 
-        element[SegmentIterator.num_positives] = num_positives
+        element[SegmentIterator.NUM_POSITIVES] = num_positives
         return element
 
 
@@ -210,7 +217,9 @@ class RGB2BGRPostMethod(PostMapMethod):
     def load_data(self, data_paths):
         element = self._parent_method.load_data(data_paths)
 
-        img = element[SegmentIterator.image]
+        img = element[SegmentIterator.IMAGE]
         # Swap channels
-        element[SegmentIterator.image] = tf.reverse(img, axis=[-1], name='RGB2BGR')
+        element[SegmentIterator.IMAGE] = tf.reverse(img, axis=[-1], name='RGB2BGR')
         return element
+
+

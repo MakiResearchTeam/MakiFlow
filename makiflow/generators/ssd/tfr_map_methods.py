@@ -1,8 +1,16 @@
 from __future__ import absolute_import
 import tensorflow as tf
-from makiflow.generators.gen_base import SSDIterator
-from makiflow.generators.tfr_gen_base import TFRMapMethod
+
+from makiflow.generators.main_modules.gen_base import ImageIterator
+from makiflow.generators.main_modules.tfr_map_method import TFRMapMethod
 from makiflow.generators.ssd.data_preparation import IMAGE_FNAME, LABEL_FNAME, LOC_FNAME, LOC_MASK_FNAME
+
+
+class SSDIterator(ImageIterator):
+    LOC = 'loc'
+    LOC_MASK = 'loc_mask'
+    LABEL = 'label'
+    IMAGE = 'IMAGE'
 
 
 class LoadDataMethod(TFRMapMethod):
@@ -50,10 +58,11 @@ class LoadDataMethod(TFRMapMethod):
         loc_mask.set_shape(self.loc_mask_shape)
 
         return {
-            SSDIterator.image: image,
-            SSDIterator.loc: loc,
-            SSDIterator.loc_mask: loc_mask,
-            SSDIterator.label: label
+            SSDIterator.IMAGE: image,
+            SSDIterator.LOC: loc,
+            SSDIterator.LOC_MASK: loc_mask,
+            SSDIterator.LABEL: label
         }
+
 
 

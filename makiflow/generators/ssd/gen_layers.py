@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 import tensorflow as tf
-from makiflow.generators.gen_base import GenLayer, ImageIterator
-from makiflow.generators.tfr_gen_base import TFRMapMethod, TFRPathGenerator
+from makiflow.generators.main_modules.gen_base import GenLayer, ImageIterator
+from makiflow.generators.main_modules.tfr_gen_layers import TFRPathGenerator
+from makiflow.generators.main_modules.tfr_map_method import TFRMapMethod
 
 
 class InputGenLayerV1(GenLayer):
@@ -47,7 +48,7 @@ class InputGenLayerV1(GenLayer):
         self.iterator = self.build_iterator(tf_records, map_operation, num_parallel_calls)
         super().__init__(
             name=name,
-            input_image=self.iterator[ImageIterator.image]
+            input_tensor=self.iterator[ImageIterator.IMAGE]
         )
 
     def build_iterator(self, tf_records, map_operation: TFRMapMethod, num_parallel_calls):
@@ -116,7 +117,7 @@ class InputGenLayerV2(GenLayer):
         self.iterator = self.build_iterator(tfr_path_generator, map_operation, num_parallel_calls)
         super().__init__(
             name=name,
-            input_image=self.iterator[ImageIterator.image]
+            input_tensor=self.iterator[ImageIterator.IMAGE]
         )
 
     def build_iterator(self, gen: TFRPathGenerator, map_operation: TFRMapMethod, num_parallel_calls):
@@ -185,7 +186,7 @@ class InputGenLayerV3(GenLayer):
         self.iterator = self.build_iterator(tfr_path_generator, map_operation, num_parallel_calls)
         super().__init__(
             name=name,
-            input_image=self.iterator[ImageIterator.image]
+            input_tensor=self.iterator[ImageIterator.IMAGE]
         )
 
     def build_iterator(self, gen: TFRPathGenerator, map_operation: TFRMapMethod, num_parallel_calls):
@@ -258,7 +259,7 @@ class InputGenLayerV4(GenLayer):
         self.iterator = self.build_iterator(tfr_path_generator, map_operation, num_parallel_calls)
         super().__init__(
             name=name,
-            input_image=self.iterator[ImageIterator.image]
+            input_tensor=self.iterator[ImageIterator.IMAGE]
         )
 
     def build_iterator(self, gen: TFRPathGenerator, map_operation: TFRMapMethod, num_parallel_calls):
