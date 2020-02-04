@@ -1,5 +1,5 @@
 import tensorflow as tf
-from ..main_modules import NeuralRendererBasis
+from ..main_modules import NeuralRenderBasis
 from makiflow.base.loss_builder import Loss
 from makiflow.models.nn_render.training_modules.utils import print_train_info
 from sklearn.utils import shuffle
@@ -8,7 +8,7 @@ from tqdm import tqdm
 MSE_LOSS = 'MSE LOSS'
 
 
-class MseTrainingModule(NeuralRendererBasis):
+class MseTrainingModule(NeuralRenderBasis):
     def _prepare_training_vars(self):
         self._mse_loss_is_build = False
         super()._prepare_training_vars()

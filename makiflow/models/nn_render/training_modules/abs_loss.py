@@ -1,5 +1,5 @@
 import tensorflow as tf
-from ..main_modules import NeuralRendererBasis
+from ..main_modules import NeuralRenderBasis
 from makiflow.base.loss_builder import Loss
 from makiflow.models.nn_render.training_modules.utils import print_train_info, moving_average
 from makiflow.models.nn_render.training_modules.utils import new_optimizer_used, loss_is_built
@@ -9,7 +9,7 @@ from tqdm import tqdm
 ABS_LOSS = 'ABS LOSS'
 
 
-class AbsTrainingModule(NeuralRendererBasis):
+class AbsTrainingModule(NeuralRenderBasis):
     def _prepare_training_vars(self):
         self._abs_loss_is_build = False
         super()._prepare_training_vars()

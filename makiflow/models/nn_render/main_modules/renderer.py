@@ -3,7 +3,7 @@ from makiflow.base.maki_entities import MakiModel, MakiTensor
 from makiflow.generators.nn_render.tfr_map_methods import NNRIterator
 
 
-class NeuralRendererBasis(MakiModel):
+class NeuralRenderBasis(MakiModel):
     def __init__(self, input_l, output, sampled_texture: MakiTensor, name):
         self.name = str(name)
         graph_tensors = output.get_previous_tensors()
