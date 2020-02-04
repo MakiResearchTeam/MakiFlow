@@ -5,7 +5,7 @@ def print_train_info(epoch, *args):
     output = ''
     for value_name, value in args:
         value_name = value_name.lower() + ': '
-        value_name[0] = value_name[0].upper()
+        value_name = value_name.title()
         output += value_name + '{:0.4f}'.format(value) + ' '
 
     print(EPOCH, epoch, output)
