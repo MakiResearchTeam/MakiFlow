@@ -14,6 +14,8 @@ def _bytes_feature(value):
     -------
 
     """
+    if tf.executing_eagerly():
+        value = value.numpy()
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
