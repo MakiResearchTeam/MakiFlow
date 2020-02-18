@@ -16,7 +16,7 @@ class LearningRateBuilder:
     @staticmethod
     def build_learning_rate(learning_rate_info):
         """
-        Build learning rate with curtain params.
+        Build learning rate with certain params.
 
         Parameters
         ----------
@@ -25,9 +25,10 @@ class LearningRateBuilder:
                 "lr": {
                         "type": "ExponentialDecay",
                         "params": {
-                            "lr": ..
-                            "decay_steps": ..
-                        }
+                            "lr": 1e-2,
+                            "decay_steps": 100,
+                            ...
+                        },
                     }
                 For more examples, visit example_of_builders.json in this folder.
 

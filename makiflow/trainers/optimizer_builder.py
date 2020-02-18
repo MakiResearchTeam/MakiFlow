@@ -16,7 +16,7 @@ class OptimizerBuilder:
     @staticmethod
     def build_optimizer(optimizer_info):
         """
-        Build optimizer with curtain params.
+        Build optimizer with certain params.
 
         Parameters
         ----------
