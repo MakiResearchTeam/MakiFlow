@@ -331,6 +331,8 @@ class SegmentatorTrainer:
         test_period = exp_params[ExpField.test_period]
         save_period = exp_params[ExpField.save_period]
         optimizer, global_step = OptimizerBuilder.build_optimizer(opt_info)
+        if global_step is not None:
+            self._sess.run(tf.variables_initializer([global_step]))
         # Catch InterruptException
         try:
             for i in range(epochs):

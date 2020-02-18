@@ -12,8 +12,40 @@ from .learning_rate_builder import LearningRateBuilder
 """
 
 class OptimizerBuilder:
+
     @staticmethod
     def build_optimizer(optimizer_info):
+        """
+        Build optimizer with curtain params.
+
+        Parameters
+        ----------
+            optimizer_info : dict
+                Here some example:
+                {
+                    "type": "MomentumOptimizer",
+                    "params": {
+                        "lr": ..
+                        "momentum": ..
+                    }
+                }
+                Where `lr` can be, for example:
+                "lr": {
+                        "type": "ExponentialDecay",
+                        "params": {
+                            "lr": ..
+                            "decay_steps": ..
+                        }
+                    }
+                For more examples, visit example_of_builders.json in this folder.
+
+        Returns
+        -------
+            optimizer : tensorflow optimizer
+                Built optimizer.
+            global_step : tf.Variable
+                 Optional Variable to increment by one after the variables have been updated.
+        """
         opt_type = optimizer_info['type']
         params = optimizer_info['params']
         build_dict = {
