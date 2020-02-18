@@ -43,7 +43,7 @@ class OptimizerBuilder:
 
     @staticmethod
     def __adam_optimizer(params):
-        lr = LearningRateBuilder.build_learning_rate(params['learning_rate'])
+        lr, global_step = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         beta1 = params['beta1']
         beta2 = params['beta2']
         epsilon = params['epsilon']

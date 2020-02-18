@@ -330,7 +330,7 @@ class SegmentatorTrainer:
         epochs = exp_params[ExpField.epochs]
         test_period = exp_params[ExpField.test_period]
         save_period = exp_params[ExpField.save_period]
-        optimizer = OptimizerBuilder.build_optimizer(opt_info)
+        optimizer, global_step = OptimizerBuilder.build_optimizer(opt_info)
         # Catch InterruptException
         try:
             for i in range(epochs):
@@ -338,33 +338,34 @@ class SegmentatorTrainer:
                     if loss_type == LossType.FocalLoss:
                         sub_train_info = model.fit_focal(
                             images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
-                            num_positives=self.num_pos, optimizer=optimizer, epochs=1
+                            num_positives=self.num_pos, optimizer=optimizer, epochs=1, global_step=global_step
                         )
                     elif loss_type == LossType.MakiLoss:
                         sub_train_info = model.fit_maki(
                             images=self.Xtrain, labels=self.Ytrain, gamma=gamma,
-                            num_positives=self.num_pos, optimizer=optimizer, epochs=1
+                            num_positives=self.num_pos, optimizer=optimizer, epochs=1, global_step=global_step
                         )
                     elif loss_type == LossType.QuadraticCELoss:
                         sub_train_info = model.fit_quadratic_ce(
                             images=self.Xtrain, labels=self.Ytrain,
-                            optimizer=optimizer, epochs=1
+                            optimizer=optimizer, epochs=1, global_step=global_step
                         )
                     else:
                         raise ValueError('Unknown loss type!')
                 else:
                     if loss_type == LossType.FocalLoss:
                         sub_train_info = model.genfit_focal(
-                            gamma=gamma, optimizer=optimizer, epochs=1, iterations=self.iterations
+                            gamma=gamma, optimizer=optimizer, epochs=1, iterations=self.iterations,
+                            global_step=global_step
                         )
                     elif loss_type == LossType.MakiLoss:
                         sub_train_info = model.genfit_maki(
                             gamma=gamma, optimizer=optimizer, epochs=1,
-                            iterations=self.iterations
+                            iterations=self.iterations, global_step=global_step
                         )
                     elif loss_type == LossType.QuadraticCELoss:
                         sub_train_info = model.genfit_quadratic_ce(
-                            optimizer=optimizer, epochs=1, iterations=self.iterations
+                            optimizer=optimizer, epochs=1, iterations=self.iterations, global_step=global_step
                         )
                     else:
                         raise ValueError('Unknown loss type!')
