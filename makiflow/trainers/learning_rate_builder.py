@@ -20,7 +20,7 @@ class LearningRateBuilder:
 
         Parameters
         ----------
-            optimizer_info : dict
+            learning_rate_info : dict
                 Here some example:
                 "lr": {
                         "type": "ExponentialDecay",
