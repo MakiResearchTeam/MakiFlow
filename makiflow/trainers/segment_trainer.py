@@ -330,7 +330,9 @@ class SegmentatorTrainer:
         epochs = exp_params[ExpField.epochs]
         test_period = exp_params[ExpField.test_period]
         save_period = exp_params[ExpField.save_period]
-        optimizer = OptimizerBuilder.build_optimizer(opt_info)
+        # TODO
+        # Add compatibility with the optimizer builder
+        optimizer, global_step = OptimizerBuilder.build_optimizer(opt_info)
         # Catch InterruptException
         try:
             for i in range(epochs):
