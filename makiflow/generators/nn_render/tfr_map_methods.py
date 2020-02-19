@@ -7,6 +7,7 @@ import numpy as np
 class NNRIterator:
     UVMAP = 'UVMAP'
     IMAGE = 'IMAGE'
+    BIN_MASK = 'BIN_MASK'
 
 
 class LoadDataMethod(TFRMapMethod):
@@ -87,4 +88,18 @@ class RandomCropMethod(TFRPostMapMethod):
 
         element[NNRIterator.IMAGE] = cropped_image
         element[NNRIterator.UVMAP] = cropped_uvmap
+        return element
+
+
+class BinaryMaskMethod(TFRPostMapMethod):
+    def __init__(self, threshold=1e-6):
+        super().__init__()
+        self._threshold = threshold
+
+    def read_record(self, serialized_example):
+        element = self._parent_method.read_record(serialized_example)
+        uvmap = element[NNRIterator.UVMAP]
+        bool_mask = uvmap > self._threshold
+        bin_mask = tf.cast(bool_mask, tf.float32)
+        element[NNRIterator.BIN_MASK] = bin_mask
         return element
