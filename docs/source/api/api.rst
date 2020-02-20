@@ -1,10 +1,9 @@
 API
 ===
 
-List of packages
-^^^^^^^^^^^^^^^^
 .. toctree::
-   :maxdepth: 1
+    :caption: Table of Contents
+    :maxdepth: 1
 
-   layers/layers
-   models/models
+    layers/layers
+    models/models
