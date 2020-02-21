@@ -1,5 +1,5 @@
 Normalization layers
---------------------
+====================
 
 BatchNormLayer
 ~~~~~~~~~~~~~~
