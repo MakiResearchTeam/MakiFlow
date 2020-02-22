@@ -12,8 +12,34 @@ import tensorflow as tf
 
 
 class LearningRateBuilder:
+
     @staticmethod
     def build_learning_rate(learning_rate_info):
+        """
+        Build learning rate with certain params.
+
+        Parameters
+        ----------
+            learning_rate_info : dict
+                Here some example:
+                "lr": {
+                        "type": "ExponentialDecay",
+                        "params": {
+                            "lr": 1e-2,
+                            "decay_steps": 100,
+                            ...
+                        },
+                    }
+                For more examples, visit example_of_builders.json in this folder.
+
+        Returns
+        -------
+            learning_rate : tensorflow learning rate
+                Built learning rate.
+            global_step : tf.Variable
+                 Optional Variable to increment by one after the variables have been updated.
+                 None if `learning_rate_info` is not dict.
+        """
         if type(learning_rate_info) is type(dict):
             opt_type = learning_rate_info['type']
             params = learning_rate_info['params']
