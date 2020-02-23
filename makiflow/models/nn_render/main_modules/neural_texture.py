@@ -26,12 +26,12 @@ class SingleTextureLayer(SimpleForwardLayer):
         named_params_dict = {self._text_name: self._texture}
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
+    def _forward(self, x):
         # Normalize the input UV map so that its coordinates are within [-1, 1] range.
-        X = X * 2.0 - 1.0
-        batch_size = X.get_shape().as_list()[0]
+        x = x * 2.0 - 1.0
+        batch_size = x.get_shape().as_list()[0]
         expanded_texture = tf.concat([self._texture] * batch_size, axis=0)
-        return grid_sample(expanded_texture, X)
+        return grid_sample(expanded_texture, x)
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -76,11 +76,11 @@ class LaplacianPyramidTextureLayer(SimpleForwardLayer):
         super().__init__(name, params, named_params_dict)
 
     # noinspection PyProtectedMember
-    def _forward(self, X):
+    def _forward(self, x):
         # Normalize the input UV map so that its coordinates are within [-1, 1] range.
         y = []
         for d in range(self._depth):
-            y += [self._textures[d]._forward(X)]
+            y += [self._textures[d]._forward(x)]
         return tf.add_n(y)
 
     def _training_forward(self, x):

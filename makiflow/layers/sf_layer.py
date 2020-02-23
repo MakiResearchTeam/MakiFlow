@@ -21,5 +21,5 @@ class SimpleForwardLayer(MakiLayer):
         return maki_tensor
 
     @abstractmethod
-    def _forward(self, X):
+    def _forward(self, x):
         pass

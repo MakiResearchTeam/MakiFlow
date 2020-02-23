@@ -42,17 +42,17 @@ class RNNLayer(SimpleForwardLayer, ABC):
         self._cell_type = CellType.get_cell_type(bidirectional, dynamic)
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
+    def _forward(self, x):
         if self._cell_type == CellType.BIDIR_DYNAMIC:
-            return bidirectional_dynamic_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=X, dtype=tf.float32)
+            return bidirectional_dynamic_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=x, dtype=tf.float32)
         elif self._cell_type == CellType.BIDIR_STATIC:
-            X = tf.unstack(X, num=self._seq_length, axis=1)
-            return static_bidirectional_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=X, dtype=tf.float32)
+            x = tf.unstack(x, num=self._seq_length, axis=1)
+            return static_bidirectional_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=x, dtype=tf.float32)
         elif self._cell_type == CellType.DYNAMIC:
-            return dynamic_rnn(self._cells, X, dtype=tf.float32)
+            return dynamic_rnn(self._cells, x, dtype=tf.float32)
         elif self._cell_type == CellType.STATIC:
-            X = tf.unstack(X, num=self._seq_length, axis=1)
-            return static_rnn(self._cells, X, dtype=tf.float32)
+            x = tf.unstack(x, num=self._seq_length, axis=1)
+            return static_rnn(self._cells, x, dtype=tf.float32)
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -94,7 +94,7 @@ class GRULayer(RNNLayer):
         cell.build(inputs_shape=[None, tf.Dimension(self._input_dim)])
         params = cell.variables
         param_common_name = name + f'_{num_cells}_{input_dim}_{seq_length}'
-        named_params_dict = {(param_common_name + '_' + str(i)): param for i, param in enumerate(self.params)}
+        named_params_dict = {(param_common_name + '_' + str(i)): param for i, param in enumerate(params)}
         super().__init__(
             cells=cell,
             params=params,
@@ -149,11 +149,12 @@ class LSTMLayer(RNNLayer):
         """
         self._num_cells = num_cells
         self._input_dim = input_dim
+        self._f = activation
         cell = LSTMCell(num_units=num_cells, activation=activation, dtype=tf.float32)
         cell.build(inputs_shape=[None, tf.Dimension(self._input_dim)])
         params = cell.variables
         param_common_name = name + f'_{num_cells}_{input_dim}_{seq_length}'
-        named_params_dict = {(param_common_name + '_' + str(i)): param for i, param in enumerate(self.params)}
+        named_params_dict = {(param_common_name + '_' + str(i)): param for i, param in enumerate(params)}
         super().__init__(
             cells=cell,
             params=params,
@@ -174,7 +175,7 @@ class LSTMLayer(RNNLayer):
                 'name': self._name,
                 'dynamic': self._dynamic,
                 'bidirectional': self._bidirectional,
-                'activation': ActivationConverter.activation_to_str(self._act)
+                'activation': ActivationConverter.activation_to_str(self._f)
             }
         }
 
@@ -263,8 +264,8 @@ class EmbeddingLayer(SimpleForwardLayer):
         named_params_dict = {name: self.embed}
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        return tf.nn.embedding_lookup(self.embed, X)
+    def _forward(self, x):
+        return tf.nn.embedding_lookup(self.embed, x)
 
     def _training_forward(self, x):
         return self._forward(x)

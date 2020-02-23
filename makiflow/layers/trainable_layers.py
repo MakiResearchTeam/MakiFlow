@@ -66,8 +66,8 @@ class ConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        conv_out = tf.nn.conv2d(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
+    def _forward(self, x):
+        conv_out = tf.nn.conv2d(x, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
         if self.use_bias:
             conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:
@@ -153,14 +153,14 @@ class UpConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        out_shape = X.get_shape().as_list()
+    def _forward(self, x):
+        out_shape = x.get_shape().as_list()
         out_shape[1] *= self.size[0]
         out_shape[2] *= self.size[1]
         # out_f
         out_shape[3] = self.shape[2]
         conv_out = tf.nn.conv2d_transpose(
-            X, self.W,
+            x, self.W,
             output_shape=out_shape, strides=self.strides, padding=self.padding
         )
         if self.use_bias:
@@ -212,8 +212,8 @@ class BiasLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        return tf.nn.bias_add(X, self.b)
+    def _forward(self, x):
+        return tf.nn.bias_add(x, self.b)
 
     def _training_forward(self, X):
         return self._forward(X)
@@ -284,9 +284,9 @@ class DepthWiseConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
+    def _forward(self, x):
         conv_out = tf.nn.depthwise_conv2d(
-            input=X,
+            input=x,
             filter=self.W,
             strides=[1, self.stride, self.stride, 1],
             padding=self.padding,
@@ -385,9 +385,9 @@ class SeparableConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
+    def _forward(self, x):
         conv_out = tf.nn.separable_conv2d(
-            input=X,
+            input=x,
             depthwise_filter=self.W_dw,
             pointwise_filter=self.W_pw,
             strides=[1, self.stride, self.stride, 1],
@@ -466,8 +466,8 @@ class DenseLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        out = tf.matmul(X, self.W)
+    def _forward(self, x):
+        out = tf.matmul(x, self.W)
         if self.use_bias:
             out = out + self.b
         if self.f is None:
@@ -550,8 +550,8 @@ class AtrousConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        conv_out = tf.nn.atrous_conv2d(X, self.W, self.rate, self.padding)
+    def _forward(self, x):
+        conv_out = tf.nn.atrous_conv2d(x, self.W, self.rate, self.padding)
         if self.use_bias:
             conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:

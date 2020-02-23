@@ -68,8 +68,8 @@ class ReshapeLayer(SimpleForwardLayer):
         super().__init__(name, [], {})
         self.new_shape = new_shape
 
-    def _forward(self, X):
-        return tf.reshape(tensor=X, shape=self.new_shape, name=self.get_name())
+    def _forward(self, x):
+        return tf.reshape(tensor=x, shape=self.new_shape, name=self.get_name())
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -99,8 +99,8 @@ class MulByAlphaLayer(SimpleForwardLayer):
         self.alpha = tf.constant(alpha)
         super().__init__(name, [], {})
 
-    def _forward(self, X):
-        return X * self.alpha
+    def _forward(self, x):
+        return x * self.alpha
 
     def _training_forward(self, X):
         return self._forward(X)
@@ -228,9 +228,9 @@ class ZeroPaddingLayer(SimpleForwardLayer):
         self.padding = [[0, 0], padding[0], padding[1], [0, 0]]
         super().__init__(name, [], {})
 
-    def _forward(self, X):
+    def _forward(self, x):
         return tf.pad(
-            tensor=X,
+            tensor=x,
             paddings=self.padding,
             mode="CONSTANT",
         )
@@ -261,9 +261,9 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
         """
         super().__init__(name, [], {})
 
-    def _forward(self, X):
-        assert (len(X.shape) == 4)
-        return tf.reduce_max(X, axis=[1, 2])
+    def _forward(self, x):
+        assert (len(x.shape) == 4)
+        return tf.reduce_max(x, axis=[1, 2])
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -290,9 +290,9 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
         """
         super().__init__(name, [], {})
 
-    def _forward(self, X):
-        assert (len(X.shape) == 4)
-        return tf.reduce_mean(X, axis=[1, 2])
+    def _forward(self, x):
+        assert (len(x.shape) == 4)
+        return tf.reduce_mean(x, axis=[1, 2])
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -327,9 +327,9 @@ class MaxPoolLayer(SimpleForwardLayer):
         self.strides = strides
         self.padding = padding
 
-    def _forward(self, X):
+    def _forward(self, x):
         return tf.nn.max_pool(
-            X,
+            x,
             ksize=self.ksize,
             strides=self.strides,
             padding=self.padding
@@ -371,9 +371,9 @@ class AvgPoolLayer(SimpleForwardLayer):
         self.strides = strides
         self.padding = padding
 
-    def _forward(self, X):
+    def _forward(self, x):
         return tf.nn.avg_pool(
-            X,
+            x,
             ksize=self.ksize,
             strides=self.strides,
             padding=self.padding
@@ -411,11 +411,11 @@ class UpSamplingLayer(SimpleForwardLayer):
         super().__init__(name, [], {})
         self.size = size
 
-    def _forward(self, X):
-        t_shape = X.get_shape()
+    def _forward(self, x):
+        t_shape = x.get_shape()
         im_size = (t_shape[1] * self.size[0], t_shape[2] * self.size[1])
         return tf.image.resize_nearest_neighbor(
-            X,
+            x,
             im_size
         )
 
@@ -449,8 +449,8 @@ class ActivationLayer(SimpleForwardLayer):
             raise Exception("Activation can't None")
         self.f = activation
 
-    def _forward(self, X):
-        return self.f(X)
+    def _forward(self, x):
+        return self.f(x)
 
     def _training_forward(self, X):
         return self.f(X)
@@ -478,8 +478,8 @@ class FlattenLayer(SimpleForwardLayer):
         """
         super().__init__(name, [], {})
 
-    def _forward(self, X):
-        return tf.contrib.layers.flatten(X)
+    def _forward(self, x):
+        return tf.contrib.layers.flatten(x)
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -516,8 +516,8 @@ class DropoutLayer(SimpleForwardLayer):
         self.noise_shape = noise_shape
         self.seed = seed
 
-    def _forward(self, X):
-        return X
+    def _forward(self, x):
+        return x
 
     def _training_forward(self, X):
         return tf.nn.dropout(X, self._p_keep,
@@ -559,31 +559,31 @@ class ResizeLayer(SimpleForwardLayer):
 
         super().__init__(name, [], {})
 
-    def _forward(self, X):
+    def _forward(self, x):
         if self.interpolation == 'bilinear':
             return tf.image.resize_bilinear(
-                X,
+                x,
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
             )
         elif self.interpolation == 'nearest_neighbor':
             return tf.image.resize_nearest_neighbor(
-                X,
+                x,
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
             )
         elif self.interpolation == 'area':
             return tf.image.resize_area(
-                X,
+                x,
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
             )
         elif self.interpolation == 'bicubic':
             return tf.image.resize_bicubic(
-                X,
+                x,
                 self.new_shape,
                 align_corners=self.align_corners,
                 name=self.name,
@@ -616,9 +616,9 @@ class L2NormalizationLayer(SimpleForwardLayer):
         self._name = name
         super().__init__(name, params=[], named_params_dict={})
 
-    def _forward(self, X):
+    def _forward(self, x):
         return tf.math.l2_normalize(
-            x=X, epsilon=self._eps, axis=-1, name=self._name
+            x=x, epsilon=self._eps, axis=-1, name=self._name
         )
 
     def _training_forward(self, x):
