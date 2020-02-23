@@ -91,7 +91,7 @@ class GRULayer(RNNLayer):
         self._num_cells = num_cells
         self._input_dim = input_dim
         cell = GRUCell(num_units=num_cells, activation=activation, dtype=tf.float32)
-        cell.build(inputs_shape=[None, tf.Dimension(self._input_dim)])
+        cell.build(input_shape=[None, tf.Dimension(self._input_dim)])
         params = cell.variables
         param_common_name = name + f'_{num_cells}_{input_dim}_{seq_length}'
         named_params_dict = {(param_common_name + '_' + str(i)): param for i, param in enumerate(params)}
@@ -151,7 +151,7 @@ class LSTMLayer(RNNLayer):
         self._input_dim = input_dim
         self._f = activation
         cell = LSTMCell(num_units=num_cells, activation=activation, dtype=tf.float32)
-        cell.build(inputs_shape=[None, tf.Dimension(self._input_dim)])
+        cell.build(input_shape=[None, tf.Dimension(self._input_dim)])
         params = cell.variables
         param_common_name = name + f'_{num_cells}_{input_dim}_{seq_length}'
         named_params_dict = {(param_common_name + '_' + str(i)): param for i, param in enumerate(params)}
