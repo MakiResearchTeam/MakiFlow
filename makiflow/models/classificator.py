@@ -27,6 +27,9 @@ class Classificator(MakiModel):
         self._inference_out = self._output_data_tensors[0]
         # For training
         self._training_vars_are_ready = False
+        # Identity transformation
+        self._labels_transform = lambda x: x
+        self._labels = None
 
     def _get_model_info(self):
         input_mt = self._inputs[0]
@@ -37,6 +40,23 @@ class Classificator(MakiModel):
             'name': self.name
         }
 
+    def set_label_input(self, labels, labels_transform):
+        """
+        Replaces basic labels placeholder with the custom one.
+        Parameters
+        ----------
+        labels : tf.placeholder
+            The placeholder for the input data.
+        labels_transform : python function
+            This transformation will be applied to the labels placeholder for later loss calculation.
+        """
+        if labels is None:
+            raise ValueError(f'Please provide the necessary tf.placeholder. Got {labels}')
+        if labels_transform is None:
+            raise ValueError(f'Please provide the necessary transformation function. Got {labels_transform}')
+        self._labels_transform = labels_transform
+        self._labels = labels
+
     def _prepare_training_vars(self):
         if not self._set_for_training:
             super()._setup_for_training()
@@ -46,9 +66,10 @@ class Classificator(MakiModel):
         # Number of labels does not always equal to the size of the batch size (with RNNs).
         # It is more safe to take the first dimension as the number of the labels.
         num_labels = self._logits.get_shape()[0]
-        self._labels = tf.placeholder(tf.int32, shape=[num_labels])
+        if self._labels is None:
+            self._labels = tf.placeholder(tf.int32, shape=[num_labels])
         self._ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=self._logits, labels=self._labels
+            logits=self._logits, labels=self._labels_transform(self._labels)
         )
         self._training_vars_are_ready = True
         self._ce_loss_is_build = False
