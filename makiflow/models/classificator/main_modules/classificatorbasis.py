@@ -104,6 +104,8 @@ class ClassificatorBasis(MakiModel):
         for i in tqdm(range(n_batches)):
             Xbatch = Xtest[i * self._batch_sz:(i + 1) * self._batch_sz]
             predictions += [self._session.run(out, feed_dict={self._images: Xbatch})]
-
-        return np.vstack(predictions, axis=0)
+        if len(predictions) > 1:
+            return np.vstack(predictions, axis=0)
+        else:
+            return predictions[0]
 
