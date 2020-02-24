@@ -43,7 +43,10 @@ class Classificator(MakiModel):
 
         self._logits = self._training_outputs[0]
         self._num_classes = self._logits.get_shape()[-1]
-        self._labels = tf.placeholder(tf.int32, shape=[self._batch_sz])
+        # Number of labels does not always equal to the size of the batch size (with RNNs).
+        # It is more safe to take the first dimension as the number of the labels.
+        num_labels = self._logits.get_shape()[0]
+        self._labels = tf.placeholder(tf.int32, shape=[num_labels])
         self._ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self._logits, labels=self._labels
         )
