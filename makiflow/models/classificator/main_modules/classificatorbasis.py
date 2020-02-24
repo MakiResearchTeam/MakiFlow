@@ -1,11 +1,10 @@
 from __future__ import absolute_import
-from makiflow.base import MakiModel, MakiTensor, Loss
+from makiflow.base import MakiModel, MakiTensor
 from makiflow.layers import InputLayer
 import tensorflow as tf
 import numpy as np
-from sklearn.utils import shuffle
 from tqdm import tqdm
-from makiflow.utils import error_rate, sparse_cross_entropy
+from makiflow.models.classificator.utils import error_rate, sparse_cross_entropy
 from copy import copy
 
 EPSILON = np.float32(1e-37)
@@ -24,6 +23,7 @@ class ClassificatorBasis(MakiModel):
         self._batch_sz = input.get_shape()[0]
         self._images = self._input_data_tensors[0]
         self._inference_out = self._output_data_tensors[0]
+        self._softmax_out = tf.nn.softmax(self._inference_out)
         # For training
         self._training_vars_are_ready = False
         # Identity transformation
@@ -89,30 +89,21 @@ class ClassificatorBasis(MakiModel):
             test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
             predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=1)
 
-        error = error_rate(predictions, Ytest)
+        error_r = error_rate(predictions, Ytest)
         test_cost = test_cost / (len(Xtest) // self._batch_sz)
-        print('Accuracy:', 1 - error, 'Cost:', test_cost)
+        return error_r, test_cost
 
-    def predict(self, Xtest, use_softmax_and_argmax=True):
-        Xtest = Xtest.astype(np.float32)
-        if use_softmax_and_argmax:
-            Yish_test = tf.nn.softmax(self._inference_out)
+    def predict(self, Xtest, use_softmax=True):
+        if use_softmax:
+            out = self._softmax_out
         else:
-            Yish_test = self._inference_out
+            out = self._inference_out
         n_batches = len(Xtest) // self._batch_sz
 
-        predictions = None
+        predictions = []
         for i in tqdm(range(n_batches)):
-            Xtestbatch = Xtest[i * self._batch_sz:(i + 1) * self._batch_sz]
-            Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
+            Xbatch = Xtest[i * self._batch_sz:(i + 1) * self._batch_sz]
+            predictions += [self._session.run(out, feed_dict={self._images: Xbatch})]
 
-            if use_softmax_and_argmax:
-                Yish_test_done = np.argmax(Yish_test_done, axis=1)
-
-            if predictions is None:
-                predictions = Yish_test_done
-            else:
-                predictions = np.concatenate((predictions, Yish_test_done))
-
-        return predictions
+        return np.vstack(predictions, axis=0)
 

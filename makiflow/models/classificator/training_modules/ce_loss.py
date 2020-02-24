@@ -2,6 +2,7 @@ from ..main_modules import ClassificatorBasis
 import tensorflow as tf
 import numpy as np
 from sklearn.utils import shuffle
+from tqdm import tqdm
 
 
 class CETrainingModule(ClassificatorBasis):
@@ -103,26 +104,11 @@ class CETrainingModule(ClassificatorBasis):
                         feed_dict={self._images: Xbatch, self._labels: Ybatch})
                     # Use exponential decay for calculating loss and error
                     train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
-                    train_error_batch = error_rate(np.argmax(y_ish, axis=1), Ybatch)
-                    train_error = 0.99 * train_error + 0.01 * train_error_batch
 
                 # Validating the network on test data
-                if i % test_period == 0:
+                if test_period != -1 and i % test_period == 0:
                     # For test data
-                    test_cost = np.float32(0)
-                    test_predictions = np.zeros(len(Xtest))
-
-                    for k in range(len(Xtest) // self._batch_sz):
-                        # Test data
-                        Xtestbatch = Xtest[k * self._batch_sz:(k + 1) * self._batch_sz]
-                        Ytestbatch = Ytest[k * self._batch_sz:(k + 1) * self._batch_sz]
-                        Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
-                        test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
-                        test_predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=1)
-
-                    # Collect and print data
-                    test_cost = test_cost / (len(Xtest) // self._batch_sz)
-                    test_error = error_rate(test_predictions, Ytest)
+                    test_error, test_cost = self.evaluate(Xtest, Ytest)
                     test_errors.append(test_error)
                     test_costs.append(test_cost)
 
