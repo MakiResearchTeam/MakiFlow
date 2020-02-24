@@ -123,7 +123,7 @@ class MakiTrainingModule(ClassificatorBasis):
                         }
                     )
                     # Use exponential decay for calculating loss and error
-                    train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
+                    train_cost = moving_average(train_cost, train_cost_batch, j)
 
                 train_costs.append(train_cost)
                 train_info = [(TRAIN_LOSS, train_cost)]
