@@ -1,15 +1,24 @@
 from __future__ import absolute_import
 
 from abc import ABC
-
+from copy import copy
 import tensorflow as tf
 import numpy as np
 from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 # noinspection PyUnresolvedReferences
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
+from makiflow.base.maki_entities import MakiLayer, MakiTensor
 from makiflow.layers.sf_layer import SimpleForwardLayer
 from makiflow.layers.activation_converter import ActivationConverter
+
+
+class NoCellStateException(Exception):
+    ERROR_MSG = "The cells do not have a state yet. You might need to pass a MakiTensor into the " + \
+        "__call__ method."
+
+    def __init__(self):
+        super().__init__(NoCellStateException.ERROR_MSG)
 
 
 class CellType:
@@ -32,7 +41,7 @@ class CellType:
                 return CellType.STATIC
 
 
-class RNNLayer(SimpleForwardLayer, ABC):
+class RNNLayer(MakiLayer, ABC):
     def __init__(self, cells, params, named_params_dict, name, seq_length=None, dynamic=True,
                  bidirectional=False):
         self._cells = cells
@@ -40,25 +49,59 @@ class RNNLayer(SimpleForwardLayer, ABC):
         self._dynamic = dynamic
         self._bidirectional = bidirectional
         self._cell_type = CellType.get_cell_type(bidirectional, dynamic)
+        self._cells_state = None
         super().__init__(name, params, named_params_dict)
+
+    def __call__(self, x):
+        data = x.get_data_tensor()
+        outputs = self._forward(data)
+
+        parent_tensor_names = [x.get_name()]
+        previous_tensors = copy(x.get_previous_tensors())
+        previous_tensors.update(x.get_self_pair())
+        maki_tensor_outputs = MakiTensor(
+            data_tensor=outputs,
+            parent_layer=self,
+            parent_tensor_names=parent_tensor_names,
+            previous_tensors=previous_tensors,
+        )
+        return maki_tensor_outputs
 
     def _forward(self, x):
         if self._cell_type == CellType.BIDIR_DYNAMIC:
-            return bidirectional_dynamic_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=x, dtype=tf.float32)
+            (outputs_f, outputs_b), (states_f, states_b) = \
+                bidirectional_dynamic_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=x, dtype=tf.float32)
+            # Creation of the two MakiTensors for both `outputs_f` and `outputs_b` is inappropriate since
+            # the algorithm that builds the computational graph does not consider such case and
+            # therefore can not handle this situation, it will cause an error.
+            self._cells_state = tf.concat([states_f, states_b], axis=-1)
+            return tf.concat([outputs_f, outputs_b], axis=-1)
         elif self._cell_type == CellType.BIDIR_STATIC:
             x = tf.unstack(x, num=self._seq_length, axis=1)
-            return static_bidirectional_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=x, dtype=tf.float32)
+            outputs_fb, states_f, states_b =\
+                static_bidirectional_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=x, dtype=tf.float32)
+            self._cells_state = tf.concat([states_f, states_f], axis=-1)
+            return outputs_fb
         elif self._cell_type == CellType.DYNAMIC:
-            return dynamic_rnn(self._cells, x, dtype=tf.float32)
+            outputs, states = dynamic_rnn(self._cells, x, dtype=tf.float32)
+            self._cells_state = states
+            return outputs
         elif self._cell_type == CellType.STATIC:
             x = tf.unstack(x, num=self._seq_length, axis=1)
-            return static_rnn(self._cells, x, dtype=tf.float32)
+            outputs, states = static_rnn(self._cells, x, dtype=tf.float32)
+            self._cells_state = states
+            return tf.stack(outputs, axis=1)
 
     def _training_forward(self, x):
         return self._forward(x)
 
     def get_cells(self):
         return self._cells
+
+    def get_cells_state(self):
+        if self._cells_state is None:
+            raise NoCellStateException()
+        return self._cells_state
 
 
 class GRULayer(RNNLayer):
@@ -90,6 +133,7 @@ class GRULayer(RNNLayer):
         """
         self._num_cells = num_cells
         self._input_dim = input_dim
+        self._f = activation
         cell = GRUCell(num_units=num_cells, activation=activation, dtype=tf.float32)
         cell.build(input_shape=[None, tf.Dimension(self._input_dim)])
         params = cell.variables
@@ -115,7 +159,7 @@ class GRULayer(RNNLayer):
                 'name': self._name,
                 'dynamic': self._dynamic,
                 'bidirectional': self._bidirectional,
-                'activation': ActivationConverter.activation_to_str(self._act)
+                'activation': ActivationConverter.activation_to_str(self._f)
             }
         }
 
