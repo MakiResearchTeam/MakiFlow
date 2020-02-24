@@ -6,6 +6,7 @@ Welcome to MakiFlow's documentation!
 
    license
    tutorials
+   development/models/models
 
 .. toctree::
    :caption API

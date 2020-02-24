@@ -3,7 +3,7 @@ from ..main_modules import NeuralRenderBasis
 from makiflow.base.loss_builder import Loss
 from makiflow.models.nn_render.training_modules.utils import print_train_info, moving_average
 from makiflow.models.nn_render.training_modules.utils import new_optimizer_used, loss_is_built
-from sklearn.utils import shuffle
+from sklearn.utils import shuffl
 from tqdm import tqdm
 
 ABS_LOSS = 'ABS LOSS'
