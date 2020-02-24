@@ -103,7 +103,6 @@ class MakiTrainingModule(ClassificatorBasis):
         n_batches = len(Xtrain) // self._batch_sz
 
         train_costs = []
-        train_errors = []
         test_costs = []
         test_errors = []
         iterator = None
@@ -111,7 +110,6 @@ class MakiTrainingModule(ClassificatorBasis):
             for i in range(epochs):
                 Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
                 train_cost = np.float32(0)
-                train_error = np.float32(0)
                 iterator = tqdm(range(n_batches))
 
                 for j in iterator:
@@ -128,8 +126,7 @@ class MakiTrainingModule(ClassificatorBasis):
                     train_cost = 0.99 * train_cost + 0.01 * train_cost_batch
 
                 train_costs.append(train_cost)
-                train_errors.append(train_error)
-                train_info = [(TRAIN_ACCURACY, 1 - train_error), (TRAIN_LOSS, train_cost)]
+                train_info = [(TRAIN_LOSS, train_cost)]
                 # Validating the network on test data
                 if test_period != -1 and i % test_period == 0:
                     # For test data
@@ -145,5 +142,5 @@ class MakiTrainingModule(ClassificatorBasis):
         finally:
             if iterator is not None:
                 iterator.close()
-            return {'train costs': train_costs, 'train errors': train_errors,
+            return {'train costs': train_costs,
                     'test costs': test_costs, 'test errors': test_errors}
