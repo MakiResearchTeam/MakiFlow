@@ -1,1 +1,1 @@
-from .main_modules import ClassificatorBasis
+from .compile import Classificator

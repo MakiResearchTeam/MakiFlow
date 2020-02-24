@@ -25,22 +25,23 @@ Interface of the main module class:
 .. code-block:: python
 
     class ModelBasis(MakiModel):
-        # Setting up the variables.
-        self._training_vars_are_ready = False
-        pass
+        def __init__(self, ...)
+            # Setting up the variables.
+            self._training_vars_are_ready = False
+            pass
 
-    def _get_model_info(self):
-        # This method is required by the MakiModel interface.
-        pass
+        def _get_model_info(self):
+            # This method is required by the MakiModel interface.
+            pass
 
-    # COMMON TRAINING FUNCTIONALITY
-    def _prepare_training_vars(self):
-        # Setting up the variables, losses, etc
-        self._training_vars_are_ready = True
-        pass
+        # COMMON TRAINING FUNCTIONALITY
+        def _prepare_training_vars(self):
+            # Setting up the variables, losses, etc
+            self._training_vars_are_ready = True
+            pass
 
-    def _other_methods_for_the_training_modules(self):
-        pass
+        def _other_methods_for_the_training_modules(self):
+            pass
 
 Training modules
 ----------------
@@ -54,7 +55,7 @@ Interface of the training module class:
 
     class LossNameTrainingModule(ModelBasis):
         def _prepare_training_vars(self):
-            self._lossname_is_built = False
+            self._lossname_loss_is_built = False
             super()._prepare_training_vars()
 
         def _build_lossname_loss(self):
@@ -73,7 +74,7 @@ Interface of the training module class:
             if not self._training_vars_are_ready:
                 self._prepare_training_vars()
 
-            if not self._lossname_is_build:
+            if not self._lossname_is_built:
                 self._setup_lossname_inputs()
                 self._build_lossname_loss()
                 self._lossname_optimizer = optimizer
@@ -102,3 +103,20 @@ Interface of the training module class:
 
             train_op = self._minimize_abs_loss(optimizer, global_step)
             # Training cycle
+
+You can copy this code a modify accordingly.
+
+compile.py
+----------
+
+In this file all the modules are assembled into the final model.
+
+.. code-block:: python
+
+    from .training_modules import Lossname1TrainingModule, Lossname2TrainingModule
+
+
+    class Model(Lossname1TrainingModule, Lossname2TrainingModule):
+        pass
+
+This model is then used for the one's purposes.
