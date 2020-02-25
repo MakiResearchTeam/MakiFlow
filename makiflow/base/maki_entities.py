@@ -2,7 +2,6 @@ from abc import abstractmethod
 import tensorflow as tf
 import json
 from copy import copy
-import numpy as np
 
 
 class MakiLayer:
@@ -102,6 +101,19 @@ class MakiTensor:
 
     def get_self_pair(self) -> dict:
         return {self.__name: self}
+
+    def __str__(self):
+        return "MakiTensor(\"%s\"%s%s%s)" % (
+            "name=%s" % self.__name,
+            (", shape=%s" %
+             self.get_shape()) if self.__data_tensor.get_shape().ndims is not None else "",
+            (", dtype=%s" % self.__data_tensor._dtype.name) if self.__data_tensor._dtype else "",
+            (", device=%s" % self.__data_tensor.device) if self.__data_tensor.device else "")
+
+    def __repr__(self):
+        return "<mf.base.MakiTensor 'name=%s' shape=%s dtype=%s>" % (self.__name,
+                                                       self.__data_tensor.get_shape(),
+                                                       self.__data_tensor._dtype.name)
 
     def get_name(self):
         return self.__name
