@@ -7,6 +7,8 @@ from makiflow.layers.sf_layer import SimpleForwardLayer
 
 
 class InputLayer(MakiTensor):
+    TYPE = 'InputLayer'
+
     def __init__(self, input_shape, name):
         """
         InputLayer is used to instantiate MakiFlow tensor.
@@ -18,6 +20,7 @@ class InputLayer(MakiTensor):
         name : str
             Name of this layer.
         """
+
         self.params = []
         self._name = str(name)
         self._input_shape = input_shape
@@ -41,11 +44,17 @@ class InputLayer(MakiTensor):
     def get_params_dict(self):
         return {}
 
+    @staticmethod
+    def build(params: dict):
+        input_shape = params['input_shape']
+        name = params['name']
+        return InputLayer(name=name, input_shape=input_shape)
+
     def to_dict(self):
         return {
             "name": self._name,
             "parent_tensor_names": [],
-            'type': 'InputLayer',
+            'type': InputLayer.TYPE,
             'params': {
                 'name': self._name,
                 'input_shape': self._input_shape
@@ -65,6 +74,8 @@ class ReshapeLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        ReshapeLayer.TYPE = 'ReshapeLayer'
+
         super().__init__(name, [], {})
         self.new_shape = new_shape
 
@@ -74,9 +85,18 @@ class ReshapeLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        new_shape = params['new_shape']
+        return ReshapeLayer(
+            new_shape=new_shape,
+            name=name
+        )
+
     def to_dict(self):
         return {
-            'type': 'ReshapeLayer',
+            'type': ReshapeLayer.TYPE,
             'params': {
                 'name': self.get_name(),
                 'new_shape': self.new_shape
@@ -96,6 +116,8 @@ class MulByAlphaLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        MulByAlphaLayer.TYPE = 'MulByAlphaLayer'
+
         self.alpha = tf.constant(alpha)
         super().__init__(name, [], {})
 
@@ -105,9 +127,15 @@ class MulByAlphaLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        alpha = params['alpha']
+        return MulByAlphaLayer(alpha=alpha, name=name)
+
     def to_dict(self):
         return {
-            'type': 'MulByAlphaLayer',
+            'type': MulByAlphaLayer.TYPE,
             'params': {
                 'name': self.get_name(),
                 'alpha': self.alpha,
@@ -125,6 +153,8 @@ class SumLayer(MakiLayer):
         name : str
             Name of this layer.
         """
+        SumLayer.TYPE = 'SumLayer'
+
         super().__init__(name, [], {})
 
     def __call__(self, x: list):
@@ -151,9 +181,14 @@ class SumLayer(MakiLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        return SumLayer(name=name)
+
     def to_dict(self):
         return {
-            'type': 'SumLayer',
+            'type': SumLayer.TYPE,
             'params': {
                 'name': self._name,
             }
@@ -172,6 +207,7 @@ class ConcatLayer(MakiLayer):
         name : str
             Name of this layer.
         """
+        ConcatLayer.TYPE = 'ConcatLayer'
         super().__init__(name, [], {})
         self.axis = axis
 
@@ -199,9 +235,15 @@ class ConcatLayer(MakiLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        axis = params['axis']
+        return ConcatLayer(name=name, axis=axis)
+
     def to_dict(self):
         return {
-            'type': 'ConcatLayer',
+            'type': ConcatLayer.TYPE,
             'params': {
                 'name': self._name,
                 'axis': self.axis,
@@ -224,6 +266,8 @@ class ZeroPaddingLayer(SimpleForwardLayer):
             Name of this layer.
         """
         assert (len(padding) == 2)
+        ZeroPaddingLayer.TYPE = 'ZeroPaddingLayer'
+
         self.input_padding = padding
         self.padding = [[0, 0], padding[0], padding[1], [0, 0]]
         super().__init__(name, [], {})
@@ -238,9 +282,15 @@ class ZeroPaddingLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        padding = params['padding']
+        return ZeroPaddingLayer(padding=padding, name=name)
+
     def to_dict(self):
         return {
-            'type': 'ZeroPaddingLayer',
+            'type': ZeroPaddingLayer.TYPE,
             'params': {
                 'name': self._name,
                 'padding': self.input_padding,
@@ -259,6 +309,7 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        GlobalMaxPoolLayer.TYPE = 'GlobalMaxPoolLayer'
         super().__init__(name, [], {})
 
     def _forward(self, x):
@@ -268,9 +319,14 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        return GlobalMaxPoolLayer(name=name)
+
     def to_dict(self):
         return {
-            'type': 'GlobalMaxPoolLayer',
+            'type': GlobalMaxPoolLayer.TYPE,
             'params': {
                 'name': self._name,
             }
@@ -288,6 +344,7 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        GlobalAvgPoolLayer.TYPE = 'GlobalAvgPoolLayer'
         super().__init__(name, [], {})
 
     def _forward(self, x):
@@ -297,9 +354,14 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        return GlobalAvgPoolLayer(name=name)
+
     def to_dict(self):
         return {
-            'type': 'GlobalAvgPoolLayer',
+            'type': GlobalAvgPoolLayer.TYPE,
             'params': {
                 'name': self._name,
             }
@@ -322,6 +384,8 @@ class MaxPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        MaxPoolLayer.TYPE = 'MaxPoolLayer'
+
         super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
@@ -338,9 +402,18 @@ class MaxPoolLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        ksize = params['ksize']
+        strides = params['strides']
+        padding = params['padding']
+        return MaxPoolLayer(name=name, ksize=ksize,
+                            strides=strides, padding=padding)
+
     def to_dict(self):
         return {
-            'type': 'MaxPoolLayer',
+            'type': MaxPoolLayer.TYPE,
             'params': {
                 'name': self._name,
                 'ksize': self.ksize,
@@ -366,6 +439,8 @@ class AvgPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        AvgPoolLayer.TYPE = 'AvgPoolLayer'
+
         super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
@@ -382,9 +457,21 @@ class AvgPoolLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        ksize = params['ksize']
+        strides = params['strides']
+        padding = params['padding']
+        name = params['name']
+
+        return AvgPoolLayer(
+            ksize=ksize, strides=strides,
+            padding=padding, name=name
+        )
+
     def to_dict(self):
         return {
-            'type': 'AvgPoolLayer',
+            'type': AvgPoolLayer.TYPE,
             'params': {
                 'name': self._name,
                 'ksize': self.ksize,
@@ -408,6 +495,7 @@ class UpSamplingLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        UpSamplingLayer.TYPE = 'UpSamplingLayer'
         super().__init__(name, [], {})
         self.size = size
 
@@ -422,9 +510,15 @@ class UpSamplingLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        size = params['size']
+        return UpSamplingLayer(name=name, size=size)
+
     def to_dict(self):
         return {
-            'type': 'UpSamplingLayer',
+            'type': UpSamplingLayer.TYPE,
             'params': {
                 'name': self._name,
                 'size': self.size
@@ -444,6 +538,8 @@ class ActivationLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        ActivationLayer.TYPE = 'ActivationLayer'
+
         super().__init__(name, [], {})
         if activation is None:
             raise Exception("Activation can't None")
@@ -453,11 +549,17 @@ class ActivationLayer(SimpleForwardLayer):
         return self.f(x)
 
     def _training_forward(self, X):
-        return self.f(X)
+        return self._forward(X)
+
+    @staticmethod
+    def build(params: dict):
+        activation = ActivationConverter.str_to_activation(params['activation'])
+        name = params['name']
+        return ActivationLayer(activation=activation, name=name)
 
     def to_dict(self):
         return {
-            'type': 'ActivationLayer',
+            'type': ActivationLayer.TYPE,
             'params': {
                 'name': self._name,
                 'activation': ActivationConverter.activation_to_str(self.f)
@@ -476,6 +578,8 @@ class FlattenLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        FlattenLayer.TYPE = 'FlattenLayer'
+
         super().__init__(name, [], {})
 
     def _forward(self, x):
@@ -484,9 +588,14 @@ class FlattenLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        return FlattenLayer(name=name)
+
     def to_dict(self):
         return {
-            'type': 'FlattenLayer',
+            'type': FlattenLayer.TYPE,
             'params': {
                 'name': self._name
             }
@@ -511,6 +620,8 @@ class DropoutLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        DropoutLayer.TYPE = 'DropoutLayer'
+
         super().__init__(name, [], {})
         self._p_keep = p_keep
         self.noise_shape = noise_shape
@@ -525,9 +636,19 @@ class DropoutLayer(SimpleForwardLayer):
                              seed=self.seed,
                              )
 
+    @staticmethod
+    def build(params: dict):
+        p_keep = params['p_keep']
+        name = params['name']
+        noise_shape = params['noise_shape']
+        seed = params['seed']
+
+        return DropoutLayer(p_keep=p_keep, name=name, noise_shape=noise_shape,
+                            seed=seed)
+
     def to_dict(self):
         return {
-            'type': 'DropoutLayer',
+            'type': DropoutLayer.TYPE,
             'params': {
                 'name': self._name,
                 'p_keep': self._p_keep,
@@ -552,6 +673,7 @@ class ResizeLayer(SimpleForwardLayer):
             Name of this layer.
         """
         assert (len(new_shape) == 2)
+        ResizeLayer.TYPE = 'ResizeLayer'
         self.new_shape = new_shape
         self.name = name
         self.align_corners = align_corners
@@ -594,9 +716,19 @@ class ResizeLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        new_shape = params['new_shape']
+        name = params['name']
+        align_corners = params['align_corners']
+        interpolation = params['interpolation']
+
+        return ResizeLayer(interpolation=interpolation, new_shape=new_shape, name=name,
+                           align_corners=align_corners)
+
     def to_dict(self):
         return {
-            'type': 'ResizeLayer',
+            'type': ResizeLayer.TYPE,
             'params': {
                 'name': self.name,
                 'interpolation': self.interpolation,
@@ -612,6 +744,7 @@ class L2NormalizationLayer(SimpleForwardLayer):
         This layer was introduced in 'PARSENET: LOOKING WIDER TO SEE BETTER'.
         Performs L2 normalization along feature dimension.
         """
+        L2NormalizationLayer.TYPE = 'L2NormalizationLayer'
         self._eps = eps
         self._name = name
         super().__init__(name, params=[], named_params_dict={})
@@ -624,11 +757,44 @@ class L2NormalizationLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        eps = params['eps']
+        return L2NormalizationLayer(name=name, eps=eps)
+
     def to_dict(self):
         return {
-            'type': 'L2NormalizationLayer',
+            'type': L2NormalizationLayer.TYPE,
             'params': {
                 'name': self._name,
                 'eps': self._eps
             }
         }
+
+
+class UnTrainableLayerAddress:
+
+    ADDRESS_TO_CLASSES = {
+        ReshapeLayer.TYPE: ReshapeLayer,
+        MulByAlphaLayer.TYPE: MulByAlphaLayer,
+        SumLayer.TYPE: SumLayer,
+
+        ConcatLayer.TYPE: ConcatLayer,
+        ZeroPaddingLayer.TYPE: ZeroPaddingLayer,
+        GlobalMaxPoolLayer.TYPE: GlobalMaxPoolLayer,
+        GlobalAvgPoolLayer.TYPE: GlobalAvgPoolLayer,
+
+        MaxPoolLayer.TYPE: MaxPoolLayer,
+        AvgPoolLayer.TYPE: AvgPoolLayer,
+
+        UpSamplingLayer.TYPE: UpSamplingLayer,
+        ActivationLayer.TYPE: ActivationLayer,
+
+        FlattenLayer.TYPE: FlattenLayer,
+        DropoutLayer.TYPE: DropoutLayer,
+        ResizeLayer.TYPE: ResizeLayer,
+        L2NormalizationLayer.TYPE: L2NormalizationLayer,
+    }
+
+

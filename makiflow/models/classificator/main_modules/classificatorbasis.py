@@ -9,6 +9,10 @@ from copy import copy
 
 EPSILON = np.float32(1e-37)
 
+class CParams:
+    INPUT_MT = 'input_mt'
+    OUTPUT_MT = 'output_mt'
+    NAME = 'name'
 
 class ClassificatorBasis(MakiModel):
     def __init__(self, input: InputLayer, output: MakiTensor, name='MakiClassificator'):
@@ -34,9 +38,9 @@ class ClassificatorBasis(MakiModel):
         input_mt = self._inputs[0]
         output_mt = self._outputs[0]
         return {
-            'input_mt': input_mt.get_name(),
-            'output_mt': output_mt.get_name(),
-            'name': self.name
+            CParams.INPUT_MT: input_mt.get_name(),
+            CParams.OUTPUT_MT: output_mt.get_name(),
+            CParams.NAME: self.name
         }
 
     # ------------------------------------------------------------------------------------------------------------------

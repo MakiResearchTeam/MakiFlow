@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.ops import math_ops
-from tensorflow.python.framework import ops
 
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
@@ -40,6 +38,8 @@ class ConvLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        ConvLayer.TYPE = 'ConvLayer'
+
         self.shape = (kw, kh, in_f, out_f)
         self.stride = stride
         self.padding = padding
@@ -77,9 +77,32 @@ class ConvLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+
+        kw = params['shape'][0]
+        kh = params['shape'][1]
+        in_f = params['shape'][2]
+        out_f = params['shape'][3]
+
+        stride = params['stride']
+        padding = params['padding']
+        activation = ActivationConverter.str_to_activation(params['activation'])
+
+        init_type = params['init_type']
+        use_bias = params['use_bias']
+
+        return ConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f,
+            stride=stride, name=name, padding=padding, activation=activation,
+            kernel_initializer=init_type, use_bias=use_bias
+        )
+
     def to_dict(self):
         return {
-            'type': 'ConvLayer',
+            'type': ConvLayer.TYPE,
             'params': {
                 'name': self._name,
                 'shape': list(self.shape),
@@ -91,7 +114,6 @@ class ConvLayer(SimpleForwardLayer):
             }
 
         }
-
 
 class UpConvLayer(SimpleForwardLayer):
     def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu,
@@ -126,6 +148,8 @@ class UpConvLayer(SimpleForwardLayer):
         """
         # Shape is different from normal convolution since it's required by 
         # transposed convolution. Output feature maps go before input ones.
+        UpConvLayer.TYPE = 'UpConvLayer'
+
         self.shape = (kw, kh, out_f, in_f)
         self.size = size
         self.strides = [1, *size, 1]
@@ -173,9 +197,31 @@ class UpConvLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+
+        kw = params['shape'][0]
+        kh = params['shape'][1]
+        in_f = params['shape'][3]
+        out_f = params['shape'][2]
+
+        padding = params['padding']
+        size = params['size']
+
+        activation = ActivationConverter.str_to_activation(params['activation'])
+
+        init_type = params['init_type']
+        use_bias = params['use_bias']
+        return UpConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f, size=size,
+            name=name, padding=padding, activation=activation,
+            kernel_initializer=init_type, use_bias=use_bias
+        )
+
     def to_dict(self):
         return {
-            'type': 'UpConvLayer',
+            'type': UpConvLayer.TYPE,
             'params': {
                 'name': self._name,
                 'shape': list(self.shape),
@@ -200,6 +246,8 @@ class BiasLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        BiasLayer.TYPE = 'BiasLayer'
+
         self.D = D
         self.name = name
 
@@ -218,9 +266,15 @@ class BiasLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        D = params['D']
+        return BiasLayer(D=D, name=name)
+
     def to_dict(self):
         return {
-            'type': 'BiasLayer',
+            'type': BiasLayer.TYPE,
             'params': {
                 'name': self._name,
                 'D': self.D,
@@ -256,6 +310,8 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        DepthWiseConvLayer.TYPE = 'DepthWiseLayer'
+
         assert (len(rate) == 2)
         self.shape = (kw, kh, in_f, multiplier)
         self.stride = stride
@@ -301,9 +357,33 @@ class DepthWiseConvLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+
+        kw = params['shape'][0]
+        kh = params['shape'][1]
+        in_f = params['shape'][2]
+        multiplier = params['shape'][3]
+
+        padding = params['padding']
+        stride = params['stride']
+
+        init_type = params['init_type']
+        use_bias = params['use_bias']
+        rate = params['rate']
+
+        activation = ActivationConverter.str_to_activation(params['activation'])
+
+        return DepthWiseConvLayer(
+            kw=kw, kh=kh, in_f=in_f, multiplier=multiplier, padding=padding,
+            stride=stride, activation=activation, name=name, rate=rate,
+            kernel_initializer=init_type, use_bias=use_bias,
+        )
+
     def to_dict(self):
         return {
-            'type': 'DepthWiseLayer',
+            'type': DepthWiseConvLayer.TYPE,
             'params': {
                 'name': self._name,
                 'shape': list(self.shape),
@@ -350,6 +430,8 @@ class SeparableConvLayer(SimpleForwardLayer):
         name : str
             Name of this layer.  
         """
+        SeparableConvLayer.TYPE = 'SeparableConvLayer'
+
         self.dw_shape = (kw, kh, in_f, multiplier)
         self.out_f = out_f
         self.stride = stride
@@ -402,9 +484,36 @@ class SeparableConvLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+
+        kw = params['dw_shape'][0]
+        kh = params['dw_shape'][1]
+        in_f = params['dw_shape'][2]
+        out_f = params['out_f']
+
+        multiplier = params['dw_shape'][3]
+
+        padding = params['padding']
+        stride = params['stride']
+
+        dw_init_type = params['dw_init_type']
+        pw_init_type = params['pw_init_type']
+        use_bias = params['use_bias']
+
+        activation = ActivationConverter.str_to_activation(params['activation'])
+
+        return SeparableConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f, multiplier=multiplier,
+            padding=padding, stride=stride, activation=activation,
+            dw_kernel_initializer=dw_init_type, pw_kernel_initializer=pw_init_type,
+            use_bias=use_bias, name=name
+        )
+
     def to_dict(self):
         return {
-            'type': 'SeparableConvLayer',
+            'type': SeparableConvLayer.TYPE,
             'params': {
                 'name': self._name,
                 'dw_shape': list(self.dw_shape),
@@ -440,6 +549,7 @@ class DenseLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        DenseLayer.TYPE = 'DenseLayer'
 
         self.input_shape = in_d
         self.output_shape = out_d
@@ -477,9 +587,26 @@ class DenseLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        input_shape = params['input_shape']
+        output_shape = params['output_shape']
+
+        activation = ActivationConverter.str_to_activation(params['activation'])
+
+        init_type = params['init_type']
+        use_bias = params['use_bias']
+
+        return DenseLayer(
+            in_d=input_shape, out_d=output_shape,
+            activation=activation, name=name,
+            mat_initializer=init_type, use_bias=use_bias
+        )
+
     def to_dict(self):
         return {
-            'type': 'DenseLayer',
+            'type': DenseLayer.TYPE,
             'params': {
                 'name': self._name,
                 'input_shape': self.input_shape,
@@ -523,6 +650,8 @@ class AtrousConvLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        AtrousConvLayer.TYPE = 'AtrousConvLayer'
+
         self.shape = (kw, kh, in_f, out_f)
         self.rate = rate
         self.padding = padding
@@ -561,9 +690,33 @@ class AtrousConvLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+
+        kw = params['shape'][0]
+        kh = params['shape'][1]
+        in_f = params['shape'][2]
+        out_f = params['shape'][3]
+
+        rate = params['rate']
+        padding = params['padding']
+
+        init_type = params['init_type']
+        use_bias = params['use_bias']
+
+        activation = ActivationConverter.str_to_activation(params['activation'])
+
+        return AtrousConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f, rate=rate,
+            padding=padding, activation=activation,
+            kernel_initializer=init_type,
+            use_bias=use_bias, name=name
+        )
+
     def to_dict(self):
         return {
-            'type': 'AtrousConvLayer',
+            'type': AtrousConvLayer.TYPE,
             'params': {
                 'name': self._name,
                 'shape': list(self.shape),
@@ -608,6 +761,8 @@ class BatchNormLayer(BatchNormBaseLayer):
         beta : float
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
+        BatchNormLayer.TYPE = 'BatchNormLayer'
+
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta,
                          type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
@@ -693,9 +848,23 @@ class BatchNormLayer(BatchNormBaseLayer):
 
         return out
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        D = params['D']
+
+        decay = params['decay']
+        eps = params['eps']
+
+        use_beta = params['use_beta']
+        use_gamma = params['use_gamma']
+
+        return BatchNormLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma)
+
     def to_dict(self):
         return {
-            'type': 'BatchNormLayer',
+            'type': BatchNormLayer.TYPE,
             'params': {
                 'name': self._name,
                 'D': self.D,
@@ -743,6 +912,8 @@ class GroupNormLayer(BatchNormBaseLayer):
         beta : float
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
+        GroupNormLayer.TYPE = 'GroupNormLayer'
+
         self.G = G
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma,
                          type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var,
@@ -858,9 +1029,26 @@ class GroupNormLayer(BatchNormBaseLayer):
 
         return X
 
+    @staticmethod
+    def build(params: dict):
+        G = params['G']
+        name = params['name']
+        D = params['D']
+
+        decay = params['decay']
+        eps = params['eps']
+
+        use_beta = params['use_beta']
+        use_gamma = params['use_gamma']
+
+        track_running_stats = params['track_running_stats']
+
+        return GroupNormLayer(D=D, G=G, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma, track_running_stats=track_running_stats)
+
     def to_dict(self):
         return {
-            'type': 'GroupNormLayer',
+            'type': GroupNormLayer.TYPE,
             'params': {
                 'name': self._name,
                 'D': self.D,
@@ -906,6 +1094,8 @@ class NormalizationLayer(BatchNormBaseLayer):
         beta : float
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
+        NormalizationLayer.TYPE = 'NormalizationLayer'
+
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
                          type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
@@ -1005,9 +1195,24 @@ class NormalizationLayer(BatchNormBaseLayer):
 
         return X
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        D = params['D']
+
+        decay = params['decay']
+        eps = params['eps']
+        use_beta = params['use_beta']
+
+        use_gamma = params['use_gamma']
+        track_running_stats = params['track_running_stats']
+
+        return NormalizationLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma, track_running_stats=track_running_stats)
+
     def to_dict(self):
         return {
-            'type': 'NormalizationLayer',
+            'type': NormalizationLayer.TYPE,
             'params': {
                 'name': self._name,
                 'D': self.D,
@@ -1054,6 +1259,8 @@ class InstanceNormLayer(BatchNormBaseLayer):
         beta : float
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
+        InstanceNormLayer.TYPE = 'InstanceNormLayer'
+
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
                          type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
@@ -1154,9 +1361,24 @@ class InstanceNormLayer(BatchNormBaseLayer):
 
         return X
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        D = params['D']
+
+        decay = params['decay']
+        eps = params['eps']
+        use_beta = params['use_beta']
+
+        use_gamma = params['use_gamma']
+        track_running_stats = params['track_running_stats']
+
+        return InstanceNormLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma, track_running_stats=track_running_stats)
+
     def to_dict(self):
         return {
-            'type': 'InstanceNormLayer',
+            'type': InstanceNormLayer.TYPE,
             'params': {
                 'name': self._name,
                 'D': self.D,
@@ -1182,6 +1404,8 @@ class ScaleLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        ScaleLayer.TYPE = 'ScaleLayer'
+
         self.init_value = init_value
         self.name_scale = 'ScaleValue_' + name
 
@@ -1195,12 +1419,39 @@ class ScaleLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params['name']
+        init_value = params['init_value']
+        return ScaleLayer(init_value=init_value, name=name)
+
     def to_dict(self):
         return {
-            'type': 'ScaleLayer',
+            'type': ScaleLayer.TYPE,
             'params': {
                 'name': self._name,
                 'init_value': self.init_value
             }
         }
+
+class TrainableLayerAddress:
+
+    ADDRESS_TO_CLASSES = {
+        ConvLayer.TYPE: ConvLayer,
+        UpConvLayer.TYPE: UpConvLayer,
+        AtrousConvLayer.TYPE: AtrousConvLayer,
+        DepthWiseConvLayer.TYPE: DepthWiseConvLayer,
+        SeparableConvLayer.TYPE: SeparableConvLayer,
+
+        BiasLayer.TYPE: BiasLayer,
+        DenseLayer.TYPE: DenseLayer,
+
+        BatchNormLayer.TYPE: BatchNormLayer,
+        GroupNormLayer.TYPE: GroupNormLayer,
+        NormalizationLayer.TYPE: NormalizationLayer,
+        InstanceNormLayer.TYPE: InstanceNormLayer,
+
+        ScaleLayer.TYPE: ScaleLayer,
+    }
+
 

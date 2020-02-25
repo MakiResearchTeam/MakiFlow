@@ -1,1 +1,2 @@
 from .classificatorbasis import ClassificatorBasis
+from .classificatorbasis import CParams

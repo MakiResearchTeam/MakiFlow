@@ -1,10 +1,28 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 import tensorflow as tf
 import json
 from copy import copy
 
+class MakiRestorable(ABC):
+    TYPE = "Restorable"
 
-class MakiLayer:
+    @abstractmethod
+    @staticmethod
+    def build(params: dict):
+        pass
+
+    @abstractmethod
+    def to_dict(self):
+        """
+        Returns
+        -------
+        dictionary
+            Contains all the necessary information for restoring the layer object.
+        """
+        pass
+
+
+class MakiLayer(MakiRestorable):
     def __init__(self, name, params, named_params_dict):
         self._name = name
         self._params = params
@@ -25,16 +43,6 @@ class MakiLayer:
 
     @abstractmethod
     def _training_forward(self, x):
-        pass
-
-    @abstractmethod
-    def to_dict(self):
-        """
-        Returns
-        -------
-        dictionary
-            Contains all the necessary information for restoring the layer object.
-        """
         pass
 
     def get_params(self):
