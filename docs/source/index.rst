@@ -1,19 +1,16 @@
 Welcome to MakiFlow's documentation!
 ====================================
 
-Guide
-^^^^^
 .. toctree::
    :maxdepth: 1
 
    license
    tutorials
-   api/api
+   development/models/models
 
+.. toctree::
+   :caption API
+   :maxdepth: 3
 
-Indices and tables
-==================
+   api/layers/layers
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

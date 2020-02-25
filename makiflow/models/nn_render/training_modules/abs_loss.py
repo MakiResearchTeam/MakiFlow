@@ -1,10 +1,10 @@
 import tensorflow as tf
 from ..main_modules import NeuralRenderBasis
 from makiflow.base.loss_builder import Loss
-from makiflow.models.nn_render.training_modules.utils import print_train_info, moving_average
-from makiflow.models.nn_render.training_modules.utils import new_optimizer_used, loss_is_built
-from sklearn.utils import shuffle
+from makiflow.models.common.utils import print_train_info, moving_average
+from makiflow.models.common.utils import new_optimizer_used, loss_is_built
 from tqdm import tqdm
+from sklearn.utils import shuffle
 
 ABS_LOSS = 'ABS LOSS'
 

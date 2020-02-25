@@ -1,5 +1,5 @@
 Convolutional layers
---------------------
+====================
 
 ConvLayer
 ~~~~~~~~~
