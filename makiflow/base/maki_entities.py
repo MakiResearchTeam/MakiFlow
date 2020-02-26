@@ -110,17 +110,19 @@ class MakiTensor:
         return {self.__name: self}
 
     def __str__(self):
-        return "MakiTensor(\"%s\"%s%s%s)" % (
-            "name=%s" % self.__name,
-            (", shape=%s" %
-             self.get_shape()) if self.__data_tensor.get_shape().ndims is not None else "",
-            (", dtype=%s" % self.__data_tensor._dtype.name) if self.__data_tensor._dtype else "",
-            (", device=%s" % self.__data_tensor.device) if self.__data_tensor.device else "")
+        name = self.__name
+        shape = self.get_shape() if self.__data_tensor.get_shape().ndims is not None else "no information"
+        dtype = self.__data_tensor._dtype.name if self.__data_tensor._dtype else "no information"
+        device = self.__data_tensor.device if self.__data_tensor.device else "no information"
+
+        return f"MakiTensor(name={name}, shape={shape}, dtype={dtype}, device={device}"
 
     def __repr__(self):
-        return "<mf.base.MakiTensor 'name=%s' shape=%s dtype=%s>" % (self.__name,
-                                                       self.__data_tensor.get_shape(),
-                                                       self.__data_tensor._dtype.name)
+        name = self.__name
+        shape = self.get_shape() if self.__data_tensor.get_shape().ndims is not None else "no information"
+        dtype = self.__data_tensor._dtype.name if self.__data_tensor._dtype else "no information"
+
+        return f"<mf.base.MakiTensor 'name={name}' shape={shape} dtype={dtype}>"
 
     def get_name(self):
         return self.__name
