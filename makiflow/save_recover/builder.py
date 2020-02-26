@@ -6,12 +6,10 @@ import json
 from makiflow.models.classificator import Classificator
 from makiflow.models.classificator.main_modules import CParams
 from makiflow.layers import RNNLayerAddress, TrainableLayerAddress, UnTrainableLayerAddress
-from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel
 from makiflow.models import Segmentator
 from makiflow.models import TextRecognizer
-from makiflow.base import MakiRestorable
 
 class Builder:
     MODEL_INFO = 'model_info'
@@ -171,7 +169,7 @@ class Builder:
         layer = all_layers_adress[layer_dict[Builder.TYPE]]
 
         if layer is None:
-            raise KeyError(f'{layer} was not found!')
+            raise KeyError(f'{layer_dict[Builder.TYPE]} was not found!')
 
         return layer.build(params)
 

@@ -6,7 +6,6 @@ from copy import copy
 class MakiRestorable(ABC):
     TYPE = "Restorable"
 
-    @abstractmethod
     @staticmethod
     def build(params: dict):
         pass
