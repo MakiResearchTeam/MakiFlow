@@ -166,7 +166,7 @@ class Builder:
 
         params = layer_dict['params']
 
-        layer = all_layers_adress[layer_dict[Builder.TYPE]]
+        layer = all_layers_adress.get(layer_dict[Builder.TYPE])
 
         if layer is None:
             raise KeyError(f'{layer_dict[Builder.TYPE]} was not found!')
