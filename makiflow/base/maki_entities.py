@@ -112,15 +112,15 @@ class MakiTensor:
 
     def __str__(self):
         name = self.__name
-        shape = self.get_shape() if self.__data_tensor.get_shape().ndims is not None else "no information"
-        dtype = self.__data_tensor._dtype.name if self.__data_tensor._dtype else "no information"
+        shape = self.get_shape()
+        dtype = self.__data_tensor._dtype.name
 
         return f"MakiTensor(name={name}, shape={shape}, dtype={dtype})"
 
     def __repr__(self):
         name = self.__name
-        shape = self.get_shape() if self.__data_tensor.get_shape().ndims is not None else "no information"
-        dtype = self.__data_tensor._dtype.name if self.__data_tensor._dtype else "no information"
+        shape = self.get_shape()
+        dtype = self.__data_tensor._dtype.name
 
         return f"<mf.base.MakiTensor 'name={name}' shape={shape} dtype={dtype}>"
 
