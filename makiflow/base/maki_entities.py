@@ -114,9 +114,8 @@ class MakiTensor:
         name = self.__name
         shape = self.get_shape() if self.__data_tensor.get_shape().ndims is not None else "no information"
         dtype = self.__data_tensor._dtype.name if self.__data_tensor._dtype else "no information"
-        device = self.__data_tensor.device if self.__data_tensor.device else "no information"
 
-        return f"MakiTensor(name={name}, shape={shape}, dtype={dtype}, device={device})"
+        return f"MakiTensor(name={name}, shape={shape}, dtype={dtype})"
 
     def __repr__(self):
         name = self.__name
