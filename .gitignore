@@ -3,8 +3,8 @@
 dataset
 test
 .ipynb_checkpoints
-docs/make.bat
-docs/Makefile
+.docs/make.bat
+.docs/Makefile
 
 
 
