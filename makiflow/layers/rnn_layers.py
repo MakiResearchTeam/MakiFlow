@@ -11,7 +11,7 @@ from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, st
 from makiflow.base.maki_entities import MakiLayer, MakiTensor
 from makiflow.layers.sf_layer import SimpleForwardLayer
 from makiflow.layers.activation_converter import ActivationConverter
-from makiflow.save_recover import Builder
+#from makiflow.save_recover import Builder
 
 class NoCellStateException(Exception):
     ERROR_MSG = "The cells do not have a state yet. You might need to pass a MakiTensor into the " + \
@@ -267,7 +267,7 @@ class LSTMLayer(RNNLayer):
 
 
 class RNNBlock(RNNLayer):
-    def __init__(self, rnn_layers, seq_length, name, dynamic=False, bidirectional=False, ):
+    def __init__(self, rnn_layers, seq_length, name, dynamic=False, bidirectional=False):
         """
         Parameters
         ----------
@@ -310,12 +310,14 @@ class RNNBlock(RNNLayer):
 
     @staticmethod
     def build(params: dict):
+        from makiflow.save_recover import Builder
         seq_length = params['seq_length']
         dynamic = params['dynamic']
         bidirectional = params['bidirectional']
         rnn_layers = []
         for i in range(len(params['rnn_layers'])):
             rnn_layers.append(Builder.layer_from_dict(params['rnn_layers'][i]))
+            pass
 
         return RNNBlock(
             rnn_layers=rnn_layers,

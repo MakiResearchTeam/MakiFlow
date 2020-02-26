@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-from makiflow.models.ssd.ssd_model import SSDModel
-from makiflow.models.ssd.detector_classifier import DetectorClassifier
-from makiflow.models.ssd import ssd_utils
-from makiflow.models.segmentation.segmentator import Segmentator
-from makiflow.models.classificator import Classificator
-from makiflow.models.rnn.text_recognizer import TextRecognizer
+from .ssd.ssd_model import SSDModel
+from .ssd.detector_classifier import DetectorClassifier
+from .ssd import ssd_utils
+from .segmentation.segmentator import Segmentator
+from .classificator import Classificator
+from .rnn.text_recognizer import TextRecognizer
