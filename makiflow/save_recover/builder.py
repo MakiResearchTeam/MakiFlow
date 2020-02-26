@@ -10,7 +10,7 @@ from makiflow.layers.trainable_layers import TrainableLayerAddress
 from makiflow.layers.untrainable_layers import UnTrainableLayerAddress
 from makiflow.layers.rnn_layers import RNNLayerAddress
 
-from makiflow.base.maki_entities import MakiModel
+from makiflow.base.maki_entities import MakiModel, MakiRestorable
 
 from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel
@@ -168,7 +168,7 @@ class Builder:
         all_layers_adress.update(TrainableLayerAddress.ADDRESS_TO_CLASSES)
         all_layers_adress.update(UnTrainableLayerAddress.ADDRESS_TO_CLASSES)
 
-        params = layer_dict['params']
+        params = layer_dict[MakiRestorable.PARAMS]
 
         layer = all_layers_adress.get(layer_dict[Builder.TYPE])
 
