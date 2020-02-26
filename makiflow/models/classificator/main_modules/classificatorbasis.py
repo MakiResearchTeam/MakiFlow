@@ -86,16 +86,13 @@ class ClassificatorBasis(MakiModel):
 
         test_cost = 0
         predictions = np.zeros(len(Xtest))
-        iterator = tqdm(range(n_batches))
-
-        for k in iterator:
+        for k in tqdm(range(n_batches)):
             Xtestbatch = Xtest[k * self._batch_sz:(k + 1) * self._batch_sz]
             Ytestbatch = Ytest[k * self._batch_sz:(k + 1) * self._batch_sz]
             Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
             test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
             predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=1)
 
-        iterator.close()
         error_r = error_rate(predictions, Ytest)
         test_cost = test_cost / (len(Xtest) // self._batch_sz)
         return error_r, test_cost

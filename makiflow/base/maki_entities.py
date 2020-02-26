@@ -137,6 +137,9 @@ class MakiTensor:
 
 
 class MakiModel:
+    MODEL_INFO = 'model_info'
+    GRAPH_INFO = 'graph_info'
+
     def __init__(self, graph_tensors: dict, outputs: list, inputs: list):
         self._graph_tensors = graph_tensors
         self._outputs = outputs

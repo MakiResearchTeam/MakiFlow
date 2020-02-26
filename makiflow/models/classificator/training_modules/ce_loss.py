@@ -111,9 +111,6 @@ class CETrainingModule(ClassificatorBasis):
                     # Use exponential decay for calculating loss and error
                     train_cost = moving_average(train_cost, train_cost_batch, j)
 
-                iterator.close()
-                iterator = None
-
                 train_costs.append(train_cost)
                 train_info = [(TRAIN_LOSS, train_cost)]
                 # Validating the network on test data
