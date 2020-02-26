@@ -113,7 +113,7 @@ class CETrainingModule(ClassificatorBasis):
 
                 iterator.close()
                 iterator = None
-                
+
                 train_costs.append(train_cost)
                 train_info = [(TRAIN_LOSS, train_cost)]
                 # Validating the network on test data

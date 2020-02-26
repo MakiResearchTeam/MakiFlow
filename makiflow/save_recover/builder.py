@@ -5,7 +5,11 @@ import json
 
 from makiflow.models.classificator import Classificator
 from makiflow.models.classificator.main_modules import CParams
-from makiflow.layers import RNNLayerAddress, TrainableLayerAddress, UnTrainableLayerAddress
+
+from makiflow.layers.trainable_layers import TrainableLayerAddress
+from makiflow.layers.untrainable_layers import UnTrainableLayerAddress
+from makiflow.layers.rnn_layers import RNNLayerAddress
+
 from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel
 from makiflow.models import Segmentator
