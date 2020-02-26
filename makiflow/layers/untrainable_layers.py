@@ -63,6 +63,8 @@ class InputLayer(MakiTensor):
 
 
 class ReshapeLayer(SimpleForwardLayer):
+    TYPE = 'ReshapeLayer'
+
     def __init__(self, new_shape: list, name):
         """
         ReshapeLayer is used to changes size from some input_shape to new_shape (include batch_size and color dimension).
@@ -74,7 +76,6 @@ class ReshapeLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        ReshapeLayer.TYPE = 'ReshapeLayer'
 
         super().__init__(name, [], {})
         self.new_shape = new_shape
@@ -105,6 +106,8 @@ class ReshapeLayer(SimpleForwardLayer):
 
 
 class MulByAlphaLayer(SimpleForwardLayer):
+    TYPE = 'MulByAlphaLayer'
+
     def __init__(self, alpha, name):
         """
         MulByAlphaLayer is used to multiply input MakiTensor on alpha.
@@ -116,7 +119,6 @@ class MulByAlphaLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        MulByAlphaLayer.TYPE = 'MulByAlphaLayer'
 
         self.alpha = tf.constant(alpha)
         super().__init__(name, [], {})
@@ -144,6 +146,8 @@ class MulByAlphaLayer(SimpleForwardLayer):
 
 
 class SumLayer(MakiLayer):
+    TYPE = 'SumLayer'
+
     def __init__(self, name):
         """
         SumLayer is used sum inputs MakiTensors and give one output MakiTensor.
@@ -153,7 +157,6 @@ class SumLayer(MakiLayer):
         name : str
             Name of this layer.
         """
-        SumLayer.TYPE = 'SumLayer'
 
         super().__init__(name, [], {})
 
@@ -196,6 +199,8 @@ class SumLayer(MakiLayer):
 
 
 class ConcatLayer(MakiLayer):
+    TYPE = 'ConcatLayer'
+
     def __init__(self, name, axis=3):
         """
         ConcatLayer is used concatenate input MakiTensors along certain axis.
@@ -207,7 +212,6 @@ class ConcatLayer(MakiLayer):
         name : str
             Name of this layer.
         """
-        ConcatLayer.TYPE = 'ConcatLayer'
         super().__init__(name, [], {})
         self.axis = axis
 
@@ -252,6 +256,8 @@ class ConcatLayer(MakiLayer):
 
 
 class ZeroPaddingLayer(SimpleForwardLayer):
+    TYPE = 'ZeroPaddingLayer'
+
     def __init__(self, padding, name):
         """
         ZeroPaddingLayer adds rows and columns of zeros
@@ -266,7 +272,6 @@ class ZeroPaddingLayer(SimpleForwardLayer):
             Name of this layer.
         """
         assert (len(padding) == 2)
-        ZeroPaddingLayer.TYPE = 'ZeroPaddingLayer'
 
         self.input_padding = padding
         self.padding = [[0, 0], padding[0], padding[1], [0, 0]]
@@ -299,6 +304,8 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 
 
 class GlobalMaxPoolLayer(SimpleForwardLayer):
+    TYPE = 'GlobalMaxPoolLayer'
+
     def __init__(self, name):
         """
         Performs global maxpooling.
@@ -309,7 +316,6 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        GlobalMaxPoolLayer.TYPE = 'GlobalMaxPoolLayer'
         super().__init__(name, [], {})
 
     def _forward(self, x):
@@ -334,6 +340,8 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
 
 
 class GlobalAvgPoolLayer(SimpleForwardLayer):
+    TYPE = 'GlobalAvgPoolLayer'
+
     def __init__(self, name):
         """
         Performs global avgpooling.
@@ -344,7 +352,6 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        GlobalAvgPoolLayer.TYPE = 'GlobalAvgPoolLayer'
         super().__init__(name, [], {})
 
     def _forward(self, x):
@@ -369,6 +376,8 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
 
 
 class MaxPoolLayer(SimpleForwardLayer):
+    TYPE = 'MaxPoolLayer'
+
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
         """
         Max pooling operation for spatial data.
@@ -384,8 +393,6 @@ class MaxPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        MaxPoolLayer.TYPE = 'MaxPoolLayer'
-
         super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
@@ -424,6 +431,8 @@ class MaxPoolLayer(SimpleForwardLayer):
 
 
 class AvgPoolLayer(SimpleForwardLayer):
+    TYPE = 'AvgPoolLayer'
+
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
         """
         Average pooling operation for spatial data.
@@ -439,8 +448,6 @@ class AvgPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        AvgPoolLayer.TYPE = 'AvgPoolLayer'
-
         super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
@@ -482,6 +489,8 @@ class AvgPoolLayer(SimpleForwardLayer):
 
 
 class UpSamplingLayer(SimpleForwardLayer):
+    TYPE = 'UpSamplingLayer'
+
     def __init__(self, name, size=(2, 2)):
         """
         Upsampling layer which changes height and width of MakiTensor.
@@ -495,7 +504,6 @@ class UpSamplingLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        UpSamplingLayer.TYPE = 'UpSamplingLayer'
         super().__init__(name, [], {})
         self.size = size
 
@@ -527,6 +535,8 @@ class UpSamplingLayer(SimpleForwardLayer):
 
 
 class ActivationLayer(SimpleForwardLayer):
+    TYPE = 'ActivationLayer'
+
     def __init__(self, name, activation=tf.nn.relu):
         """
         Applies an activation function to an input MakiTensor.
@@ -538,8 +548,6 @@ class ActivationLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        ActivationLayer.TYPE = 'ActivationLayer'
-
         super().__init__(name, [], {})
         if activation is None:
             raise Exception("Activation can't None")
@@ -568,6 +576,8 @@ class ActivationLayer(SimpleForwardLayer):
 
 
 class FlattenLayer(SimpleForwardLayer):
+    TYPE = 'FlattenLayer'
+
     def __init__(self, name):
         """
         Flattens the input.
@@ -578,8 +588,6 @@ class FlattenLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        FlattenLayer.TYPE = 'FlattenLayer'
-
         super().__init__(name, [], {})
 
     def _forward(self, x):
@@ -603,6 +611,8 @@ class FlattenLayer(SimpleForwardLayer):
 
 
 class DropoutLayer(SimpleForwardLayer):
+    TYPE = 'DropoutLayer'
+
     def __init__(self, name, p_keep=0.9, noise_shape=None, seed=None):
         """
         Applies Dropout to the input MakiTensor.
@@ -620,8 +630,6 @@ class DropoutLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        DropoutLayer.TYPE = 'DropoutLayer'
-
         super().__init__(name, [], {})
         self._p_keep = p_keep
         self.noise_shape = noise_shape
@@ -659,6 +667,8 @@ class DropoutLayer(SimpleForwardLayer):
 
 
 class ResizeLayer(SimpleForwardLayer):
+    TYPE = 'ResizeLayer'
+
     def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False):
         """
         ResizeLayer resize input MakiTensor to new_shape shape.
@@ -673,7 +683,6 @@ class ResizeLayer(SimpleForwardLayer):
             Name of this layer.
         """
         assert (len(new_shape) == 2)
-        ResizeLayer.TYPE = 'ResizeLayer'
         self.new_shape = new_shape
         self.name = name
         self.align_corners = align_corners
@@ -739,12 +748,13 @@ class ResizeLayer(SimpleForwardLayer):
 
 
 class L2NormalizationLayer(SimpleForwardLayer):
+    TYPE = 'L2NormalizationLayer'
+
     def __init__(self, name, eps=1e-12):
         """
         This layer was introduced in 'PARSENET: LOOKING WIDER TO SEE BETTER'.
         Performs L2 normalization along feature dimension.
         """
-        L2NormalizationLayer.TYPE = 'L2NormalizationLayer'
         self._eps = eps
         self._name = name
         super().__init__(name, params=[], named_params_dict={})

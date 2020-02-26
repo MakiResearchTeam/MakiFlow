@@ -9,6 +9,8 @@ from makiflow.layers.utils import init_conv_kernel, init_dense_mat
 
 
 class ConvLayer(SimpleForwardLayer):
+    TYPE = 'ConvLayer'
+
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
                  kernel_initializer='he', use_bias=True, W=None, b=None):
         """
@@ -38,8 +40,6 @@ class ConvLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        ConvLayer.TYPE = 'ConvLayer'
-
         self.shape = (kw, kh, in_f, out_f)
         self.stride = stride
         self.padding = padding
@@ -116,6 +116,8 @@ class ConvLayer(SimpleForwardLayer):
         }
 
 class UpConvLayer(SimpleForwardLayer):
+    TYPE = 'UpConvLayer'
+
     def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu,
                  kernel_initializer='he', use_bias=True, W=None, b=None):
         """
@@ -148,8 +150,6 @@ class UpConvLayer(SimpleForwardLayer):
         """
         # Shape is different from normal convolution since it's required by 
         # transposed convolution. Output feature maps go before input ones.
-        UpConvLayer.TYPE = 'UpConvLayer'
-
         self.shape = (kw, kh, out_f, in_f)
         self.size = size
         self.strides = [1, *size, 1]
@@ -235,6 +235,8 @@ class UpConvLayer(SimpleForwardLayer):
 
 
 class BiasLayer(SimpleForwardLayer):
+    TYPE = 'BiasLayer'
+
     def __init__(self, D, name):
         """
         BiasLayer adds a bias vector of dimension D to a tensor.
@@ -246,8 +248,6 @@ class BiasLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        BiasLayer.TYPE = 'BiasLayer'
-
         self.D = D
         self.name = name
 
@@ -283,6 +283,8 @@ class BiasLayer(SimpleForwardLayer):
 
 
 class DepthWiseConvLayer(SimpleForwardLayer):
+    TYPE = 'DepthWiseLayer'
+
     def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME', rate=[1, 1],
                  kernel_initializer='he', use_bias=True, activation=tf.nn.relu, W=None, b=None):
         """
@@ -310,8 +312,6 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        DepthWiseConvLayer.TYPE = 'DepthWiseLayer'
-
         assert (len(rate) == 2)
         self.shape = (kw, kh, in_f, multiplier)
         self.stride = stride
@@ -398,6 +398,8 @@ class DepthWiseConvLayer(SimpleForwardLayer):
 
 
 class SeparableConvLayer(SimpleForwardLayer):
+    TYPE = 'SeparableConvLayer'
+
     def __init__(self, kw, kh, in_f, out_f, multiplier, name, stride=1, padding='SAME',
                  dw_kernel_initializer='xavier_gaussian_inf', pw_kernel_initializer='he',
                  use_bias=True, activation=tf.nn.relu,
@@ -430,8 +432,6 @@ class SeparableConvLayer(SimpleForwardLayer):
         name : str
             Name of this layer.  
         """
-        SeparableConvLayer.TYPE = 'SeparableConvLayer'
-
         self.dw_shape = (kw, kh, in_f, multiplier)
         self.out_f = out_f
         self.stride = stride
@@ -529,6 +529,8 @@ class SeparableConvLayer(SimpleForwardLayer):
 
 
 class DenseLayer(SimpleForwardLayer):
+    TYPE = 'DenseLayer'
+
     def __init__(self, in_d, out_d, name, activation=tf.nn.relu,
                  mat_initializer='he', use_bias=True, W=None, b=None):
         """
@@ -549,8 +551,6 @@ class DenseLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        DenseLayer.TYPE = 'DenseLayer'
-
         self.input_shape = in_d
         self.output_shape = out_d
         self.f = activation
@@ -619,6 +619,8 @@ class DenseLayer(SimpleForwardLayer):
 
 
 class AtrousConvLayer(SimpleForwardLayer):
+    TYPE = 'AtrousConvLayer'
+
     def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=tf.nn.relu,
                  kernel_initializer='he', use_bias=True, W=None, b=None):
         """
@@ -650,8 +652,6 @@ class AtrousConvLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        AtrousConvLayer.TYPE = 'AtrousConvLayer'
-
         self.shape = (kw, kh, in_f, out_f)
         self.rate = rate
         self.padding = padding
@@ -730,6 +730,8 @@ class AtrousConvLayer(SimpleForwardLayer):
 
 
 class BatchNormLayer(BatchNormBaseLayer):
+    TYPE = 'BatchNormLayer'
+
     def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
@@ -761,8 +763,6 @@ class BatchNormLayer(BatchNormBaseLayer):
         beta : float
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
-        BatchNormLayer.TYPE = 'BatchNormLayer'
-
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta,
                          type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
@@ -878,6 +878,8 @@ class BatchNormLayer(BatchNormBaseLayer):
 
 
 class GroupNormLayer(BatchNormBaseLayer):
+    TYPE = 'GroupNormLayer'
+
     def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
@@ -912,8 +914,6 @@ class GroupNormLayer(BatchNormBaseLayer):
         beta : float
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
-        GroupNormLayer.TYPE = 'GroupNormLayer'
-
         self.G = G
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma,
                          type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var,
@@ -1063,6 +1063,8 @@ class GroupNormLayer(BatchNormBaseLayer):
 
 
 class NormalizationLayer(BatchNormBaseLayer):
+    TYPE = 'NormalizationLayer'
+
     def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
@@ -1094,8 +1096,6 @@ class NormalizationLayer(BatchNormBaseLayer):
         beta : float
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
-        NormalizationLayer.TYPE = 'NormalizationLayer'
-
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
                          type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
@@ -1226,6 +1226,8 @@ class NormalizationLayer(BatchNormBaseLayer):
 
 
 class InstanceNormLayer(BatchNormBaseLayer):
+    TYPE = 'InstanceNormLayer'
+
     def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
                  use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
@@ -1259,8 +1261,6 @@ class InstanceNormLayer(BatchNormBaseLayer):
         beta : float
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
-        InstanceNormLayer.TYPE = 'InstanceNormLayer'
-
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
                          type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
@@ -1392,6 +1392,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
 
 
 class ScaleLayer(SimpleForwardLayer):
+    TYPE = 'ScaleLayer'
 
     def __init__(self, init_value, name):
         """
@@ -1404,8 +1405,6 @@ class ScaleLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        ScaleLayer.TYPE = 'ScaleLayer'
-
         self.init_value = init_value
         self.name_scale = 'ScaleValue_' + name
 

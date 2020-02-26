@@ -42,10 +42,10 @@ class CellType:
 
 
 class RNNLayer(MakiLayer, ABC):
+    TYPE = 'RNNLayer'
+
     def __init__(self, cells, params, named_params_dict, name, seq_length=None, dynamic=True,
                  bidirectional=False):
-        RNNLayer.TYPE = 'RNNLayer'
-
         self._cells = cells
         self._seq_length = seq_length
         self._dynamic = dynamic
@@ -107,6 +107,8 @@ class RNNLayer(MakiLayer, ABC):
 
 
 class GRULayer(RNNLayer):
+    TYPE = 'GRULayer'
+
     def __init__(self, num_cells, input_dim, seq_length, name, activation=tf.nn.tanh, dynamic=False,
                  bidirectional=False):
         """
@@ -133,7 +135,6 @@ class GRULayer(RNNLayer):
             Influences whether the layer will be bidirectional.
             WARNING! THIS PARAMETER DOES NOT PLAY ANY ROLE IF YOU ARE GOING TO STACK RNN LAYERS.
         """
-        GRULayer.TYPE = 'GRULayer'
         self._num_cells = num_cells
         self._input_dim = input_dim
         self._f = activation
@@ -187,6 +188,8 @@ class GRULayer(RNNLayer):
 
 
 class LSTMLayer(RNNLayer):
+    TYPE = 'LSTMLayer'
+
     def __init__(self, num_cells, input_dim, seq_length, name, activation=tf.nn.tanh, dynamic=False,
                  bidirectional=False):
         """
@@ -213,7 +216,6 @@ class LSTMLayer(RNNLayer):
             Influences whether the layer will be bidirectional.
             WARNING! THIS PARAMETER DOESN'T PLAY ANY ROLE IF YOU'RE GONNA STACK RNN LAYERS.
         """
-        LSTMLayer.TYPE = 'LSTMLayer'
         self._num_cells = num_cells
         self._input_dim = input_dim
         self._f = activation
@@ -267,6 +269,8 @@ class LSTMLayer(RNNLayer):
 
 
 class RNNBlock(RNNLayer):
+    TYPE = 'RNNBlock'
+
     def __init__(self, rnn_layers, seq_length, name, dynamic=False, bidirectional=False):
         """
         Parameters
@@ -285,7 +289,6 @@ class RNNBlock(RNNLayer):
         bidirectional : boolean
             Influences whether the layer will be bidirectional.
         """
-        RNNBlock.TYPE = 'RNNBlock'
         self._rnn_layers = rnn_layers
         rnn_cells = []
         for layer in rnn_layers:
@@ -350,6 +353,8 @@ class RNNBlock(RNNLayer):
 
 
 class EmbeddingLayer(SimpleForwardLayer):
+    TYPE = 'EmbeddingLayer'
+
     def __init__(self, num_embeddings, dim, name):
         """
         Parameters
@@ -361,7 +366,6 @@ class EmbeddingLayer(SimpleForwardLayer):
         name : string or anything convertable to string
             Name of the layer.
         """
-        EmbeddingLayer.TYPE = 'EmbeddingLayer'
         self._num_embeddings = num_embeddings
         self._dim = dim
         name = 'Embedding_' + str(name)
