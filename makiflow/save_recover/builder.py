@@ -157,7 +157,7 @@ class Builder:
 # ----------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def layer_from_dict(layer_dict):
+    def __layer_from_dict(layer_dict):
         """Creates and returns Layer from dictionary"""
         all_layers_adress = {}
         all_layers_adress.update(RNNLayerAddress.ADDRESS_TO_CLASSES)
