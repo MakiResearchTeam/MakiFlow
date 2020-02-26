@@ -786,6 +786,7 @@ class L2NormalizationLayer(SimpleForwardLayer):
 class UnTrainableLayerAddress:
 
     ADDRESS_TO_CLASSES = {
+        InputLayer.TYPE: InputLayer,
         ReshapeLayer.TYPE: ReshapeLayer,
         MulByAlphaLayer.TYPE: MulByAlphaLayer,
         SumLayer.TYPE: SumLayer,
