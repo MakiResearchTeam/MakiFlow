@@ -8,26 +8,36 @@ class ActivationConverter:
     like tensorflow.nn.relu -> relu. This way we can then recover the model cause we
     know what activation function is used.
     """
+
+    RELU = 'relu'
+    SIGMOID = 'sigmoid'
+    TANH = 'tanh'
+    SOFTMAX = 'softmax'
+    LEAKY_RELU = 'leaky_relu'
+    RELU6 = 'relu6'
+    NONE = 'None'
+
     @staticmethod
     def activation_to_str(activation):
         return {
-            relu: 'relu',
-            sigmoid: 'sigmoid',
-            tanh: 'tanh',
-            softmax: 'softmax',
-            leaky_relu: 'leaky_relu',
-            relu6: 'relu6',
-            None: 'None'
+            relu: ActivationConverter.RELU,
+            sigmoid: ActivationConverter.SIGMOID,
+            tanh: ActivationConverter.TANH,
+            softmax: ActivationConverter.SOFTMAX,
+            leaky_relu: ActivationConverter.LEAKY_RELU,
+            relu6: ActivationConverter.RELU6,
+            None: ActivationConverter.NONE
         }[activation]
 
     @staticmethod
     def str_to_activation(activation_name):
         return {
-            'relu': relu,
-            'sigmoid': sigmoid,
-            'tanh': tanh,
-            'softmax': softmax,
-            'leaky_relu': leaky_relu,
-            'relu6': relu6,
-            'None': None
+            ActivationConverter.RELU: relu,
+            ActivationConverter.SIGMOID: sigmoid,
+            ActivationConverter.TANH: tanh,
+            ActivationConverter.SOFTMAX: softmax,
+            ActivationConverter.LEAKY_RELU: leaky_relu,
+            ActivationConverter.RELU6: relu6,
+            ActivationConverter.NONE: None
         }[activation_name]
+
