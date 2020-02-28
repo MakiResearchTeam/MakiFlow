@@ -5,7 +5,7 @@ import tensorflow as tf
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
 from makiflow.base.base_layers import BatchNormBaseLayer
-from makiflow.layers.utils import init_conv_kernel, init_dense_mat
+from makiflow.layers.utils import InitConvKernel, InitDenseMat
 
 
 class ConvLayer(SimpleForwardLayer):
@@ -18,7 +18,7 @@ class ConvLayer(SimpleForwardLayer):
     INIT_TYPE = 'init_type'
 
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer='he', use_bias=True, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, W=None, b=None):
         """
         Parameters
         ----------
@@ -56,7 +56,7 @@ class ConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W is None:
-            W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, in_f, out_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
@@ -131,7 +131,7 @@ class UpConvLayer(SimpleForwardLayer):
     INIT_TYPE = 'init_type'
 
     def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer='he', use_bias=True, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, W=None, b=None):
         """
         Parameters
         ----------
@@ -306,7 +306,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
     RATE = 'rate'
 
     def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME', rate=[1, 1],
-                 kernel_initializer='he', use_bias=True, activation=tf.nn.relu, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, activation=tf.nn.relu, W=None, b=None):
         """
         Parameters
         ----------
@@ -344,7 +344,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W is None:
-            W = init_conv_kernel(kw, kh, in_f, multiplier, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, in_f, multiplier, kernel_initializer)
         if b is None:
             b = np.zeros(in_f * multiplier)
 
@@ -429,7 +429,7 @@ class SeparableConvLayer(SimpleForwardLayer):
     PW_INIT_TYPE = 'pw_init_type'
 
     def __init__(self, kw, kh, in_f, out_f, multiplier, name, stride=1, padding='SAME',
-                 dw_kernel_initializer='xavier_gaussian_inf', pw_kernel_initializer='he',
+                 dw_kernel_initializer=InitConvKernel.XAVIER_GAUSSIAN_INF, pw_kernel_initializer=InitConvKernel.HE,
                  use_bias=True, activation=tf.nn.relu,
                  W_dw=None, W_pw=None, b=None):
         """
@@ -472,9 +472,9 @@ class SeparableConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W_dw is None:
-            W_dw = init_conv_kernel(kw, kh, in_f, multiplier, dw_kernel_initializer)
+            W_dw = InitConvKernel.init_by_name(kw, kh, in_f, multiplier, dw_kernel_initializer)
         if W_pw is None:
-            W_pw = init_conv_kernel(1, 1, multiplier * in_f, out_f, pw_kernel_initializer)
+            W_pw = InitConvKernel.init_by_name(1, 1, multiplier * in_f, out_f, pw_kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
@@ -565,7 +565,7 @@ class DenseLayer(SimpleForwardLayer):
     INIT_TYPE = 'init_type'
 
     def __init__(self, in_d, out_d, name, activation=tf.nn.relu,
-                 mat_initializer='he', use_bias=True, W=None, b=None):
+                 mat_initializer=InitDenseMat.HE, use_bias=True, W=None, b=None):
         """
         Paremeters
         ----------
@@ -591,7 +591,7 @@ class DenseLayer(SimpleForwardLayer):
         self.init_type = mat_initializer
 
         if W is None:
-            W = init_dense_mat(in_d, out_d, mat_initializer)
+            W = InitDenseMat.init_by_name(in_d, out_d, mat_initializer)
 
         if b is None:
             b = np.zeros(out_d)
@@ -661,7 +661,7 @@ class AtrousConvLayer(SimpleForwardLayer):
     INIT_TYPE = 'init_type'
 
     def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer='he', use_bias=True, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, W=None, b=None):
         """
         Parameters
         ----------
@@ -702,7 +702,7 @@ class AtrousConvLayer(SimpleForwardLayer):
         self.name_conv = f'AtrousConvKernel_{kw}x{kh}_in{in_f}_out{out_f}_id_{name}'
 
         if W is None:
-            W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, in_f, out_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
