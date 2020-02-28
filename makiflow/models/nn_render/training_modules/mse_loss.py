@@ -109,7 +109,7 @@ class MseTrainingModule(NeuralRenderBasis):
                 iterator.close()
             return {MSE_LOSS: mse_losses}
 
-    def gen_fit_abs(self, optimizer, epochs=1, iterations=10, global_step=None):
+    def gen_fit_mse(self, optimizer, epochs=1, iterations=10, global_step=None):
         """
         Method for training the model.
 

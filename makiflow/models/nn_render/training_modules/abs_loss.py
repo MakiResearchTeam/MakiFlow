@@ -160,4 +160,3 @@ class AbsTrainingModule(NeuralRenderBasis):
                 iterator.close()
             return {ABS_LOSS: abs_losses}
 
-

@@ -163,11 +163,15 @@ class Loss:
         return loss / num_positives
 
     @staticmethod
-    def abs_loss(labels, predictions):
+    def abs_loss(labels, predictions, raw_tensor=False):
         diff = tf.abs(labels - predictions)
+        if raw_tensor:
+            return diff
         return tf.reduce_mean(diff)
 
     @staticmethod
-    def mse_loss(labels, predictions):
+    def mse_loss(labels, predictions, raw_tensor=False):
         diff = tf.pow(labels - predictions, 2.0)
+        if raw_tensor:
+            return diff
         return tf.reduce_mean(diff)
