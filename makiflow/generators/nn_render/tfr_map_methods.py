@@ -101,5 +101,5 @@ class BinaryMaskMethod(TFRPostMapMethod):
         uvmap = element[NNRIterator.UVMAP]
         bool_mask = uvmap > self._threshold
         bin_mask = tf.cast(bool_mask, tf.float32)
-        element[NNRIterator.BIN_MASK] = bin_mask
+        element[NNRIterator.BIN_MASK] = bin_mask[:, :, :, 0]
         return element
