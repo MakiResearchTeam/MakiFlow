@@ -7,6 +7,7 @@ class MakiRestorable(ABC):
     TYPE = 'Restorable'
     PARAMS = 'params'
     FIELD_TYPE = 'type'
+    NAME = 'name'
 
     @staticmethod
     def build(params: dict):
@@ -71,6 +72,10 @@ class MakiLayer(MakiRestorable):
 
 
 class MakiTensor:
+    NAME = 'name'
+    PARENT_TENSOR_NAMES = 'parent_tensor_names'
+    PARENT_LAYER_INFO = 'parent_layer_info'
+
     def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list,
                  previous_tensors: dict):
         self.__data_tensor: tf.Tensor = data_tensor
@@ -142,9 +147,9 @@ class MakiTensor:
     def to_dict(self):
         parent_layer_dict = self.__parent_layer.to_dict()
         return {
-            'name': self.__name,
-            'parent_tensor_names': self.__parent_tensor_names,
-            'parent_layer_info': parent_layer_dict
+            MakiTensor.NAME: self.__name,
+            MakiTensor.PARENT_TENSOR_NAMES: self.__parent_tensor_names,
+            MakiTensor.PARENT_LAYER_INFO: parent_layer_dict
         }
 
 
@@ -244,8 +249,8 @@ class MakiModel:
         model_info = self._get_model_info()
         graph_info = self._get_graph_info()
         model_dict = {
-            'model_info': model_info,
-            'graph_info': graph_info
+            MakiModel.MODEL_INFO: model_info,
+            MakiModel.GRAPH_INFO: graph_info
         }
 
         model_json = json.dumps(model_dict, indent=1)

@@ -108,6 +108,12 @@ class RNNLayer(MakiLayer, ABC):
 
 class GRULayer(RNNLayer):
     TYPE = 'GRULayer'
+    NUM_CELLS = 'num_cells'
+    INPUT_DIM = 'input_dim'
+    SEQ_LENGTH = 'seq_length'
+    DYNAMIC = 'dynamic'
+    BIDIRECTIONAL = 'bidirectional'
+    ACTIVATION = 'activation'
 
     def __init__(self, num_cells, input_dim, seq_length, name, activation=tf.nn.tanh, dynamic=False,
                  bidirectional=False):
@@ -155,13 +161,13 @@ class GRULayer(RNNLayer):
 
     @staticmethod
     def build(params: dict):
-        num_cells = params['num_cells']
-        input_dim = params['input_dim']
-        seq_length = params['seq_length']
-        name = params['name']
-        dynamic = params['dynamic']
-        bidirectional = params['bidirectional']
-        activation = ActivationConverter.str_to_activation(params['activation'])
+        num_cells = params[GRULayer.NUM_CELLS]
+        input_dim = params[GRULayer.INPUT_DIM]
+        seq_length = params[GRULayer.SEQ_LENGTH]
+        name = params[GRULayer.NAME]
+        dynamic = params[GRULayer.DYNAMIC]
+        bidirectional = params[GRULayer.BIDIRECTIONAL]
+        activation = ActivationConverter.str_to_activation(params[GRULayer.ACTIVATION])
         return GRULayer(
             num_cells=num_cells,
             input_dim=input_dim,
@@ -176,19 +182,25 @@ class GRULayer(RNNLayer):
         return {
             GRULayer.FIELD_TYPE: GRULayer.TYPE,
             GRULayer.PARAMS: {
-                'num_cells': self._num_cells,
-                'input_dim': self._input_dim,
-                'seq_length': self._seq_length,
-                'name': self._name,
-                'dynamic': self._dynamic,
-                'bidirectional': self._bidirectional,
-                'activation': ActivationConverter.activation_to_str(self._f)
+                GRULayer.NAME: self._name,
+                GRULayer.NUM_CELLS: self._num_cells,
+                GRULayer.INPUT_DIM: self._input_dim,
+                GRULayer.SEQ_LENGTH: self._seq_length,
+                GRULayer.DYNAMIC: self._dynamic,
+                GRULayer.BIDIRECTIONAL: self._bidirectional,
+                GRULayer.ACTIVATION: ActivationConverter.activation_to_str(self._f)
             }
         }
 
 
 class LSTMLayer(RNNLayer):
     TYPE = 'LSTMLayer'
+    NUM_CELLS = 'num_cells'
+    INPUT_DIM = 'input_dim'
+    SEQ_LENGTH = 'seq_length'
+    DYNAMIC = 'dynamic'
+    BIDIRECTIONAL = 'bidirectional'
+    ACTIVATION = 'activation'
 
     def __init__(self, num_cells, input_dim, seq_length, name, activation=tf.nn.tanh, dynamic=False,
                  bidirectional=False):
@@ -236,13 +248,13 @@ class LSTMLayer(RNNLayer):
 
     @staticmethod
     def build(params: dict):
-        num_cells = params['num_cells']
-        input_dim = params['input_dim']
-        seq_length = params['seq_length']
-        name = params['name']
-        dynamic = params['dynamic']
-        bidirectional = params['bidirectional']
-        activation = ActivationConverter.str_to_activation(params['activation'])
+        num_cells = params[LSTMLayer.NUM_CELLS]
+        input_dim = params[LSTMLayer.INPUT_DIM]
+        seq_length = params[LSTMLayer.SEQ_LENGTH]
+        name = params[LSTMLayer.NAME]
+        dynamic = params[LSTMLayer.DYNAMIC]
+        bidirectional = params[LSTMLayer.BIDIRECTIONAL]
+        activation = ActivationConverter.str_to_activation(params[LSTMLayer.ACTIVATION])
         return LSTMLayer(
             num_cells=num_cells,
             input_dim=input_dim,
@@ -257,19 +269,23 @@ class LSTMLayer(RNNLayer):
         return {
             LSTMLayer.FIELD_TYPE: LSTMLayer.TYPE,
             LSTMLayer.PARAMS: {
-                'num_cells': self._num_cells,
-                'input_dim': self._input_dim,
-                'seq_length': self._seq_length,
-                'name': self._name,
-                'dynamic': self._dynamic,
-                'bidirectional': self._bidirectional,
-                'activation': ActivationConverter.activation_to_str(self._f)
+                LSTMLayer.NAME: self._name,
+                LSTMLayer.NUM_CELLS: self._num_cells,
+                LSTMLayer.INPUT_DIM: self._input_dim,
+                LSTMLayer.SEQ_LENGTH: self._seq_length,
+                LSTMLayer.DYNAMIC: self._dynamic,
+                LSTMLayer.BIDIRECTIONAL: self._bidirectional,
+                LSTMLayer.ACTIVATION: ActivationConverter.activation_to_str(self._f)
             }
         }
 
 
 class RNNBlock(RNNLayer):
     TYPE = 'RNNBlock'
+    SEQ_LENGTH = 'seq_length'
+    DYNAMIC = 'dynamic'
+    BIDIRECTIONAL = 'bidirectional'
+    RNN_LAYERS = 'rnn_layers'
 
     def __init__(self, rnn_layers, seq_length, name, dynamic=False, bidirectional=False):
         """
@@ -313,11 +329,11 @@ class RNNBlock(RNNLayer):
 
     @staticmethod
     def build(params: dict):
-        seq_length = params['seq_length']
-        dynamic = params['dynamic']
-        bidirectional = params['bidirectional']
+        seq_length = params[RNNBlock.SEQ_LENGTH]
+        dynamic = params[RNNBlock.DYNAMIC]
+        bidirectional = params[RNNBlock.BIDIRECTIONAL]
 
-        rnn_layers_info = params['rnn_layers']
+        rnn_layers_info = params[RNNBlock.RNN_LAYERS]
         rnn_layers = []
         for i in range(len(rnn_layers_info)):
             single_layer = rnn_layers_info[i]
@@ -336,17 +352,18 @@ class RNNBlock(RNNLayer):
         rnnblock_dict = {
             RNNBlock.FIELD_TYPE: RNNBlock.TYPE ,
             RNNBlock.PARAMS: {
-                'seq_length': self._seq_length,
-                'dynamic': self._dynamic,
-                'bidirectional': self._bidirectional,
+                RNNBlock.NAME: self._name,
+                RNNBlock.SEQ_LENGTH: self._seq_length,
+                RNNBlock.DYNAMIC: self._dynamic,
+                RNNBlock.BIDIRECTIONAL: self._bidirectional,
             }
         }
 
         rnn_layers_dict = {
-            'rnn_layers': []
+            RNNBlock.RNN_LAYERS: []
         }
         for layer in self._rnn_layers:
-            rnn_layers_dict['rnn_layers'].append(layer.to_dict())
+            rnn_layers_dict[RNNBlock.RNN_LAYERS].append(layer.to_dict())
 
         rnnblock_dict.update(rnn_layers_dict)
         return rnnblock_dict
@@ -354,6 +371,8 @@ class RNNBlock(RNNLayer):
 
 class EmbeddingLayer(SimpleForwardLayer):
     TYPE = 'EmbeddingLayer'
+    NUM_EMBEDDINGS = 'num_embeddings'
+    DIM = 'dim'
 
     def __init__(self, num_embeddings, dim, name):
         """
@@ -384,9 +403,9 @@ class EmbeddingLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        num_embeddings = params['num_embeddings']
-        dim = params['dim']
-        name = params['name']
+        num_embeddings = params[EmbeddingLayer.NUM_EMBEDDINGS]
+        dim = params[EmbeddingLayer.DIM]
+        name = params[EmbeddingLayer.NAME]
         return EmbeddingLayer(
             num_embeddings=num_embeddings,
             dim=dim,
@@ -397,9 +416,9 @@ class EmbeddingLayer(SimpleForwardLayer):
         return {
             EmbeddingLayer.FIELD_TYPE:  EmbeddingLayer.TYPE,
             EmbeddingLayer.PARAMS: {
-                'num_embeddings': self._num_embeddings,
-                'dim': self._dim,
-                'name': self._name
+                EmbeddingLayer.NAME: self._name,
+                EmbeddingLayer.NUM_EMBEDDINGS: self._num_embeddings,
+                EmbeddingLayer.DIM: self._dim,
             }
         }
 
