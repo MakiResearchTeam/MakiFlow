@@ -8,6 +8,7 @@ from makiflow.layers.sf_layer import SimpleForwardLayer
 
 class InputLayer(MakiTensor):
     TYPE = 'InputLayer'
+    PARAMS = 'params'
 
     def __init__(self, input_shape, name):
         """
@@ -55,7 +56,7 @@ class InputLayer(MakiTensor):
             "name": self._name,
             "parent_tensor_names": [],
             'type': InputLayer.TYPE,
-            'params': {
+            InputLayer.PARAMS: {
                 'name': self._name,
                 'input_shape': self._input_shape
             }
@@ -98,7 +99,7 @@ class ReshapeLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': ReshapeLayer.TYPE,
-            'params': {
+            ReshapeLayer.PARAMS: {
                 'name': self.get_name(),
                 'new_shape': self.new_shape
             }
@@ -138,7 +139,7 @@ class MulByAlphaLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': MulByAlphaLayer.TYPE,
-            'params': {
+            MulByAlphaLayer.PARAMS: {
                 'name': self.get_name(),
                 'alpha': self.alpha,
             }
@@ -192,7 +193,7 @@ class SumLayer(MakiLayer):
     def to_dict(self):
         return {
             'type': SumLayer.TYPE,
-            'params': {
+            SumLayer.PARAMS: {
                 'name': self._name,
             }
         }
@@ -248,7 +249,7 @@ class ConcatLayer(MakiLayer):
     def to_dict(self):
         return {
             'type': ConcatLayer.TYPE,
-            'params': {
+            ConcatLayer.PARAMS: {
                 'name': self._name,
                 'axis': self.axis,
             }
@@ -296,7 +297,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': ZeroPaddingLayer.TYPE,
-            'params': {
+            ZeroPaddingLayer.PARAMS: {
                 'name': self._name,
                 'padding': self.input_padding,
             }
@@ -333,7 +334,7 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': GlobalMaxPoolLayer.TYPE,
-            'params': {
+            GlobalMaxPoolLayer.PARAMS: {
                 'name': self._name,
             }
         }
@@ -369,7 +370,7 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': GlobalAvgPoolLayer.TYPE,
-            'params': {
+            GlobalAvgPoolLayer.PARAMS: {
                 'name': self._name,
             }
         }
@@ -421,7 +422,7 @@ class MaxPoolLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': MaxPoolLayer.TYPE,
-            'params': {
+            MaxPoolLayer.PARAMS: {
                 'name': self._name,
                 'ksize': self.ksize,
                 'strides': self.strides,
@@ -479,7 +480,7 @@ class AvgPoolLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': AvgPoolLayer.TYPE,
-            'params': {
+            AvgPoolLayer.PARAMS: {
                 'name': self._name,
                 'ksize': self.ksize,
                 'strides': self.strides,
@@ -527,7 +528,7 @@ class UpSamplingLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': UpSamplingLayer.TYPE,
-            'params': {
+            UpSamplingLayer.PARAMS: {
                 'name': self._name,
                 'size': self.size
             }
@@ -568,7 +569,7 @@ class ActivationLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': ActivationLayer.TYPE,
-            'params': {
+            ActivationLayer.PARAMS: {
                 'name': self._name,
                 'activation': ActivationConverter.activation_to_str(self.f)
             }
@@ -604,7 +605,7 @@ class FlattenLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': FlattenLayer.TYPE,
-            'params': {
+            FlattenLayer.PARAMS: {
                 'name': self._name
             }
         }
@@ -657,7 +658,7 @@ class DropoutLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': DropoutLayer.TYPE,
-            'params': {
+            DropoutLayer.PARAMS: {
                 'name': self._name,
                 'p_keep': self._p_keep,
                 'noise_shape': self.noise_shape,
@@ -738,7 +739,7 @@ class ResizeLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': ResizeLayer.TYPE,
-            'params': {
+            ResizeLayer.PARAMS: {
                 'name': self.name,
                 'interpolation': self.interpolation,
                 'new_shape': self.new_shape,
@@ -776,7 +777,7 @@ class L2NormalizationLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': L2NormalizationLayer.TYPE,
-            'params': {
+            L2NormalizationLayer.PARAMS: {
                 'name': self._name,
                 'eps': self._eps
             }

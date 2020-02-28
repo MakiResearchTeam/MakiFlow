@@ -175,7 +175,7 @@ class GRULayer(RNNLayer):
     def to_dict(self):
         return {
             'type': GRULayer.TYPE,
-            'params': {
+            GRULayer.PARAMS: {
                 'num_cells': self._num_cells,
                 'input_dim': self._input_dim,
                 'seq_length': self._seq_length,
@@ -256,7 +256,7 @@ class LSTMLayer(RNNLayer):
     def to_dict(self):
         return {
             'type': LSTMLayer.TYPE,
-            'params': {
+            LSTMLayer.PARAMS: {
                 'num_cells': self._num_cells,
                 'input_dim': self._input_dim,
                 'seq_length': self._seq_length,
@@ -321,7 +321,7 @@ class RNNBlock(RNNLayer):
         rnn_layers = []
         for i in range(len(rnn_layers_info)):
             single_layer = rnn_layers_info[i]
-            single_params = single_layer['params']
+            single_params = single_layer[RNNBlock.PARAMS]
             single_type = single_layer['type']
             rnn_layers.append(RNNLayerAddress.ADDRESS_TO_CLASSES[single_type].build(single_params))
 
@@ -335,7 +335,7 @@ class RNNBlock(RNNLayer):
     def to_dict(self):
         rnnblock_dict = {
             'type': RNNBlock.TYPE ,
-            'params': {
+            RNNBlock.PARAMS: {
                 'seq_length': self._seq_length,
                 'dynamic': self._dynamic,
                 'bidirectional': self._bidirectional,
@@ -396,7 +396,7 @@ class EmbeddingLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type':  EmbeddingLayer.TYPE,
-            'params': {
+            EmbeddingLayer.PARAMS: {
                 'num_embeddings': self._num_embeddings,
                 'dim': self._dim,
                 'name': self._name

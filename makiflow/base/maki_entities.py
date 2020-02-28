@@ -4,7 +4,7 @@ import json
 from copy import copy
 
 class MakiRestorable(ABC):
-    TYPE = "Restorable"
+    TYPE = 'Restorable'
     PARAMS = 'params'
 
     @staticmethod

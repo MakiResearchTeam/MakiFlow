@@ -103,7 +103,7 @@ class ConvLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': ConvLayer.TYPE,
-            'params': {
+            ConvLayer.PARAMS: {
                 'name': self._name,
                 'shape': list(self.shape),
                 'stride': self.stride,
@@ -222,7 +222,7 @@ class UpConvLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': UpConvLayer.TYPE,
-            'params': {
+            UpConvLayer.PARAMS: {
                 'name': self._name,
                 'shape': list(self.shape),
                 'size': self.size,
@@ -275,7 +275,7 @@ class BiasLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': BiasLayer.TYPE,
-            'params': {
+            BiasLayer.PARAMS: {
                 'name': self._name,
                 'D': self.D,
             }
@@ -384,7 +384,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': DepthWiseConvLayer.TYPE,
-            'params': {
+            DepthWiseConvLayer.PARAMS: {
                 'name': self._name,
                 'shape': list(self.shape),
                 'stride': self.stride,
@@ -514,7 +514,7 @@ class SeparableConvLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': SeparableConvLayer.TYPE,
-            'params': {
+            SeparableConvLayer.PARAMS: {
                 'name': self._name,
                 'dw_shape': list(self.dw_shape),
                 'out_f': self.out_f,
@@ -607,7 +607,7 @@ class DenseLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': DenseLayer.TYPE,
-            'params': {
+            DenseLayer.PARAMS: {
                 'name': self._name,
                 'input_shape': self.input_shape,
                 'output_shape': self.output_shape,
@@ -717,7 +717,7 @@ class AtrousConvLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': AtrousConvLayer.TYPE,
-            'params': {
+            AtrousConvLayer.PARAMS: {
                 'name': self._name,
                 'shape': list(self.shape),
                 'rate': self.rate,
@@ -865,7 +865,7 @@ class BatchNormLayer(BatchNormBaseLayer):
     def to_dict(self):
         return {
             'type': BatchNormLayer.TYPE,
-            'params': {
+            BatchNormLayer.PARAMS: {
                 'name': self._name,
                 'D': self.D,
                 'decay': self.decay,
@@ -1049,7 +1049,7 @@ class GroupNormLayer(BatchNormBaseLayer):
     def to_dict(self):
         return {
             'type': GroupNormLayer.TYPE,
-            'params': {
+            GroupNormLayer.PARAMS: {
                 'name': self._name,
                 'D': self.D,
                 'decay': self.decay,
@@ -1213,7 +1213,7 @@ class NormalizationLayer(BatchNormBaseLayer):
     def to_dict(self):
         return {
             'type': NormalizationLayer.TYPE,
-            'params': {
+            NormalizationLayer.PARAMS: {
                 'name': self._name,
                 'D': self.D,
                 'decay': self.decay,
@@ -1379,7 +1379,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
     def to_dict(self):
         return {
             'type': InstanceNormLayer.TYPE,
-            'params': {
+            InstanceNormLayer.PARAMS: {
                 'name': self._name,
                 'D': self.D,
                 'decay': self.decay,
@@ -1427,7 +1427,7 @@ class ScaleLayer(SimpleForwardLayer):
     def to_dict(self):
         return {
             'type': ScaleLayer.TYPE,
-            'params': {
+            ScaleLayer.PARAMS: {
                 'name': self._name,
                 'init_value': self.init_value
             }
