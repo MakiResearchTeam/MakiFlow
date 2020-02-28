@@ -18,8 +18,6 @@ from makiflow.models import Segmentator
 from makiflow.models import TextRecognizer
 
 class Builder:
-    ACTIVATION = 'activation'
-    TYPE = 'type'
 
     @staticmethod
     def classificator_from_json(json_path, batch_size=None):
@@ -162,7 +160,11 @@ class Builder:
 
     @staticmethod
     def __layer_from_dict(layer_dict):
-        """Creates and returns Layer from dictionary"""
+        """
+        Creates and returns Layer from dictionary
+        """
+
+        # Collects the address to all existing layers
         all_layers_adress = {}
         all_layers_adress.update(RNNLayerAddress.ADDRESS_TO_CLASSES)
         all_layers_adress.update(TrainableLayerAddress.ADDRESS_TO_CLASSES)
@@ -170,12 +172,12 @@ class Builder:
 
         params = layer_dict[MakiRestorable.PARAMS]
 
-        layer = all_layers_adress.get(layer_dict[Builder.TYPE])
+        built_layer = all_layers_adress.get(layer_dict[MakiRestorable.FIELD_TYPE])
 
-        if layer is None:
-            raise KeyError(f'{layer_dict[Builder.TYPE]} was not found!')
+        if built_layer is None:
+            raise KeyError(f'{layer_dict[MakiRestorable.FIELD_TYPE]} was not found!')
 
-        return layer.build(params)
+        return built_layer.build(params)
 
     # -----------------------------------------------------------GRAPH RESTORATION--------------------------------------
     # ------------------------------------------------------------------------------------------------------------------

@@ -6,9 +6,21 @@ from copy import copy
 class MakiRestorable(ABC):
     TYPE = 'Restorable'
     PARAMS = 'params'
+    FIELD_TYPE = 'type'
 
     @staticmethod
     def build(params: dict):
+        """
+        Parameters
+        ----------
+        params : dict
+            Dictionary of specific params to build layers.
+
+        Returns
+        -------
+        MakiLayer
+            Specific built layers
+        """
         pass
 
     @abstractmethod
