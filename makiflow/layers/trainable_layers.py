@@ -173,7 +173,7 @@ class UpConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W is None:
-            W = init_conv_kernel(kw, kh, out_f, in_f, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
