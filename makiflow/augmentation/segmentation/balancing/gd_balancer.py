@@ -121,6 +121,7 @@ class GDBalancer:
         self.objective = self.objective + alpha * reg_loss1
 
     def add_reg2(self, alpha, initial_cardinalities):
+        # Gives the best results
         init_c = initial_cardinalities / np.sum(initial_cardinalities)
         init_c = init_c.reshape(-1, 1).astype(np.float32)
 

@@ -80,7 +80,7 @@ class RNNLayer(MakiLayer, ABC):
             return tf.concat([outputs_f, outputs_b], axis=-1)
         elif self._cell_type == CellType.BIDIR_STATIC:
             x = tf.unstack(x, num=self._seq_length, axis=1)
-            outputs_fb, states_f, states_b =\
+            outputs_fb, states_f, states_b = \
                 static_bidirectional_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=x, dtype=tf.float32)
             self._cells_state = tf.concat([states_f, states_f], axis=-1)
             return outputs_fb
