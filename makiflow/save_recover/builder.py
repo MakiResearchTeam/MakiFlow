@@ -7,10 +7,10 @@ from makiflow.models.classificator import Classificator
 from makiflow.models.classificator.main_modules import CParams
 
 from makiflow.layers.trainable_layers import TrainableLayerAddress
-from makiflow.layers.untrainable_layers import UnTrainableLayerAddress
+from makiflow.layers.untrainable_layers import UnTrainableLayerAddress, InputLayer
 from makiflow.layers.rnn_layers import RNNLayerAddress
 
-from makiflow.base.maki_entities import MakiModel, MakiRestorable
+from makiflow.base.maki_entities import MakiModel, MakiRestorable, MakiTensor
 
 from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel
@@ -188,7 +188,7 @@ class Builder:
         graph_info = {}
 
         for tensor in graph_info_json:
-            graph_info[tensor['name']] = tensor
+            graph_info[tensor[MakiRestorable.NAME]] = tensor
 
         used = {}
         coll_tensors = {}
@@ -199,13 +199,12 @@ class Builder:
             if used.get(from_) is None:
                 used[from_] = True
                 # like "to"
-                all_parent_names = parent_layer_info['parent_tensor_names']
+                all_parent_names = parent_layer_info[MakiTensor.PARENT_TENSOR_NAMES]
                 # store ready tensors
                 takes = []
-                answer = None
                 if len(all_parent_names) != 0:
                     # All layer except input layer
-                    layer = Builder.__layer_from_dict(parent_layer_info['parent_layer_info'])
+                    layer = Builder.__layer_from_dict(parent_layer_info[MakiTensor.PARENT_LAYER_INFO])
                     for elem in all_parent_names:
                         takes += [restore_in_and_out_x(elem)]
                     answer = layer(takes[0] if len(takes) == 1 else takes)
@@ -213,11 +212,11 @@ class Builder:
                     # Input layer
                     temp = {}
                     temp.update({
-                        'type': parent_layer_info['type'],
-                        'params': parent_layer_info['params']}
+                        MakiRestorable.FIELD_TYPE: parent_layer_info[MakiRestorable.FIELD_TYPE],
+                        MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
                     )
                     if batch_sz is not None:
-                        temp['params']['input_shape'][0] = batch_sz
+                        temp[MakiRestorable.PARAMS][InputLayer.INPUT_SHAPE][0] = batch_sz
                     if generator is not None:
                         answer = generator
                     else:
