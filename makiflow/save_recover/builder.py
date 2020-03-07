@@ -1,6 +1,4 @@
 from __future__ import absolute_import
-
-# For loading model architecture
 import json
 
 from makiflow.models.classificator import Classificator
@@ -69,7 +67,7 @@ class Builder:
     @staticmethod
     def __detector_classifier_from_dict(dc_dict, inputs_outputs):
         """Creates and returns DetectorClassifier from dictionary"""
-        params = dc_dict['params']
+        params = dc_dict[MakiRestorable.PARAMS]
         name = params[DCParams.NAME]
         class_number = params[DCParams.CLASS_NUMBER]
         dboxes = params[DCParams.DBOXES]
