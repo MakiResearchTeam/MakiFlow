@@ -699,7 +699,6 @@ class ResizeLayer(SimpleForwardLayer):
     def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False):
         """
         ResizeLayer resize input MakiTensor to new_shape shape.
-        NOTICE! area interpolation don't have half_pixel_centers parameter
         Parameters
         ----------
         interpolation : str
