@@ -56,7 +56,7 @@ class ConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, in_f, out_f, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
@@ -173,7 +173,7 @@ class UpConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, in_f, out_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
@@ -344,7 +344,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, in_f, multiplier, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, multiplier, in_f, kernel_initializer)
         if b is None:
             b = np.zeros(in_f * multiplier)
 
@@ -472,9 +472,9 @@ class SeparableConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W_dw is None:
-            W_dw = InitConvKernel.init_by_name(kw, kh, in_f, multiplier, dw_kernel_initializer)
+            W_dw = InitConvKernel.init_by_name(kw, kh, multiplier, in_f, dw_kernel_initializer)
         if W_pw is None:
-            W_pw = InitConvKernel.init_by_name(1, 1, multiplier * in_f, out_f, pw_kernel_initializer)
+            W_pw = InitConvKernel.init_by_name(1, 1, out_f, multiplier * in_f, pw_kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
@@ -702,7 +702,7 @@ class AtrousConvLayer(SimpleForwardLayer):
         self.name_conv = f'AtrousConvKernel_{kw}x{kh}_in{in_f}_out{out_f}_id_{name}'
 
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, in_f, out_f, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
