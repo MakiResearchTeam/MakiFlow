@@ -52,15 +52,17 @@ class InitConvKernel:
         w *= np.sqrt(12. / (kw * kh * in_f + kw * kh * out_f))
         return w.astype(dtype)
 
-    SET_INITS = {
-            XAVIER_GAUSSIAN_AVG: xavier_gaussian_avg,
-            XAVIER_GAUSSIAN_INF: xavier_gaussian_inf,
+    SET_INITS = {}
 
-            XAVIER_UNIFORM_INF: xavier_uniform_inf,
-            XAVIER_UNIFORM_AVG: xavier_uniform_avg,
+InitConvKernel.SET_INITS = {
+            InitConvKernel.XAVIER_GAUSSIAN_AVG: InitConvKernel.xavier_gaussian_avg,
+            InitConvKernel.XAVIER_GAUSSIAN_INF: InitConvKernel.xavier_gaussian_inf,
 
-            LASANGE: lasange,
-            HE: he,
+            InitConvKernel.XAVIER_UNIFORM_INF: InitConvKernel.xavier_uniform_inf,
+            InitConvKernel.XAVIER_UNIFORM_AVG: InitConvKernel.xavier_uniform_avg,
+
+            InitConvKernel.LASANGE: InitConvKernel.lasange,
+            InitConvKernel.HE: InitConvKernel.he,
     }
 
 class InitDenseMat:
@@ -98,11 +100,11 @@ class InitDenseMat:
         w *= np.sqrt(12. / (in_d + out_d))
         return w.astype(dtype)
 
-    SET_INITS = {
-            XAVIER_GAUSSIAN: xavier_gaussian,
-            XAVIER_UNIFORM: xavier_uniform,
-            HE: he,
-            LASANGE: lassange,
+    SET_INITS = { }
+
+InitDenseMat.SET_INITS = {
+            InitDenseMat.XAVIER_GAUSSIAN: InitDenseMat.xavier_gaussian,
+            InitDenseMat.XAVIER_UNIFORM: InitDenseMat.xavier_uniform,
+            InitDenseMat.HE: InitDenseMat.he,
+            InitDenseMat.LASANGE: InitDenseMat.lassange,
     }
-
-
