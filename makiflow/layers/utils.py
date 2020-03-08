@@ -13,14 +13,14 @@ class InitConvKernel:
     HE = 'he'
 
     SET_INITS = {
-            XAVIER_GAUSSIAN_AVG: xavier_gaussian_avg,
-            XAVIER_GAUSSIAN_INF: xavier_gaussian_inf,
+            XAVIER_GAUSSIAN_AVG: InitConvKernel.xavier_gaussian_avg,
+            XAVIER_GAUSSIAN_INF: InitConvKernel.xavier_gaussian_inf,
 
-            XAVIER_UNIFORM_INF: xavier_uniform_inf,
-            XAVIER_UNIFORM_AVG: xavier_uniform_avg,
+            XAVIER_UNIFORM_INF: InitConvKernel.xavier_uniform_inf,
+            XAVIER_UNIFORM_AVG: InitConvKernel.xavier_uniform_avg,
 
-            LASANGE: lasange,
-            HE: he,
+            LASANGE: InitConvKernel.lasange,
+            HE: InitConvKernel.he,
     }
 
     @staticmethod
@@ -72,10 +72,10 @@ class InitDenseMat:
     LASANGE = 'lasange'
 
     SET_INITS = {
-            XAVIER_GAUSSIAN: xavier_gaussian,
-            XAVIER_UNIFORM: xavier_uniform,
-            HE: he,
-            LASANGE: lassange,
+            XAVIER_GAUSSIAN: InitDenseMat.xavier_gaussian,
+            XAVIER_UNIFORM: InitDenseMat.xavier_uniform,
+            HE: InitDenseMat.he,
+            LASANGE: InitDenseMat.lassange,
     }
 
     @staticmethod
