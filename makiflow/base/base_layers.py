@@ -6,6 +6,14 @@ from makiflow.base.maki_entities import MakiLayer, MakiTensor
 
 
 class BatchNormBaseLayer(MakiLayer):
+    TYPE = 'BatchNormBaseLayer'
+    D = 'D'
+    DECAY = 'decay'
+    EPS = 'eps'
+    USE_BETA = 'use_beta'
+    USE_GAMMA = 'use_gamma'
+    TRACK_RUNNING_STATS = 'track_running_stats'
+
     def __init__(self, D, decay, eps, name, use_gamma, use_beta, type_norm, mean, var, gamma, beta, track_running_stats):
         """
         Batch Normalization Procedure:

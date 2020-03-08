@@ -23,3 +23,4 @@ class SimpleForwardLayer(MakiLayer):
     @abstractmethod
     def _forward(self, x):
         pass
+

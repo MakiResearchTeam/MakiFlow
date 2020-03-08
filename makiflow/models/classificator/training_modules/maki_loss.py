@@ -133,7 +133,7 @@ class MakiTrainingModule(ClassificatorBasis):
                     test_error, test_cost = self.evaluate(Xtest, Ytest)
                     test_errors.append(test_error)
                     test_costs.append(test_cost)
-                    train_info += [(TEST_ACCURACY, 1 - test_error), (TRAIN_LOSS, test_cost)]
+                    train_info += [(TEST_ACCURACY, 1 - test_error), (TEST_LOSS, test_cost)]
 
                 print_train_info(i, *train_info)
         except Exception as ex:
