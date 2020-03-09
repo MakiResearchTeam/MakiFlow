@@ -12,17 +12,6 @@ class InitConvKernel:
     LASANGE = 'lasange'
     HE = 'he'
 
-    SET_INITS = {
-            XAVIER_GAUSSIAN_AVG: xavier_gaussian_avg,
-            XAVIER_GAUSSIAN_INF: xavier_gaussian_inf,
-
-            XAVIER_UNIFORM_INF: xavier_uniform_inf,
-            XAVIER_UNIFORM_AVG: xavier_uniform_avg,
-
-            LASANGE: lasange,
-            HE: he,
-    }
-
     @staticmethod
     def init_by_name(kw, kh, out_f, in_f, name_init, dtype=np.float32):
         return InitConvKernel.SET_INITS[name_init](kw, kh, out_f, in_f, dtype)
@@ -63,6 +52,18 @@ class InitConvKernel:
         w *= np.sqrt(12. / (kw * kh * in_f + kw * kh * out_f))
         return w.astype(dtype)
 
+    SET_INITS = {}
+
+InitConvKernel.SET_INITS = {
+            InitConvKernel.XAVIER_GAUSSIAN_AVG: InitConvKernel.xavier_gaussian_avg,
+            InitConvKernel.XAVIER_GAUSSIAN_INF: InitConvKernel.xavier_gaussian_inf,
+
+            InitConvKernel.XAVIER_UNIFORM_INF: InitConvKernel.xavier_uniform_inf,
+            InitConvKernel.XAVIER_UNIFORM_AVG: InitConvKernel.xavier_uniform_avg,
+
+            InitConvKernel.LASANGE: InitConvKernel.lasange,
+            InitConvKernel.HE: InitConvKernel.he,
+    }
 
 class InitDenseMat:
 
@@ -70,13 +71,6 @@ class InitDenseMat:
     XAVIER_UNIFORM = 'xavier_uniform'
     HE = 'he'
     LASANGE = 'lasange'
-
-    SET_INITS = {
-            XAVIER_GAUSSIAN: xavier_gaussian,
-            XAVIER_UNIFORM: xavier_uniform,
-            HE: he,
-            LASANGE: lassange,
-    }
 
     @staticmethod
     def init_by_name(in_d, out_d, name_init, dtype=np.float32):
@@ -106,3 +100,11 @@ class InitDenseMat:
         w *= np.sqrt(12. / (in_d + out_d))
         return w.astype(dtype)
 
+    SET_INITS = { }
+
+InitDenseMat.SET_INITS = {
+            InitDenseMat.XAVIER_GAUSSIAN: InitDenseMat.xavier_gaussian,
+            InitDenseMat.XAVIER_UNIFORM: InitDenseMat.xavier_uniform,
+            InitDenseMat.HE: InitDenseMat.he,
+            InitDenseMat.LASANGE: InitDenseMat.lassange,
+    }
