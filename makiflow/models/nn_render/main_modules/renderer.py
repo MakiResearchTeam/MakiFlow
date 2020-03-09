@@ -13,6 +13,7 @@ class NeuralRenderBasis(MakiModel):
 
         self._training_vars_are_ready = False
         self._learn_rgb_texture = False
+        self._sep_loss = None
         self._generator = None
 
     def predict(self, x):
@@ -80,9 +81,20 @@ class NeuralRenderBasis(MakiModel):
         # Override the method for the later ease of loss building
         if self._learn_rgb_texture:
             custom_loss = custom_loss + self._texture_loss * self._texture_loss_scale
+        if self._sep_loss is not None:
+            custom_loss = custom_loss + self._sep_loss
         loss = super()._build_final_loss(custom_loss)
         return loss
 
+    def add_sep_loss(self, loss):
+        """
+        Used for adding other terms to the final loss. The VGG loss can be such a term.
+        Parameters
+        ----------
+        loss : tf.Tensor
+            A scalar of the additional loss.
+        """
+        self._sep_loss = loss
 
 
 
