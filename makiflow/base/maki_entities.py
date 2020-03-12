@@ -3,6 +3,7 @@ import tensorflow as tf
 import json
 from copy import copy
 
+
 class MakiRestorable(ABC):
     TYPE = 'Restorable'
     PARAMS = 'params'

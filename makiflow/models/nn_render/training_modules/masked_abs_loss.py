@@ -9,7 +9,7 @@ from tqdm import tqdm
 MASKED_ABS_LOSS = 'MASKED ABS LOSS'
 
 
-class MaskerAbsTrainingModule(NeuralRenderBasis):
+class MaskedAbsTrainingModule(NeuralRenderBasis):
     def _prepare_training_vars(self):
         self._masked_abs_loss_is_build = False
         super()._prepare_training_vars()

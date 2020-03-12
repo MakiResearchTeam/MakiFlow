@@ -6,10 +6,10 @@ from makiflow.models.common.utils import new_optimizer_used, loss_is_built
 from makiflow.generators.nn_render import NNRIterator
 from tqdm import tqdm
 
-MASKED_MSE_LOSS = 'MASKED ABS LOSS'
+MASKED_MSE_LOSS = 'MASKED MSE LOSS'
 
 
-class MaskerMseTrainingModule(NeuralRenderBasis):
+class MaskedMseTrainingModule(NeuralRenderBasis):
     def _prepare_training_vars(self):
         self._masked_mse_loss_is_build = False
         super()._prepare_training_vars()

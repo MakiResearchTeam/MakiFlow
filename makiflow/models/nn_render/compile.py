@@ -1,11 +1,12 @@
-from .training_modules import AbsTrainingModule, MseTrainingModule, MaskerAbsTrainingModule, \
-    MaskerMseTrainingModule
+from .training_modules import AbsTrainingModule, MseTrainingModule, MaskedAbsTrainingModule, \
+    MaskedMseTrainingModule, PerceptualTrainingModule
 
 
 class NeuralRender(
     AbsTrainingModule,
     MseTrainingModule,
-    MaskerAbsTrainingModule,
-    MaskerMseTrainingModule
+    MaskedAbsTrainingModule,
+    MaskedMseTrainingModule,
+    PerceptualTrainingModule
 ):
     pass
