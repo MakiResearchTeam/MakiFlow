@@ -249,8 +249,9 @@ class UpConvLayer(SimpleForwardLayer):
 class BiasLayer(SimpleForwardLayer):
     TYPE = 'BiasLayer'
     D = 'D'
+    TRAINABLE = 'trainable'
 
-    def __init__(self, D, name):
+    def __init__(self, D, name, trainable=True, b=None):
         """
         BiasLayer adds a bias vector of dimension D to a tensor.
 
@@ -260,14 +261,21 @@ class BiasLayer(SimpleForwardLayer):
             Dimension of bias vector.
         name : str
             Name of this layer.
+        trainable : bool
+            If true, bias will be learned in train, otherwise its will be constant variable.
+        b : numpy array
+            Bias' weights. This value is used for the bias initialization with pretrained bias.
         """
         self.D = D
         self.name = name
+        self.trainable = trainable
 
-        b = np.zeros(D)
+        if b is None:
+            b = np.zeros(D)
+
         params = []
         self.bias_name = f'BiasLayer_{D}' + name
-        self.b = tf.Variable(b.astype(np.float32), name=self.bias_name)
+        self.b = tf.Variable(b.astype(np.float32), trainable=trainable, name=self.bias_name)
         params = [self.b]
         named_params_dict = {self.bias_name: self.b}
 
@@ -283,7 +291,8 @@ class BiasLayer(SimpleForwardLayer):
     def build(params: dict):
         name = params[BiasLayer.NAME]
         D = params[BiasLayer.D]
-        return BiasLayer(D=D, name=name)
+        trainable = params[BiasLayer.TRAINABLE]
+        return BiasLayer(D=D, trainable=trainable, name=name)
 
     def to_dict(self):
         return {
@@ -291,6 +300,7 @@ class BiasLayer(SimpleForwardLayer):
             BiasLayer.PARAMS: {
                 BiasLayer.NAME: self._name,
                 BiasLayer.D: self.D,
+                BiasLayer.TRAINABLE: self.trainable,
             }
         }
 
