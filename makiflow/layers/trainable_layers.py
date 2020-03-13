@@ -272,6 +272,8 @@ class BiasLayer(SimpleForwardLayer):
 
         if b is None:
             b = np.zeros(D)
+        elif b.shape[0] != D:
+            raise ValueError(f"Initial value of `b` should have same dimension size like D={D}")
 
         params = []
         self.bias_name = f'BiasLayer_{D}' + name
