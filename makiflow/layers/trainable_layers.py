@@ -278,7 +278,9 @@ class BiasLayer(SimpleForwardLayer):
         params = []
         self.bias_name = f'BiasLayer_{D}' + name
         self.b = tf.Variable(b.astype(np.float32), trainable=trainable, name=self.bias_name)
-        params = [self.b]
+
+        if trainable:
+            params = [self.b]
         named_params_dict = {self.bias_name: self.b}
 
         super().__init__(name, params, named_params_dict)
