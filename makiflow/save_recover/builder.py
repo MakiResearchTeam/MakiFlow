@@ -170,12 +170,12 @@ class Builder:
 
         params = layer_dict[MakiRestorable.PARAMS]
 
-        built_layer = all_layers_adress.get(layer_dict[MakiRestorable.FIELD_TYPE])
+        build_layer = all_layers_adress.get(layer_dict[MakiRestorable.FIELD_TYPE])
 
-        if built_layer is None:
+        if build_layer is None:
             raise KeyError(f'{layer_dict[MakiRestorable.FIELD_TYPE]} was not found!')
 
-        return built_layer.build(params)
+        return build_layer.build(params)
 
     # -----------------------------------------------------------GRAPH RESTORATION--------------------------------------
     # ------------------------------------------------------------------------------------------------------------------
