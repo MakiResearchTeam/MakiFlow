@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 from makiflow.layers.activation_converter import ActivationConverter
-from makiflow.base import MakiLayer, MakiTensor
+from makiflow.base import MakiLayer, MakiTensor, MakiRestorable
 from makiflow.layers.sf_layer import SimpleForwardLayer
 
 
@@ -50,16 +50,16 @@ class InputLayer(MakiTensor):
     @staticmethod
     def build(params: dict):
         input_shape = params[InputLayer.INPUT_SHAPE]
-        name = params[InputLayer.NAME]
+        name = params[MakiRestorable.NAME]
         return InputLayer(name=name, input_shape=input_shape)
 
     def to_dict(self):
         return {
-            InputLayer.NAME: self._name,
+            MakiRestorable.NAME: self._name,
             InputLayer.PARENT_TENSOR_NAMES: [],
             InputLayer.FIELD_TYPE: InputLayer.TYPE,
-            InputLayer.PARAMS: {
-                InputLayer.NAME: self._name,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 InputLayer.INPUT_SHAPE: self._input_shape
             }
         }
@@ -92,7 +92,7 @@ class ReshapeLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[ReshapeLayer.NAME]
+        name = params[MakiRestorable.NAME]
         new_shape = params[ReshapeLayer.NEW_SHAPE]
         return ReshapeLayer(
             new_shape=new_shape,
@@ -101,9 +101,9 @@ class ReshapeLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            ReshapeLayer.FIELD_TYPE: ReshapeLayer.TYPE,
-            ReshapeLayer.PARAMS: {
-                ReshapeLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: ReshapeLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 ReshapeLayer.NEW_SHAPE: self.new_shape
             }
         }
@@ -136,15 +136,15 @@ class MulByAlphaLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[MulByAlphaLayer.NAME]
+        name = params[MakiRestorable.NAME]
         alpha = params[MulByAlphaLayer.ALPHA]
         return MulByAlphaLayer(alpha=alpha, name=name)
 
     def to_dict(self):
         return {
-            MulByAlphaLayer.FIELD_TYPE: MulByAlphaLayer.TYPE,
-            MulByAlphaLayer.PARAMS: {
-                MulByAlphaLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: MulByAlphaLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 MulByAlphaLayer.ALPHA: self.alpha,
             }
         }
@@ -191,14 +191,14 @@ class SumLayer(MakiLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[SumLayer.NAME]
+        name = params[MakiRestorable.NAME]
         return SumLayer(name=name)
 
     def to_dict(self):
         return {
-            SumLayer.FIELD_TYPE: SumLayer.TYPE,
-            SumLayer.PARAMS: {
-                SumLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: SumLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
             }
         }
 
@@ -247,15 +247,15 @@ class ConcatLayer(MakiLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[ConcatLayer.NAME]
+        name = params[MakiRestorable.NAME]
         axis = params[ConcatLayer.AXIS]
         return ConcatLayer(name=name, axis=axis)
 
     def to_dict(self):
         return {
-            ConcatLayer.FIELD_TYPE: ConcatLayer.TYPE,
-            ConcatLayer.PARAMS: {
-                ConcatLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: ConcatLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 ConcatLayer.AXIS: self.axis,
             }
         }
@@ -296,15 +296,15 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[ZeroPaddingLayer.NAME]
+        name = params[MakiRestorable.NAME]
         padding = params[ZeroPaddingLayer.PADDING]
         return ZeroPaddingLayer(padding=padding, name=name)
 
     def to_dict(self):
         return {
-            ZeroPaddingLayer.FIELD_TYPE: ZeroPaddingLayer.TYPE,
-            ZeroPaddingLayer.PARAMS: {
-                ZeroPaddingLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: ZeroPaddingLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 ZeroPaddingLayer.PADDING: self.input_padding,
             }
         }
@@ -334,14 +334,14 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[GlobalMaxPoolLayer.NAME]
+        name = params[MakiRestorable.NAME]
         return GlobalMaxPoolLayer(name=name)
 
     def to_dict(self):
         return {
-            GlobalMaxPoolLayer.FIELD_TYPE: GlobalMaxPoolLayer.TYPE,
-            GlobalMaxPoolLayer.PARAMS: {
-                GlobalMaxPoolLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: GlobalMaxPoolLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
             }
         }
 
@@ -370,14 +370,14 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[GlobalAvgPoolLayer.NAME]
+        name = params[MakiRestorable.NAME]
         return GlobalAvgPoolLayer(name=name)
 
     def to_dict(self):
         return {
-            GlobalAvgPoolLayer.FIELD_TYPE: GlobalAvgPoolLayer.TYPE,
-            GlobalAvgPoolLayer.PARAMS: {
-                GlobalAvgPoolLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: GlobalAvgPoolLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
             }
         }
 
@@ -421,7 +421,7 @@ class MaxPoolLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[MaxPoolLayer.NAME]
+        name = params[MakiRestorable.NAME]
         ksize = params[MaxPoolLayer.KSIZE]
         strides = params[MaxPoolLayer.STRIDES]
         padding = params[MaxPoolLayer.PADDING]
@@ -430,9 +430,9 @@ class MaxPoolLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            MaxPoolLayer.FIELD_TYPE: MaxPoolLayer.TYPE,
-            MaxPoolLayer.PARAMS: {
-                MaxPoolLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: MaxPoolLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 MaxPoolLayer.KSIZE: self.ksize,
                 MaxPoolLayer.STRIDES: self.strides,
                 MaxPoolLayer.PADDING: self.padding
@@ -482,7 +482,7 @@ class AvgPoolLayer(SimpleForwardLayer):
         ksize = params[AvgPoolLayer.KSIZE]
         strides = params[AvgPoolLayer.STRIDES]
         padding = params[AvgPoolLayer.PADDING]
-        name = params[AvgPoolLayer.NAME]
+        name = params[MakiRestorable.NAME]
 
         return AvgPoolLayer(
             ksize=ksize, strides=strides,
@@ -491,9 +491,9 @@ class AvgPoolLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            AvgPoolLayer.FIELD_TYPE: AvgPoolLayer.TYPE,
-            AvgPoolLayer.PARAMS: {
-                AvgPoolLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: AvgPoolLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 AvgPoolLayer.KSIZE: self.ksize,
                 AvgPoolLayer.STRIDES: self.strides,
                 AvgPoolLayer.PADDING: self.padding
@@ -534,15 +534,15 @@ class UpSamplingLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[UpSamplingLayer.NAME]
+        name = params[MakiRestorable.NAME]
         size = params[UpSamplingLayer.SIZE]
         return UpSamplingLayer(name=name, size=size)
 
     def to_dict(self):
         return {
-            UpSamplingLayer.FIELD_TYPE: UpSamplingLayer.TYPE,
-            UpSamplingLayer.PARAMS: {
-                UpSamplingLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: UpSamplingLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 UpSamplingLayer.SIZE: self.size
             }
         }
@@ -577,14 +577,14 @@ class ActivationLayer(SimpleForwardLayer):
     @staticmethod
     def build(params: dict):
         activation = ActivationConverter.str_to_activation(params[ActivationLayer.ACTIVATION])
-        name = params[ActivationLayer.NAME]
+        name = params[MakiRestorable.NAME]
         return ActivationLayer(activation=activation, name=name)
 
     def to_dict(self):
         return {
-            ActivationLayer.FIELD_TYPE: ActivationLayer.TYPE,
-            ActivationLayer.PARAMS: {
-                ActivationLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: ActivationLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 ActivationLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f)
             }
         }
@@ -613,14 +613,14 @@ class FlattenLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[FlattenLayer.NAME]
+        name = params[MakiRestorable.NAME]
         return FlattenLayer(name=name)
 
     def to_dict(self):
         return {
-            FlattenLayer.FIELD_TYPE: FlattenLayer.TYPE,
-            FlattenLayer.PARAMS: {
-                FlattenLayer.NAME: self._name
+            MakiRestorable.FIELD_TYPE: FlattenLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name
             }
         }
 
@@ -665,7 +665,7 @@ class DropoutLayer(SimpleForwardLayer):
     @staticmethod
     def build(params: dict):
         p_keep = params[DropoutLayer.P_KEEP]
-        name = params[DropoutLayer.NAME]
+        name = params[MakiRestorable.NAME]
         noise_shape = params[DropoutLayer.NOISE_SHAPE]
         seed = params[DropoutLayer.SEED]
 
@@ -674,9 +674,9 @@ class DropoutLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            DropoutLayer.FIELD_TYPE: DropoutLayer.TYPE,
-            DropoutLayer.PARAMS: {
-                DropoutLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: DropoutLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 DropoutLayer.P_KEEP: self._p_keep,
                 DropoutLayer.NOISE_SHAPE: self.noise_shape,
                 DropoutLayer.SEED: self.seed
@@ -754,7 +754,7 @@ class ResizeLayer(SimpleForwardLayer):
     @staticmethod
     def build(params: dict):
         new_shape = params[ResizeLayer.NEW_SHAPE]
-        name = params[ResizeLayer.NAME]
+        name = params[MakiRestorable.NAME]
         align_corners = params[ResizeLayer.ALIGN_CORNERS]
         interpolation = params[ResizeLayer.FIELD_INTERPOLATION]
 
@@ -763,9 +763,9 @@ class ResizeLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            ResizeLayer.FIELD_TYPE: ResizeLayer.TYPE,
-            ResizeLayer.PARAMS: {
-                ResizeLayer.NAME: self.name,
+            MakiRestorable.FIELD_TYPE: ResizeLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.name,
                 ResizeLayer.FIELD_INTERPOLATION: self.interpolation,
                 ResizeLayer.NEW_SHAPE: self.new_shape,
                 ResizeLayer.ALIGN_CORNERS: self.align_corners,
@@ -796,15 +796,15 @@ class L2NormalizationLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[L2NormalizationLayer.NAME]
+        name = params[MakiRestorable.NAME]
         eps = params[L2NormalizationLayer.EPS]
         return L2NormalizationLayer(name=name, eps=eps)
 
     def to_dict(self):
         return {
-            L2NormalizationLayer.FIELD_TYPE: L2NormalizationLayer.TYPE,
-            L2NormalizationLayer.PARAMS: {
-                L2NormalizationLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: L2NormalizationLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 L2NormalizationLayer.EPS: self._eps
             }
         }
