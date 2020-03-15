@@ -8,7 +8,7 @@ from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 # noinspection PyUnresolvedReferences
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
-from makiflow.base.maki_entities import MakiLayer, MakiTensor
+from makiflow.base.maki_entities import MakiLayer, MakiTensor, MakiRestorable
 from makiflow.layers.sf_layer import SimpleForwardLayer
 from makiflow.layers.activation_converter import ActivationConverter
 
@@ -164,7 +164,7 @@ class GRULayer(RNNLayer):
         num_cells = params[GRULayer.NUM_CELLS]
         input_dim = params[GRULayer.INPUT_DIM]
         seq_length = params[GRULayer.SEQ_LENGTH]
-        name = params[GRULayer.NAME]
+        name = params[MakiRestorable.NAME]
         dynamic = params[GRULayer.DYNAMIC]
         bidirectional = params[GRULayer.BIDIRECTIONAL]
         activation = ActivationConverter.str_to_activation(params[GRULayer.ACTIVATION])
@@ -180,9 +180,9 @@ class GRULayer(RNNLayer):
 
     def to_dict(self):
         return {
-            GRULayer.FIELD_TYPE: GRULayer.TYPE,
-            GRULayer.PARAMS: {
-                GRULayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: GRULayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 GRULayer.NUM_CELLS: self._num_cells,
                 GRULayer.INPUT_DIM: self._input_dim,
                 GRULayer.SEQ_LENGTH: self._seq_length,
@@ -251,7 +251,7 @@ class LSTMLayer(RNNLayer):
         num_cells = params[LSTMLayer.NUM_CELLS]
         input_dim = params[LSTMLayer.INPUT_DIM]
         seq_length = params[LSTMLayer.SEQ_LENGTH]
-        name = params[LSTMLayer.NAME]
+        name = params[MakiRestorable.NAME]
         dynamic = params[LSTMLayer.DYNAMIC]
         bidirectional = params[LSTMLayer.BIDIRECTIONAL]
         activation = ActivationConverter.str_to_activation(params[LSTMLayer.ACTIVATION])
@@ -267,9 +267,9 @@ class LSTMLayer(RNNLayer):
 
     def to_dict(self):
         return {
-            LSTMLayer.FIELD_TYPE: LSTMLayer.TYPE,
-            LSTMLayer.PARAMS: {
-                LSTMLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: LSTMLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 LSTMLayer.NUM_CELLS: self._num_cells,
                 LSTMLayer.INPUT_DIM: self._input_dim,
                 LSTMLayer.SEQ_LENGTH: self._seq_length,
@@ -337,7 +337,7 @@ class RNNBlock(RNNLayer):
         rnn_layers = []
         for i in range(len(rnn_layers_info)):
             single_layer = rnn_layers_info[i]
-            single_params = single_layer[RNNBlock.PARAMS]
+            single_params = single_layer[MakiRestorable.PARAMS]
             single_type = single_layer[RNNBlock.FIELD_TYPE]
             rnn_layers.append(RNNLayerAddress.ADDRESS_TO_CLASSES[single_type].build(single_params))
 
@@ -350,9 +350,9 @@ class RNNBlock(RNNLayer):
 
     def to_dict(self):
         rnnblock_dict = {
-            RNNBlock.FIELD_TYPE: RNNBlock.TYPE ,
-            RNNBlock.PARAMS: {
-                RNNBlock.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: RNNBlock.TYPE ,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 RNNBlock.SEQ_LENGTH: self._seq_length,
                 RNNBlock.DYNAMIC: self._dynamic,
                 RNNBlock.BIDIRECTIONAL: self._bidirectional,
@@ -405,7 +405,7 @@ class EmbeddingLayer(SimpleForwardLayer):
     def build(params: dict):
         num_embeddings = params[EmbeddingLayer.NUM_EMBEDDINGS]
         dim = params[EmbeddingLayer.DIM]
-        name = params[EmbeddingLayer.NAME]
+        name = params[MakiRestorable.NAME]
         return EmbeddingLayer(
             num_embeddings=num_embeddings,
             dim=dim,
@@ -414,9 +414,9 @@ class EmbeddingLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            EmbeddingLayer.FIELD_TYPE:  EmbeddingLayer.TYPE,
-            EmbeddingLayer.PARAMS: {
-                EmbeddingLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE:  EmbeddingLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 EmbeddingLayer.NUM_EMBEDDINGS: self._num_embeddings,
                 EmbeddingLayer.DIM: self._dim,
             }

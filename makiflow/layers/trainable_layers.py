@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import numpy as np
 import tensorflow as tf
 
+from makiflow.base.maki_entities import MakiRestorable
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
 from makiflow.base.base_layers import BatchNormBaseLayer
@@ -86,7 +87,7 @@ class ConvLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[ConvLayer.NAME]
+        name = params[MakiRestorable.NAME]
 
         kw = params[ConvLayer.SHAPE][0]
         kh = params[ConvLayer.SHAPE][1]
@@ -108,9 +109,9 @@ class ConvLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            ConvLayer.FIELD_TYPE: ConvLayer.TYPE,
-            ConvLayer.PARAMS: {
-                ConvLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: ConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 ConvLayer.SHAPE: list(self.shape),
                 ConvLayer.STRI: self.stride,
                 ConvLayer.PADDING: self.padding,
@@ -211,7 +212,7 @@ class UpConvLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[UpConvLayer.NAME]
+        name = params[MakiRestorable.NAME]
 
         kw = params[UpConvLayer.SHAPE][0]
         kh = params[UpConvLayer.SHAPE][1]
@@ -233,9 +234,9 @@ class UpConvLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            UpConvLayer.FIELD_TYPE: UpConvLayer.TYPE,
-            UpConvLayer.PARAMS: {
-                UpConvLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: UpConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 UpConvLayer.SHAPE: list(self.shape),
                 UpConvLayer.SIZE: self.size,
                 UpConvLayer.PADDING: self.padding,
@@ -249,8 +250,9 @@ class UpConvLayer(SimpleForwardLayer):
 class BiasLayer(SimpleForwardLayer):
     TYPE = 'BiasLayer'
     D = 'D'
+    TRAINABLE = 'trainable'
 
-    def __init__(self, D, name):
+    def __init__(self, D, name, trainable=True, b=None):
         """
         BiasLayer adds a bias vector of dimension D to a tensor.
 
@@ -260,15 +262,26 @@ class BiasLayer(SimpleForwardLayer):
             Dimension of bias vector.
         name : str
             Name of this layer.
+        trainable : bool
+            If true, bias will be learned in train, otherwise its will be constant variable.
+        b : numpy array
+            Bias' weights. This value is used for the bias initialization with predefined value.
         """
         self.D = D
         self.name = name
+        self.trainable = trainable
 
-        b = np.zeros(D)
+        if b is None:
+            b = np.zeros(D)
+        elif b.shape[0] != D:
+            raise ValueError(f"The initial value of `b` must have the same dimension size as D={D}")
+
         params = []
         self.bias_name = f'BiasLayer_{D}' + name
         self.b = tf.Variable(b.astype(np.float32), name=self.bias_name)
-        params = [self.b]
+
+        if trainable:
+            params = [self.b]
         named_params_dict = {self.bias_name: self.b}
 
         super().__init__(name, params, named_params_dict)
@@ -281,16 +294,18 @@ class BiasLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[BiasLayer.NAME]
+        name = params[MakiRestorable.NAME]
         D = params[BiasLayer.D]
-        return BiasLayer(D=D, name=name)
+        trainable = params[BiasLayer.TRAINABLE]
+        return BiasLayer(D=D, trainable=trainable, name=name)
 
     def to_dict(self):
         return {
-            BiasLayer.FIELD_TYPE: BiasLayer.TYPE,
-            BiasLayer.PARAMS: {
-                BiasLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: BiasLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 BiasLayer.D: self.D,
+                BiasLayer.TRAINABLE: self.trainable,
             }
         }
 
@@ -379,7 +394,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[DepthWiseConvLayer.NAME]
+        name = params[MakiRestorable.NAME]
 
         kw = params[DepthWiseConvLayer.SHAPE][0]
         kh = params[DepthWiseConvLayer.SHAPE][1]
@@ -403,9 +418,9 @@ class DepthWiseConvLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            DepthWiseConvLayer.FIELD_TYPE: DepthWiseConvLayer.TYPE,
-            DepthWiseConvLayer.PARAMS: {
-                DepthWiseConvLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: DepthWiseConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 DepthWiseConvLayer.SHAPE: list(self.shape),
                 DepthWiseConvLayer.STRIDE: self.stride,
                 DepthWiseConvLayer.PADDING: self.padding,
@@ -514,7 +529,7 @@ class SeparableConvLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[SeparableConvLayer.NAME]
+        name = params[MakiRestorable.NAME]
 
         kw = params[SeparableConvLayer.DW_SHAPE][0]
         kh = params[SeparableConvLayer.DW_SHAPE][1]
@@ -541,9 +556,9 @@ class SeparableConvLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            SeparableConvLayer.FIELD_TYPE: SeparableConvLayer.TYPE,
-            SeparableConvLayer.PARAMS: {
-                SeparableConvLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: SeparableConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 SeparableConvLayer.DW_SHAPE: list(self.dw_shape),
                 SeparableConvLayer.OUT_F: self.out_f,
                 SeparableConvLayer.STRIDE: self.stride,
@@ -622,7 +637,7 @@ class DenseLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[DenseLayer.NAME]
+        name = params[MakiRestorable.NAME]
         input_shape = params[DenseLayer.INPUT_SHAPE]
         output_shape = params[DenseLayer.OUTPUT_SHAPE]
 
@@ -639,9 +654,9 @@ class DenseLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            DenseLayer.FIELD_TYPE: DenseLayer.TYPE,
-            DenseLayer.PARAMS: {
-                DenseLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: DenseLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 DenseLayer.INPUT_SHAPE: self.input_shape,
                 DenseLayer.OUTPUT_SHAPE: self.output_shape,
                 DenseLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
@@ -731,7 +746,7 @@ class AtrousConvLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[AtrousConvLayer.NAME]
+        name = params[MakiRestorable.NAME]
 
         kw = params[AtrousConvLayer.SHAPE][0]
         kh = params[AtrousConvLayer.SHAPE][1]
@@ -755,9 +770,9 @@ class AtrousConvLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            AtrousConvLayer.FIELD_TYPE: AtrousConvLayer.TYPE,
-            AtrousConvLayer.PARAMS: {
-                AtrousConvLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: AtrousConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 AtrousConvLayer.SHAPE: list(self.shape),
                 AtrousConvLayer.RATE: self.rate,
                 AtrousConvLayer.PADDING: self.padding,
@@ -889,7 +904,7 @@ class BatchNormLayer(BatchNormBaseLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[BatchNormLayer.NAME]
+        name = params[MakiRestorable.NAME]
         D = params[BatchNormLayer.D]
 
         decay = params[BatchNormLayer.DECAY]
@@ -903,9 +918,9 @@ class BatchNormLayer(BatchNormBaseLayer):
 
     def to_dict(self):
         return {
-            BatchNormLayer.FIELD_TYPE: BatchNormLayer.TYPE,
-            BatchNormLayer.PARAMS: {
-                BatchNormLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: BatchNormLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 BatchNormLayer.D: self.D,
                 BatchNormLayer.DECAY: self.decay,
                 BatchNormLayer.EPS: self.eps,
@@ -1072,7 +1087,7 @@ class GroupNormLayer(BatchNormBaseLayer):
     @staticmethod
     def build(params: dict):
         G = params[GroupNormLayer.G]
-        name = params[GroupNormLayer.NAME]
+        name = params[MakiRestorable.NAME]
         D = params[GroupNormLayer.D]
 
         decay = params[GroupNormLayer.DECAY]
@@ -1088,9 +1103,9 @@ class GroupNormLayer(BatchNormBaseLayer):
 
     def to_dict(self):
         return {
-            GroupNormLayer.FIELD_TYPE: GroupNormLayer.TYPE,
-            GroupNormLayer.PARAMS: {
-                GroupNormLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: GroupNormLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 GroupNormLayer.D: self.D,
                 GroupNormLayer.DECAY: self.decay,
                 GroupNormLayer.EPS: self.eps,
@@ -1237,7 +1252,7 @@ class NormalizationLayer(BatchNormBaseLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[NormalizationLayer.NAME]
+        name = params[MakiRestorable.NAME]
         D = params[NormalizationLayer.D]
 
         decay = params[NormalizationLayer.DECAY]
@@ -1253,9 +1268,9 @@ class NormalizationLayer(BatchNormBaseLayer):
 
     def to_dict(self):
         return {
-            NormalizationLayer.FIELD_TYPE: NormalizationLayer.TYPE,
-            NormalizationLayer.PARAMS: {
-                NormalizationLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: NormalizationLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 NormalizationLayer.D: self.D,
                 NormalizationLayer.DECAY: self.decay,
                 NormalizationLayer.EPS: self.eps,
@@ -1404,7 +1419,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[InstanceNormLayer.NAME]
+        name = params[MakiRestorable.NAME]
         D = params[InstanceNormLayer.D]
 
         decay = params[InstanceNormLayer.DECAY]
@@ -1420,9 +1435,9 @@ class InstanceNormLayer(BatchNormBaseLayer):
 
     def to_dict(self):
         return {
-            InstanceNormLayer.FIELD_TYPE: InstanceNormLayer.TYPE,
-            InstanceNormLayer.PARAMS: {
-                InstanceNormLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: InstanceNormLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 InstanceNormLayer.D: self.D,
                 InstanceNormLayer.DECAY: self.decay,
                 InstanceNormLayer.EPS: self.eps,
@@ -1463,15 +1478,15 @@ class ScaleLayer(SimpleForwardLayer):
 
     @staticmethod
     def build(params: dict):
-        name = params[ScaleLayer.NAME]
+        name = params[MakiRestorable.NAME]
         init_value = params[ScaleLayer.INIT_VALUE]
         return ScaleLayer(init_value=init_value, name=name)
 
     def to_dict(self):
         return {
-            ScaleLayer.FIELD_TYPE: ScaleLayer.TYPE,
-            ScaleLayer.PARAMS: {
-                ScaleLayer.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: ScaleLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
                 ScaleLayer.INIT_VALUE: self.init_value
             }
         }
