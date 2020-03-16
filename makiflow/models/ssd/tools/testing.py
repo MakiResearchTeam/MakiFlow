@@ -21,11 +21,11 @@ from makiflow.tools.object_detection_evaluator import ODEvaluator
 from tqdm import tqdm
 import numpy as np
 
+
 class SSDTester:
     def __init__(self):
         pass
-    
-    
+
     def prepare_ground_truth_labels(self, annotation_dict, class_name_to_num):
         """
         Prepares ground truth data for later testing.
@@ -55,8 +55,7 @@ class SSDTester:
                 bb_class = class_name_to_num[gt_bb['name']]-1
                 self.gt_boxes.append([image_name, bb_class, bb_coords])
         print('Number of ground truth detections:', len(self.gt_boxes))
-                
-                
+
     def mean_average_precision(self, ssd, images, conf_trashhold=0.5, iou_trashhold=0.5):
         """
         Computes mean average precision given predictions.
@@ -99,8 +98,7 @@ class SSDTester:
             
         confidences_list = np.vstack(confidences_list)
         bboxes_list = np.vstack(bboxes_list)
-            
-            
+
         # Filter predictions with Non-Maximum Supression
         print('Filtering detections with NMS...')
         filtered_boxes = []
@@ -125,5 +123,3 @@ class SSDTester:
                 detected_boxes.append([image_name, bb_class, bb_confidence, bb_coords])
         print('Number of the SSD detections:', len(detected_boxes))
         return ODEvaluator.mean_average_precision(detected_boxes, self.gt_boxes, num_classes=ssd.num_classes-1)
-
-        

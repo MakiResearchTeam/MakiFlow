@@ -159,7 +159,7 @@ def nms(pred_bboxes, pred_confs, conf_threshold=0.4, iou_threshold=0.1, backgrou
         most_confident_box_stack = np.vstack([most_confident_box] * len(boxes_same_class))
         ious = jaccard_index(most_confident_box_stack, boxes_same_class)
 
-        # Step 4: Mark boxes as used which iou is greater than 0.1
+        # Step 4: Mark boxes as used which iou is greater than `iou_threshold`
         boxes_to_mark = indexes_same_class[ious > iou_threshold]
         for box in boxes_to_mark:
             usage_mask[box] = False

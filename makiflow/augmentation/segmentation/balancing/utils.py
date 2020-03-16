@@ -30,6 +30,7 @@ def to_hc_vec(num_classes, classes):
     vec[classes] = 1
     return vec
 
+
 def get_unique(arr):
     uniq = {}
     uniq_vecs = []

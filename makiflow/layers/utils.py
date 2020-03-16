@@ -20,6 +20,7 @@ import numpy as np
 # Some initialize methods
 # Initializations define the way to set the initial random weights of MakiFlow layers.
 
+
 class InitConvKernel:
 
     XAVIER_GAUSSIAN_AVG = 'xavier_gaussian_avg'
@@ -81,6 +82,7 @@ InitConvKernel.SET_INITS = {
             InitConvKernel.LASANGE: InitConvKernel.lasange,
             InitConvKernel.HE: InitConvKernel.he,
     }
+
 
 class InitDenseMat:
 

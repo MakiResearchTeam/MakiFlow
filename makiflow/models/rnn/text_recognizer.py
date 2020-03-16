@@ -54,11 +54,11 @@ def toSparse(texts, chars):
 	return (indices, values, shape)
 
 
-
 class DecoderType:
 	BestPath = 0
 	BeamSearch = 1
 	WordBeamSearch = 2
+
 
 class TextRecognizer:
     def __init__(self, cnn_layers, rnn_layers, input_shape, chars, max_seq_length, decoder_type=DecoderType.BeamSearch, name='MakiRecognizer'):
