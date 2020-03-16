@@ -1,3 +1,20 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 import tensorflow as tf
 from .learning_rate_builder import LearningRateBuilder
 
@@ -12,8 +29,40 @@ from .learning_rate_builder import LearningRateBuilder
 """
 
 class OptimizerBuilder:
+
     @staticmethod
     def build_optimizer(optimizer_info):
+        """
+        Build optimizer with certain params.
+
+        Parameters
+        ----------
+            optimizer_info : dict
+                Here some example:
+                {
+                    "type": "MomentumOptimizer",
+                    "params": {
+                        "lr": ..
+                        "momentum": ..
+                    }
+                }
+                Where `lr` can be, for example:
+                "lr": {
+                        "type": "ExponentialDecay",
+                        "params": {
+                            "lr": ..
+                            "decay_steps": ..
+                        }
+                    }
+                For more examples, visit example_of_builders.json in this folder.
+
+        Returns
+        -------
+            optimizer : tensorflow optimizer
+                Built optimizer.
+            global_step : tf.Variable
+                 Optional Variable to increment by one after the variables have been updated.
+        """
         opt_type = optimizer_info['type']
         params = optimizer_info['params']
         build_dict = {
@@ -43,7 +92,7 @@ class OptimizerBuilder:
 
     @staticmethod
     def __adam_optimizer(params):
-        lr = LearningRateBuilder.build_learning_rate(params['learning_rate'])
+        lr, global_step = LearningRateBuilder.build_learning_rate(params['learning_rate'])
         beta1 = params['beta1']
         beta2 = params['beta2']
         epsilon = params['epsilon']

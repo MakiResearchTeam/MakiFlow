@@ -1,18 +1,38 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import absolute_import
 
-from makiflow.generators.gen_base import GenLayer, SSDIterator
+from makiflow.generators.pipeline.gen_base import GenLayer
+from makiflow.generators.ssd import SSDIterator
 from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
 from makiflow.base import MakiModel
 from makiflow.models.ssd.training_literals import TL
 from makiflow.models.ssd.ssd_utils import bboxes_wh2xy, bboxes_xy2wh
 from makiflow.base.loss_builder import Loss
-from copy import copy
 
 import numpy as np
 import tensorflow as tf
 from sklearn.utils import shuffle
 
 from tqdm import tqdm
+
+# Log messages
+MSG_NEW_OPTIMIZER_IS_USED = 'New optimizer is used.'
 
 
 class OffsetRegression:
@@ -262,9 +282,9 @@ class SSDModel(MakiModel):
         self._train_offsets = tf.concat(training_offsets, axis=1)
 
         if use_generator:
-            self._flattened_labels = self._generator.get_iterator()[SSDIterator.label]
-            self._input_loc_loss_masks = self._generator.get_iterator()[SSDIterator.loc_mask]
-            self._input_loc = self._generator.get_iterator()[SSDIterator.loc]
+            self._flattened_labels = self._generator.get_iterator()[SSDIterator.LABEL]
+            self._input_loc_loss_masks = self._generator.get_iterator()[SSDIterator.LOC_MASK]
+            self._input_loc = self._generator.get_iterator()[SSDIterator.LOC]
         else:
             # Create placeholders for the training data
             self._flattened_labels = tf.placeholder(tf.int32, shape=[self.batch_sz, self.total_predictions])
@@ -289,6 +309,7 @@ class SSDModel(MakiModel):
         self._scan_loss_is_build = False
         self._maki_loss_is_build = False
         self._quadratic_ce_loss_is_build = False
+        self._poly_loss_is_build = False
 
     def _build_loc_loss(self):
         diff = self._input_loc - self._train_offsets
@@ -312,7 +333,6 @@ class SSDModel(MakiModel):
         loc_loss_mask = tf.stack([self._input_loc_loss_masks] * 4, axis=2)
         loc_loss = loc_loss_mask * loc_loss
         self._loc_loss = tf.reduce_sum(loc_loss) / self._num_positives
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------FOCAL LOSS--------------------------------------------------
@@ -356,7 +376,7 @@ class SSDModel(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self._focal_optimizer != optimizer:
-            print('New optimizer is used.')
+            print(MSG_NEW_OPTIMIZER_IS_USED)
             self._focal_optimizer = optimizer
             self._focal_train_op = optimizer.minimize(
                 self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
@@ -460,13 +480,17 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
             return {
-                'focal losses': train_focal_losses,
-                'total losses': train_total_losses,
-                'loc losses': train_loc_losses,
+                TL.FOCAL_LOSS: train_focal_losses,
+                TL.TOTAL_LOSS: train_total_losses,
+                TL.LOC_LOSS: train_loc_losses,
             }
 
     def genfit_focal(self, optimizer, loc_loss_weight=1.0, gamma=2.0, epochs=1, iterations=10, global_step=None):
@@ -510,13 +534,14 @@ class SSDModel(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
             return {
-                'total loss': train_total_losses,
-                'focal loss': train_focal_losses,
-                'loc loss': train_loc_losses
+                TL.FOCAL_LOSS: train_focal_losses,
+                TL.TOTAL_LOSS: train_total_losses,
+                TL.LOC_LOSS: train_loc_losses,
             }
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -578,7 +603,7 @@ class SSDModel(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self._top_k_optimizer != optimizer:
-            print('New optimizer is used.')
+            print(MSG_NEW_OPTIMIZER_IS_USED)
             self._top_k_optimizer = optimizer
             self._top_k_train_op = optimizer.minimize(
                 self._final_top_k_loss, var_list=self._trainable_vars, global_step=global_step
@@ -670,6 +695,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -692,14 +718,18 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
             return {
-                'positive losses': train_pos_losses,
-                'negative losses': train_neg_losses,
-                'total losses': train_total_losses,
-                'loc losses': train_loc_losses,
+                TL.POSITIVE_LOSS: train_pos_losses,
+                TL.NEGATIVE_LOSS: train_neg_losses,
+                TL.TOTAL_LOSS: train_total_losses,
+                TL.LOC_LOSS: train_loc_losses,
             }
 
     def genfit_top_k(
@@ -768,6 +798,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -790,14 +821,18 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
             return {
-                'positive losses': train_pos_losses,
-                'negative losses': train_neg_losses,
-                'total losses': train_total_losses,
-                'loc losses': train_loc_losses,
+                TL.POSITIVE_LOSS: train_pos_losses,
+                TL.NEGATIVE_LOSS: train_neg_losses,
+                TL.TOTAL_LOSS: train_total_losses,
+                TL.LOC_LOSS: train_loc_losses,
             }
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -866,7 +901,7 @@ class SSDModel(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self._scan_optimizer != optimizer:
-            print('New optimizer is used.')
+            print(MSG_NEW_OPTIMIZER_IS_USED)
             self._scan_optimizer = optimizer
             self._scan_train_op = optimizer.minimize(
                 self._final_scan_loss, var_list=self._trainable_vars, global_step=global_step
@@ -959,6 +994,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -981,14 +1017,18 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
             return {
-                'positive losses': train_pos_losses,
-                'negative losses': train_neg_losses,
-                'total losses': train_total_losses,
-                'loc losses': train_loc_losses,
+                TL.POSITIVE_LOSS: train_pos_losses,
+                TL.NEGATIVE_LOSS: train_neg_losses,
+                TL.TOTAL_LOSS: train_total_losses,
+                TL.LOC_LOSS: train_loc_losses,
             }
 
     def genfit_scan(
@@ -1057,6 +1097,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -1079,14 +1120,18 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
             return {
-                'positive losses': train_pos_losses,
-                'negative losses': train_neg_losses,
-                'total losses': train_total_losses,
-                'loc losses': train_loc_losses,
+                TL.POSITIVE_LOSS: train_pos_losses,
+                TL.NEGATIVE_LOSS: train_neg_losses,
+                TL.TOTAL_LOSS: train_total_losses,
+                TL.LOC_LOSS: train_loc_losses,
             }
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -1136,7 +1181,7 @@ class SSDModel(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self._maki_optimizer != optimizer:
-            print('New optimizer is used.')
+            print(MSG_NEW_OPTIMIZER_IS_USED)
             self._maki_optimizer = optimizer
             self._maki_train_op = optimizer.minimize(
                 self._final_maki_loss, var_list=self._trainable_vars, global_step=global_step
@@ -1220,6 +1265,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -1239,6 +1285,11 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -1289,6 +1340,7 @@ class SSDModel(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -1330,7 +1382,7 @@ class SSDModel(MakiModel):
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
         if self._quadratic_ce_optimizer != optimizer:
-            print('New optimizer is used.')
+            print(MSG_NEW_OPTIMIZER_IS_USED)
             self._quadratic_ce_optimizer = optimizer
             self._quadratic_ce_train_op = optimizer.minimize(
                 self._final_quadratic_ce_loss, var_list=self._trainable_vars, global_step=global_step
@@ -1413,6 +1465,7 @@ class SSDModel(MakiModel):
                                 raise Exception('You have raised KeyboardInterrupt exception.')
                             else:
                                 print(ex)
+                                print('type of error is ', type(ex))
                                 continue
 
                         # Calculate losses using exponential decay
@@ -1432,6 +1485,10 @@ class SSDModel(MakiModel):
                 except Exception as ex:
                     iterator.close()
                     print(ex)
+                    print('type of error is ', type(ex))
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -1481,11 +1538,211 @@ class SSDModel(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
             return {
                 TL.TOTAL_LOSS: train_total_losses,
-                TL.MAKI_LOSS: train_qce_losses,
+                TL.QUADRATIC_CE_LOSS: train_qce_losses,
+                TL.LOC_LOSS: train_loc_losses
+            }
+
+    # ----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------POLY LOSS------------------------------------------
+
+    def set_poly_loss_coeffs(self, coeffs):
+        self._coeffs = coeffs
+        self._poly_loss_is_build = False
+
+    def _build_poly_loss(self):
+        self._poly_loss = Loss.poly_loss(
+            flattened_logits=self._flattened_logits,
+            flattened_labels=self._flattened_labels,
+            num_positives=self._num_positives,
+            num_classes=self._num_classes,
+            coeffs=self._coeffs
+        )
+        total_loss = self._loc_loss * self._loc_loss_weight + self._poly_loss
+        self._final_poly_loss = self._build_final_loss(total_loss)
+        self._poly_loss_is_build = True
+
+    def _setup_poly_loss_inputs(self):
+        pass
+
+    def _minimize_poly_loss(self, optimizer, global_step):
+        if not self._set_for_training:
+            super()._setup_for_training()
+
+        if not self._training_vars_are_ready:
+            self._prepare_training_vars()
+
+        if not self._quadratic_ce_loss_is_build:
+            self._setup_poly_loss_inputs()
+            self._build_poly_loss()
+            self._poly_optimizer = optimizer
+            self._poly_train_op = optimizer.minimize(
+                self._final_poly_loss, var_list=self._trainable_vars, global_step=global_step
+            )
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        if self._poly_optimizer != optimizer:
+            print(MSG_NEW_OPTIMIZER_IS_USED)
+            self._poly_optimizer = optimizer
+            self._poly_train_op = optimizer.minimize(
+                self._final_poly_loss, var_list=self._trainable_vars, global_step=global_step
+            )
+            self._session.run(tf.variables_initializer(optimizer.variables()))
+
+        return self._poly_train_op
+
+    def fit_poly(
+            self, images, loc_masks, labels, gt_locs, optimizer,
+            loc_loss_weight=1.0, epochs=1, global_step=None
+    ):
+        """
+        Function for training the SSD.
+
+        Parameters
+        ----------
+        images : numpy ndarray
+            Numpy array contains images with shape [batch_sz, image_w, image_h, color_channels].
+        loc_masks : numpy array
+            Binary masks represent which default box matches ground truth box. In training loop it will be multiplied
+            with confidence losses array in order to get only positive confidences.
+        labels : numpy array
+            Sparse(not one-hot encoded!) labels for classification loss. The array has a shape of [num_images].
+        gt_locs : numpy ndarray
+            Array with differences between ground truth boxes and default boxes coordinates: gbox - dbox.
+        loc_loss_weight : float
+            Means how much localization loss influences total loss:
+            loss = confidence_loss + loss_weight*localization_loss
+        gamma : float
+            Gamma term of the focal loss. Affects how much good predictions' loss is penalized:
+            more gamma - higher penalizing.
+        optimizer : TensorFlow optimizer
+            Used for minimizing the loss function.
+        epochs : int
+            Number of epochs to run.
+        global_step : tf.Variable
+            Used for learning rate exponential decay. See TensorFlow documentation on how to use
+            exponential decay.
+        """
+        assert (type(loc_loss_weight) == float)
+
+        train_op = self._minimize_poly_loss(optimizer, global_step)
+
+        n_batches = len(images) // self.batch_sz
+
+        iterator = None
+        train_loc_losses = []
+        train_qce_losses = []
+        train_total_losses = []
+        try:
+            for i in range(epochs):
+                print('Start shuffling...')
+                images, loc_masks, labels, gt_locs = shuffle(images, loc_masks, labels, gt_locs)
+                print('Finished shuffling.')
+                loc_loss = 0
+                qce_loss = 0
+                total_loss = 0
+                iterator = tqdm(range(n_batches))
+                try:
+                    for j in iterator:
+                        img_batch = images[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        loc_mask_batch = loc_masks[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        labels_batch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
+                        gt_locs_batch = gt_locs[j * self.batch_sz:(j + 1) * self.batch_sz]
+
+                        # Don't know how to fix it yet.
+                        try:
+                            batch_total_loss, batch_maki_loss, batch_loc_loss, _ = self._session.run(
+                                [self._final_poly_loss, self._poly_loss, self._loc_loss, train_op],
+                                feed_dict={
+                                    self._input_data_tensors[0]: img_batch,
+                                    self._flattened_labels: labels_batch,
+                                    self._input_loc_loss_masks: loc_mask_batch,
+                                    self._input_loc: gt_locs_batch,
+                                    self._loc_loss_weight: loc_loss_weight,
+                                })
+                        except Exception as ex:
+                            if ex is KeyboardInterrupt:
+                                raise Exception('You have raised KeyboardInterrupt exception.')
+                            else:
+                                print(ex)
+                                continue
+
+                        # Calculate losses using exponential decay
+                        loc_loss = 0.1 * batch_loc_loss + 0.9 * loc_loss
+                        qce_loss = 0.1 * batch_maki_loss + 0.9 * qce_loss
+                        total_loss = 0.1 * batch_total_loss + 0.9 * total_loss
+
+                    train_loc_losses.append(loc_loss)
+                    train_qce_losses.append(qce_loss)
+                    train_total_losses.append(total_loss)
+                    print(
+                        'Epoch:', i,
+                        'Poly loss: {:0.4f}'.format(float(qce_loss)),
+                        'Total loss: {:0.4f}'.format(float(total_loss)),
+                        'Loc loss: {:0.4f}'.format(float(loc_loss))
+                    )
+                except Exception as ex:
+                    iterator.close()
+                    print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {
+                TL.TOTAL_LOSS: train_total_losses,
+                TL.POLY_LOSS: train_qce_losses,
+                TL.LOC_LOSS: train_loc_losses
+            }
+
+    def genfit_poly(self, optimizer, loc_loss_weight=1.0, epochs=1, iterations=10, global_step=None):
+        assert (optimizer is not None)
+        assert (self._session is not None)
+
+        train_op = self._minimize_poly_loss(optimizer, global_step)
+
+        train_total_losses = []
+        train_qce_losses = []
+        train_loc_losses = []
+        iterator = None
+        try:
+            for i in range(epochs):
+                total_loss = 0
+                qce_loss = 0
+                loc_loss = 0
+                iterator = tqdm(range(iterations))
+
+                for _ in iterator:
+                    batch_total_loss, batch_qce_loss, batch_loc_loss, _ = self._session.run(
+                        [self._final_poly_loss, self._poly_loss, self._loc_loss, train_op],
+                        feed_dict={
+                            self._loc_loss_weight: loc_loss_weight
+                        })
+                    # Use exponential decay for calculating loss and error
+                    qce_loss = 0.1 * batch_qce_loss + 0.9 * qce_loss
+                    total_loss = 0.1 * batch_total_loss + 0.9 * total_loss
+                    loc_loss = 0.1 * batch_loc_loss + 0.9 * loc_loss
+
+                train_total_losses.append(total_loss)
+                train_qce_losses.append(qce_loss)
+                train_loc_losses.append(loc_loss)
+
+                print(
+                    'Epoch:', i,
+                    'Poly loss: {:0.4f}'.format(float(qce_loss)),
+                    'Total loss: {:0.4f}'.format(float(total_loss)),
+                    'Loc loss: {:0.4f}'.format(float(loc_loss))
+                )
+        except Exception as ex:
+            print(ex)
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {
+                TL.TOTAL_LOSS: train_total_losses,
+                TL.POLY_LOSS: train_qce_losses,
                 TL.LOC_LOSS: train_loc_losses
             }

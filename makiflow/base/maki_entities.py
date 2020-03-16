@@ -1,11 +1,59 @@
-from abc import abstractmethod
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+from abc import abstractmethod, ABC
 import tensorflow as tf
 import json
 from copy import copy
-import numpy as np
 
 
-class MakiLayer:
+class MakiRestorable(ABC):
+    TYPE = 'Restorable'
+    PARAMS = 'params'
+    FIELD_TYPE = 'type'
+    NAME = 'name'
+
+    @staticmethod
+    def build(params: dict):
+        """
+        Parameters
+        ----------
+        params : dict
+            Dictionary of specific params to build layers.
+
+        Returns
+        -------
+        MakiLayer
+            Specific built layers
+        """
+        pass
+
+    @abstractmethod
+    def to_dict(self):
+        """
+        Returns
+        -------
+        dictionary
+            Contains all the necessary information for restoring the layer object.
+        """
+        pass
+
+
+class MakiLayer(MakiRestorable):
     def __init__(self, name, params, named_params_dict):
         self._name = name
         self._params = params
@@ -28,16 +76,6 @@ class MakiLayer:
     def _training_forward(self, x):
         pass
 
-    @abstractmethod
-    def to_dict(self):
-        """
-        Returns
-        -------
-        dictionary
-            Contains all the necessary information for restoring the layer object.
-        """
-        pass
-
     def get_params(self):
         return self._params
 
@@ -52,6 +90,10 @@ class MakiLayer:
 
 
 class MakiTensor:
+    NAME = 'name'
+    PARENT_TENSOR_NAMES = 'parent_tensor_names'
+    PARENT_LAYER_INFO = 'parent_layer_info'
+
     def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list,
                  previous_tensors: dict):
         self.__data_tensor: tf.Tensor = data_tensor
@@ -103,19 +145,36 @@ class MakiTensor:
     def get_self_pair(self) -> dict:
         return {self.__name: self}
 
+    def __str__(self):
+        name = self.__name
+        shape = self.get_shape()
+        dtype = self.__data_tensor._dtype.name
+
+        return f"MakiTensor(name={name}, shape={shape}, dtype={dtype})"
+
+    def __repr__(self):
+        name = self.__name
+        shape = self.get_shape()
+        dtype = self.__data_tensor._dtype.name
+
+        return f"<mf.base.MakiTensor 'name={name}' shape={shape} dtype={dtype}>"
+
     def get_name(self):
         return self.__name
 
     def to_dict(self):
         parent_layer_dict = self.__parent_layer.to_dict()
         return {
-            'name': self.__name,
-            'parent_tensor_names': self.__parent_tensor_names,
-            'parent_layer_info': parent_layer_dict
+            MakiTensor.NAME: self.__name,
+            MakiTensor.PARENT_TENSOR_NAMES: self.__parent_tensor_names,
+            MakiTensor.PARENT_LAYER_INFO: parent_layer_dict
         }
 
 
 class MakiModel:
+    MODEL_INFO = 'model_info'
+    GRAPH_INFO = 'graph_info'
+
     def __init__(self, graph_tensors: dict, outputs: list, inputs: list):
         self._graph_tensors = graph_tensors
         self._outputs = outputs
@@ -208,8 +267,8 @@ class MakiModel:
         model_info = self._get_model_info()
         graph_info = self._get_graph_info()
         model_dict = {
-            'model_info': model_info,
-            'graph_info': graph_info
+            MakiModel.MODEL_INFO: model_info,
+            MakiModel.GRAPH_INFO: graph_info
         }
 
         model_json = json.dumps(model_dict, indent=1)

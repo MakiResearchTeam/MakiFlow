@@ -1,6 +1,23 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import absolute_import
 from makiflow.base import MakiModel, MakiTensor
-from makiflow.generators.gen_base import SegmentIterator
+from makiflow.generators.segmentator import SegmentIterator
 from makiflow.layers import InputLayer
 from sklearn.utils import shuffle
 import tensorflow as tf
@@ -53,7 +70,7 @@ class Segmentator(MakiModel):
         # produced by the generator, since it's the input layer.
         self._images = self._input_data_tensors[0]
         if use_generator:
-            self._labels = self._generator.get_iterator()[SegmentIterator.mask]
+            self._labels = self._generator.get_iterator()[SegmentIterator.MASK]
         else:
             self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name='labels')
 
@@ -90,13 +107,13 @@ class Segmentator(MakiModel):
         focal_weights = tf.pow(ones_arr - sparse_confidences, self._focal_gamma)
         num_positives = tf.reduce_sum(self._focal_num_positives)
         self._focal_loss = tf.reduce_sum(focal_weights * self._ce_loss) / num_positives
-        self._final_weighted_focal_loss = self._build_final_loss(self._focal_loss)
+        self._final_focal_loss = self._build_final_loss(self._focal_loss)
         self._focal_loss_is_build = True
 
     def _setup_focal_loss_inputs(self):
         self._focal_gamma = tf.placeholder(tf.float32, shape=[], name='gamma')
         if self._use_generator:
-            self._focal_num_positives = self._generator.get_iterator()[SegmentIterator.num_positives]
+            self._focal_num_positives = self._generator.get_iterator()[SegmentIterator.NUM_POSITIVES]
         else:
             self._focal_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
 
@@ -112,7 +129,7 @@ class Segmentator(MakiModel):
             self._build_focal_loss()
             self._focal_optimizer = optimizer
             self._focal_train_op = optimizer.minimize(
-                self._focal_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -120,7 +137,7 @@ class Segmentator(MakiModel):
             print('New optimizer is used.')
             self._focal_optimizer = optimizer
             self._focal_train_op = optimizer.minimize(
-                self._focal_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -173,7 +190,7 @@ class Segmentator(MakiModel):
                     Lbatch = labels[j * self.batch_sz:(j + 1) * self.batch_sz]
                     NPbatch = num_positives[j * self.batch_sz:(j + 1) * self.batch_sz]
                     batch_focal_loss, _ = self._session.run(
-                        [self._focal_loss, train_op],
+                        [self._final_focal_loss, train_op],
                         feed_dict={
                             self._images: Ibatch,
                             self._labels: Lbatch,
@@ -188,6 +205,7 @@ class Segmentator(MakiModel):
                 print('Epoch:', i, 'Focal loss: {:0.4f}'.format(focal_loss))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -231,7 +249,7 @@ class Segmentator(MakiModel):
 
                 for _ in iterator:
                     batch_focal_loss, _ = self._session.run(
-                        [self._focal_loss, train_op],
+                        [self._final_focal_loss, train_op],
                         feed_dict={
                             self._focal_gamma: gamma
                         })
@@ -243,6 +261,7 @@ class Segmentator(MakiModel):
                 print('Epoch:', i, 'Focal loss: {:0.4f}'.format(float(focal_loss)))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -282,7 +301,7 @@ class Segmentator(MakiModel):
     def _setup_maki_loss_inputs(self):
         self._maki_gamma = None
         if self._use_generator:
-            self._maki_num_positives = self._generator.get_iterator()[SegmentIterator.num_positives]
+            self._maki_num_positives = self._generator.get_iterator()[SegmentIterator.NUM_POSITIVES]
         else:
             self._maki_num_positives = tf.placeholder(tf.float32, shape=[self.batch_sz], name='num_positives')
 
@@ -385,6 +404,7 @@ class Segmentator(MakiModel):
                 print('Epoch:', i, 'Focal loss: {:0.4f}'.format(focal_loss))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -439,6 +459,7 @@ class Segmentator(MakiModel):
                 print('Epoch:', i, 'Maki loss: {:0.4f}'.format(maki_loss))
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -463,7 +484,7 @@ class Segmentator(MakiModel):
         )
         num_positives = tf.reduce_sum(self._weighted_focal_num_positives)
         self._weighted_focal_loss = tf.reduce_sum(flattened_weights * focal_weights * self._ce_loss) / num_positives
-        self._final_weighted_focal_loss = self._build_final_loss(self._weighted_focal_loss)
+        self._final_focal_loss = self._build_final_loss(self._weighted_focal_loss)
 
         self._weighted_focal_loss_is_build = True
 
@@ -486,7 +507,7 @@ class Segmentator(MakiModel):
             self._build_weighted_focal_loss()
             self._weighted_focal_optimizer = optimizer
             self._weighted_focal_train_op = optimizer.minimize(
-                self._final_weighted_focal_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -494,7 +515,7 @@ class Segmentator(MakiModel):
             print('New optimizer is used.')
             self._weighted_focal_optimizer = optimizer
             self._weighted_focal_train_op = optimizer.minimize(
-                self._final_weighted_focal_loss, var_list=self._trainable_vars, global_step=global_step
+                self._final_focal_loss, var_list=self._trainable_vars, global_step=global_step
             )
             self._session.run(tf.variables_initializer(optimizer.variables()))
 
@@ -554,7 +575,7 @@ class Segmentator(MakiModel):
                     NPbatch = num_positives[j * self.batch_sz:(j + 1) * self.batch_sz]
                     WMbatch = weight_maps[j * self.batch_sz:(j + 1) * self.batch_sz]
                     batch_total_loss, batch_focal_loss, _ = self._session.run(
-                        [self._final_weighted_focal_loss, self._weighted_focal_loss, train_op],
+                        [self._final_focal_loss, self._weighted_focal_loss, train_op],
                         feed_dict={
                             self._images: Ibatch,
                             self._labels: Lbatch,
@@ -576,6 +597,7 @@ class Segmentator(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -694,6 +716,7 @@ class Segmentator(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -804,6 +827,7 @@ class Segmentator(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -866,6 +890,7 @@ class Segmentator(MakiModel):
                 )
         except Exception as ex:
             print(ex)
+            print('type of error is ', type(ex))
         finally:
             if iterator is not None:
                 iterator.close()
@@ -873,3 +898,4 @@ class Segmentator(MakiModel):
                 'train losses': train_total_losses,
                 'qudratic ce losses': train_quadratic_ce_losses
             }
+

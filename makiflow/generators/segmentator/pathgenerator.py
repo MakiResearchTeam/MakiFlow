@@ -1,9 +1,31 @@
-from makiflow.generators.gen_base import SegmentIterator, SegmentPathGenerator
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
+from abc import ABC
+from makiflow.generators.pipeline.gen_base import PathGenerator
 from glob import glob
 import os
 import numpy as np
 from sklearn.utils import shuffle
+
+
+class SegmentPathGenerator(PathGenerator, ABC):
+    IMAGE = 'image'
+    MASK = 'mask'
 
 
 class CyclicGeneratorSegment(SegmentPathGenerator):
@@ -29,8 +51,8 @@ class CyclicGeneratorSegment(SegmentPathGenerator):
                 index = 0
 
             el = {
-                SegmentIterator.image: self.images[index],
-                SegmentIterator.mask: self.masks[index]
+                SegmentPathGenerator.IMAGE: self.images[index],
+                SegmentPathGenerator.MASK: self.masks[index]
             }
             index += 1
 
@@ -57,8 +79,8 @@ class RandomGeneratorSegment(SegmentPathGenerator):
             index = np.random.randint(low=0, high=len(self.images))
 
             el = {
-                SegmentIterator.image: self.images[index],
-                SegmentIterator.mask: self.masks[index]
+                SegmentPathGenerator.IMAGE: self.images[index],
+                SegmentPathGenerator.MASK: self.masks[index]
             }
 
             yield el
@@ -100,8 +122,8 @@ class SubCyclicGeneratorSegment(SegmentPathGenerator):
                 counter_batches = [0] * len(self.batches_masks)
 
             el = {
-                SegmentIterator.image: self.batches_images[current_batch][counter_batches[current_batch]],
-                SegmentIterator.mask: self.batches_masks[current_batch][counter_batches[current_batch]]
+                SegmentPathGenerator.IMAGE: self.batches_images[current_batch][counter_batches[current_batch]],
+                SegmentPathGenerator.MASK: self.batches_masks[current_batch][counter_batches[current_batch]]
             }
 
             counter_batches[current_batch] += 1

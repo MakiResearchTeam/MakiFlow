@@ -1,18 +1,42 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import absolute_import
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.ops import math_ops
-from tensorflow.python.framework import ops
 
+from makiflow.base.maki_entities import MakiRestorable
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
 from makiflow.base.base_layers import BatchNormBaseLayer
-from makiflow.layers.utils import init_conv_kernel, init_dense_mat
+from makiflow.layers.utils import InitConvKernel, InitDenseMat
 
 
 class ConvLayer(SimpleForwardLayer):
+    TYPE = 'ConvLayer'
+    SHAPE = 'shape'
+    STRIDE = 'stride'
+    PADDING = 'padding'
+    ACTIVATION = 'activation'
+    USE_BIAS = 'use_bias'
+    INIT_TYPE = 'init_type'
+
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer='he', use_bias=True, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, W=None, b=None):
         """
         Parameters
         ----------
@@ -50,7 +74,7 @@ class ConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W is None:
-            W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
@@ -66,8 +90,8 @@ class ConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        conv_out = tf.nn.conv2d(X, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
+    def _forward(self, x):
+        conv_out = tf.nn.conv2d(x, self.W, strides=[1, self.stride, self.stride, 1], padding=self.padding)
         if self.use_bias:
             conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:
@@ -77,25 +101,55 @@ class ConvLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+
+        kw = params[ConvLayer.SHAPE][0]
+        kh = params[ConvLayer.SHAPE][1]
+        in_f = params[ConvLayer.SHAPE][2]
+        out_f = params[ConvLayer.SHAPE][3]
+
+        stride = params[ConvLayer.STRIDE]
+        padding = params[ConvLayer.PADDING]
+        activation = ActivationConverter.str_to_activation(params[ConvLayer.ACTIVATION])
+
+        init_type = params[ConvLayer.INIT_TYPE]
+        use_bias = params[ConvLayer.USE_BIAS]
+
+        return ConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f,
+            stride=stride, name=name, padding=padding, activation=activation,
+            kernel_initializer=init_type, use_bias=use_bias
+        )
+
     def to_dict(self):
         return {
-            'type': 'ConvLayer',
-            'params': {
-                'name': self._name,
-                'shape': list(self.shape),
-                'stride': self.stride,
-                'padding': self.padding,
-                'activation': ActivationConverter.activation_to_str(self.f),
-                'use_bias': self.use_bias,
-                'init_type': self.init_type
+            MakiRestorable.FIELD_TYPE: ConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                ConvLayer.SHAPE: list(self.shape),
+                ConvLayer.STRI: self.stride,
+                ConvLayer.PADDING: self.padding,
+                ConvLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
+                ConvLayer.USE_BIAS: self.use_bias,
+                ConvLayer.INIT_TYPE: self.init_type
             }
 
         }
 
-
 class UpConvLayer(SimpleForwardLayer):
+    TYPE = 'UpConvLayer'
+    SHAPE = 'shape'
+    SIZE = 'size'
+    PADDING = 'padding'
+    ACTIVATION = 'activation'
+    USE_BIAS = 'use_bias'
+    INIT_TYPE = 'init_type'
+
     def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer='he', use_bias=True, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, W=None, b=None):
         """
         Parameters
         ----------
@@ -137,7 +191,7 @@ class UpConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W is None:
-            W = init_conv_kernel(kw, kh, out_f, in_f, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, in_f, out_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
@@ -153,14 +207,14 @@ class UpConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        out_shape = X.get_shape().as_list()
+    def _forward(self, x):
+        out_shape = x.get_shape().as_list()
         out_shape[1] *= self.size[0]
         out_shape[2] *= self.size[1]
         # out_f
         out_shape[3] = self.shape[2]
         conv_out = tf.nn.conv2d_transpose(
-            X, self.W,
+            x, self.W,
             output_shape=out_shape, strides=self.strides, padding=self.padding
         )
         if self.use_bias:
@@ -173,23 +227,49 @@ class UpConvLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+
+        kw = params[UpConvLayer.SHAPE][0]
+        kh = params[UpConvLayer.SHAPE][1]
+        in_f = params[UpConvLayer.SHAPE][3]
+        out_f = params[UpConvLayer.SHAPE][2]
+
+        padding = params[UpConvLayer.PADDING]
+        size = params[UpConvLayer.SIZE]
+
+        activation = ActivationConverter.str_to_activation(params[UpConvLayer.ACTIVATION])
+
+        init_type = params[UpConvLayer.INIT_TYPE]
+        use_bias = params[UpConvLayer.USE_BIAS]
+        return UpConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f, size=size,
+            name=name, padding=padding, activation=activation,
+            kernel_initializer=init_type, use_bias=use_bias
+        )
+
     def to_dict(self):
         return {
-            'type': 'UpConvLayer',
-            'params': {
-                'name': self._name,
-                'shape': list(self.shape),
-                'size': self.size,
-                'padding': self.padding,
-                'activation': ActivationConverter.activation_to_str(self.f),
-                'use_bias': self.use_bias,
-                'init_type': self.init_type
+            MakiRestorable.FIELD_TYPE: UpConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                UpConvLayer.SHAPE: list(self.shape),
+                UpConvLayer.SIZE: self.size,
+                UpConvLayer.PADDING: self.padding,
+                UpConvLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
+                UpConvLayer.USE_BIAS: self.use_bias,
+                UpConvLayer.INIT_TYPE: self.init_type
             }
         }
 
 
 class BiasLayer(SimpleForwardLayer):
-    def __init__(self, D, name):
+    TYPE = 'BiasLayer'
+    D = 'D'
+    TRAINABLE = 'trainable'
+
+    def __init__(self, D, name, trainable=True, b=None):
         """
         BiasLayer adds a bias vector of dimension D to a tensor.
 
@@ -199,38 +279,66 @@ class BiasLayer(SimpleForwardLayer):
             Dimension of bias vector.
         name : str
             Name of this layer.
+        trainable : bool
+            If true, bias will be learned in train, otherwise its will be constant variable.
+        b : numpy array
+            Bias' weights. This value is used for the bias initialization with predefined value.
         """
         self.D = D
         self.name = name
+        self.trainable = trainable
 
-        b = np.zeros(D)
+        if b is None:
+            b = np.zeros(D)
+        elif b.shape[0] != D:
+            raise ValueError(f"The initial value of `b` must have the same dimension size as D={D}")
+
         params = []
         self.bias_name = f'BiasLayer_{D}' + name
         self.b = tf.Variable(b.astype(np.float32), name=self.bias_name)
-        params = [self.b]
+
+        if trainable:
+            params = [self.b]
         named_params_dict = {self.bias_name: self.b}
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        return tf.nn.bias_add(X, self.b)
+    def _forward(self, x):
+        return tf.nn.bias_add(x, self.b)
 
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        D = params[BiasLayer.D]
+        trainable = params[BiasLayer.TRAINABLE]
+        return BiasLayer(D=D, trainable=trainable, name=name)
+
     def to_dict(self):
         return {
-            'type': 'BiasLayer',
-            'params': {
-                'name': self._name,
-                'D': self.D,
+            MakiRestorable.FIELD_TYPE: BiasLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                BiasLayer.D: self.D,
+                BiasLayer.TRAINABLE: self.trainable,
             }
         }
 
 
 class DepthWiseConvLayer(SimpleForwardLayer):
+    TYPE = 'DepthWiseLayer'
+    SHAPE = 'shape'
+    STRIDE = 'stride'
+    PADDING = 'padding'
+    ACTIVATION = 'activation'
+    USE_BIAS = 'use_bias'
+    INIT_TYPE = 'init_type'
+    RATE = 'rate'
+
     def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME', rate=[1, 1],
-                 kernel_initializer='he', use_bias=True, activation=tf.nn.relu, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, activation=tf.nn.relu, W=None, b=None):
         """
         Parameters
         ----------
@@ -268,7 +376,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W is None:
-            W = init_conv_kernel(kw, kh, in_f, multiplier, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, multiplier, in_f, kernel_initializer)
         if b is None:
             b = np.zeros(in_f * multiplier)
 
@@ -284,9 +392,9 @@ class DepthWiseConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
+    def _forward(self, x):
         conv_out = tf.nn.depthwise_conv2d(
-            input=X,
+            input=x,
             filter=self.W,
             strides=[1, self.stride, self.stride, 1],
             padding=self.padding,
@@ -301,25 +409,59 @@ class DepthWiseConvLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+
+        kw = params[DepthWiseConvLayer.SHAPE][0]
+        kh = params[DepthWiseConvLayer.SHAPE][1]
+        in_f = params[DepthWiseConvLayer.SHAPE][2]
+        multiplier = params[DepthWiseConvLayer.SHAPE][3]
+
+        padding = params[DepthWiseConvLayer.PADDING]
+        stride = params[DepthWiseConvLayer.STRIDE]
+
+        init_type = params[DepthWiseConvLayer.INIT_TYPE]
+        use_bias = params[DepthWiseConvLayer.USE_BIAS]
+        rate = params[DepthWiseConvLayer.RATE]
+
+        activation = ActivationConverter.str_to_activation(params[DepthWiseConvLayer.ACTIVATION])
+
+        return DepthWiseConvLayer(
+            kw=kw, kh=kh, in_f=in_f, multiplier=multiplier, padding=padding,
+            stride=stride, activation=activation, name=name, rate=rate,
+            kernel_initializer=init_type, use_bias=use_bias,
+        )
+
     def to_dict(self):
         return {
-            'type': 'DepthWiseLayer',
-            'params': {
-                'name': self._name,
-                'shape': list(self.shape),
-                'stride': self.stride,
-                'padding': self.padding,
-                'activation': ActivationConverter.activation_to_str(self.f),
-                'use_bias': self.use_bias,
-                'init_type': self.init_type,
-                'rate': self.rate,
+            MakiRestorable.FIELD_TYPE: DepthWiseConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                DepthWiseConvLayer.SHAPE: list(self.shape),
+                DepthWiseConvLayer.STRIDE: self.stride,
+                DepthWiseConvLayer.PADDING: self.padding,
+                DepthWiseConvLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
+                DepthWiseConvLayer.USE_BIAS: self.use_bias,
+                DepthWiseConvLayer.INIT_TYPE: self.init_type,
+                DepthWiseConvLayer.RATE: self.rate,
             }
         }
 
 
 class SeparableConvLayer(SimpleForwardLayer):
+    TYPE = 'SeparableConvLayer'
+    DW_SHAPE = 'dw_shape'
+    OUT_F = 'out_f'
+    STRIDE = 'stride'
+    PADDING = 'padding'
+    ACTIVATION = 'activation'
+    USE_BIAS = 'use_bias'
+    DW_INIT_TYPE = 'dw_init_type'
+    PW_INIT_TYPE = 'pw_init_type'
+
     def __init__(self, kw, kh, in_f, out_f, multiplier, name, stride=1, padding='SAME',
-                 dw_kernel_initializer='xavier_gaussian_inf', pw_kernel_initializer='he',
+                 dw_kernel_initializer=InitConvKernel.XAVIER_GAUSSIAN_INF, pw_kernel_initializer=InitConvKernel.HE,
                  use_bias=True, activation=tf.nn.relu,
                  W_dw=None, W_pw=None, b=None):
         """
@@ -362,9 +504,9 @@ class SeparableConvLayer(SimpleForwardLayer):
         name = str(name)
 
         if W_dw is None:
-            W_dw = init_conv_kernel(kw, kh, in_f, multiplier, dw_kernel_initializer)
+            W_dw = InitConvKernel.init_by_name(kw, kh, multiplier, in_f, dw_kernel_initializer)
         if W_pw is None:
-            W_pw = init_conv_kernel(1, 1, multiplier * in_f, out_f, pw_kernel_initializer)
+            W_pw = InitConvKernel.init_by_name(1, 1, out_f, multiplier * in_f, pw_kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
@@ -385,9 +527,9 @@ class SeparableConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
+    def _forward(self, x):
         conv_out = tf.nn.separable_conv2d(
-            input=X,
+            input=x,
             depthwise_filter=self.W_dw,
             pointwise_filter=self.W_pw,
             strides=[1, self.stride, self.stride, 1],
@@ -402,26 +544,60 @@ class SeparableConvLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+
+        kw = params[SeparableConvLayer.DW_SHAPE][0]
+        kh = params[SeparableConvLayer.DW_SHAPE][1]
+        in_f = params[SeparableConvLayer.DW_SHAPE][2]
+        out_f = params[SeparableConvLayer.OUT_F]
+
+        multiplier = params[SeparableConvLayer.DW_SHAPE][3]
+
+        padding = params[SeparableConvLayer.PADDING]
+        stride = params[SeparableConvLayer.STRIDE]
+
+        dw_init_type = params[SeparableConvLayer.DW_INIT_TYPE]
+        pw_init_type = params[SeparableConvLayer.PW_INIT_TYPE]
+        use_bias = params[SeparableConvLayer.USE_BIAS]
+
+        activation = ActivationConverter.str_to_activation(params[SeparableConvLayer.ACTIVATION])
+
+        return SeparableConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f, multiplier=multiplier,
+            padding=padding, stride=stride, activation=activation,
+            dw_kernel_initializer=dw_init_type, pw_kernel_initializer=pw_init_type,
+            use_bias=use_bias, name=name
+        )
+
     def to_dict(self):
         return {
-            'type': 'SeparableConvLayer',
-            'params': {
-                'name': self._name,
-                'dw_shape': list(self.dw_shape),
-                'out_f': self.out_f,
-                'stride': self.stride,
-                'padding': self.padding,
-                'activation': ActivationConverter.activation_to_str(self.f),
-                'use_bias': self.use_bias,
-                'dw_init_type': self.dw_init_type,
-                'pw_init_type': self.pw_init_type
+            MakiRestorable.FIELD_TYPE: SeparableConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                SeparableConvLayer.DW_SHAPE: list(self.dw_shape),
+                SeparableConvLayer.OUT_F: self.out_f,
+                SeparableConvLayer.STRIDE: self.stride,
+                SeparableConvLayer.PADDING: self.padding,
+                SeparableConvLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
+                SeparableConvLayer.USE_BIAS: self.use_bias,
+                SeparableConvLayer.DW_INIT_TYPE: self.dw_init_type,
+                SeparableConvLayer.PW_INIT_TYPE: self.pw_init_type
             }
         }
 
 
 class DenseLayer(SimpleForwardLayer):
+    TYPE = 'DenseLayer'
+    INPUT_SHAPE = 'input_shape'
+    OUTPUT_SHAPE = 'output_shape'
+    ACTIVATION = 'activation'
+    USE_BIAS = 'use_bias'
+    INIT_TYPE = 'init_type'
+
     def __init__(self, in_d, out_d, name, activation=tf.nn.relu,
-                 mat_initializer='he', use_bias=True, W=None, b=None):
+                 mat_initializer=InitDenseMat.HE, use_bias=True, W=None, b=None):
         """
         Paremeters
         ----------
@@ -440,7 +616,6 @@ class DenseLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-
         self.input_shape = in_d
         self.output_shape = out_d
         self.f = activation
@@ -448,7 +623,7 @@ class DenseLayer(SimpleForwardLayer):
         self.init_type = mat_initializer
 
         if W is None:
-            W = init_dense_mat(in_d, out_d, mat_initializer)
+            W = InitDenseMat.init_by_name(in_d, out_d, mat_initializer)
 
         if b is None:
             b = np.zeros(out_d)
@@ -466,8 +641,8 @@ class DenseLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        out = tf.matmul(X, self.W)
+    def _forward(self, x):
+        out = tf.matmul(x, self.W)
         if self.use_bias:
             out = out + self.b
         if self.f is None:
@@ -477,23 +652,48 @@ class DenseLayer(SimpleForwardLayer):
     def _training_forward(self, X):
         return self._forward(X)
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        input_shape = params[DenseLayer.INPUT_SHAPE]
+        output_shape = params[DenseLayer.OUTPUT_SHAPE]
+
+        activation = ActivationConverter.str_to_activation(params[DenseLayer.ACTIVATION])
+
+        init_type = params[DenseLayer.INIT_TYPE]
+        use_bias = params[DenseLayer.USE_BIAS]
+
+        return DenseLayer(
+            in_d=input_shape, out_d=output_shape,
+            activation=activation, name=name,
+            mat_initializer=init_type, use_bias=use_bias
+        )
+
     def to_dict(self):
         return {
-            'type': 'DenseLayer',
-            'params': {
-                'name': self._name,
-                'input_shape': self.input_shape,
-                'output_shape': self.output_shape,
-                'activation': ActivationConverter.activation_to_str(self.f),
-                'use_bias': self.use_bias,
-                'init_type': self.init_type
+            MakiRestorable.FIELD_TYPE: DenseLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                DenseLayer.INPUT_SHAPE: self.input_shape,
+                DenseLayer.OUTPUT_SHAPE: self.output_shape,
+                DenseLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
+                DenseLayer.USE_BIAS: self.use_bias,
+                DenseLayer.INIT_TYPE: self.init_type
             }
         }
 
 
 class AtrousConvLayer(SimpleForwardLayer):
+    TYPE = 'AtrousConvLayer'
+    SHAPE = 'shape'
+    RATE = 'rate'
+    PADDING = 'padding'
+    ACTIVATION = 'activation'
+    USE_BIAS = 'use_bias'
+    INIT_TYPE = 'init_type'
+
     def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer='he', use_bias=True, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, W=None, b=None):
         """
         Parameters
         ----------
@@ -534,7 +734,7 @@ class AtrousConvLayer(SimpleForwardLayer):
         self.name_conv = f'AtrousConvKernel_{kw}x{kh}_in{in_f}_out{out_f}_id_{name}'
 
         if W is None:
-            W = init_conv_kernel(kw, kh, in_f, out_f, kernel_initializer)
+            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
         if b is None:
             b = np.zeros(out_f)
 
@@ -550,8 +750,8 @@ class AtrousConvLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, X):
-        conv_out = tf.nn.atrous_conv2d(X, self.W, self.rate, self.padding)
+    def _forward(self, x):
+        conv_out = tf.nn.atrous_conv2d(x, self.W, self.rate, self.padding)
         if self.use_bias:
             conv_out = tf.nn.bias_add(conv_out, self.b)
         if self.f is None:
@@ -561,24 +761,50 @@ class AtrousConvLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+
+        kw = params[AtrousConvLayer.SHAPE][0]
+        kh = params[AtrousConvLayer.SHAPE][1]
+        in_f = params[AtrousConvLayer.SHAPE][2]
+        out_f = params[AtrousConvLayer.SHAPE][3]
+
+        rate = params[AtrousConvLayer.RATE]
+        padding = params[AtrousConvLayer.PADDING]
+
+        init_type = params[AtrousConvLayer.INIT_TYPE]
+        use_bias = params[AtrousConvLayer.USE_BIAS]
+
+        activation = ActivationConverter.str_to_activation(params[AtrousConvLayer.ACTIVATION])
+
+        return AtrousConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f, rate=rate,
+            padding=padding, activation=activation,
+            kernel_initializer=init_type,
+            use_bias=use_bias, name=name
+        )
+
     def to_dict(self):
         return {
-            'type': 'AtrousConvLayer',
-            'params': {
-                'name': self._name,
-                'shape': list(self.shape),
-                'rate': self.rate,
-                'padding': self.padding,
-                'activation': ActivationConverter.activation_to_str(self.f),
-                'use_bias': self.use_bias,
-                'init_type': self.init_type
+            MakiRestorable.FIELD_TYPE: AtrousConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                AtrousConvLayer.SHAPE: list(self.shape),
+                AtrousConvLayer.RATE: self.rate,
+                AtrousConvLayer.PADDING: self.padding,
+                AtrousConvLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
+                AtrousConvLayer.USE_BIAS: self.use_bias,
+                AtrousConvLayer.INIT_TYPE: self.init_type
             }
         }
 
 
 class BatchNormLayer(BatchNormBaseLayer):
+    TYPE = 'BatchNormLayer'
+
     def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         Batch Normalization Procedure:
             X_normed = (X - mean) / variance
@@ -609,7 +835,7 @@ class BatchNormLayer(BatchNormBaseLayer):
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta,
-                         type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta)
+                         type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
         if self.running_mean is None:
@@ -630,16 +856,39 @@ class BatchNormLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
-        return tf.nn.batch_normalization(
-            X,
-            self.running_mean,
-            self.running_variance,
-            self.beta,
-            self.gamma,
-            self.eps
-        )
+        if self._track_running_stats:
+            return tf.nn.batch_normalization(
+                X,
+                self.running_mean,
+                self.running_variance,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
+        else:
+            # These if statements check if we do batchnorm for convolution or dense
+            if len(X.shape) == 4:
+                # conv
+                axes = [0, 1, 2]
+            else:
+                # dense
+                axes = [0]
+
+            batch_mean, batch_var = tf.nn.moments(X, axes=axes)
+
+            return tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
 
     def _training_forward(self, X):
+        if not self._track_running_stats:
+            return self._forward(X)
+
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
             # conv
@@ -649,6 +898,7 @@ class BatchNormLayer(BatchNormBaseLayer):
             axes = [0]
 
         batch_mean, batch_var = tf.nn.moments(X, axes=axes)
+
         update_running_mean = tf.assign(
             self.running_mean,
             self.running_mean * self.decay + batch_mean * (1 - self.decay)
@@ -669,23 +919,41 @@ class BatchNormLayer(BatchNormBaseLayer):
 
         return out
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        D = params[BatchNormLayer.D]
+
+        decay = params[BatchNormLayer.DECAY]
+        eps = params[BatchNormLayer.EPS]
+
+        use_beta = params[BatchNormLayer.USE_BETA]
+        use_gamma = params[BatchNormLayer.USE_GAMMA]
+
+        return BatchNormLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma)
+
     def to_dict(self):
         return {
-            'type': 'BatchNormLayer',
-            'params': {
-                'name': self._name,
-                'D': self.D,
-                'decay': self.decay,
-                'eps': self.eps,
-                'use_beta': self.use_beta,
-                'use_gamma': self.use_gamma,
+            MakiRestorable.FIELD_TYPE: BatchNormLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                BatchNormLayer.D: self.D,
+                BatchNormLayer.DECAY: self.decay,
+                BatchNormLayer.EPS: self.eps,
+                BatchNormLayer.USE_BETA: self.use_beta,
+                BatchNormLayer.USE_GAMMA: self.use_gamma,
+                BatchNormLayer.TRACK_RUNNING_STATS: self._track_running_stats,
             }
         }
 
 
 class GroupNormLayer(BatchNormBaseLayer):
+    TYPE = 'GroupNormLayer'
+    G = 'G'
+
     def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         GroupNormLayer Procedure:
             X_normed = (X - mean) / variance
@@ -720,7 +988,8 @@ class GroupNormLayer(BatchNormBaseLayer):
         """
         self.G = G
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma,
-                         type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var, gamma=gamma, beta=beta)
+                         type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var,
+                         gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
         N = data.shape[0]
@@ -770,7 +1039,12 @@ class GroupNormLayer(BatchNormBaseLayer):
             old_shape = [N, F]
             X = tf.reshape(X, [N, self.G, F // self.G])
 
-        X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
+        if self._track_running_stats:
+            X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
+        else:
+            # Output shape [N, 1, 1, self.G, 1] for Conv and [N, G, 1] for Dense
+            batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+            X = (X - batch_mean) / tf.sqrt(batch_var + self.eps)
 
         X = tf.reshape(X, old_shape)
 
@@ -783,6 +1057,9 @@ class GroupNormLayer(BatchNormBaseLayer):
         return X
 
     def _training_forward(self, X):
+        if not self._track_running_stats:
+            return self._forward(X)
+
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
             # conv
@@ -824,24 +1101,44 @@ class GroupNormLayer(BatchNormBaseLayer):
 
         return X
 
+    @staticmethod
+    def build(params: dict):
+        G = params[GroupNormLayer.G]
+        name = params[MakiRestorable.NAME]
+        D = params[GroupNormLayer.D]
+
+        decay = params[GroupNormLayer.DECAY]
+        eps = params[GroupNormLayer.EPS]
+
+        use_beta = params[GroupNormLayer.USE_BETA]
+        use_gamma = params[GroupNormLayer.USE_GAMMA]
+
+        track_running_stats = params[GroupNormLayer.TRACK_RUNNING_STATS]
+
+        return GroupNormLayer(D=D, G=G, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma, track_running_stats=track_running_stats)
+
     def to_dict(self):
         return {
-            'type': 'GroupNormLayer',
-            'params': {
-                'name': self._name,
-                'D': self.D,
-                'decay': self.decay,
-                'eps': self.eps,
-                'G': self.G,
-                'use_beta': self.use_beta,
-                'use_gamma': self.use_gamma,
+            MakiRestorable.FIELD_TYPE: GroupNormLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                GroupNormLayer.D: self.D,
+                GroupNormLayer.DECAY: self.decay,
+                GroupNormLayer.EPS: self.eps,
+                GroupNormLayer.G: self.G,
+                GroupNormLayer.USE_BETA: self.use_beta,
+                GroupNormLayer.USE_GAMMA: self.use_gamma,
+                GroupNormLayer.TRACK_RUNNING_STATS: self._track_running_stats,
             }
         }
 
 
 class NormalizationLayer(BatchNormBaseLayer):
+    TYPE = 'NormalizationLayer'
+
     def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         NormalizationLayer Procedure:
             X_normed = (X - mean) / variance
@@ -872,7 +1169,7 @@ class NormalizationLayer(BatchNormBaseLayer):
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
-                         type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta)
+                         type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
         N = data.shape[0]
@@ -904,16 +1201,40 @@ class NormalizationLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
-        return tf.nn.batch_normalization(
-            X,
-            self.running_mean,
-            self.running_variance,
-            self.beta,
-            self.gamma,
-            self.eps
-        )
+        if self._track_running_stats:
+            return tf.nn.batch_normalization(
+                X,
+                self.running_mean,
+                self.running_variance,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
+        else:
+            # These if statements check if we do batchnorm for convolution or dense
+            if len(X.shape) == 4:
+                # conv
+                axes = [1, 2, 3]
+            else:
+                # dense
+                axes = [1]
+
+            # Output shape [N, 1, 1, 1] for Conv and [N, 1] for Dense
+            batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+
+            return tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
 
     def _training_forward(self, X):
+        if not self._track_running_stats:
+            return self._forward(X)
+
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
             # conv
@@ -946,29 +1267,48 @@ class NormalizationLayer(BatchNormBaseLayer):
 
         return X
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        D = params[NormalizationLayer.D]
+
+        decay = params[NormalizationLayer.DECAY]
+        eps = params[NormalizationLayer.EPS]
+
+        use_beta = params[NormalizationLayer.USE_BETA]
+        use_gamma = params[NormalizationLayer.USE_GAMMA]
+
+        track_running_stats = params[NormalizationLayer.TRACK_RUNNING_STATS]
+
+        return NormalizationLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma, track_running_stats=track_running_stats)
+
     def to_dict(self):
         return {
-            'type': 'NormalizationLayer',
-            'params': {
-                'name': self._name,
-                'D': self.D,
-                'decay': self.decay,
-                'eps': self.eps,
-                'use_beta': self.use_beta,
-                'use_gamma': self.use_gamma,
+            MakiRestorable.FIELD_TYPE: NormalizationLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                NormalizationLayer.D: self.D,
+                NormalizationLayer.DECAY: self.decay,
+                NormalizationLayer.EPS: self.eps,
+                NormalizationLayer.USE_BETA: self.use_beta,
+                NormalizationLayer.USE_GAMMA: self.use_gamma,
+                NormalizationLayer.TRACK_RUNNING_STATS: self._track_running_stats,
             }
         }
 
 
 class InstanceNormLayer(BatchNormBaseLayer):
+    TYPE = 'InstanceNormLayer'
+
     def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None):
+                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         InstanceNormLayer Procedure:
             X_normed = (X - mean) / variance
             X_final = X*gamma + beta
 
-        There X have shape [N, H, W, C]. InstanceNormLayer normilized input on N and C axis
+        There X have shape [N, H, W, C]. InstanceNormLayer normalized input on N and C axis
         gamma and beta are learned using gradient descent.
 
         Parameters
@@ -995,7 +1335,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
-                         type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta)
+                         type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
         N = data.shape[0]
@@ -1028,16 +1368,40 @@ class InstanceNormLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X):
-        return tf.nn.batch_normalization(
-            X,
-            self.running_mean,
-            self.running_variance,
-            self.beta,
-            self.gamma,
-            self.eps
-        )
+        if self._track_running_stats:
+            return tf.nn.batch_normalization(
+                X,
+                self.running_mean,
+                self.running_variance,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
+        else:
+            # These if statements check if we do batchnorm for convolution or dense
+            if len(X.shape) == 4:
+                # conv
+                axes = [1, 2]
+            else:
+                # dense
+                axes = [1]
+
+            # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
+            batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+
+            return tf.nn.batch_normalization(
+                X,
+                batch_mean,
+                batch_var,
+                self.beta,
+                self.gamma,
+                self.eps
+            )
 
     def _training_forward(self, X):
+        if not self._track_running_stats:
+            return self._forward(X)
+
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
             # conv
@@ -1070,15 +1434,98 @@ class InstanceNormLayer(BatchNormBaseLayer):
 
         return X
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        D = params[InstanceNormLayer.D]
+
+        decay = params[InstanceNormLayer.DECAY]
+        eps = params[InstanceNormLayer.EPS]
+
+        use_beta = params[InstanceNormLayer.USE_BETA]
+        use_gamma = params[InstanceNormLayer.USE_GAMMA]
+
+        track_running_stats = params[InstanceNormLayer.TRACK_RUNNING_STATS]
+
+        return InstanceNormLayer(D=D, name=name, decay=decay, eps=eps,
+                              use_beta=use_beta, use_gamma=use_gamma, track_running_stats=track_running_stats)
+
     def to_dict(self):
         return {
-            'type': 'InstanceNormLayer',
-            'params': {
-                'name': self._name,
-                'D': self.D,
-                'decay': self.decay,
-                'eps': self.eps,
-                'use_beta': self.use_beta,
-                'use_gamma': self.use_gamma,
+            MakiRestorable.FIELD_TYPE: InstanceNormLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                InstanceNormLayer.D: self.D,
+                InstanceNormLayer.DECAY: self.decay,
+                InstanceNormLayer.EPS: self.eps,
+                InstanceNormLayer.USE_BETA: self.use_beta,
+                InstanceNormLayer.USE_GAMMA: self.use_gamma,
+                InstanceNormLayer.TRACK_RUNNING_STATS: self._track_running_stats,
             }
         }
+
+
+class ScaleLayer(SimpleForwardLayer):
+    TYPE = 'ScaleLayer'
+    INIT_VALUE = 'init_value'
+
+    def __init__(self, init_value, name):
+        """
+        ScaleLayer is used to multiply input MakiTensor on `init_value`, which is trainable variable.
+
+        Parameters
+        ----------
+        init_value : int
+            The initial value which need to multiply by input.
+        name : str
+            Name of this layer.
+        """
+        self.init_value = init_value
+        self.name_scale = 'ScaleValue_' + name
+
+        self.scale = tf.Variable(init_value, name=self.name_scale, dtype=tf.float32)
+
+        super().__init__(name, [self.scale], {self.name_scale: self.scale})
+
+    def _forward(self, x):
+        return x * self.scale
+
+    def _training_forward(self, x):
+        return self._forward(x)
+
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        init_value = params[ScaleLayer.INIT_VALUE]
+        return ScaleLayer(init_value=init_value, name=name)
+
+    def to_dict(self):
+        return {
+            MakiRestorable.FIELD_TYPE: ScaleLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                ScaleLayer.INIT_VALUE: self.init_value
+            }
+        }
+
+class TrainableLayerAddress:
+
+    ADDRESS_TO_CLASSES = {
+        ConvLayer.TYPE: ConvLayer,
+        UpConvLayer.TYPE: UpConvLayer,
+        AtrousConvLayer.TYPE: AtrousConvLayer,
+        DepthWiseConvLayer.TYPE: DepthWiseConvLayer,
+        SeparableConvLayer.TYPE: SeparableConvLayer,
+
+        BiasLayer.TYPE: BiasLayer,
+        DenseLayer.TYPE: DenseLayer,
+
+        BatchNormLayer.TYPE: BatchNormLayer,
+        GroupNormLayer.TYPE: GroupNormLayer,
+        NormalizationLayer.TYPE: NormalizationLayer,
+        InstanceNormLayer.TYPE: InstanceNormLayer,
+
+        ScaleLayer.TYPE: ScaleLayer,
+    }
+
+

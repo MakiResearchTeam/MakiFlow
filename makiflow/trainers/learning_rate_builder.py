@@ -1,3 +1,20 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 import tensorflow as tf
 
 """
@@ -12,8 +29,34 @@ import tensorflow as tf
 
 
 class LearningRateBuilder:
+
     @staticmethod
     def build_learning_rate(learning_rate_info):
+        """
+        Build learning rate with certain params.
+
+        Parameters
+        ----------
+            learning_rate_info : dict
+                Here some example:
+                "lr": {
+                        "type": "ExponentialDecay",
+                        "params": {
+                            "lr": 1e-2,
+                            "decay_steps": 100,
+                            ...
+                        },
+                    }
+                For more examples, visit example_of_builders.json in this folder.
+
+        Returns
+        -------
+            learning_rate : tensorflow learning rate
+                Built learning rate.
+            global_step : tf.Variable
+                 Optional Variable to increment by one after the variables have been updated.
+                 None if `learning_rate_info` is not dict.
+        """
         if type(learning_rate_info) is type(dict):
             opt_type = learning_rate_info['type']
             params = learning_rate_info['params']

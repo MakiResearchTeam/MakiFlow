@@ -1,3 +1,20 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 from abc import abstractmethod
 import tensorflow as tf
 from copy import copy
@@ -6,7 +23,15 @@ from makiflow.base.maki_entities import MakiLayer, MakiTensor
 
 
 class BatchNormBaseLayer(MakiLayer):
-    def __init__(self, D, decay, eps, name, use_gamma, use_beta, type_norm, mean, var, gamma, beta):
+    TYPE = 'BatchNormBaseLayer'
+    D = 'D'
+    DECAY = 'decay'
+    EPS = 'eps'
+    USE_BETA = 'use_beta'
+    USE_GAMMA = 'use_gamma'
+    TRACK_RUNNING_STATS = 'track_running_stats'
+
+    def __init__(self, D, decay, eps, name, use_gamma, use_beta, type_norm, mean, var, gamma, beta, track_running_stats):
         """
         Batch Normalization Procedure:
             X_normed = (X - mean) / variance
@@ -43,9 +68,10 @@ class BatchNormBaseLayer(MakiLayer):
         self.use_beta = use_beta
         self.running_mean = mean
         self.running_variance = var
+        self._track_running_stats = track_running_stats
 
         # These variables are needed to change the mean and variance of the batch after
-        # the batchnormalization: result*gamma + beta
+        # the batchNormaization: result*gamma + beta
         # beta - offset
         # gamma - scale
         if beta is None:
@@ -80,7 +106,8 @@ class BatchNormBaseLayer(MakiLayer):
     def __call__(self, x):
         data = x.get_data_tensor()
 
-        self._init_train_params(data)
+        if self._track_running_stats:
+            self._init_train_params(data)
 
         data = self._forward(data)
 

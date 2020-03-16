@@ -1,6 +1,44 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 from makiflow.base import MakiTensor
 from makiflow.layers import ConvLayer
 from makiflow.layers import ReshapeLayer
+
+
+class DCParams:
+    TYPE = 'DetectorClassifier'
+    NAME = 'name'
+    CLASS_NUMBER = 'class_number'
+    DBOXES = 'dboxes'
+
+    REG_X_NAME = 'reg_x_name'
+    RKW = 'rkw'
+    RKH = 'rkh'
+    RIN_F = 'rin_f'
+    USE_REG_BIAS = 'use_reg_bias'
+    REG_INIT_TYPE = 'reg_init_type'
+
+    CLASS_X_NAME = 'class_x_name'
+    CKW = 'ckw'
+    CKH = 'ckh'
+    CIN_F = 'cin_f'
+    USE_CLASS_BIAS = 'use_class_bias'
+    CLASS_INIT_TYPE = 'class_init_type'
 
 
 class DetectorClassifier:
@@ -8,12 +46,13 @@ class DetectorClassifier:
     This class represents a part of SSD algorithm. It consists of several parts:
     conv layers -> detector -> confidences + localization regression.
     """
-
     def __init__(
-            self, reg_fms: MakiTensor, rkw, rkh, rin_f,
+            self,
+            reg_fms: MakiTensor, rkw, rkh, rin_f,
             class_fms: MakiTensor, ckw, ckh, cin_f,
             num_classes, dboxes: list, name,
-            use_reg_bias=True, use_class_bias=True
+            use_reg_bias=True, use_class_bias=True,
+            reg_init_type='he', class_init_type='he'
     ):
         """
         Parameters
@@ -65,13 +104,21 @@ class DetectorClassifier:
         self.name = str(name)
         self.use_class_bias = use_class_bias
         self.use_reg_bias = use_reg_bias
+        self.reg_init_type = reg_init_type
+        self.class_init_type = class_init_type
 
         classifier_out_f = num_classes * len(dboxes)
         bb_regressor_out_f = 4 * len(dboxes)
-        self.classifier = ConvLayer(ckw, ckh, cin_f, classifier_out_f, use_bias=use_class_bias,
-                                    activation=None, padding='SAME', name='SSDClassifier_' + str(name))
-        self.bb_regressor = ConvLayer(rkw, rkh, rin_f, bb_regressor_out_f, use_bias=use_reg_bias,
-                                      activation=None, padding='SAME', name='SSDBBDetector_' + str(name))
+        self.classifier = ConvLayer(
+            ckw, ckh, cin_f, classifier_out_f, use_bias=use_class_bias,
+            activation=None, padding='SAME', kernel_initializer=class_init_type,
+            name='SSDClassifier_' + str(name)
+        )
+        self.bb_regressor = ConvLayer(
+            rkw, rkh, rin_f, bb_regressor_out_f, use_bias=use_reg_bias,
+            activation=None, padding='SAME', kernel_initializer=reg_init_type,
+            name='SSDBBDetector_' + str(name)
+        )
         self._make_detections()
 
     def _make_detections(self):
@@ -119,20 +166,24 @@ class DetectorClassifier:
 
     def to_dict(self):
         return {
-            'type': 'DetectorClassifier',
+            'type': DCParams.TYPE,
             'params': {
-                'reg_x_name': self.reg_x.get_name(),
-                'rkw': self.rkw,
-                'rkh': self.rkh,
-                'rin_f': self.rin_f,
-                'use_reg_bias': self.use_reg_bias,
-                'class_x_name': self.class_x.get_name(),
-                'ckw': self.ckw,
-                'ckh': self.ckh,
-                'cin_f': self.cin_f,
-                'use_class_bias': self.use_class_bias,
-                'class_number': self.class_number,
-                'dboxes': self._dboxes,
-                'name': self.name
+                DCParams.REG_X_NAME: self.reg_x.get_name(),
+                DCParams.RKW: self.rkw,
+                DCParams.RKH: self.rkh,
+                DCParams.RIN_F: self.rin_f,
+                DCParams.USE_REG_BIAS: self.use_reg_bias,
+                DCParams.REG_INIT_TYPE: self.reg_init_type,
+
+                DCParams.CLASS_X_NAME: self.class_x.get_name(),
+                DCParams.CKW: self.ckw,
+                DCParams.CKH: self.ckh,
+                DCParams.CIN_F: self.cin_f,
+                DCParams.USE_CLASS_BIAS: self.use_class_bias,
+                DCParams.CLASS_INIT_TYPE: self.class_init_type,
+
+                DCParams.CLASS_NUMBER: self.class_number,
+                DCParams.DBOXES: self._dboxes,
+                DCParams.NAME: self.name
             }
         }
