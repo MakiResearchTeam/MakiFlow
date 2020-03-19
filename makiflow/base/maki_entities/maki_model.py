@@ -1,6 +1,3 @@
-<<<<<<< HEAD:makiflow/base/maki_entities/maki_model.py
-from abc import abstractmethod
-=======
 # Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
 #
 # This file is part of MakiFlow.
@@ -19,7 +16,6 @@ from abc import abstractmethod
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from abc import abstractmethod, ABC
->>>>>>> upstream/beta_v1.0:makiflow/base/maki_entities.py
 import tensorflow as tf
 import json
 from copy import copy
