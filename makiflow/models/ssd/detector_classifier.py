@@ -48,8 +48,8 @@ class DetectorClassifier:
     """
     def __init__(
             self,
-            reg_fms, rkw, rkh, rin_f,
-            class_fms, ckw, ckh, cin_f,
+            reg_fms: MakiTensor, rkw, rkh, rin_f,
+            class_fms: MakiTensor, ckw, ckh, cin_f,
             num_classes, dboxes: list, name,
             use_reg_bias=True, use_class_bias=True,
             reg_init_type='he', class_init_type='he'
