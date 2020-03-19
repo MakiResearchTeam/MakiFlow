@@ -1,12 +1,15 @@
 from __future__ import absolute_import
-from makiflow.base import MakiModel, MakiTensor
-from makiflow.generators.segmentator import SegmentIterator
-from makiflow.layers import InputLayer
+
 from sklearn.utils import shuffle
 import tensorflow as tf
 from tqdm import tqdm
 
 from scipy.special import binom
+
+from makiflow.base import MakiTensor
+from makiflow.generators.segmentator import SegmentIterator
+from makiflow.layers import InputLayer
+from makiflow.base.maki_entities.maki_model import MakiModel
 
 
 class Segmentator(MakiModel):

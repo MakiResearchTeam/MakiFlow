@@ -2,10 +2,10 @@ from __future__ import absolute_import
 import numpy as np
 import tensorflow as tf
 
-from makiflow.base.maki_entities import MakiRestorable
+from makiflow.base.maki_entities.maki_layer import MakiRestorable
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
-from makiflow.base.base_layers import BatchNormBaseLayer
+from makiflow.base import BatchNormBaseLayer
 from makiflow.layers.utils import InitConvKernel, InitDenseMat
 
 

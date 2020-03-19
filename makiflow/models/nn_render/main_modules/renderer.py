@@ -1,5 +1,7 @@
 import tensorflow as tf
-from makiflow.base.maki_entities import MakiModel, MakiTensor
+from makiflow.base.maki_entities import MakiTensor
+from makiflow.base.maki_entities.maki_model import MakiModel
+
 from makiflow.generators.nn_render import NNRIterator
 
 
