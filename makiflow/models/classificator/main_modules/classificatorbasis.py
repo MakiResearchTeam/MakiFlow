@@ -43,6 +43,10 @@ class ClassificatorBasis(MakiModel):
             CParams.NAME: self.name
         }
 
+    @staticmethod
+    def from_json(path_to_model):
+        pass
+
     # ------------------------------------------------------------------------------------------------------------------
     # ----------------------------------------------------------SETTING UP TRAINING-------------------------------------
 
