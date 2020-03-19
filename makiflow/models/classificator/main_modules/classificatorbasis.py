@@ -23,7 +23,6 @@ from tqdm import tqdm
 from makiflow.models.classificator.utils import error_rate, sparse_cross_entropy
 from copy import copy
 
-
 from makiflow.base import MakiTensor
 from makiflow.layers import InputLayer
 from makiflow.base.maki_entities.maki_model import MakiModel
@@ -63,10 +62,6 @@ class ClassificatorBasis(MakiModel):
             CParams.OUTPUT_MT: output_mt.get_name(),
             CParams.NAME: self.name
         }
-
-    @staticmethod
-    def from_json(path_to_model):
-        pass
 
     # ------------------------------------------------------------------------------------------------------------------
     # ----------------------------------------------------------SETTING UP TRAINING-------------------------------------
