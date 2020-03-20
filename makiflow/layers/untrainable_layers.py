@@ -19,14 +19,11 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 from makiflow.layers.activation_converter import ActivationConverter
-from makiflow.base import MakiLayer, MakiTensor, MakiRestorable
+from makiflow.base import MakiLayer, MakiTensor, MakiRestorable, InputMakiLayer
 from makiflow.layers.sf_layer import SimpleForwardLayer
 
 
-class InputLayer(MakiTensor):
-    TYPE = 'InputLayer'
-    PARAMS = 'params'
-    FIELD_TYPE = 'type'
+class InputLayer(InputMakiLayer):
     INPUT_SHAPE = 'input_shape'
 
     def __init__(self, input_shape, name):
@@ -44,25 +41,17 @@ class InputLayer(MakiTensor):
         self.params = []
         self._name = str(name)
         self._input_shape = input_shape
-        self.input = tf.placeholder(tf.float32, shape=input_shape, name=self._name)
+        self._input = tf.placeholder(tf.float32, shape=input_shape, name=self._name)
         super().__init__(
-            data_tensor=self.input,
-            parent_layer=self,
-            parent_tensor_names=None,
-            previous_tensors={},
+            data_tensor=self._input,
+            name=name
         )
 
-    def get_shape(self):
-        return self._input_shape
+    def __call__(self, x):
+        raise RuntimeError('This functionality is not implemented in the InputLayer.')
 
-    def get_name(self):
-        return self._name
-
-    def get_params(self):
-        return []
-
-    def get_params_dict(self):
-        return {}
+    def _training_forward(self, x):
+        raise RuntimeError('This functionality is not implemented in the InputLayer.')
 
     @staticmethod
     def build(params: dict):
@@ -73,8 +62,8 @@ class InputLayer(MakiTensor):
     def to_dict(self):
         return {
             MakiRestorable.NAME: self._name,
-            InputLayer.PARENT_TENSOR_NAMES: [],
-            InputLayer.FIELD_TYPE: InputLayer.TYPE,
+            MakiTensor.PARENT_TENSOR_NAMES: [],
+            MakiRestorable.FIELD_TYPE: InputMakiLayer.TYPE,
             MakiRestorable.PARAMS: {
                 MakiRestorable.NAME: self._name,
                 InputLayer.INPUT_SHAPE: self._input_shape
@@ -853,3 +842,8 @@ class UnTrainableLayerAddress:
     }
 
 
+from makiflow.base.maki_entities.maki_builder import MakiBuilder
+
+MakiBuilder.register_layers(UnTrainableLayerAddress.ADDRESS_TO_CLASSES)
+
+del MakiBuilder

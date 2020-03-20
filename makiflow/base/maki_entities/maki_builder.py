@@ -18,20 +18,19 @@
 from abc import abstractmethod
 from .maki_layer import MakiRestorable
 from .maki_tensor import MakiTensor
-
-from makiflow.layers.trainable_layers import TrainableLayerAddress
-from makiflow.layers.untrainable_layers import UnTrainableLayerAddress, InputLayer
-from makiflow.layers.rnn_layers import RNNLayerAddress
+from .input_maki_layer import InputMakiLayer
 
 
 class MakiBuilder:
     # Provides API for model restoration.
 
-    # Collects the addresses to all existing layers
-    ALL_LAYERS_ADDRESS = {} \
-        .update(RNNLayerAddress.ADDRESS_TO_CLASSES) \
-        .update(TrainableLayerAddress.ADDRESS_TO_CLASSES) \
-        .update(UnTrainableLayerAddress.ADDRESS_TO_CLASSES)
+    # Contains pairs {LayerType: LayerClass}.
+    # This static field gets filled within the layers packages.
+    ALL_LAYERS_ADDRESS = {}
+
+    @staticmethod
+    def register_layers(type_layer_dict):
+        MakiBuilder.ALL_LAYERS_ADDRESS.update(type_layer_dict)
 
     @staticmethod
     def __layer_from_dict(layer_dict):
@@ -51,9 +50,18 @@ class MakiBuilder:
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def restore_graph(outputs, graph_info_json, batch_sz=None, generator=None):
+    def restore_graph(outputs, graph_info_json, input_layer: InputMakiLayer = None):
         """
         Restore Inference graph with inputs and outputs of model from json.
+
+        Parameters
+        ----------
+        outputs
+        graph_info_json : dict
+            Graph info section from the architecture file.
+        input_layer : InputMakiLayer
+            Custom InputLayer. Use this parameter if you want to train the model with pipelines
+            or simply want to change the batch size.
         """
         # dict {NameTensor : Info about this tensor}
         graph_info = {}
@@ -89,10 +97,8 @@ class MakiBuilder:
                         MakiRestorable.FIELD_TYPE: parent_layer_info[MakiRestorable.FIELD_TYPE],
                         MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
                     )
-                    if batch_sz is not None:
-                        temp[MakiRestorable.PARAMS][InputLayer.INPUT_SHAPE][0] = batch_sz
-                    if generator is not None:
-                        answer = generator
+                    if input_layer is not None:
+                        answer = input_layer
                     else:
                         answer = MakiBuilder.__layer_from_dict(temp)
 

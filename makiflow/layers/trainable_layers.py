@@ -1530,3 +1530,8 @@ class TrainableLayerAddress:
     }
 
 
+from makiflow.base.maki_entities.maki_builder import MakiBuilder
+
+MakiBuilder.register_layers(TrainableLayerAddress.ADDRESS_TO_CLASSES)
+
+del MakiBuilder

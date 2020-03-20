@@ -450,4 +450,9 @@ class RNNLayerAddress:
         EmbeddingLayer.TYPE: EmbeddingLayer,
     }
 
+from makiflow.base.maki_entities.maki_builder import MakiBuilder
+
+MakiBuilder.register_layers(RNNLayerAddress.ADDRESS_TO_CLASSES)
+
+del MakiBuilder
 

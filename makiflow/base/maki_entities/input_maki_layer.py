@@ -15,11 +15,31 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
-
 from .maki_tensor import MakiTensor
-from .maki_layer import MakiRestorable, MakiLayer
-from .maki_core import MakiCore
-from .input_maki_layer import InputMakiLayer
+from .maki_layer import MakiLayer
+from abc import ABC
 
-del absolute_import
+
+class InputMakiLayer(MakiTensor, MakiLayer, ABC):
+    TYPE = 'InputLayer'
+
+    def __init__(self, data_tensor, name):
+        """
+        InputLayer is used to instantiate MakiFlow tensor.
+
+        Parameters
+        ----------
+        data_tensor : tf.Tensor
+            The data tensor.
+        name : str
+            Name of this layer.
+        """
+
+        self.params = []
+        self._name = str(name)
+        super().__init__(
+            data_tensor=data_tensor,
+            parent_layer=self,
+            parent_tensor_names=[],
+            previous_tensors={},
+        )

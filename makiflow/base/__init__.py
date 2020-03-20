@@ -17,7 +17,7 @@
 
 from __future__ import absolute_import
 
-from .maki_entities import MakiRestorable, MakiTensor, MakiLayer
+from .maki_entities import MakiRestorable, MakiTensor, MakiLayer, InputMakiLayer
 from .base_layers import BatchNormBaseLayer
 from .loss_builder import Loss
 
