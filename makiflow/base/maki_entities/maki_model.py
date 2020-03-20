@@ -18,14 +18,6 @@
 from abc import abstractmethod, ABC
 import tensorflow as tf
 import json
-from copy import copy
-
-from .maki_layer import MakiRestorable
-from .maki_tensor import MakiTensor
-
-from makiflow.layers.trainable_layers import TrainableLayerAddress
-from makiflow.layers.untrainable_layers import UnTrainableLayerAddress, InputLayer
-from makiflow.layers.rnn_layers import RNNLayerAddress
 
 
 class MakiModel(ABC):
