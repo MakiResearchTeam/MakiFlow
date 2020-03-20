@@ -17,7 +17,7 @@
 
 from .training_modules import QCETrainingModule, CETrainingModule, FocalTrainingModule, MakiTrainingModule
 from .main_modules import CParams
-from makiflow.base.maki_entities.maki_model import MakiModel
+from makiflow.base.maki_entities import MakiCore
 import json
 
 
@@ -29,13 +29,13 @@ class Classificator(CETrainingModule, QCETrainingModule, FocalTrainingModule, Ma
         json_value = json_file.read()
         json_info = json.loads(json_value)
 
-        output_tensor_name = json_info[MakiModel.MODEL_INFO][CParams.OUTPUT_MT]
-        input_tensor_name = json_info[MakiModel.MODEL_INFO][CParams.INPUT_MT]
-        model_name = json_info[MakiModel.MODEL_INFO][CParams.NAME]
+        output_tensor_name = json_info[MakiCore.MODEL_INFO][CParams.OUTPUT_MT]
+        input_tensor_name = json_info[MakiCore.MODEL_INFO][CParams.INPUT_MT]
+        model_name = json_info[MakiCore.MODEL_INFO][CParams.NAME]
 
-        graph_info = json_info[MakiModel.GRAPH_INFO]
+        graph_info = json_info[MakiCore.GRAPH_INFO]
 
-        inputs_outputs = MakiModel.restore_graph([output_tensor_name], graph_info, batch_size)
+        inputs_outputs = MakiCore.restore_graph([output_tensor_name], graph_info, batch_size)
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')

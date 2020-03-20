@@ -26,10 +26,15 @@ from scipy.special import binom
 from makiflow.base import MakiTensor
 from makiflow.generators.segmentator import SegmentIterator
 from makiflow.layers import InputLayer
-from makiflow.base.maki_entities.maki_model import MakiModel
+from makiflow.base.maki_entities import MakiCore
 
 
-class Segmentator(MakiModel):
+class Segmentator(MakiCore):
+    @staticmethod
+    def from_json(path_to_model):
+        # TODO
+        pass
+
     def __init__(self, input_s: InputLayer, output: MakiTensor, name='MakiSegmentator'):
         self.name = str(name)
         graph_tensors = output.get_previous_tensors()

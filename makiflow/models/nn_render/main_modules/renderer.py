@@ -17,12 +17,17 @@
 
 import tensorflow as tf
 from makiflow.base.maki_entities import MakiTensor
-from makiflow.base.maki_entities.maki_model import MakiModel
+from makiflow.base.maki_entities import MakiCore
 
 from makiflow.generators.nn_render import NNRIterator
 
 
-class NeuralRenderBasis(MakiModel):
+class NeuralRenderBasis(MakiCore):
+    @staticmethod
+    def from_json(path_to_model):
+        # TODO
+        pass
+
     def __init__(self, input_l, output, sampled_texture: MakiTensor, name):
         self.name = str(name)
         graph_tensors = output.get_previous_tensors()

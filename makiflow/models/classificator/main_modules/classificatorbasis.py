@@ -25,16 +25,19 @@ from copy import copy
 
 from makiflow.base import MakiTensor
 from makiflow.layers import InputLayer
-from makiflow.base.maki_entities.maki_model import MakiModel
+from makiflow.base.maki_entities import MakiCore
+from abc import ABC
 
 EPSILON = np.float32(1e-37)
+
 
 class CParams:
     INPUT_MT = 'input_mt'
     OUTPUT_MT = 'output_mt'
     NAME = 'name'
 
-class ClassificatorBasis(MakiModel):
+
+class ClassificatorBasis(MakiCore, ABC):
     def __init__(self, input: InputLayer, output: MakiTensor, name='MakiClassificator'):
         graph_tensors = copy(output.get_previous_tensors())
         # Add output tensor to `graph_tensors` since it doesn't have it.

@@ -1508,6 +1508,7 @@ class ScaleLayer(SimpleForwardLayer):
             }
         }
 
+
 class TrainableLayerAddress:
 
     ADDRESS_TO_CLASSES = {

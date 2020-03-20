@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from makiflow.generators.pipeline.gen_base import GenLayer
 from makiflow.generators.ssd import SSDIterator
 from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
-from makiflow.base.maki_entities.maki_model import MakiModel
+from makiflow.base.maki_entities import MakiCore
 from makiflow.models.ssd.training_literals import TL
 from makiflow.models.ssd.ssd_utils import bboxes_wh2xy, bboxes_xy2wh
 from makiflow.base.loss_builder import Loss
@@ -40,7 +40,12 @@ class OffsetRegression:
     RCNN_LIKE = 1
 
 
-class SSDModel(MakiModel):
+class SSDModel(MakiCore):
+    @staticmethod
+    def from_json(path_to_model):
+        # TODO
+        pass
+
     def __init__(self, dcs: list, input_s: InputLayer, offset_reg_type=OffsetRegression.DUMMY, name='MakiSSD'):
         self.dcs = dcs
         self.name = str(name)

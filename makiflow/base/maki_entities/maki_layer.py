@@ -17,6 +17,7 @@
 
 from abc import abstractmethod, ABC
 
+
 class MakiRestorable(ABC):
     TYPE = 'Restorable'
     PARAMS = 'params'
