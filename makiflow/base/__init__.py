@@ -16,7 +16,9 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.base.maki_entities import MakiTensor, MakiLayer, MakiModel, MakiRestorable
-from makiflow.base.base_layers import BatchNormBaseLayer
-from makiflow.base.loss_builder import Loss
+
+from .maki_entities import MakiRestorable, MakiTensor, MakiLayer
+from .base_layers import BatchNormBaseLayer
+from .loss_builder import Loss
+
 del absolute_import

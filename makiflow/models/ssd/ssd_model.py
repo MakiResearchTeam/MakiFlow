@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from makiflow.generators.pipeline.gen_base import GenLayer
 from makiflow.generators.ssd import SSDIterator
 from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
-from makiflow.base import MakiModel
+from makiflow.base.maki_entities.maki_model import MakiModel
 from makiflow.models.ssd.training_literals import TL
 from makiflow.models.ssd.ssd_utils import bboxes_wh2xy, bboxes_xy2wh
 from makiflow.base.loss_builder import Loss

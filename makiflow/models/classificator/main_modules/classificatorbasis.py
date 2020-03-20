@@ -16,13 +16,16 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.base import MakiModel, MakiTensor
-from makiflow.layers import InputLayer
+
 import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 from makiflow.models.classificator.utils import error_rate, sparse_cross_entropy
 from copy import copy
+
+from makiflow.base import MakiTensor
+from makiflow.layers import InputLayer
+from makiflow.base.maki_entities.maki_model import MakiModel
 
 EPSILON = np.float32(1e-37)
 

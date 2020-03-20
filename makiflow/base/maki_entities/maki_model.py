@@ -20,158 +20,108 @@ import tensorflow as tf
 import json
 from copy import copy
 
+from .maki_layer import MakiRestorable
+from .maki_tensor import MakiTensor
 
-class MakiRestorable(ABC):
-    TYPE = 'Restorable'
-    PARAMS = 'params'
-    FIELD_TYPE = 'type'
-    NAME = 'name'
+from makiflow.layers.trainable_layers import TrainableLayerAddress
+from makiflow.layers.untrainable_layers import UnTrainableLayerAddress, InputLayer
+from makiflow.layers.rnn_layers import RNNLayerAddress
+
+
+class MakiModelRestoreBase:
+    # -----------------------------------------------------------LAYERS RESTORATION------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def build(params: dict):
+    def __layer_from_dict(layer_dict):
         """
-        Parameters
-        ----------
-        params : dict
-            Dictionary of specific params to build layers.
-
-        Returns
-        -------
-        MakiLayer
-            Specific built layers
+        Creates and returns Layer from dictionary
         """
-        pass
+        # Collects the address to all existing layers
+        all_layers_adress = {}
+        all_layers_adress.update(RNNLayerAddress.ADDRESS_TO_CLASSES)
+        all_layers_adress.update(TrainableLayerAddress.ADDRESS_TO_CLASSES)
+        all_layers_adress.update(UnTrainableLayerAddress.ADDRESS_TO_CLASSES)
 
+        params = layer_dict[MakiRestorable.PARAMS]
+
+        build_layer = all_layers_adress.get(layer_dict[MakiRestorable.FIELD_TYPE])
+
+        if build_layer is None:
+            raise KeyError(f'{layer_dict[MakiRestorable.FIELD_TYPE]} was not found!')
+
+        return build_layer.build(params)
+
+    # -----------------------------------------------------------GRAPH RESTORATION--------------------------------------
+    # ------------------------------------------------------------------------------------------------------------------
+
+    @staticmethod
+    def restore_graph(outputs, graph_info_json, batch_sz=None, generator=None):
+        """
+        Rectore Inference graph with inputs and outputs of model from json.
+        """
+        # dict {NameTensor : Info about this tensor}
+        graph_info = {}
+
+        for tensor in graph_info_json:
+            graph_info[tensor[MakiRestorable.NAME]] = tensor
+
+        used = {}
+        coll_tensors = {}
+
+        def restore_in_and_out_x(from_):
+            """
+            Rectore inputs and outputs of model from json.
+            """
+            # from_ - name of layer
+            parent_layer_info = graph_info[from_]
+            if used.get(from_) is None:
+                used[from_] = True
+                # like "to"
+                all_parent_names = parent_layer_info[MakiTensor.PARENT_TENSOR_NAMES]
+                # store ready tensors
+                takes = []
+                if len(all_parent_names) != 0:
+                    # All layer except input layer
+                    layer = MakiModelRestoreBase.__layer_from_dict(parent_layer_info[MakiTensor.PARENT_LAYER_INFO])
+                    for elem in all_parent_names:
+                        takes += [restore_in_and_out_x(elem)]
+                    answer = layer(takes[0] if len(takes) == 1 else takes)
+                else:
+                    # Input layer
+                    temp = {}
+                    temp.update({
+                        MakiRestorable.FIELD_TYPE: parent_layer_info[MakiRestorable.FIELD_TYPE],
+                        MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
+                    )
+                    if batch_sz is not None:
+                        temp[MakiRestorable.PARAMS][InputLayer.INPUT_SHAPE][0] = batch_sz
+                    if generator is not None:
+                        answer = generator
+                    else:
+                        answer = MakiModelRestoreBase.__layer_from_dict(temp)
+
+                coll_tensors[from_] = answer
+                return answer
+            else:
+                return coll_tensors[from_]
+
+        for name_output in outputs:
+            restore_in_and_out_x(name_output)
+
+        return coll_tensors
+
+    @staticmethod
     @abstractmethod
-    def to_dict(self):
+    def from_json(path_to_model):
         """
-        Returns
-        -------
-        dictionary
-            Contains all the necessary information for restoring the layer object.
+        Rectore certain model.
+        This method must be implemented by other models.
         """
         pass
 
 
-class MakiLayer(MakiRestorable):
-    def __init__(self, name, params, named_params_dict):
-        self._name = name
-        self._params = params
-        self._named_params_dict = named_params_dict
-
-    @abstractmethod
-    def __call__(self, x):
-        """
-        Parameters
-        ----------
-        x: MakiTensor or list of MakiTensors
-
-        Returns
-        -------
-        MakiTensor or list of MakiTensors
-        """
-        pass
-
-    @abstractmethod
-    def _training_forward(self, x):
-        pass
-
-    def get_params(self):
-        return self._params
-
-    def get_params_dict(self):
-        """
-        This data is used for correct saving and loading models using TensorFlow checkpoint files.
-        """
-        return self._named_params_dict
-
-    def get_name(self):
-        return self._name
-
-
-class MakiTensor:
-    NAME = 'name'
-    PARENT_TENSOR_NAMES = 'parent_tensor_names'
-    PARENT_LAYER_INFO = 'parent_layer_info'
-
-    def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list,
-                 previous_tensors: dict):
-        self.__data_tensor: tf.Tensor = data_tensor
-        self.__name: str = parent_layer.get_name()
-        self.__parent_tensor_names = parent_tensor_names
-        self.__parent_layer = parent_layer
-        self.__previous_tensors: dict = previous_tensors
-
-    def get_data_tensor(self):
-        return self.__data_tensor
-
-    def get_parent_layer(self):
-        """
-        Returns
-        -------
-        Layer
-            Layer which produced current MakiTensor.
-        """
-        return self.__parent_layer
-
-    def get_parent_tensors(self) -> list:
-        """
-        Returns
-        -------
-        list of MakiTensors
-            MakiTensors that were used for creating current MakiTensor.
-        """
-        parent_tensors = []
-        for name in self.__parent_tensor_names:
-            parent_tensors += [self.__previous_tensors[name]]
-        return parent_tensors
-
-    def get_parent_tensor_names(self):
-        return self.__parent_tensor_names
-
-    def get_previous_tensors(self) -> dict:
-        """
-        Returns
-        -------
-        dict of MakiTensors
-            All the MakiTensors that appear earlier in the computational graph.
-            The dictionary contains pairs: { name of the tensor: MakiTensor }.
-        """
-        return self.__previous_tensors
-
-    def get_shape(self):
-        return self.__data_tensor.get_shape().as_list()
-
-    def get_self_pair(self) -> dict:
-        return {self.__name: self}
-
-    def __str__(self):
-        name = self.__name
-        shape = self.get_shape()
-        dtype = self.__data_tensor._dtype.name
-
-        return f"MakiTensor(name={name}, shape={shape}, dtype={dtype})"
-
-    def __repr__(self):
-        name = self.__name
-        shape = self.get_shape()
-        dtype = self.__data_tensor._dtype.name
-
-        return f"<mf.base.MakiTensor 'name={name}' shape={shape} dtype={dtype}>"
-
-    def get_name(self):
-        return self.__name
-
-    def to_dict(self):
-        parent_layer_dict = self.__parent_layer.to_dict()
-        return {
-            MakiTensor.NAME: self.__name,
-            MakiTensor.PARENT_TENSOR_NAMES: self.__parent_tensor_names,
-            MakiTensor.PARENT_LAYER_INFO: parent_layer_dict
-        }
-
-
-class MakiModel:
+class MakiModel(MakiModelRestoreBase):
     MODEL_INFO = 'model_info'
     GRAPH_INFO = 'graph_info'
 
@@ -294,8 +244,8 @@ class MakiModel:
     def get_node(self, node_name):
         return self._graph_tensors.get(node_name)
 
-# ----------------------------------------------------------------------------------------------------------------------
-# ----------------------------------------------------------------------MAKIMODEL TRAINING------------------------------
+    # ----------------------------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------MAKIMODEL TRAINING------------------------------
 
     def set_layers_trainable(self, layers):
         """
@@ -327,7 +277,7 @@ class MakiModel:
 
     def _setup_for_training(self):
         self._set_for_training = True
-        
+
         # Collect all the layers names since all of them are trainable from
         # the beginning.
         self._trainable_layers = []
@@ -335,7 +285,7 @@ class MakiModel:
             self._trainable_layers.append(layer_name)
         self._trainable_vars = []
         self._collect_train_params()
-        
+
         # Setup L2 regularization
         self._uses_l2_regularization = False
         self._l2_reg_loss_is_build = False
@@ -368,13 +318,13 @@ class MakiModel:
             self._setup_for_training()
 
         self._uses_l2_regularization = True
-        
+
         for layer_name, decay in layers:
             self._l2_regularized_layers[layer_name] = decay
-    
+
     def set_common_l2_weight_decay(self, decay=1e-6):
         """
-        Enables L2 regularization while training. 
+        Enables L2 regularization while training.
         `decay` will be set as decay for each regularized weight.
         If you haven't used `set_l2_reg` method and did not turn off
         the regularization on certain layers, the regularization will be
@@ -393,7 +343,7 @@ class MakiModel:
         for layer_name in self._l2_regularized_layers:
             if self._l2_regularized_layers[layer_name] is not None:
                 self._l2_regularized_layers[layer_name] = decay
-    
+
     def _build_l2_loss(self):
         self._l2_reg_loss = tf.constant(0.0)
         for layer_name in self._l2_regularized_layers:
@@ -403,7 +353,7 @@ class MakiModel:
                 params = layer.get_params()
                 for param in params:
                     self._l2_reg_loss += tf.nn.l2_loss(param) * tf.constant(decay)
-        
+
         self._l2_reg_loss_is_build = True
 
     # L1 REGULARIZATION
@@ -425,13 +375,13 @@ class MakiModel:
             self._setup_for_training()
 
         self._uses_l1_regularization = True
-        
+
         for layer_name, decay in layers:
             self._l1_regularized_layers[layer_name] = decay
-    
+
     def set_common_l1_weight_decay(self, decay=1e-6):
         """
-        Enables L2 regularization while training. 
+        Enables L2 regularization while training.
         `decay` will be set as decay for each regularized weight.
         If you haven't used `set_l1_reg` method and did not turn off
         the regularization on certain layers, the regularization will be
@@ -450,7 +400,7 @@ class MakiModel:
         for layer_name in self._l1_regularized_layers:
             if self._l1_regularized_layers[layer_name] is not None:
                 self._l1_regularized_layers[layer_name] = decay
-    
+
     def _build_l1_loss(self):
         self._l1_reg_loss = tf.constant(0.0)
         for layer_name in self._l1_regularized_layers:
@@ -473,7 +423,7 @@ class MakiModel:
             if not self._l2_reg_loss_is_build:
                 self._build_l2_loss()
             custom_loss += self._l2_reg_loss
-        
+
         return custom_loss
 
     def _build_training_graph(self):

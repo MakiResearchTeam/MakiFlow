@@ -16,8 +16,8 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.models.unsupervised.autoencoders.encoder import Encoder
-from makiflow.models.unsupervised.autoencoders import Decoder
+from .encoder import Encoder
+from .decoder import Decoder
 
 import tensorflow as tf
 import numpy as np
