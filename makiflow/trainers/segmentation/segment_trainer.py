@@ -21,7 +21,7 @@ import os
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-from makiflow.metrics import categorical_dice_coeff, confusion_mat_perform_testing
+from makiflow.metrics import categorical_dice_coeff
 from makiflow.trainers.utils.optimizer_builder import OptimizerBuilder
 from sklearn.utils import shuffle
 from makiflow.save_recover.builder import Builder

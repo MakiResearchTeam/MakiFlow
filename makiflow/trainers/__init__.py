@@ -17,7 +17,8 @@
 
 from __future__ import absolute_import
 
-from makiflow.trainers.segmentation.segment_trainer import SegmentatorTrainer
+from .segmentation import SegmentatorTrainer
+from .utils import LearningRateBuilder, OptimizerBuilder
 
 del absolute_import
 
