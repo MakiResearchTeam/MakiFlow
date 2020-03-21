@@ -27,3 +27,7 @@ from .untrainable_layers import ZeroPaddingLayer, UpSamplingLayer, ConcatLayer, 
 from .untrainable_layers import InputLayer, ReshapeLayer, ResizeLayer, L2NormalizationLayer
 
 from .rnn_layers import CellType, GRULayer, LSTMLayer, EmbeddingLayer, RNNBlock
+
+from .neural_texture import LaplacianPyramidTextureLayer, SingleTextureLayer
+
+del absolute_import

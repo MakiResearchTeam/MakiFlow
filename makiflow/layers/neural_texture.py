@@ -15,21 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.layers.sf_layer import SimpleForwardLayer
+from .sf_layer import SimpleForwardLayer
 from makiflow.models.nn_render.utils import grid_sample
+from makiflow.base import MakiRestorable
 import tensorflow as tf
 import numpy as np
 
 
-class TParams:
+class SingleTextureLayer(SimpleForwardLayer):
+
+    TYPE = 'SingleTextureLayer'
     WIDTH = 'WIDTH'
     HEIGHT = 'HEIGHT'
     NUM_F = 'NUM_F'
-    DEPTH = 'DEPTH'
-    NAME = 'NAME'
 
-
-class SingleTextureLayer(SimpleForwardLayer):
     def __init__(self, width, height, num_f, name, text_init=None):
         self._w = width
         self._h = height
@@ -53,19 +52,36 @@ class SingleTextureLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        width = params[SingleTextureLayer.WIDTH]
+        height = params[SingleTextureLayer.HEIGHT]
+        num_f = params[SingleTextureLayer.NUM_F]
+
+        return SingleTextureLayer(width=width, height=height, num_f=num_f, name=name)
+
     def to_dict(self):
         return {
-            'type': 'SingleTextureLayer',
-            'params': {
-                TParams.WIDTH: self._w,
-                TParams.HEIGHT: self._h,
-                TParams.NUM_F: self._num_f,
-                TParams.NAME: self._name
+            MakiRestorable.FIELD_TYPE: SingleTextureLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                SingleTextureLayer.WIDTH: self._w,
+                SingleTextureLayer.HEIGHT: self._h,
+                SingleTextureLayer.NUM_F: self._num_f
             }
         }
 
 
 class LaplacianPyramidTextureLayer(SimpleForwardLayer):
+
+    TYPE = 'LaplacianPyramidTextureLayer'
+    WIDTH = 'WIDTH'
+    HEIGHT = 'HEIGHT'
+    NUM_F = 'NUM_F'
+    DEPTH = 'DEPTH'
+    NAME = 'NAME'
+
     def __init__(self, width, height, num_f, depth, name, text_init=None):
         self._w = width
         self._h = height
@@ -103,14 +119,26 @@ class LaplacianPyramidTextureLayer(SimpleForwardLayer):
     def _training_forward(self, x):
         return self._forward(x)
 
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        width = params[LaplacianPyramidTextureLayer.WIDTH]
+        height = params[LaplacianPyramidTextureLayer.HEIGHT]
+        num_f = params[LaplacianPyramidTextureLayer.NUM_F]
+        depth = params[LaplacianPyramidTextureLayer.DEPTH]
+
+        return LaplacianPyramidTextureLayer(width=width, height=height, num_f=num_f,
+                                            depth=depth, name=name)
+
     def to_dict(self):
         return {
-            'type': 'SingleTextureLayer',
-            'params': {
-                TParams.WIDTH: self._w,
-                TParams.HEIGHT: self._h,
-                TParams.NUM_F: self._num_f,
-                TParams.DEPTH: self._depth,
-                TParams.NAME: self._name,
+            MakiRestorable.FIELD_TYPE: LaplacianPyramidTextureLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self._name,
+                LaplacianPyramidTextureLayer.WIDTH: self._w,
+                LaplacianPyramidTextureLayer.HEIGHT: self._h,
+                LaplacianPyramidTextureLayer.NUM_F: self._num_f,
+                LaplacianPyramidTextureLayer.DEPTH: self._depth,
             }
         }
+

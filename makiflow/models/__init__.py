@@ -23,5 +23,6 @@ from .ssd.ssd_model import SSDModel
 from .classificator import Classificator
 from .segmentation.segmentator import Segmentator
 from .rnn.text_recognizer import TextRecognizer
+from .nn_render import NeuralRender
 
 del absolute_import

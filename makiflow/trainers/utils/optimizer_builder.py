@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from .learning_rate_builder import LearningRateBuilder
+from makiflow.trainers.utils.learning_rate_builder import LearningRateBuilder
 
 """
 {
