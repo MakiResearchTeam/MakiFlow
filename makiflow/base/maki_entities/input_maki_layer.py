@@ -20,7 +20,7 @@ from .maki_layer import MakiLayer
 from abc import ABC
 
 
-class InputMakiLayer(MakiTensor, MakiLayer, ABC):
+class InputMakiLayer(MakiTensor, ABC):
     TYPE = 'InputLayer'
 
     def __init__(self, data_tensor, name):
@@ -35,6 +35,8 @@ class InputMakiLayer(MakiTensor, MakiLayer, ABC):
             Name of this layer.
         """
         self._name = name
+        self._params = []
+        self._named_params_dict = {}
 
         super().__init__(
             data_tensor=data_tensor,
@@ -43,3 +45,14 @@ class InputMakiLayer(MakiTensor, MakiLayer, ABC):
             previous_tensors={},
         )
 
+    def get_params(self):
+        return self._params
+
+    def get_params_dict(self):
+        """
+        This data is used for correct saving and loading models using TensorFlow checkpoint files.
+        """
+        return self._named_params_dict
+
+    def get_name(self):
+        return self._name
