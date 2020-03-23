@@ -23,10 +23,20 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import traceback
+import cv2
+import glob
+import copy
 
-from makiflow.models import NeuralRender
+from makiflow.models.nn_render.training_modules.abs_loss import ABS_LOSS
+from makiflow.models.nn_render.training_modules.mse_loss import MSE_LOSS
+from makiflow.models.nn_render.training_modules.masked_abs_loss import MASKED_ABS_LOSS
+from makiflow.models.nn_render.training_modules.masked_mse_loss import MASKED_MSE_LOSS
+from makiflow.models.nn_render.training_modules.perceptual_loss import PERCEPTUAL_LOSS
+
+
 from makiflow.trainers.utils.optimizer_builder import OptimizerBuilder
 from makiflow.tools.test_visualizer import TestVisualizer
+from makiflow.tf_scripts import  get_low_memory_sess
 
 """
 EXAMPLE OF THE TEST PARAMETERS:
@@ -67,7 +77,6 @@ class ExpField:
     untrainable_layers = 'untrainable layers'
     epochs = 'epochs'
     test_period = 'test period'
-    save_period = 'save period'
     loss_type = 'loss type'
     l1_reg = 'l1 reg'
     l1_reg_layers = 'l1 reg layers'
@@ -75,11 +84,12 @@ class ExpField:
     l2_reg_layers = 'l2 reg layers'
     optimizers = 'optimizers'
     iterations = 'iterations'
-
+    path_test_image = 'path_test_image'
+    path_test_uv = 'path_test_uv'
+    batch_size = 'batch_size'
 
 class SubExpField:
     opt_info = 'opt_info'
-
 
 class LossType:
     AbsLoss = 'AbsLoss'
@@ -136,12 +146,14 @@ class RenderTrainer:
             ExpField.untrainable_layers: experiment[ExpField.untrainable_layers],
             ExpField.epochs: experiment[ExpField.epochs],
             ExpField.test_period: experiment[ExpField.test_period],
-            ExpField.save_period: experiment[ExpField.save_period],
             ExpField.loss_type: experiment[ExpField.loss_type],
             ExpField.l1_reg: experiment[ExpField.l1_reg],
             ExpField.l1_reg_layers: experiment[ExpField.l1_reg_layers],
             ExpField.l2_reg: experiment[ExpField.l2_reg],
-            ExpField.l2_reg_layers: experiment[ExpField.l2_reg_layers]
+            ExpField.l2_reg_layers: experiment[ExpField.l2_reg_layers],
+            ExpField.path_test_image: experiment[ExpField.path_test_image],
+            ExpField.path_test_uv: experiment[ExpField.path_test_uv],
+            ExpField.batch_size: experiment[ExpField.batch_size],
         }
         for opt_info in experiment[ExpField.optimizers]:
             exp_params[SubExpField.opt_info] = opt_info
@@ -168,7 +180,7 @@ class RenderTrainer:
         # what causes deletion of every computational graph was ever built.
         self._update_session()
 
-        model = self._model_creation_function()
+        model = self._model_creation_function(True)
         self.generator = model._generator
         self.loss_list = []
 
@@ -207,12 +219,72 @@ class RenderTrainer:
     # -----------------------------------------------------------------------------------------------------------------
     # -----------------------------------EXPERIMENT UTILITIES----------------------------------------------------------
 
-    def _perform_testing(self, model, exp_params, epoch, FPS=25):
-        # Create test video from pure model
+    def _perform_testing(self, exp_params, epochs, path_to_weights, FPS=25):
+        # Create test video from pure model.
+        # NOTICE output of model and input image size (not UV) must be equal
         print('Testing the model...')
         print('Collecting predictions...')
 
-        pass
+        # Create model with default InputLayer
+        model = self._model_creation_function(False)
+        test_ses = get_low_memory_sess()
+        model.set_session(test_ses)
+        model.load_weights(path_to_weights)
+
+        # Collect data and predictions
+
+        uv = []
+        masks = []
+        origin_image = []
+
+        for m in range(len(exp_params[ExpField.path_test_uv])):
+            path = exp_params[ExpField.path_test_uv][m]
+            path_image = exp_params[ExpField.path_test_image][m]
+            count = len(glob.glob(path + '/*.npy'))
+            for i in range(1, count):
+                load = np.load(path + '/' + str(i) + '.npy')
+                image = cv2.imread(path_image + '/' + str(i) + '.png')
+                mask = copy.deepcopy(load[:, :, 0])
+                mask[mask > 0.0] = 1.0
+                masks.append(mask.astype(np.float32))
+                uv.append(load.astype(np.float32))
+                origin_image.append(image.astype(np.float32))
+
+        without_face = []
+        for i in range(len(origin_image)):
+            mask = masks[i]
+            image = copy.deepcopy(origin_image[i])
+            image[:, :, 0] *= (mask != 1)
+            image[:, :, 1] *= (mask != 1)
+            image[:, :, 2] *= (mask != 1)
+            without_face.append(image.astype(np.float32))
+
+        batch_size = exp_params[ExpField.batch_size]
+
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        writer = cv2.VideoWriter(os.path.join('', f'{epochs}_render_danil_test.mp4'), fourcc, FPS,
+                                 (origin_image[0].shape[0] * 2, origin_image[0].shape[0]), True)
+
+        all_pred = []
+
+        for i in range(len(uv) // batch_size):
+            answer = model.predict(uv[i * batch_size:batch_size * (i + 1)])
+            all_pred += [i for i in answer]
+
+        print('render video')
+        for i in range(len(all_pred)):
+            answer = np.clip(all_pred[i] + 1, 0.0, 2.0)
+            answer = answer * 128
+            answer[:, :, 0] = without_face[i][:, :, 0] + masks[i] * answer[:, :, 0]
+            answer[:, :, 1] = without_face[i][:, :, 1] + masks[i] * answer[:, :, 1]
+            answer[:, :, 2] = without_face[i][:, :, 2] + masks[i] * answer[:, :, 2]
+            answer = np.concatenate([answer, origin_image[i]], axis=1)
+            answer = answer.astype(np.uint8)
+            writer.write(answer)
+
+        writer.release()
+        print(f'{epochs}_render_danil_test.mp4 video was created!')
+        test_ses.close()
 
     # -----------------------------------------------------------------------------------------------------------------
     # ------------------------------------EXPERIMENT LOOP--------------------------------------------------------------
@@ -225,7 +297,6 @@ class RenderTrainer:
         epochs = exp_params[ExpField.epochs]
         iterations = exp_params[ExpField.iterations]
         test_period = exp_params[ExpField.test_period]
-        save_period = exp_params[ExpField.save_period]
         optimizer, global_step = OptimizerBuilder.build_optimizer(opt_info)
         if global_step is not None:
             self._sess.run(tf.variables_initializer([global_step]))
@@ -233,42 +304,40 @@ class RenderTrainer:
         # Catch InterruptException
         try:
             for i in range(epochs):
-                if self.generator is None:
-                    if loss_type == LossType.AbsLoss:
-                        sub_train_info = None
-                    elif loss_type == LossType.MseLoss:
-                        sub_train_info = None
-                    else:
-                        raise ValueError('Unknown loss type!')
+                if loss_type == LossType.AbsLoss:
+                    sub_train_info = model.gen_fit_abs(optimizer=optimizer, epochs=1,
+                                                       iterations=iterations, global_step=global_step)
+                    loss_value = sub_train_info[ABS_LOSS][0]
+                elif loss_type == LossType.MseLoss:
+                    sub_train_info = model.gen_fit_mse(optimizer=optimizer, epochs=1,
+                                                       iterations=iterations, global_step=global_step)
+                    loss_value = sub_train_info[MSE_LOSS][0]
+                elif loss_type == LossType.MaskedAbsLoss:
+                    sub_train_info = model.gen_fit_masked_abs(optimizer=optimizer, epochs=1,
+                                                              iterations=iterations, global_step=global_step)
+                    loss_value = sub_train_info[MASKED_ABS_LOSS][0]
+                elif loss_type == LossType.MaskedMseLoss:
+                    sub_train_info = model.gen_fit_masked_mse(optimizer=optimizer, epochs=1,
+                                                              iterations=iterations, global_step=global_step)
+                    loss_value = sub_train_info[MASKED_MSE_LOSS][0]
+                elif loss_type == LossType.PerceptualLoss:
+                    sub_train_info = model.gen_fit_perceptual(optimizer=optimizer, epochs=1,
+                                                              iterations=iterations, global_step=global_step)
+                    loss_value = sub_train_info[PERCEPTUAL_LOSS][0]
                 else:
-                    if loss_type == LossType.AbsLoss:
-                        sub_train_info = model.gen_fit_abs(optimizer=optimizer, epochs=1,
-                                                           iterations=iterations, global_step=global_step)
-                    elif loss_type == LossType.MseLoss:
-                        sub_train_info = model.gen_fit_mse(optimizer=optimizer, epochs=1,
-                                                           iterations=iterations, global_step=global_step)
-                    elif loss_type == LossType.MaskedAbsLoss:
-                        sub_train_info = model.gen_fit_masked_abs(optimizer=optimizer, epochs=1,
-                                                                  iterations=iterations, global_step=global_step)
-                    elif loss_type == LossType.MaskedMseLoss:
-                        sub_train_info = model.gen_fit_masked_mse(optimizer=optimizer, epochs=1,
-                                                                  iterations=iterations, global_step=global_step)
-                    elif loss_type == LossType.PerceptualLoss:
-                        sub_train_info = model.gen_fit_perceptual(optimizer=optimizer, epochs=1,
-                                                                  iterations=iterations, global_step=global_step)
-                    else:
-                        raise ValueError('Unknown loss type!')
+                    raise ValueError(f'Unknown loss type {loss_type}!')
 
-                self.loss_list += sub_train_info['train losses']
+                self.loss_list += [loss_value]
 
+                # For generators we should save weights and then load them into new model to perform test
                 if i % test_period == 0:
-                    self._perform_testing(model, exp_params, i)
-
-                if save_period is not None and i % save_period == 0:
+                    save_path = f'{self._path_to_save}/epoch_{i}/'
                     os.makedirs(
-                        f'{self._path_to_save}/epoch_{i}/', exist_ok=True
+                        save_path, exist_ok=True
                     )
-                    model.save_weights(f'{self._path_to_save}/epoch_{i}/weights.ckpt')
+                    model.save_weights(save_path + 'weights.ckpt')
+
+                    self._perform_testing(exp_params, i, save_path + 'weights.ckpt')
                 print('Epochs:', i)
         except KeyboardInterrupt as ex:
             traceback.print_exc()
@@ -300,17 +369,6 @@ class RenderTrainer:
     # -----------------------------------SAVING TRAINING RESULTS-------------------------------------------------------
 
     def _create_loss_info(self, loss_type):
-        """
-        # Plot all dices
-        TestVisualizer.plot_test_values(
-            test_values=values[1:],
-            legends=labels[1:],
-            x_label='Epochs',
-            y_label='Dice',
-            save_path=f'{self._path_to_save}/dices.png'
-        )
-        """
-
         # Plot Loss
         TestVisualizer.plot_test_values(
             test_values=self.loss_list,
