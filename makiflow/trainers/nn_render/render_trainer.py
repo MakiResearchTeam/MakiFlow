@@ -220,7 +220,7 @@ class RenderTrainer:
     # -----------------------------------------------------------------------------------------------------------------
     # -----------------------------------EXPERIMENT UTILITIES----------------------------------------------------------
 
-    def _perform_testing(self, exp_params, epochs, path_to_weights, FPS=25):
+    def _perform_testing(self, exp_params, save_path, epochs, path_to_weights, FPS=25):
         # Create test video from pure model.
         # NOTICE output of model and input image size (not UV) must be equal
         print('Testing the model...')
@@ -263,7 +263,7 @@ class RenderTrainer:
         batch_size = exp_params[ExpField.batch_size]
 
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        writer = cv2.VideoWriter(os.path.join('', f'{self._exp_folder}/epoch_{i}/render_video.mp4'), fourcc, FPS,
+        writer = cv2.VideoWriter(f'{save_path}/render_video.mp4', fourcc, FPS,
                                  (origin_image[0].shape[0] * 2, origin_image[0].shape[0]), True)
 
         all_pred = []
@@ -338,7 +338,7 @@ class RenderTrainer:
                     )
                     model.save_weights(save_path + 'weights.ckpt')
 
-                    self._perform_testing(exp_params, i, save_path + 'weights.ckpt')
+                    self._perform_testing(exp_params, save_path, i, save_path + 'weights.ckpt')
                 print('Epochs:', i)
         except KeyboardInterrupt as ex:
             traceback.print_exc()
