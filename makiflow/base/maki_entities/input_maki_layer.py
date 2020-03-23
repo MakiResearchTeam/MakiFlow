@@ -36,6 +36,7 @@ class InputMakiLayer(MakiTensor, MakiLayer, ABC):
         """
 
         self._params = []
+        self._named_params_dict = {}
         self._name = str(name)
         super().__init__(
             data_tensor=data_tensor,
