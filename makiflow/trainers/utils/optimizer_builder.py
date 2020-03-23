@@ -22,7 +22,7 @@ from makiflow.trainers.utils.learning_rate_builder import LearningRateBuilder
 {
     "type": "MomentumOptimizer",
     "params": {
-        "lr": ..
+        "learning_rate": ..
         "momentum": ..
     }
 }

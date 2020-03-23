@@ -3,7 +3,7 @@
     {
       "type": "AdamOptimizer",
       "params": {
-        "learning_rates": "lr_settings",
+        "learning_rate": "lr_settings",
         "beta1": 0.9,
         "beta2": 0.999,
         "use_locking": false,
@@ -65,7 +65,7 @@
     {
       "type": "ExponentialDecay",
       "params": {
-        "lr": "value_of_lr",
+        "learning_rate": "value_of_lr",
         "decay_steps": "value_of_param",
         "decay_rate": "value_of_param",
         "staircase": false,
@@ -75,7 +75,7 @@
     {
       "type": "CosineDecay",
       "params": {
-        "lr": "value_of_lr",
+        "learning_rate": "value_of_lr",
         "decay_steps": "value_of_param",
         "alpha": 0.0,
         "name": "CosineDecay"
@@ -84,7 +84,7 @@
     {
       "type": "CosineRestartsDecay",
       "params": {
-        "lr": "value_of_lr",
+        "learning_rate": "value_of_lr",
         "first_decay_steps": "value_of_param",
         "t_mul": 2.0,
         "m_mul": 1.0,
@@ -95,7 +95,7 @@
     {
       "type": "InverseTimeDecay",
       "params": {
-        "lr": "value_of_lr",
+        "learning_rate": "value_of_lr",
         "decay_steps": "value_of_param",
         "decay_rate": "value_of_param",
         "staircase": false,
@@ -105,7 +105,7 @@
     {
       "type": "LinearCosineDecay",
       "params": {
-        "lr": "value_of_lr",
+        "learning_rate": "value_of_lr",
         "decay_steps": "value_of_param",
         "num_periods": 0.5,
         "alpha": 0.0,
