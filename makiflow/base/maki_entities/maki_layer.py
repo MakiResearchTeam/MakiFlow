@@ -51,6 +51,11 @@ class MakiRestorable(ABC):
 
 
 class MakiLayer(MakiRestorable):
+
+    def __init__(self):
+        self._params = []
+        self._named_params_dict = {}
+
     def __init__(self, name, params, named_params_dict):
         self._name = name
         self._params = params

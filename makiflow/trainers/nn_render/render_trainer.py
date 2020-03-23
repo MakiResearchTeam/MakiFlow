@@ -332,7 +332,7 @@ class RenderTrainer:
 
                 # For generators we should save weights and then load them into new model to perform test
                 if i % test_period == 0:
-                    save_path = f'{self._path_to_save}/epoch_{i}/'
+                    save_path = f'{self._exp_folder}/epoch_{i}/'
                     os.makedirs(
                         save_path, exist_ok=True
                     )
@@ -346,9 +346,9 @@ class RenderTrainer:
         finally:
             # ALWAYS DO LAST SAVE
             os.makedirs(
-                f'{self._path_to_save}/last_weights/', exist_ok=True
+                f'{self._exp_folder}/last_weights/', exist_ok=True
             )
-            model.save_weights(f'{self._path_to_save}/last_weights/weights.ckpt')
+            model.save_weights(f'{self._exp_folder}/last_weights/weights.ckpt')
             print('Test finished.')
 
             # Close the session since Generator yields unexpected behaviour otherwise.
@@ -376,6 +376,6 @@ class RenderTrainer:
             legends=[loss_type],
             x_label='Epochs',
             y_label='Loss',
-            save_path=f'{self._path_to_save}/loss.png'
+            save_path=f'{self._exp_folder}/loss.png'
         )
 

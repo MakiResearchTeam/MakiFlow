@@ -34,13 +34,12 @@ class InputMakiLayer(MakiTensor, MakiLayer, ABC):
         name : str
             Name of this layer.
         """
+        self._name = name
 
-        self._params = []
-        self._named_params_dict = {}
-        self._name = str(name)
         super().__init__(
             data_tensor=data_tensor,
             parent_layer=self,
             parent_tensor_names=[],
             previous_tensors={},
         )
+
