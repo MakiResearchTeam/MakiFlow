@@ -36,7 +36,6 @@ from makiflow.models.nn_render.training_modules.perceptual_loss import PERCEPTUA
 
 from makiflow.trainers.utils.optimizer_builder import OptimizerBuilder
 from makiflow.tools.test_visualizer import TestVisualizer
-from makiflow.tf_scripts import  get_low_memory_sess
 
 """
 EXAMPLE OF THE TEST PARAMETERS:
@@ -229,7 +228,7 @@ class RenderTrainer:
 
         # Create model with default InputLayer
         model = self._model_creation_function(False)
-        test_ses = get_low_memory_sess()
+        test_ses = tf.Session()
         model.set_session(test_ses)
         model.load_weights(path_to_weights)
 
