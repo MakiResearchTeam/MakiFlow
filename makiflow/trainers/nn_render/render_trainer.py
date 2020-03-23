@@ -349,7 +349,7 @@ class RenderTrainer:
             os.makedirs(
                 save_path, exist_ok=True
             )
-            model.save_weights(f'{save_path}/last_weights/weights.ckpt')
+            model.save_weights(f'{save_path}/weights.ckpt')
             print('Test finished.')
 
             # Close the session since Generator yields unexpected behaviour otherwise.
