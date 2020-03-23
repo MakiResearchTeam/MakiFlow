@@ -374,7 +374,7 @@ class RenderTrainer:
         # Plot Loss
         TestVisualizer.plot_test_values(
             test_values=self.loss_list,
-            legends=loss_type,
+            legends=[loss_type],
             x_label='Epochs',
             y_label='Loss',
             save_path=f'{self._path_to_save}/loss.png'
