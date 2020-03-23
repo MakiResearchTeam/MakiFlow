@@ -220,7 +220,7 @@ class RenderTrainer:
     # -----------------------------------------------------------------------------------------------------------------
     # -----------------------------------EXPERIMENT UTILITIES----------------------------------------------------------
 
-    def _perform_testing(self, exp_params, save_path, epochs, path_to_weights, FPS=25):
+    def _perform_testing(self, exp_params, save_path, path_to_weights, FPS=25):
         # Create test video from pure model.
         # NOTICE output of model and input image size (not UV) must be equal
         print('Testing the model...')
@@ -338,7 +338,7 @@ class RenderTrainer:
                     )
                     model.save_weights(save_path + 'weights.ckpt')
 
-                    self._perform_testing(exp_params, save_path, i, save_path + 'weights.ckpt')
+                    self._perform_testing(exp_params, save_path, save_path + 'weights.ckpt')
                 print('Epochs:', i)
         except KeyboardInterrupt as ex:
             traceback.print_exc()
@@ -350,6 +350,7 @@ class RenderTrainer:
                 save_path + '/last_weights', exist_ok=True
             )
             model.save_weights(f'{save_path}/last_weights/weights.ckpt')
+            self._perform_testing(exp_params, save_path + '/last_weights/', save_path + '/last_weights/weights.ckpt')
             print('Test finished.')
 
             # Close the session since Generator yields unexpected behaviour otherwise.
