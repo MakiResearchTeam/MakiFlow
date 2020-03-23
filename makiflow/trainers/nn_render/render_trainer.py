@@ -345,11 +345,11 @@ class RenderTrainer:
             print("SAVING GAINED DATA")
         finally:
             # ALWAYS DO LAST SAVE
-            save_path = f'{self._exp_folder}/{number_of_experiment}_exp/last_weights'
+            save_path = f'{self._exp_folder}/{number_of_experiment}_exp'
             os.makedirs(
-                save_path, exist_ok=True
+                save_path + '/last_weights', exist_ok=True
             )
-            model.save_weights(f'{save_path}/weights.ckpt')
+            model.save_weights(f'{save_path}/last_weights/weights.ckpt')
             print('Test finished.')
 
             # Close the session since Generator yields unexpected behaviour otherwise.
@@ -364,19 +364,19 @@ class RenderTrainer:
             self._sess = None
             print('Session is closed.')
 
-            self._create_loss_info(loss_type)
+            self._create_loss_info(loss_type, save_path)
             print('Sub test is done.')
 
     # -----------------------------------------------------------------------------------------------------------------
     # -----------------------------------SAVING TRAINING RESULTS-------------------------------------------------------
 
-    def _create_loss_info(self, loss_type):
+    def _create_loss_info(self, loss_type, save_path):
         # Plot Loss
         TestVisualizer.plot_test_values(
             test_values=[self.loss_list],
             legends=[loss_type],
             x_label='Epochs',
             y_label='Loss',
-            save_path=f'{self._exp_folder}/loss.png'
+            save_path=f'{save_path}/loss_info.png'
         )
 
