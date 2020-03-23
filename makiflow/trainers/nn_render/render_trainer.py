@@ -71,6 +71,7 @@ experiment_params = {
 
 
 class ExpField:
+    experiments = 'experiments'
     name = 'name'
     pretrained_layers = 'pretrained layers'
     weights = 'weights'
@@ -125,7 +126,7 @@ class RenderTrainer:
         """
         Starts all the experiments.
         """
-        for experiment in self._exp_params['experiments']:
+        for experiment in self._exp_params[ExpField.experiments]:
             self._start_exp(experiment)
 
     def _create_experiment_folder(self, name):
