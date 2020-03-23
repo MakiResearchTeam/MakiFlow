@@ -156,9 +156,9 @@ class RenderTrainer:
             ExpField.batch_size: experiment[ExpField.batch_size],
             ExpField.iterations: experiment[ExpField.iterations],
         }
-        for opt_info in experiment[ExpField.optimizers]:
+        for i, opt_info in enumerate(experiment[ExpField.optimizers]):
             exp_params[SubExpField.opt_info] = opt_info
-            self._run_experiment(exp_params)
+            self._run_experiment(exp_params, i)
 
     # -----------------------------------------------------------------------------------------------------------------
     # -----------------------------------PREPARING THE EXPERIMENT------------------------------------------------------
@@ -263,7 +263,7 @@ class RenderTrainer:
         batch_size = exp_params[ExpField.batch_size]
 
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        writer = cv2.VideoWriter(f'{save_path}/render_video.mp4', fourcc, FPS,
+        writer = cv2.VideoWriter(f'{save_path}render_video.mp4', fourcc, FPS,
                                  (origin_image[0].shape[0] * 2, origin_image[0].shape[0]), True)
 
         all_pred = []
@@ -284,13 +284,13 @@ class RenderTrainer:
             writer.write(answer)
 
         writer.release()
-        print(f'{epochs}_render_danil_test.mp4 video was created!')
+        print(f'{save_path}/render_video.mp4 video was created!')
         test_ses.close()
 
     # -----------------------------------------------------------------------------------------------------------------
     # ------------------------------------EXPERIMENT LOOP--------------------------------------------------------------
 
-    def _run_experiment(self, exp_params):
+    def _run_experiment(self, exp_params, number_of_experiment):
         model = self._restore_model(exp_params)
 
         loss_type = exp_params[ExpField.loss_type]
@@ -332,7 +332,7 @@ class RenderTrainer:
 
                 # For generators we should save weights and then load them into new model to perform test
                 if i % test_period == 0:
-                    save_path = f'{self._exp_folder}/epoch_{i}/'
+                    save_path = f'{self._exp_folder}/{number_of_experiment}_exp/epoch_{i}/'
                     os.makedirs(
                         save_path, exist_ok=True
                     )
@@ -345,10 +345,11 @@ class RenderTrainer:
             print("SAVING GAINED DATA")
         finally:
             # ALWAYS DO LAST SAVE
+            save_path = f'{self._exp_folder}/{number_of_experiment}_exp/last_weights'
             os.makedirs(
-                f'{self._exp_folder}/last_weights/', exist_ok=True
+                save_path, exist_ok=True
             )
-            model.save_weights(f'{self._exp_folder}/last_weights/weights.ckpt')
+            model.save_weights(f'{save_path}/last_weights/weights.ckpt')
             print('Test finished.')
 
             # Close the session since Generator yields unexpected behaviour otherwise.
