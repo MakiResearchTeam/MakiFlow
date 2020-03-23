@@ -373,7 +373,7 @@ class RenderTrainer:
     def _create_loss_info(self, loss_type):
         # Plot Loss
         TestVisualizer.plot_test_values(
-            test_values=self.loss_list,
+            test_values=[self.loss_list],
             legends=[loss_type],
             x_label='Epochs',
             y_label='Loss',
