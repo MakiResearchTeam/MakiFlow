@@ -263,7 +263,7 @@ class RenderTrainer:
         batch_size = exp_params[ExpField.batch_size]
 
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        writer = cv2.VideoWriter(os.path.join('', f'{epochs}_render_danil_test.mp4'), fourcc, FPS,
+        writer = cv2.VideoWriter(os.path.join('', f'{self._exp_folder}/{epochs}_render_danil_test.mp4'), fourcc, FPS,
                                  (origin_image[0].shape[0] * 2, origin_image[0].shape[0]), True)
 
         all_pred = []
