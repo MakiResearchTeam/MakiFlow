@@ -155,6 +155,7 @@ class RenderTrainer:
             ExpField.path_test_image: experiment[ExpField.path_test_image],
             ExpField.path_test_uv: experiment[ExpField.path_test_uv],
             ExpField.batch_size: experiment[ExpField.batch_size],
+            ExpField.iterations: experiment[ExpField.iterations],
         }
         for opt_info in experiment[ExpField.optimizers]:
             exp_params[SubExpField.opt_info] = opt_info
