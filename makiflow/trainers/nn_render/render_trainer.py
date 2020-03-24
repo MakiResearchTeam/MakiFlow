@@ -70,7 +70,7 @@ experiment_params = {
 
 
 class ExpField:
-    EXPERIMENTS = 'EXPERIMENTS'
+    EXPERIMENTS = 'experiments'
     NAME = 'name'
     PRETRAINED_LAYERS = 'pretrained layers'
     WEIGHTS = 'weights'
