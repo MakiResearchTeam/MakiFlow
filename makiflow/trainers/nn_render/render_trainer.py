@@ -181,23 +181,36 @@ class RenderTrainer:
         # what causes deletion of every computational graph was ever built.
         self._update_session()
 
-        model = self._model_creation_function(use_gen=True, batch_size=exp_params[ExpField.BATCH_SIZE])
-        self.generator = model._generator
+        # model for train
+        self._model = self._model_creation_function(use_gen=True, batch_size=exp_params[ExpField.BATCH_SIZE])
+        self.generator = self._model._generator
         self.loss_list = []
 
         weights_path = exp_params[ExpField.WEIGHTS]
         pretrained_layers = exp_params[ExpField.PRETRAINED_LAYERS]
         untrainable_layers = exp_params[ExpField.UNTRAINABLE_LAYERS]
 
-        model.set_session(self._sess)
+        self._model.set_session(self._sess)
         if weights_path is not None:
-            model.load_weights(weights_path, layer_names=pretrained_layers)
+            self._model.load_weights(weights_path, layer_names=pretrained_layers)
+
+        # model for test
+        self._test_model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE])
+
+        weights_path = exp_params[ExpField.WEIGHTS]
+        pretrained_layers = exp_params[ExpField.PRETRAINED_LAYERS]
+        untrainable_layers = exp_params[ExpField.UNTRAINABLE_LAYERS]
+
+        self._test_model.set_session(self._sess)
+        if weights_path is not None:
+            self._test_model.load_weights(weights_path, layer_names=pretrained_layers)
+
 
         if untrainable_layers is not None:
             layers = []
             for layer_name in untrainable_layers:
                 layers += [(layer_name, False)]
-            model.set_layers_trainable(layers)
+            self._model.set_layers_trainable(layers)
 
         # Set l1 regularization
         l1_reg = exp_params[ExpField.L1_REG]
@@ -205,7 +218,7 @@ class RenderTrainer:
             l1_reg = np.float32(l1_reg)
             l1_reg_layers = exp_params[ExpField.L1_REG_LAYERS]
             reg_config = [(layer, l1_reg) for layer in l1_reg_layers]
-            model.set_l1_reg(reg_config)
+            self._model.set_l1_reg(reg_config)
 
         # Set l2 regularization
         l2_reg = exp_params[ExpField.L2_REG]
@@ -213,9 +226,7 @@ class RenderTrainer:
             l2_reg = np.float32(l2_reg)
             l2_reg_layers = exp_params[ExpField.L2_REG_LAYERS]
             reg_config = [(layer, l2_reg) for layer in l2_reg_layers]
-            model.set_l2_reg(reg_config)
-
-        return model
+            self._model.set_l2_reg(reg_config)
 
     # -----------------------------------------------------------------------------------------------------------------
     # -----------------------------------EXPERIMENT UTILITIES----------------------------------------------------------
@@ -225,12 +236,6 @@ class RenderTrainer:
         # NOTICE output of model and input image size (not UV) must be equal
         print('Testing the model...')
         print('Collecting predictions...')
-
-        # Create model with default InputLayer
-        model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE])
-        test_ses = tf.Session()
-        model.set_session(test_ses)
-        model.load_weights(path_to_weights)
 
         # Collect data and predictions
 
@@ -269,7 +274,7 @@ class RenderTrainer:
         all_pred = []
 
         for i in range(len(uv) // batch_size):
-            answer = model.predict(uv[i * batch_size:batch_size * (i + 1)])
+            answer = self._test_model.predict(uv[i * batch_size:batch_size * (i + 1)])
             all_pred += [i for i in answer]
 
         print('render video')
@@ -291,7 +296,7 @@ class RenderTrainer:
     # ------------------------------------EXPERIMENT LOOP--------------------------------------------------------------
 
     def _run_experiment(self, exp_params, number_of_experiment):
-        model = self._restore_model(exp_params)
+        self._restore_model(exp_params)
 
         loss_type = exp_params[ExpField.LOSS_TYPE]
         opt_info = exp_params[SubExpField.OPT_INFO]
@@ -306,23 +311,23 @@ class RenderTrainer:
         try:
             for i in range(epochs):
                 if loss_type == LossType.ABS_LOSS:
-                    sub_train_info = model.gen_fit_abs(optimizer=optimizer, epochs=1,
+                    sub_train_info = self._model.gen_fit_abs(optimizer=optimizer, epochs=1,
                                                        iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[ABS_LOSS][0]
                 elif loss_type == LossType.MSE_LOSS:
-                    sub_train_info = model.gen_fit_mse(optimizer=optimizer, epochs=1,
+                    sub_train_info = self._model.gen_fit_mse(optimizer=optimizer, epochs=1,
                                                        iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[MSE_LOSS][0]
                 elif loss_type == LossType.MASKED_ABS_LOSS:
-                    sub_train_info = model.gen_fit_masked_abs(optimizer=optimizer, epochs=1,
+                    sub_train_info = self._model.gen_fit_masked_abs(optimizer=optimizer, epochs=1,
                                                               iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[MASKED_ABS_LOSS][0]
                 elif loss_type == LossType.MASKED_MSE_LOSS:
-                    sub_train_info = model.gen_fit_masked_mse(optimizer=optimizer, epochs=1,
+                    sub_train_info = self._model.gen_fit_masked_mse(optimizer=optimizer, epochs=1,
                                                               iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[MASKED_MSE_LOSS][0]
                 elif loss_type == LossType.PERCEPTUAL_LOSS:
-                    sub_train_info = model.gen_fit_perceptual(optimizer=optimizer, epochs=1,
+                    sub_train_info = self._model.gen_fit_perceptual(optimizer=optimizer, epochs=1,
                                                               iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[PERCEPTUAL_LOSS][0]
                 else:
@@ -336,7 +341,7 @@ class RenderTrainer:
                     os.makedirs(
                         save_path, exist_ok=True
                     )
-                    model.save_weights(save_path + 'weights.ckpt')
+                    self._model.save_weights(save_path + 'weights.ckpt')
 
                     self._perform_testing(exp_params, save_path, save_path + 'weights.ckpt')
                 print('Epochs:', i)
@@ -349,7 +354,7 @@ class RenderTrainer:
             os.makedirs(
                 save_path + '/last_weights', exist_ok=True
             )
-            model.save_weights(f'{save_path}/last_weights/weights.ckpt')
+            self._model.save_weights(f'{save_path}/last_weights/weights.ckpt')
             self._perform_testing(exp_params, save_path + '/last_weights/', save_path + '/last_weights/weights.ckpt')
             print('Test finished.')
 
