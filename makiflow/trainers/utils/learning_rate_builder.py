@@ -57,7 +57,7 @@ class LearningRateBuilder:
                  Optional Variable to increment by one after the variables have been updated.
                  None if `learning_rate_info` is not dict.
         """
-        if type(learning_rate_info) is type(dict):
+        if type(learning_rate_info) is dict:
             opt_type = learning_rate_info['type']
             params = learning_rate_info['params']
             global_step  = tf.Variable(0, trainable=False)
