@@ -85,7 +85,7 @@
       "type": "CosineRestartsDecay",
       "params": {
         "learning_rate": "value_of_lr",
-        "first_decay_steps": "value_of_param",
+        "decay_steps": "value_of_param",
         "t_mul": 2.0,
         "m_mul": 1.0,
         "alpha": 0.0,
