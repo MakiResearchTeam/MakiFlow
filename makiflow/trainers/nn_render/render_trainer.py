@@ -237,6 +237,9 @@ class RenderTrainer:
         print('Testing the model...')
         print('Collecting predictions...')
 
+        # load weights to test model
+        self._test_model.load_weights(path_to_weights)
+
         # Collect data and predictions
 
         uv = []
