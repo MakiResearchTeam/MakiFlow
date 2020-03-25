@@ -75,6 +75,11 @@ class MakiLayer(MakiRestorable):
         pass
 
     def get_params(self):
+        """
+        :return
+        ----------
+        Trainable parameters of the layer.
+        """
         return self._params
 
     def get_params_dict(self):

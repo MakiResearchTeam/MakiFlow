@@ -80,7 +80,6 @@ class LaplacianPyramidTextureLayer(SimpleForwardLayer):
     HEIGHT = 'HEIGHT'
     NUM_F = 'NUM_F'
     DEPTH = 'DEPTH'
-    NAME = 'NAME'
 
     def __init__(self, width, height, num_f, depth, name, text_init=None):
         self._w = width

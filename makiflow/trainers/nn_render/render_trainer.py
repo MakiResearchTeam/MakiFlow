@@ -33,7 +33,6 @@ from makiflow.models.nn_render.training_modules.masked_abs_loss import MASKED_AB
 from makiflow.models.nn_render.training_modules.masked_mse_loss import MASKED_MSE_LOSS
 from makiflow.models.nn_render.training_modules.perceptual_loss import PERCEPTUAL_LOSS
 
-
 from makiflow.trainers.utils.optimizer_builder import OptimizerBuilder
 from makiflow.tools.test_visualizer import TestVisualizer
 
@@ -87,9 +86,12 @@ class ExpField:
     PATH_TEST_IMAGE = 'path_test_image'
     PATH_TEST_UV = 'path_test_uv'
     BATCH_SIZE = 'batch_size'
+    TEXTURE_SIZE = 'texture_size'
+
 
 class SubExpField:
     OPT_INFO = 'opt_info'
+
 
 class LossType:
     ABS_LOSS = 'AbsLoss'
@@ -100,13 +102,35 @@ class LossType:
 
 
 class RenderTrainer:
-    def __init__(self, model_creation_function, exp_params, path_to_save: str):
+    def __init__(self, model_creation_function, exp_params: str, path_to_save: str):
+        """
+        Initialize Render trainer.
+
+        Parameters
+        ----------
+            model_creation_function : function
+                Function that create model. API of the function is next:
+                    model_creation_function(use_gen, batch_size, texture_size)
+                where:
+                    use_gen : bool
+                        If true, then function return model with generator (usually this is for training)
+                    batch_size : int
+                        Batch size of the model
+                    texture_size : tuple
+                        Tuple of (width, height) both are int. This parameter related to size of texture.
+            exp_params : str
+                Path to json file with parameters for training.
+            path_to_save : str
+                Path for experiments folder. If its does not exist, it will be created.
+        """
         self._exp_params = exp_params
 
         self._model_creation_function = model_creation_function
 
-        if isinstance(exp_params, str):
+        if type(exp_params) is str:
             self._exp_params = self._load_exp_params(exp_params)
+        else:
+            raise TypeError("`exp_params` must be path to JSON file with parameters for training")
 
         self._path_to_save = path_to_save
         self._sess = None
@@ -155,6 +179,7 @@ class RenderTrainer:
             ExpField.PATH_TEST_UV: experiment[ExpField.PATH_TEST_UV],
             ExpField.BATCH_SIZE: experiment[ExpField.BATCH_SIZE],
             ExpField.ITERATIONS: experiment[ExpField.ITERATIONS],
+            ExpField.TEXTURE_SIZE: experiment[ExpField.TEXTURE_SIZE],
         }
         for i, opt_info in enumerate(experiment[ExpField.OPTIMIZERS]):
             exp_params[SubExpField.OPT_INFO] = opt_info
@@ -181,8 +206,9 @@ class RenderTrainer:
         # what causes deletion of every computational graph was ever built.
         self._update_session()
 
-        # model for train
-        self._model = self._model_creation_function(use_gen=True, batch_size=exp_params[ExpField.BATCH_SIZE])
+        # Model for train
+        self._model = self._model_creation_function(use_gen=True, batch_size=exp_params[ExpField.BATCH_SIZE],
+                                                    texture_size=ExpField.TEXTURE_SIZE)
         self.generator = self._model._generator
         self.loss_list = []
 
@@ -194,17 +220,13 @@ class RenderTrainer:
         if weights_path is not None:
             self._model.load_weights(weights_path, layer_names=pretrained_layers)
 
-        # model for test
-        self._test_model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE])
-
-        weights_path = exp_params[ExpField.WEIGHTS]
-        pretrained_layers = exp_params[ExpField.PRETRAINED_LAYERS]
-        untrainable_layers = exp_params[ExpField.UNTRAINABLE_LAYERS]
+        # Model for test
+        self._test_model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE],
+                                                         texture_size=ExpField.TEXTURE_SIZE)
 
         self._test_model.set_session(self._sess)
         if weights_path is not None:
             self._test_model.load_weights(weights_path, layer_names=pretrained_layers)
-
 
         if untrainable_layers is not None:
             layers = []
@@ -314,23 +336,23 @@ class RenderTrainer:
             for i in range(epochs):
                 if loss_type == LossType.ABS_LOSS:
                     sub_train_info = self._model.gen_fit_abs(optimizer=optimizer, epochs=1,
-                                                       iterations=iterations, global_step=global_step)
+                                                             iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[ABS_LOSS][0]
                 elif loss_type == LossType.MSE_LOSS:
                     sub_train_info = self._model.gen_fit_mse(optimizer=optimizer, epochs=1,
-                                                       iterations=iterations, global_step=global_step)
+                                                             iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[MSE_LOSS][0]
                 elif loss_type == LossType.MASKED_ABS_LOSS:
                     sub_train_info = self._model.gen_fit_masked_abs(optimizer=optimizer, epochs=1,
-                                                              iterations=iterations, global_step=global_step)
+                                                                    iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[MASKED_ABS_LOSS][0]
                 elif loss_type == LossType.MASKED_MSE_LOSS:
                     sub_train_info = self._model.gen_fit_masked_mse(optimizer=optimizer, epochs=1,
-                                                              iterations=iterations, global_step=global_step)
+                                                                    iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[MASKED_MSE_LOSS][0]
                 elif loss_type == LossType.PERCEPTUAL_LOSS:
                     sub_train_info = self._model.gen_fit_perceptual(optimizer=optimizer, epochs=1,
-                                                              iterations=iterations, global_step=global_step)
+                                                                    iterations=iterations, global_step=global_step)
                     loss_value = sub_train_info[PERCEPTUAL_LOSS][0]
                 else:
                     raise ValueError(f'Unknown loss type {loss_type}!')
@@ -387,5 +409,3 @@ class RenderTrainer:
             y_label='Loss',
             save_path=f'{save_path}/loss_info.png'
         )
-
-
