@@ -41,7 +41,7 @@ class InputMakiLayer(MakiTensor, ABC):
         super().__init__(
             data_tensor=data_tensor,
             parent_layer=self,
-            parent_tensor_names=[],
+            parent_tensor_names=None,
             previous_tensors={},
         )
 
