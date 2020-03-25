@@ -210,7 +210,7 @@ class RenderTrainer:
 
         # Model for train
         self._model = self._model_creation_function(use_gen=True, batch_size=exp_params[ExpField.BATCH_SIZE],
-                                                    texture_size=ExpField.TEXTURE_SIZE, sess=self._sess)
+                                                    texture_size=exp_params[ExpField.TEXTURE_SIZE], sess=self._sess)
         self.generator = self._model._generator
         self.loss_list = []
 
@@ -224,7 +224,7 @@ class RenderTrainer:
 
         # Model for test
         self._test_model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE],
-                                                         texture_size=ExpField.TEXTURE_SIZE, sess=self._sess)
+                                                         texture_size=exp_params[ExpField.TEXTURE_SIZE], sess=self._sess)
 
         self._test_model.set_session(self._sess)
         if weights_path is not None:
