@@ -110,7 +110,7 @@ class RenderTrainer:
         ----------
             model_creation_function : function
                 Function that create model. API of the function is next:
-                    model_creation_function(use_gen, batch_size, texture_size)
+                    model_creation_function(use_gen, batch_size, texture_size, sess)
                 where:
                     use_gen : bool
                         If true, then function return model with generator (usually this is for training)
@@ -118,6 +118,8 @@ class RenderTrainer:
                         Batch size of the model
                     texture_size : tuple
                         Tuple of (width, height) both are int. This parameter related to size of texture.
+                    sess : tensorflow object
+                        Current session for special usage.
             exp_params : str
                 Path to json file with parameters for training.
             path_to_save : str
@@ -208,7 +210,7 @@ class RenderTrainer:
 
         # Model for train
         self._model = self._model_creation_function(use_gen=True, batch_size=exp_params[ExpField.BATCH_SIZE],
-                                                    texture_size=ExpField.TEXTURE_SIZE)
+                                                    texture_size=ExpField.TEXTURE_SIZE, sess=self._sess)
         self.generator = self._model._generator
         self.loss_list = []
 
@@ -222,7 +224,7 @@ class RenderTrainer:
 
         # Model for test
         self._test_model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE],
-                                                         texture_size=ExpField.TEXTURE_SIZE)
+                                                         texture_size=ExpField.TEXTURE_SIZE, sess=self._sess)
 
         self._test_model.set_session(self._sess)
         if weights_path is not None:
