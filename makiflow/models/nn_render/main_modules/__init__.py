@@ -15,5 +15,4 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .neural_texture import SingleTextureLayer, LaplacianPyramidTextureLayer
 from .renderer import NeuralRenderBasis

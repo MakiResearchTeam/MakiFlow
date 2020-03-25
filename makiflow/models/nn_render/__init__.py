@@ -16,4 +16,3 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from .compile import NeuralRender
-from .main_modules import LaplacianPyramidTextureLayer, SingleTextureLayer

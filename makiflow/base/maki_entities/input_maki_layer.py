@@ -20,7 +20,7 @@ from .maki_layer import MakiLayer
 from abc import ABC
 
 
-class InputMakiLayer(MakiTensor, MakiLayer, ABC):
+class InputMakiLayer(MakiTensor, ABC):
     TYPE = 'InputLayer'
 
     def __init__(self, data_tensor, name):
@@ -34,12 +34,31 @@ class InputMakiLayer(MakiTensor, MakiLayer, ABC):
         name : str
             Name of this layer.
         """
+        self._name = name
+        self._params = []
+        self._named_params_dict = {}
 
-        self.params = []
-        self._name = str(name)
         super().__init__(
             data_tensor=data_tensor,
             parent_layer=self,
-            parent_tensor_names=[],
+            parent_tensor_names=None,
             previous_tensors={},
         )
+
+    def get_params(self):
+        """
+        :return
+        ----------
+        Trainable parameters of the layer.
+        """
+        return self._params
+
+    def get_params_dict(self):
+        """
+        This code imitates MakiLayer API for the compatibility sake.
+        This data is used for correct saving and loading models using TensorFlow checkpoint files.
+        """
+        return self._named_params_dict
+
+    def get_name(self):
+        return self._name
