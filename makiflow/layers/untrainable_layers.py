@@ -62,7 +62,7 @@ class InputLayer(InputMakiLayer):
     def to_dict(self):
         return {
             MakiRestorable.NAME: self._name,
-            MakiTensor.PARENT_TENSOR_NAMES: [],
+            MakiTensor.PARENT_TENSOR_NAMES: None,
             MakiRestorable.FIELD_TYPE: InputMakiLayer.TYPE,
             MakiRestorable.PARAMS: {
                 MakiRestorable.NAME: self._name,
