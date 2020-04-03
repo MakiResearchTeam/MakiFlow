@@ -30,6 +30,4 @@ from .rnn_layers import CellType, GRULayer, LSTMLayer, EmbeddingLayer, RNNBlock
 
 from .neural_texture import LaplacianPyramidTextureLayer, SingleTextureLayer
 
-from .activation_converter import ActivationConverter
-
 del absolute_import

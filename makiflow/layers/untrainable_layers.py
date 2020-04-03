@@ -397,7 +397,7 @@ class MaxPoolLayer(SimpleForwardLayer):
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
         """
         Max pooling operation for spatial data.
-        
+
         Parameters
         ----------
         ksize : list
@@ -455,7 +455,7 @@ class AvgPoolLayer(SimpleForwardLayer):
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
         """
         Average pooling operation for spatial data.
-        
+
         Parameters
         ----------
         ksize : list
@@ -514,9 +514,9 @@ class UpSamplingLayer(SimpleForwardLayer):
     def __init__(self, name, size=(2, 2)):
         """
         Upsampling layer which changes height and width of MakiTensor.
-        Example: input MakiTensor have shape [N1, H1, W1, C1], after this operation it would be [N1, H2, W2, C1], 
+        Example: input MakiTensor have shape [N1, H1, W1, C1], after this operation it would be [N1, H2, W2, C1],
         where H2 = H1 * size[0], W2 = W2 * size[1]
-        
+
         Parameters
         ----------
         size : list
@@ -558,22 +558,21 @@ class ActivationLayer(SimpleForwardLayer):
     TYPE = 'ActivationLayer'
     ACTIVATION = 'activation'
 
-    def __init__(self, name, activation=ActivationConverter.RELU):
+    def __init__(self, name, activation=tf.nn.relu):
         """
         Applies an activation function to an input MakiTensor.
-        
+
         Parameters
         ----------
-        activation : str
-            Name of the activation function from ActivationConverter.
-            Set as `ActivationConverter.NONE` or as string "None" if you don't need activation.
+        activation : object
+            Activation function from tf.
         name : str
             Name of this layer.
         """
         super().__init__(name, [], {})
-        if activation is None or activation == ActivationConverter.NONE:
+        if activation is None:
             raise Exception("Activation can't None")
-        self.f = ActivationConverter.str_to_activation(activation)
+        self.f = activation
 
     def _forward(self, x):
         return self.f(x)
@@ -604,7 +603,7 @@ class FlattenLayer(SimpleForwardLayer):
         """
         Flattens the input.
         Example: if input is [B1, H1, W1, C1], after this operation it would be [B1, C2], where C2 = H1 * W1 * C1
-        
+
         Parameters
         ----------
         name : str
@@ -641,7 +640,7 @@ class DropoutLayer(SimpleForwardLayer):
     def __init__(self, name, p_keep=0.9, noise_shape=None, seed=None):
         """
         Applies Dropout to the input MakiTensor.
-        
+
         Parameters
         ----------
         p_keep : float
@@ -649,7 +648,7 @@ class DropoutLayer(SimpleForwardLayer):
         seed : int
             A Python integer. Used to create random seeds.
         noise_shape : list
-            1D list of int representing the shape of the binary dropout mask that will be multiplied with the input MakiTensor. 
+            1D list of int representing the shape of the binary dropout mask that will be multiplied with the input MakiTensor.
             For example, if shape(x) = [k, l, m, n] (BHWC) and noise_shape = [k, 1, 1, n], each batch and channel component will be kept
             independently and each row and column will be kept or not kept together.
         name : str
@@ -818,7 +817,6 @@ class L2NormalizationLayer(SimpleForwardLayer):
 
 
 class UnTrainableLayerAddress:
-
     ADDRESS_TO_CLASSES = {
         InputLayer.TYPE: InputLayer,
         ReshapeLayer.TYPE: ReshapeLayer,
