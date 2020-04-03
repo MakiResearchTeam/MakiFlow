@@ -35,7 +35,7 @@ class ConvLayer(SimpleForwardLayer):
     USE_BIAS = 'use_bias'
     INIT_TYPE = 'init_type'
 
-    def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
+    def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=ActivationConverter.RELU,
                  kernel_initializer=InitConvKernel.HE, use_bias=True, W=None, b=None):
         """
         Parameters
@@ -53,8 +53,9 @@ class ConvLayer(SimpleForwardLayer):
             Defines the stride of the convolution.
         padding : str
             Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
-        activation : tensorflow function
-            Activation function. Set None if you don't need activation.
+        activation : str
+            Name of the activation function from ActivationConverter.
+            Set as `ActivationConverter.NONE` or as string "None" if you don't need activation.
         W : numpy array
             Filter's weights. This value is used for the filter initialization with pretrained filters.
         b : numpy array
@@ -67,7 +68,7 @@ class ConvLayer(SimpleForwardLayer):
         self.shape = (kw, kh, in_f, out_f)
         self.stride = stride
         self.padding = padding
-        self.f = activation
+        self.f =  ActivationConverter.str_to_activation(activation)
         self.use_bias = use_bias
         self.init_type = kernel_initializer
 
@@ -113,7 +114,7 @@ class ConvLayer(SimpleForwardLayer):
 
         stride = params[ConvLayer.STRIDE]
         padding = params[ConvLayer.PADDING]
-        activation = ActivationConverter.str_to_activation(params[ConvLayer.ACTIVATION])
+        activation = params[ConvLayer.ACTIVATION]
 
         init_type = params[ConvLayer.INIT_TYPE]
         use_bias = params[ConvLayer.USE_BIAS]
@@ -148,7 +149,7 @@ class UpConvLayer(SimpleForwardLayer):
     USE_BIAS = 'use_bias'
     INIT_TYPE = 'init_type'
 
-    def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu,
+    def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=ActivationConverter.RELU,
                  kernel_initializer=InitConvKernel.HE, use_bias=True, W=None, b=None):
         """
         Parameters
@@ -169,8 +170,9 @@ class UpConvLayer(SimpleForwardLayer):
             with `size` (a, b).
         padding : str
             Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
-        activation : tensorflow function
-            Activation function. Set None if you don't need activation.
+        activation : str
+            Name of the activation function from ActivationConverter.
+            Set as `ActivationConverter.NONE` or as string "None" if you don't need activation.
         W : numpy array
             Filter's weights. This value is used for the filter initialization with pretrained filters.
         b : numpy array
@@ -184,7 +186,7 @@ class UpConvLayer(SimpleForwardLayer):
         self.size = size
         self.strides = [1, *size, 1]
         self.padding = padding
-        self.f = activation
+        self.f =  ActivationConverter.str_to_activation(activation)
         self.use_bias = use_bias
         self.init_type = kernel_initializer
 
@@ -239,7 +241,7 @@ class UpConvLayer(SimpleForwardLayer):
         padding = params[UpConvLayer.PADDING]
         size = params[UpConvLayer.SIZE]
 
-        activation = ActivationConverter.str_to_activation(params[UpConvLayer.ACTIVATION])
+        activation = params[UpConvLayer.ACTIVATION]
 
         init_type = params[UpConvLayer.INIT_TYPE]
         use_bias = params[UpConvLayer.USE_BIAS]
@@ -338,7 +340,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
     RATE = 'rate'
 
     def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME', rate=[1, 1],
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, activation=tf.nn.relu, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, activation=ActivationConverter.RELU, W=None, b=None):
         """
         Parameters
         ----------
@@ -355,8 +357,9 @@ class DepthWiseConvLayer(SimpleForwardLayer):
             Defines the stride of the convolution.
         padding : str
             Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
-        activation : tensorflow function
-            Activation function. Set None if you don't need activation.
+        activation : str
+            Name of the activation function from ActivationConverter.
+            Set as `ActivationConverter.NONE` or as string "None" if you don't need activation.
         W : numpy array
             Filter's weights. This value is used for the filter initialization with pretrained filters.
         use_bias : bool
@@ -368,7 +371,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         self.shape = (kw, kh, in_f, multiplier)
         self.stride = stride
         self.padding = padding
-        self.f = activation
+        self.f = ActivationConverter.str_to_activation(activation)
         self.use_bias = use_bias
         self.rate = rate
         self.init_type = kernel_initializer
@@ -425,7 +428,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         use_bias = params[DepthWiseConvLayer.USE_BIAS]
         rate = params[DepthWiseConvLayer.RATE]
 
-        activation = ActivationConverter.str_to_activation(params[DepthWiseConvLayer.ACTIVATION])
+        activation = params[DepthWiseConvLayer.ACTIVATION]
 
         return DepthWiseConvLayer(
             kw=kw, kh=kh, in_f=in_f, multiplier=multiplier, padding=padding,
@@ -462,7 +465,7 @@ class SeparableConvLayer(SimpleForwardLayer):
 
     def __init__(self, kw, kh, in_f, out_f, multiplier, name, stride=1, padding='SAME',
                  dw_kernel_initializer=InitConvKernel.XAVIER_GAUSSIAN_INF, pw_kernel_initializer=InitConvKernel.HE,
-                 use_bias=True, activation=tf.nn.relu,
+                 use_bias=True, activation=ActivationConverter.RELU,
                  W_dw=None, W_pw=None, b=None):
         """
         Parameters
@@ -483,8 +486,9 @@ class SeparableConvLayer(SimpleForwardLayer):
             Defines the stride of the convolution.
         padding : str
             Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
-        activation : tensorflow function
-            Activation function. Set None if you don't need activation.
+        activation : str
+            Name of the activation function from ActivationConverter.
+            Set as `ActivationConverter.NONE` or as string "None" if you don't need activation.
         W_dw : numpy array
             Filter's weights. This value is used for the filter initialization.
         use_bias : bool
@@ -496,7 +500,7 @@ class SeparableConvLayer(SimpleForwardLayer):
         self.out_f = out_f
         self.stride = stride
         self.padding = padding
-        self.f = activation
+        self.f = ActivationConverter.str_to_activation(activation)
         self.use_bias = use_bias
         self.dw_init_type = dw_kernel_initializer
         self.pw_init_type = pw_kernel_initializer
@@ -562,7 +566,7 @@ class SeparableConvLayer(SimpleForwardLayer):
         pw_init_type = params[SeparableConvLayer.PW_INIT_TYPE]
         use_bias = params[SeparableConvLayer.USE_BIAS]
 
-        activation = ActivationConverter.str_to_activation(params[SeparableConvLayer.ACTIVATION])
+        activation = params[SeparableConvLayer.ACTIVATION]
 
         return SeparableConvLayer(
             kw=kw, kh=kh, in_f=in_f, out_f=out_f, multiplier=multiplier,
@@ -596,7 +600,7 @@ class DenseLayer(SimpleForwardLayer):
     USE_BIAS = 'use_bias'
     INIT_TYPE = 'init_type'
 
-    def __init__(self, in_d, out_d, name, activation=tf.nn.relu,
+    def __init__(self, in_d, out_d, name, activation=ActivationConverter.RELU,
                  mat_initializer=InitDenseMat.HE, use_bias=True, W=None, b=None):
         """
         Paremeters
@@ -605,8 +609,9 @@ class DenseLayer(SimpleForwardLayer):
             Dimensionality of the input vector. Example: 500.
         out_d : int 
             Dimensionality of the output vector. Example: 100.
-        activation : TensorFlow function
-            Activation function. Set to None if you don't need activation.
+        activation : str
+            Name of the activation function from ActivationConverter.
+            Set as `ActivationConverter.NONE` or as string "None" if you don't need activation.
         W : numpy ndarray
             Used for initialization the weight matrix.
         b : numpy ndarray
@@ -618,7 +623,7 @@ class DenseLayer(SimpleForwardLayer):
         """
         self.input_shape = in_d
         self.output_shape = out_d
-        self.f = activation
+        self.f = ActivationConverter.str_to_activation(activation)
         self.use_bias = use_bias
         self.init_type = mat_initializer
 
@@ -658,7 +663,7 @@ class DenseLayer(SimpleForwardLayer):
         input_shape = params[DenseLayer.INPUT_SHAPE]
         output_shape = params[DenseLayer.OUTPUT_SHAPE]
 
-        activation = ActivationConverter.str_to_activation(params[DenseLayer.ACTIVATION])
+        activation = params[DenseLayer.ACTIVATION]
 
         init_type = params[DenseLayer.INIT_TYPE]
         use_bias = params[DenseLayer.USE_BIAS]
@@ -692,7 +697,7 @@ class AtrousConvLayer(SimpleForwardLayer):
     USE_BIAS = 'use_bias'
     INIT_TYPE = 'init_type'
 
-    def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=tf.nn.relu,
+    def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=ActivationConverter.RELU,
                  kernel_initializer=InitConvKernel.HE, use_bias=True, W=None, b=None):
         """
         Parameters
@@ -712,8 +717,9 @@ class AtrousConvLayer(SimpleForwardLayer):
             Defines the stride of the convolution.
         padding : str
             Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
-        activation : tensorflow function
-            Activation function. Set None if you don't need activation.
+        activation : str
+            Name of the activation function from ActivationConverter.
+            Set as `ActivationConverter.NONE` or as string "None" if you don't need activation.
         W : numpy array
             Filter's weights. This value is used for the filter initialization with pretrained filters.
         b : numpy array
@@ -726,7 +732,7 @@ class AtrousConvLayer(SimpleForwardLayer):
         self.shape = (kw, kh, in_f, out_f)
         self.rate = rate
         self.padding = padding
-        self.f = activation
+        self.f = ActivationConverter.str_to_activation(activation)
         self.use_bias = use_bias
         self.init_type = kernel_initializer
 
@@ -776,7 +782,7 @@ class AtrousConvLayer(SimpleForwardLayer):
         init_type = params[AtrousConvLayer.INIT_TYPE]
         use_bias = params[AtrousConvLayer.USE_BIAS]
 
-        activation = ActivationConverter.str_to_activation(params[AtrousConvLayer.ACTIVATION])
+        activation = params[AtrousConvLayer.ACTIVATION]
 
         return AtrousConvLayer(
             kw=kw, kh=kh, in_f=in_f, out_f=out_f, rate=rate,

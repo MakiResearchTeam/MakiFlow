@@ -558,21 +558,22 @@ class ActivationLayer(SimpleForwardLayer):
     TYPE = 'ActivationLayer'
     ACTIVATION = 'activation'
 
-    def __init__(self, name, activation=tf.nn.relu):
+    def __init__(self, name, activation=ActivationConverter.RELU):
         """
         Applies an activation function to an input MakiTensor.
         
         Parameters
         ----------
-        activation : object
-            Activation function from tf.
+        activation : str
+            Name of the activation function from ActivationConverter.
+            Set as `ActivationConverter.NONE` or as string "None" if you don't need activation.
         name : str
             Name of this layer.
         """
         super().__init__(name, [], {})
-        if activation is None:
+        if activation is None or activation == ActivationConverter.NONE:
             raise Exception("Activation can't None")
-        self.f = activation
+        self.f = ActivationConverter.str_to_activation(activation)
 
     def _forward(self, x):
         return self.f(x)
