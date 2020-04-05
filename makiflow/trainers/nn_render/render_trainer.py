@@ -271,8 +271,8 @@ class RenderTrainer:
 
     def _plot_values(self, exp_params, save_path):
         print('Prepare to plot values...')
-        path = exp_params[ExpField.PATH_TEST_UV][np.random.choice(len(exp_params[ExpField.PATH_TEST_UV]), 1)]
-        random_number = np.random.choice(len(path + '/*.npy'), 1)
+        path = exp_params[ExpField.PATH_TEST_UV][int(np.random.choice(len(exp_params[ExpField.PATH_TEST_UV]), 1))]
+        random_number = int(np.random.choice(len(path + '/*.npy'), 1))
         uv = np.load(path + '/' + str(random_number) + '.npy').astype(np.float32)
 
         values = []
