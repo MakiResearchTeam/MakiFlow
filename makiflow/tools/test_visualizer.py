@@ -16,6 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 class TestVisualizer:
@@ -40,4 +41,41 @@ class TestVisualizer:
             fig.show()
         plt.close(fig)
 
-        
+    @staticmethod
+    def plot_numpy_dist_obs(values, legends, save_path=None, axes_x=None, axes_y=None):
+        """
+        Parameters
+        ----------
+        values : list
+            Set of values that need to plot.
+        legends : list
+            List of values names.
+        save_path : str
+            Path to save plotted figure.
+        axes_x : tuple
+            Tuple of size 2, example (min_x, max_x), where min_x - minimum on the axes x, max_x - maximum of the axes x.
+            By default is None, mean self-scale.
+        axes_y : tuple
+            Tuple of size 2, example (min_y, max_y), where min_y - minimum on the axes y, max_x - maximum of the axes y.
+            By default is None, mean self-scale.
+        """
+        assert (len(values) == len(legends))
+        fig = plt.figure(figsize=(6, 34))
+
+        for i in range(len(values)):
+            sub = plt.subplot(len(values),1,i+1)
+            plt.title(legends[i] + f' number {i}')
+            axes = sub.axes
+            if axes_y is not None:
+                axes.set_ylim(axes_y)
+            if axes_x is not None:
+                axes.set_xlim(axes_x)
+            sns.distplot(values[i])
+
+        if save_path is not None:
+            fig.savefig(save_path)
+        else:
+            fig.show()
+
+        fig.close()
+

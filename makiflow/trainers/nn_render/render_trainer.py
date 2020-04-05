@@ -20,8 +20,6 @@ import json
 import os
 import tensorflow as tf
 import numpy as np
-import pandas as pd
-from tqdm import tqdm
 import traceback
 import cv2
 import glob
