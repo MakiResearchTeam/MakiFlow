@@ -77,5 +77,5 @@ class TestVisualizer:
         else:
             fig.show()
 
-        fig.close()
+        plt.close(fig)
 

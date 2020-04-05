@@ -277,7 +277,7 @@ class RenderTrainer:
         uv = uv.reshape(1, *uv.shape)
         origin_uv = copy.deepcopy(uv)
 
-        for _ in range(exp_params[ExpField.BATCH_SIZE]):
+        for _ in range(exp_params[ExpField.BATCH_SIZE] - 1):
             uv = np.concatenate((origin_uv, uv), 0)
 
         values = []
@@ -285,11 +285,12 @@ class RenderTrainer:
         for name_layer in exp_params[ExpField.PLOT_VALUE_LAYERS]:
             tensor_of_layer = self._test_model.get_node(name_layer).get_data_tensor()
             values.append(self._sess.run(tensor_of_layer,
-                                         feed_dict={self._test_model._input_data_tensors: uv})[0])
+                                         feed_dict={self._test_model._input_data_tensors[0]: uv})[0])
 
         TestVisualizer.plot_numpy_dist_obs(values=values, legends=exp_params[ExpField.PLOT_VALUE_LAYERS],
                                            save_path=save_path + '_NN_values.png',
         )
+        print('Plot was created!')
 
     def _record_video(self,  exp_params, save_path, FPS=25):
         print('Collecting predictions...')
@@ -343,7 +344,7 @@ class RenderTrainer:
             writer.write(answer)
 
         writer.release()
-        print(f'{save_path}/render_video.mp4 video was created!')
+        print('Video was created!')
 
     # -----------------------------------------------------------------------------------------------------------------
     # ------------------------------------EXPERIMENT LOOP--------------------------------------------------------------
