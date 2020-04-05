@@ -271,6 +271,8 @@ class RenderTrainer:
 
     def _plot_values(self, exp_params, save_path):
         print('Prepare to plot values...')
+
+        # Plot product of the neural network
         path = exp_params[ExpField.PATH_TEST_UV][int(np.random.choice(len(exp_params[ExpField.PATH_TEST_UV]), 1))]
         random_number = int(np.random.choice(len(path + '/*.npy'), 1))
         uv = np.load(path + '/' + str(random_number) + '.npy').astype(np.float32)
@@ -288,8 +290,23 @@ class RenderTrainer:
                                          feed_dict={self._test_model._input_data_tensors[0]: uv})[0])
 
         TestVisualizer.plot_numpy_dist_obs(values=values, legends=exp_params[ExpField.PLOT_VALUE_LAYERS],
-                                           save_path=save_path + '_NN_values.png',
+                                           save_path=save_path + 'NN_values.png',
         )
+
+        # Plot weights of the texture
+        texture = self._test_model._sampled_texture.get_parent_layer()._texture[0]
+        texture = self._sess.run(texture).astype(np.float32)
+
+        values_texture = []
+        number_texture = []
+        for i in range(int(texture.shape[-1])):
+            values_texture.append(texture[:, :, i])
+            number_texture.append(str(i))
+
+        TestVisualizer.plot_numpy_dist_obs(values=values_texture, legends=number_texture,
+                                           save_path=save_path + 'NN_texture.png',
+        )
+
         print('Plot was created!')
 
     def _record_video(self,  exp_params, save_path, FPS=25):

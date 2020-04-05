@@ -60,7 +60,7 @@ class TestVisualizer:
             By default is None, mean that it will be self-scaled.
         """
         assert (len(values) == len(legends))
-        fig = plt.figure(figsize=(6, 34))
+        fig = plt.figure(figsize=(6, len(values) * 6))
 
         for i in range(len(values)):
             sub = plt.subplot(len(values),1,i+1)
