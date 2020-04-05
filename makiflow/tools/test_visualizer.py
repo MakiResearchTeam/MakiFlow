@@ -54,10 +54,10 @@ class TestVisualizer:
             Path to save plotted figure.
         axes_x : tuple
             Tuple of size 2, example (min_x, max_x), where min_x - minimum on the axes x, max_x - maximum of the axes x.
-            By default is None, mean self-scale.
+            By default is None, mean that it will be self-scaled.
         axes_y : tuple
             Tuple of size 2, example (min_y, max_y), where min_y - minimum on the axes y, max_x - maximum of the axes y.
-            By default is None, mean self-scale.
+            By default is None, mean that it will be self-scaled.
         """
         assert (len(values) == len(legends))
         fig = plt.figure(figsize=(6, 34))

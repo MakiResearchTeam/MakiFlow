@@ -59,6 +59,7 @@ experiment_params = {
     'path to arch': path,
     'pretrained layers': [layer_name],
     'utrainable layers': [layer_name],
+    'plot value layers': [layer_name],
     'l1 reg': 1e-6 or None,
     'l1 reg layers': [layer_name],
     'l2 reg': 1e-6 or None,
@@ -72,6 +73,7 @@ class ExpField:
     PRETRAINED_LAYERS = 'pretrained layers'
     WEIGHTS = 'weights'
     UNTRAINABLE_LAYERS = 'untrainable layers'
+    PLOT_VALUE_LAYERS = 'plot value layers'
     EPOCHS = 'epochs'
     TEST_PERIOD = 'test period'
     LOSS_TYPE = 'loss type'
@@ -168,6 +170,7 @@ class RenderTrainer:
             ExpField.PRETRAINED_LAYERS: experiment[ExpField.PRETRAINED_LAYERS],
             ExpField.WEIGHTS: experiment[ExpField.WEIGHTS],
             ExpField.UNTRAINABLE_LAYERS: experiment[ExpField.UNTRAINABLE_LAYERS],
+            ExpField.PLOT_VALUE_LAYERS: experiment[ExpField.PLOT_VALUE_LAYERS],
             ExpField.EPOCHS: experiment[ExpField.EPOCHS],
             ExpField.TEST_PERIOD: experiment[ExpField.TEST_PERIOD],
             ExpField.LOSS_TYPE: experiment[ExpField.LOSS_TYPE],
@@ -257,13 +260,34 @@ class RenderTrainer:
         # Create test video from pure model.
         # NOTICE output of model and input image size (not UV) must be equal
         print('Testing the model...')
-        print('Collecting predictions...')
 
         # load weights to test model
         self._test_model.load_weights(path_to_weights)
 
         # Collect data and predictions
 
+        self._record_video(exp_params=exp_params, save_path=save_path, FPS=FPS)
+        self._plot_values(exp_params=exp_params, save_path=save_path)
+
+    def _plot_values(self, exp_params, save_path):
+        print('Prepare to plot values...')
+        path = exp_params[ExpField.PATH_TEST_UV][np.random.choice(len(exp_params[ExpField.PATH_TEST_UV]), 1)]
+        random_number = np.random.choice(len(path + '/*.npy'), 1)
+        uv = np.load(path + '/' + str(random_number) + '.npy').astype(np.float32)
+
+        values = []
+
+        for name_layer in exp_params[ExpField.PLOT_VALUE_LAYERS]:
+            tensor_of_layer = self._test_model.get_node(name_layer).get_data_tensor()
+            values.append(self._sess.run(tensor_of_layer,
+                                         feed_dict={self._test_model._input_data_tensors: uv}))
+
+        TestVisualizer.plot_numpy_dist_obs(values=values, legends=exp_params[ExpField.PLOT_VALUE_LAYERS],
+                                           save_path=save_path + '_NN_values.png',
+        )
+
+    def _record_video(self,  exp_params, save_path, FPS=25):
+        print('Collecting predictions...')
         uv = []
         masks = []
         origin_image = []
