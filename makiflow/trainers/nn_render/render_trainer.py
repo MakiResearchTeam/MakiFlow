@@ -274,13 +274,18 @@ class RenderTrainer:
         path = exp_params[ExpField.PATH_TEST_UV][int(np.random.choice(len(exp_params[ExpField.PATH_TEST_UV]), 1))]
         random_number = int(np.random.choice(len(path + '/*.npy'), 1))
         uv = np.load(path + '/' + str(random_number) + '.npy').astype(np.float32)
+        uv = uv.reshape(1, *uv.shape)
+        origin_uv = copy.deepcopy(uv)
+
+        for _ in range(exp_params[ExpField.BATCH_SIZE]):
+            uv = np.concatenate((origin_uv, uv), 0)
 
         values = []
 
         for name_layer in exp_params[ExpField.PLOT_VALUE_LAYERS]:
             tensor_of_layer = self._test_model.get_node(name_layer).get_data_tensor()
             values.append(self._sess.run(tensor_of_layer,
-                                         feed_dict={self._test_model._input_data_tensors: uv}))
+                                         feed_dict={self._test_model._input_data_tensors: uv})[0])
 
         TestVisualizer.plot_numpy_dist_obs(values=values, legends=exp_params[ExpField.PLOT_VALUE_LAYERS],
                                            save_path=save_path + '_NN_values.png',
