@@ -102,7 +102,7 @@ class LossType:
 
 
 class RenderTrainer:
-    def __init__(self, model_creation_function, exp_params: str, path_to_save: str):
+    def __init__(self, model_creation_function, exp_params: str, path_to_save: str, restore_function=None):
         """
         Initialize Render trainer.
 
@@ -124,10 +124,21 @@ class RenderTrainer:
                 Path to json file with parameters for training.
             path_to_save : str
                 Path for experiments folder. If its does not exist, it will be created.
+            restore_function : function
+                Function that restore image from network prediction of the neural render network.
+                By default restore function is:
+                    X - predict of the network
+                    Y - final image, then:
+                        Y = (X + 1) * 128
+                So, default normalization for images are next:
+                    I - image
+                    N - normalize result, then:
+                        N = I / 128 - 1
         """
         self._exp_params = exp_params
 
         self._model_creation_function = model_creation_function
+        self._restore_function = restore_function
 
         if type(exp_params) is str:
             self._exp_params = self._load_exp_params(exp_params)
@@ -223,14 +234,6 @@ class RenderTrainer:
         if weights_path is not None:
             self._model.load_weights(weights_path, layer_names=pretrained_layers)
 
-        # Model for test
-        self._test_model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE],
-                                                         texture_size=exp_params[ExpField.TEXTURE_SIZE], sess=self._sess)
-
-        self._test_model.set_session(self._sess)
-        if weights_path is not None:
-            self._test_model.load_weights(weights_path, layer_names=pretrained_layers)
-
         if untrainable_layers is not None:
             layers = []
             for layer_name in untrainable_layers:
@@ -253,8 +256,19 @@ class RenderTrainer:
             reg_config = [(layer, l2_reg) for layer in l2_reg_layers]
             self._model.set_l2_reg(reg_config)
 
+        # Model for test
+        self._test_model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE],
+                                                         texture_size=exp_params[ExpField.TEXTURE_SIZE], sess=self._sess)
+
+        self._test_model.set_session(self._sess)
+        if weights_path is not None:
+            self._test_model.load_weights(weights_path, layer_names=pretrained_layers)
+
     # -----------------------------------------------------------------------------------------------------------------
     # -----------------------------------EXPERIMENT UTILITIES----------------------------------------------------------
+
+    def set_restore_function(self, new_restore_function):
+        self._restore_function = new_restore_function
 
     def _perform_testing(self, exp_params, save_path, path_to_weights, FPS=25):
         # Create test video from pure model.
@@ -351,8 +365,11 @@ class RenderTrainer:
 
         print('render video')
         for i in range(len(all_pred)):
-            answer = np.clip(all_pred[i] + 1, 0.0, 2.0)
-            answer = answer * 128
+            if self._restore_function is None:
+                answer = np.clip(all_pred[i] + 1, 0.0, 2.0)
+                answer = answer * 128
+            else:
+                answer = self._restore_function(all_pred[i])
             answer[:, :, 0] = without_face[i][:, :, 0] + masks[i] * answer[:, :, 0]
             answer[:, :, 1] = without_face[i][:, :, 1] + masks[i] * answer[:, :, 1]
             answer[:, :, 2] = without_face[i][:, :, 2] + masks[i] * answer[:, :, 2]
