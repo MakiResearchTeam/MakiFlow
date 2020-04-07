@@ -373,7 +373,7 @@ class RenderTrainer:
             answer[:, :, 0] = without_face[i][:, :, 0] + masks[i] * answer[:, :, 0]
             answer[:, :, 1] = without_face[i][:, :, 1] + masks[i] * answer[:, :, 1]
             answer[:, :, 2] = without_face[i][:, :, 2] + masks[i] * answer[:, :, 2]
-            answer = np.concatenate([answer, origin_image[i]], axis=1)
+            answer = np.concatenate([np.clip(answer, 0.0, 255.0), origin_image[i]], axis=1)
             answer = answer.astype(np.uint8)
             writer.write(answer)
 
