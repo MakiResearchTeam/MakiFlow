@@ -24,6 +24,8 @@ import traceback
 import cv2
 import glob
 import copy
+from scipy.stats import skew, kurtosis
+import pandas as pd
 
 from makiflow.models.nn_render.training_modules.abs_loss import ABS_LOSS
 from makiflow.models.nn_render.training_modules.mse_loss import MSE_LOSS
@@ -88,7 +90,6 @@ class ExpField:
     BATCH_SIZE = 'batch_size'
     TEXTURE_SIZE = 'texture_size'
 
-
 class SubExpField:
     OPT_INFO = 'opt_info'
 
@@ -102,7 +103,13 @@ class LossType:
 
 
 class RenderTrainer:
-    def __init__(self, model_creation_function, exp_params: str, path_to_save: str, restore_function=None):
+    def __init__(self,
+                 model_creation_function,
+                 exp_params: str,
+                 path_to_save: str,
+                 restore_function=None,
+                 save_texture_info=False,
+                 mask_for_test_info=None):
         """
         Initialize Render trainer.
 
@@ -134,6 +141,10 @@ class RenderTrainer:
                     I - image
                     N - normalize result, then:
                         N = I / 128 - 1
+            save_texture_info : bool
+                If true, in csv file will be written std, mean, kurtosis and asymmetry and stored in experiment folder.
+            mask_for_test_info : str
+                Path to binary numpy array. Before computing information about texture, this mask will be used.
         """
         self._exp_params = exp_params
 
@@ -147,6 +158,13 @@ class RenderTrainer:
 
         self._path_to_save = path_to_save
         self._sess = None
+
+        self._save_texture_info = save_texture_info
+
+        if mask_for_test_info is None:
+            self._texture_mask = None
+        else:
+            self._texture_mask = np.load(mask_for_test_info).astype(np.float32)
         self.generator = None
 
     def _load_exp_params(self, json_path):
@@ -193,7 +211,7 @@ class RenderTrainer:
             ExpField.PATH_TEST_UV: experiment[ExpField.PATH_TEST_UV],
             ExpField.BATCH_SIZE: experiment[ExpField.BATCH_SIZE],
             ExpField.ITERATIONS: experiment[ExpField.ITERATIONS],
-            ExpField.TEXTURE_SIZE: experiment[ExpField.TEXTURE_SIZE],
+            ExpField.TEXTURE_SIZE: experiment[ExpField.TEXTURE_SIZE]
         }
         for i, opt_info in enumerate(experiment[ExpField.OPTIMIZERS]):
             exp_params[SubExpField.OPT_INFO] = opt_info
@@ -267,6 +285,21 @@ class RenderTrainer:
     # -----------------------------------------------------------------------------------------------------------------
     # -----------------------------------EXPERIMENT UTILITIES----------------------------------------------------------
 
+    def save_texture_info_to_scv(self, x, folder):
+
+        std = [x[i, :, :].std().astype(np.float32) for i in range(x.shape[0])]
+        mean = [x[i, :, :].mean().astype(np.float32) for i in range(x.shape[0])]
+        assym = [np.array(skew(x[i, :, :], axis=None)).astype(np.float32) for i in range(x.shape[0])]
+        kurt = [np.array(kurtosis(x[i, :, :], fisher=True, axis=None)).astype(np.float32) for i in range(x.shape[0])]
+
+        df = pd.DataFrame({
+            'std': std,
+            'mean': mean,
+            'kurt': kurt,
+            'assym': assym,
+        })
+        df.to_csv(folder)
+
     def set_restore_function(self, new_restore_function):
         self._restore_function = new_restore_function
 
@@ -304,7 +337,7 @@ class RenderTrainer:
                                          feed_dict={self._test_model._input_data_tensors[0]: uv})[0])
 
         TestVisualizer.plot_numpy_dist_obs(values=values, legends=exp_params[ExpField.PLOT_VALUE_LAYERS],
-                                           save_path=save_path + 'NN_values.png',
+                                           save_path=save_path + 'histograms_of_layers.png',
         )
 
         # Plot weights of the texture
@@ -313,8 +346,15 @@ class RenderTrainer:
 
         values_texture = []
         number_texture = []
+
         for i in range(int(texture.shape[-1])):
-            values_texture.append(texture[:, :, i])
+            if self._texture_mask is not None:
+                # Multiply on mask
+                texture[:, :, i] *= self._texture_mask
+                # Collect all non-zeros values
+                values_texture.append(texture[:, :, i][texture[:, :, i] != 0])
+            else:
+                values_texture.append(texture[:, :, i])
             number_texture.append(str(i))
 
         TestVisualizer.plot_numpy_dist_obs(values=values_texture, legends=number_texture,
@@ -322,6 +362,9 @@ class RenderTrainer:
         )
 
         print('Plot was created!')
+
+        # Store information about texture
+        self.save_texture_info_to_scv(np.array(values_texture), save_path + 'texture_info.csv')
 
     def _record_video(self,  exp_params, save_path, FPS=25):
         print('Collecting predictions...')
