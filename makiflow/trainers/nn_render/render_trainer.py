@@ -286,11 +286,11 @@ class RenderTrainer:
     # -----------------------------------EXPERIMENT UTILITIES----------------------------------------------------------
 
     def save_texture_info_to_scv(self, x, folder):
-
-        std = [x[i, :, :].std().astype(np.float32) for i in range(x.shape[0])]
-        mean = [x[i, :, :].mean().astype(np.float32) for i in range(x.shape[0])]
-        assym = [np.array(skew(x[i, :, :], axis=None)).astype(np.float32) for i in range(x.shape[0])]
-        kurt = [np.array(kurtosis(x[i, :, :], fisher=True, axis=None)).astype(np.float32) for i in range(x.shape[0])]
+        print('Prepare data for saving texture info into csv...')
+        std = [x[i, ...].std().astype(np.float32) for i in range(x.shape[0])]
+        mean = [x[i, ...].mean().astype(np.float32) for i in range(x.shape[0])]
+        assym = [np.array(skew(x[i, ...], axis=None)).astype(np.float32) for i in range(x.shape[0])]
+        kurt = [np.array(kurtosis(x[i, ...], fisher=True, axis=None)).astype(np.float32) for i in range(x.shape[0])]
 
         df = pd.DataFrame({
             'std': std,
@@ -352,7 +352,7 @@ class RenderTrainer:
                 # Multiply on mask
                 texture[:, :, i] *= self._texture_mask
                 # Collect all non-zeros values
-                values_texture.append(texture[:, :, i][texture[:, :, i] != 0])
+                values_texture.append(texture[:, :, i][texture[:, :, i] != 0.0])
             else:
                 values_texture.append(texture[:, :, i])
             number_texture.append(str(i))
@@ -363,8 +363,9 @@ class RenderTrainer:
 
         print('Plot was created!')
 
-        # Store information about texture
-        self.save_texture_info_to_scv(np.array(values_texture), save_path + 'texture_info.csv')
+        if self._save_texture_info:
+            # Store information about texture
+            self.save_texture_info_to_scv(np.array(values_texture), save_path + 'texture_info.csv')
 
     def _record_video(self,  exp_params, save_path, FPS=25):
         print('Collecting predictions...')
@@ -389,9 +390,9 @@ class RenderTrainer:
         for i in range(len(origin_image)):
             mask = masks[i]
             image = copy.deepcopy(origin_image[i])
-            image[:, :, 0] *= (mask != 1)
-            image[:, :, 1] *= (mask != 1)
-            image[:, :, 2] *= (mask != 1)
+            image[..., 0] *= (mask != 1)
+            image[..., 1] *= (mask != 1)
+            image[..., 2] *= (mask != 1)
             without_face.append(image.astype(np.float32))
 
         batch_size = exp_params[ExpField.BATCH_SIZE]
@@ -413,9 +414,9 @@ class RenderTrainer:
                 answer = answer * 128
             else:
                 answer = self._restore_function(all_pred[i])
-            answer[:, :, 0] = without_face[i][:, :, 0] + masks[i] * answer[:, :, 0]
-            answer[:, :, 1] = without_face[i][:, :, 1] + masks[i] * answer[:, :, 1]
-            answer[:, :, 2] = without_face[i][:, :, 2] + masks[i] * answer[:, :, 2]
+            answer[..., 0] = without_face[i][..., 0] + masks[i] * answer[..., 0]
+            answer[..., 1] = without_face[i][..., 1] + masks[i] * answer[..., 1]
+            answer[..., 2] = without_face[i][..., 2] + masks[i] * answer[..., 2]
             answer = np.concatenate([np.clip(answer, 0.0, 255.0), origin_image[i]], axis=1)
             answer = answer.astype(np.uint8)
             writer.write(answer)
