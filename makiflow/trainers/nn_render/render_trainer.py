@@ -300,9 +300,6 @@ class RenderTrainer:
         })
         df.to_csv(folder)
 
-    def set_restore_function(self, new_restore_function):
-        self._restore_function = new_restore_function
-
     def _perform_testing(self, exp_params, save_path, path_to_weights, FPS=25):
         # Create test video from pure model.
         # NOTICE output of model and input image size (not UV) must be equal
