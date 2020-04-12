@@ -44,7 +44,7 @@ class TestVisualizer:
     @staticmethod
     def plot_numpy_dist_obs(values, legends, save_path=None, x_axis=None, y_axis=None):
         """
-        Flexibly plot a univariate distribution of observations.
+        Flexibly plot a univariate distribution of observations for every numpy.ndarray in `values`.
 
         Parameters
         ----------
