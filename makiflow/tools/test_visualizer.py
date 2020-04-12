@@ -42,22 +42,24 @@ class TestVisualizer:
         plt.close(fig)
 
     @staticmethod
-    def plot_numpy_dist_obs(values, legends, save_path=None, axes_x=None, axes_y=None):
+    def plot_numpy_dist_obs(values, legends, save_path=None, x_axis=None, y_axis=None):
         """
+        Flexibly plot a univariate distribution of observations.
+
         Parameters
         ----------
         values : list
-            Set of values that need to plot.
+            Set of numpy.ndarray values that need to plot.
         legends : list
             List of values names.
         save_path : str
             Path to save plotted figure.
-        axes_x : tuple
-            Tuple of size 2, example (min_x, max_x), where min_x - minimum on the axes x, max_x - maximum of the axes x.
-            By default is None, mean that it will be self-scaled.
-        axes_y : tuple
-            Tuple of size 2, example (min_y, max_y), where min_y - minimum on the axes y, max_x - maximum of the axes y.
-            By default is None, mean that it will be self-scaled.
+        x_axis : tuple
+            Tuple of (min, max), where max and min are the maximum and minimum values on the X axis accordingly.
+            If set to None, maximum and minimum values are not constrained.
+        y_axis : tuple
+            Tuple of (min, max), where max and min are the maximum and minimum values on the Y axis accordingly.
+            If set to None, maximum and minimum values are not constrained.
         """
         assert (len(values) == len(legends))
         fig = plt.figure(figsize=(6, len(values) * 6))
@@ -66,10 +68,10 @@ class TestVisualizer:
             sub = plt.subplot(len(values),1,i+1)
             plt.title(legends[i] + f' number {i}')
             axes = sub.axes
-            if axes_y is not None:
-                axes.set_ylim(axes_y)
-            if axes_x is not None:
-                axes.set_xlim(axes_x)
+            if y_axis is not None:
+                axes.set_ylim(y_axis)
+            if x_axis is not None:
+                axes.set_xlim(x_axis)
             sns.distplot(values[i])
 
         if save_path is not None:

@@ -142,14 +142,22 @@ class RenderTrainer:
                     N - normalize result, then:
                         N = I / 128 - 1
             save_texture_info : bool
-                If true, in csv file will be written std, mean, kurtosis and asymmetry and stored in experiment folder.
+                If set to True, the std, mean, kurtosis and asymmetry will be written into the csv file,
+                which will be stored in the experiment folder.
             mask_for_test_info : str
                 Path to binary numpy array. Before computing information about texture, this mask will be used.
         """
         self._exp_params = exp_params
 
         self._model_creation_function = model_creation_function
-        self._restore_function = restore_function
+        if restore_function is None:
+            def restore_func(image):
+                restored_image = np.clip(image + 1, 0.0, 2.0)
+                restored_image = restored_image * 128
+                return restored_image
+            self._restore_function = restore_func
+        else:
+            self._restore_function = restore_function
 
         if type(exp_params) is str:
             self._exp_params = self._load_exp_params(exp_params)
@@ -316,28 +324,29 @@ class RenderTrainer:
     def _plot_values(self, exp_params, save_path):
         print('Prepare to plot values...')
 
-        # Plot product of the neural network
+        # Choose random uv data from tests set
         path = exp_params[ExpField.PATH_TEST_UV][int(np.random.choice(len(exp_params[ExpField.PATH_TEST_UV]), 1))]
-        random_number = int(np.random.choice(len(path + '/*.npy'), 1))
-        uv = np.load(path + '/' + str(random_number) + '.npy').astype(np.float32)
+        random_number = int(np.random.choice(len(os.path.join(path, '*.npy')), 1))
+        uv = np.load(os.path.join(path, str(random_number) + '.npy')).astype(np.float32)
         uv = uv.reshape(1, *uv.shape)
         origin_uv = copy.deepcopy(uv)
 
         for _ in range(exp_params[ExpField.BATCH_SIZE] - 1):
             uv = np.concatenate((origin_uv, uv), 0)
 
-        values = []
+        layer_values = []
 
+        # Plot prediction of the Neural Network at the certain layers
         for name_layer in exp_params[ExpField.PLOT_VALUE_LAYERS]:
             tensor_of_layer = self._test_model.get_node(name_layer).get_data_tensor()
-            values.append(self._sess.run(tensor_of_layer,
+            layer_values.append(self._sess.run(tensor_of_layer,
                                          feed_dict={self._test_model._input_data_tensors[0]: uv})[0])
 
-        TestVisualizer.plot_numpy_dist_obs(values=values, legends=exp_params[ExpField.PLOT_VALUE_LAYERS],
-                                           save_path=save_path + 'histograms_of_layers.png',
+        TestVisualizer.plot_numpy_dist_obs(values=layer_values, legends=exp_params[ExpField.PLOT_VALUE_LAYERS],
+                                           save_path=os.path.join(save_path, 'histograms_of_layers.png'),
         )
 
-        # Plot weights of the texture
+        # Plot distribution of weights of the texture
         texture = self._test_model._sampled_texture.get_parent_layer()._texture[0]
         texture = self._sess.run(texture).astype(np.float32)
 
@@ -346,23 +355,21 @@ class RenderTrainer:
 
         for i in range(int(texture.shape[-1])):
             if self._texture_mask is not None:
-                # Multiply on mask
-                texture[:, :, i] *= self._texture_mask
                 # Collect all non-zeros values
-                values_texture.append(texture[:, :, i][texture[:, :, i] != 0.0])
+                values_texture.append(texture[:, :, i][self._texture_mask != 0.0])
             else:
                 values_texture.append(texture[:, :, i])
             number_texture.append(str(i))
 
         TestVisualizer.plot_numpy_dist_obs(values=values_texture, legends=number_texture,
-                                           save_path=save_path + 'NN_texture.png',
+                                           save_path=os.path.join(save_path, 'NN_texture.png'),
         )
 
         print('Plot was created!')
 
         if self._save_texture_info:
             # Store information about texture
-            self.save_texture_info_to_scv(np.array(values_texture), save_path + 'texture_info.csv')
+            self.save_texture_info_to_scv(np.array(values_texture), os.path.join(save_path, 'texture_info.csv'))
 
     def _record_video(self,  exp_params, save_path, FPS=25):
         print('Collecting predictions...')
@@ -375,8 +382,8 @@ class RenderTrainer:
             path_image = exp_params[ExpField.PATH_TEST_IMAGE][m]
             count = len(glob.glob(path + '/*.npy'))
             for i in range(1, count):
-                load = np.load(path + '/' + str(i) + '.npy')
-                image = cv2.imread(path_image + '/' + str(i) + '.png')
+                load = np.load(os.path.join(path, str(i) + '.npy'))
+                image = cv2.imread(os.path.join(path_image, str(i) + '.png'))
                 mask = copy.deepcopy(load[:, :, 0])
                 mask[mask > 0.0] = 1.0
                 masks.append(mask.astype(np.float32))
@@ -395,28 +402,25 @@ class RenderTrainer:
         batch_size = exp_params[ExpField.BATCH_SIZE]
 
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        writer = cv2.VideoWriter(f'{save_path}render_video.mp4', fourcc, FPS,
+        writer = cv2.VideoWriter(os.path.join(save_path, 'render_video.mp4'), fourcc, FPS,
                                  (origin_image[0].shape[0] * 2, origin_image[0].shape[0]), True)
 
         all_pred = []
 
         for i in range(len(uv) // batch_size):
-            answer = self._test_model.predict(uv[i * batch_size:batch_size * (i + 1)])
-            all_pred += [i for i in answer]
+            model_predict = self._test_model.predict(uv[i * batch_size:batch_size * (i + 1)])
+            all_pred += [i for i in model_predict]
 
         print('render video')
         for i in range(len(all_pred)):
-            if self._restore_function is None:
-                answer = np.clip(all_pred[i] + 1, 0.0, 2.0)
-                answer = answer * 128
-            else:
-                answer = self._restore_function(all_pred[i])
-            answer[..., 0] = without_face[i][..., 0] + masks[i] * answer[..., 0]
-            answer[..., 1] = without_face[i][..., 1] + masks[i] * answer[..., 1]
-            answer[..., 2] = without_face[i][..., 2] + masks[i] * answer[..., 2]
-            answer = np.concatenate([np.clip(answer, 0.0, 255.0), origin_image[i]], axis=1)
-            answer = answer.astype(np.uint8)
-            writer.write(answer)
+            restored_image = self._restore_function(all_pred[i])
+
+            restored_image[..., 0] = without_face[i][..., 0] + masks[i] * restored_image[..., 0]
+            restored_image[..., 1] = without_face[i][..., 1] + masks[i] * restored_image[..., 1]
+            restored_image[..., 2] = without_face[i][..., 2] + masks[i] * restored_image[..., 2]
+            restored_image = np.concatenate([np.clip(restored_image, 0.0, 255.0), origin_image[i]], axis=1)
+            restored_image = restored_image.astype(np.uint8)
+            writer.write(restored_image)
 
         writer.release()
         print('Video was created!')
@@ -466,13 +470,13 @@ class RenderTrainer:
 
                 # For generators we should save weights and then load them into new model to perform test
                 if i % test_period == 0:
-                    save_path = f'{self._exp_folder}/{number_of_experiment}_exp/epoch_{i}/'
+                    save_path = f'{self._exp_folder}/{number_of_experiment}_exp/epoch_{i}'
                     os.makedirs(
                         save_path, exist_ok=True
                     )
-                    self._model.save_weights(save_path + 'weights.ckpt')
+                    self._model.save_weights(os.path.join(save_path, 'weights.ckpt'))
 
-                    self._perform_testing(exp_params, save_path, save_path + 'weights.ckpt')
+                    self._perform_testing(exp_params, save_path, os.path.join(save_path, 'weights.ckpt'))
                 print('Epochs:', i)
         except KeyboardInterrupt as ex:
             traceback.print_exc()
