@@ -44,12 +44,13 @@ class TestVisualizer:
     @staticmethod
     def plot_numpy_dist_obs(values, legends, save_path=None, x_axis=None, y_axis=None):
         """
-        Flexibly plot a univariate distribution of observations for every numpy.ndarray in `values`.
+        
 
         Parameters
         ----------
         values : list
-            Set of numpy.ndarray values that need to plot.
+            A set of numpy.ndarray each one of them have an arbitrary shape.
+            For each of `values` distribution will be plotted.
         legends : list
             List of values names.
         save_path : str

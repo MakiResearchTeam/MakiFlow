@@ -336,7 +336,7 @@ class RenderTrainer:
 
         layer_values = []
 
-        # Plot prediction of the Neural Network at the certain layers
+        # Plot distribution of prediction of the Neural Network at the certain layers
         for name_layer in exp_params[ExpField.PLOT_VALUE_LAYERS]:
             tensor_of_layer = self._test_model.get_node(name_layer).get_data_tensor()
             layer_values.append(self._sess.run(tensor_of_layer,
