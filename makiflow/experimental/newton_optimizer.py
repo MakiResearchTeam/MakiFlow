@@ -52,19 +52,25 @@ class NewtonOptimizer():
     See https://en.wikipedia.org/wiki/Newton%27s_method_in_optimization
     """
 
-    def __init__(self, sess, learning_rate=1e-3, name='NewtonOptimizer'):
+    NEWTON_MODE = 0
+    SGD_MODE = 0
+
+    def __init__(self, learning_rate, learning_rate_sgd=1e-4, name='NewtonOptimizer'):
         self._name = name
         self._lr = learning_rate
-        self._sess = sess
+        self._lr_sgd = learning_rate_sgd
+        self._current_state = None
 
         # Tensor versions of the constructor arguments, created in _prepare().
         self._lr_t = None
+        self._lr_sgd_t = None
 
     def _prepare(self):
         self._lr_t = ops.convert_to_tensor(self._lr, name='learning_rate')
+        self._lr_sgd_t = ops.convert_to_tensor(self._lr_sgd, name='learning_rate_sgd')
 
     def variables(self):
-        return self.grads + self.hesses
+        return [self._lr_t, self._lr_sgd_t]
 
     def _compute_update(self, var, objective):
         grad = tf.squeeze(tf.gradients(ys=objective, xs=var), axis=0, name=self._name + '_squeeze_grads')
@@ -75,13 +81,24 @@ class NewtonOptimizer():
         matrix_rank = tf.linalg.matrix_rank(a=hess, name=self._name + '_matrix_rank_of_hesse_result')
 
         # Number of row must be equal with matrix rank
-        update = tf.cond(tf.math.equal(matrix_rank, hess.get_shape()[0]),
-                        tf.matmul(tf.matrix_inverse(hess),
-                                  grad,
-                                  name=self._name + '_matmul_gradient_and_inverse_hesse'
-                        ),                                                                  # newton mode
-                        grad                                                                # sgd mode
+
+        self._current_state = tf.cond(tf.math.equal(matrix_rank, hess.get_shape()[0]),
+                        lambda: NewtonOptimizer.NEWTON_MODE,                                        # newton mode
+                        lambda: NewtonOptimizer.SGD_MODE                                            # sgd mode
         )
+
+        flat_grad = tf.reshape(grad, shape=[1, -1])
+        newton_update = tf.matmul(flat_grad, tf.matrix_inverse(hess),
+                         name=self._name + '_matmul_gradient_and_inverse_hesse'
+        )
+
+        newton_update = tf.reshape(newton_update, grad.get_shape())
+
+        update = tf.cond(tf.math.equal(self._current_state, NewtonOptimizer.NEWTON_MODE),
+                        lambda: newton_update,                                                                          # newton mode
+                        lambda: grad                                                                # sgd mode
+        )
+
 
         # self.grads += [grad]
         # self.hesses += [hess]
@@ -89,16 +106,19 @@ class NewtonOptimizer():
         return update
 
     def _apply_update(self, var, update):
-        adjusted_update = self._lr_t * update
+        adjusted_update = tf.cond(tf.math.equal(self._current_state, NewtonOptimizer.NEWTON_MODE),
+                            lambda: self._lr_t * update,                                             # newton mode
+                            lambda: self._lr_sgd_t * update                                          # sgd mode
+        )
         return tf.assign_sub(var, adjusted_update)
 
-    def minimize(self, objective, train_vars=None):
+    def minimize(self, objective, var_list=None):
         self._prepare()
 
-        if train_vars is None:
-            train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+        if var_list is None:
+            var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         update_ops = []
-        for var in train_vars:
+        for var in var_list:
             update = self._compute_update(var, objective)
             update_ops += [self._apply_update(var, update)]
         return update_ops
