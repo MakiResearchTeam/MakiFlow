@@ -45,7 +45,7 @@ class TestVisualizer:
     def plot_numpy_dist_obs(values, legends, save_path=None, x_axis=None, y_axis=None):
         """
         Creates histograms of the distribution of values from `values`.
-        Each graph is denoted by the certain name from `legends` to the certain value from `values`.
+        Each histogram is denoted by the certain name from `legends` to the corresponding value from `values`.
 
         Parameters
         ----------
