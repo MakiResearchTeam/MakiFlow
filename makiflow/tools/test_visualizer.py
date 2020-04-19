@@ -45,12 +45,12 @@ class TestVisualizer:
     def plot_numpy_dist_obs(values, legends, save_path=None, x_axis=None, y_axis=None):
         """
         Creates histograms of the distribution of values from `values`.
-        Each histogram is denoted by the certain name from `legends` to the corresponding value from `values`.
+        Each histogram will be denoted by the correspondent legend from the `legends`. len(`legends`) = len(`values`)
 
         Parameters
         ----------
         values : list
-            A set of numpy.ndarray each one of them have an arbitrary shape.
+            A list of numpy.ndarrays of arbitrary shape.
             For each of `values` distribution will be plotted.
         legends : list
             List of values names.
