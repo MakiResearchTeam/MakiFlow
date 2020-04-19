@@ -47,12 +47,12 @@ class ConvLayer(SimpleForwardLayer):
         in_f : int
             Number of input feature maps. Treat as color channels if this layer
             is first one.
-        out_f : int 
+        out_f : int
             Number of output feature maps (number of filters).
         stride : int
             Defines the stride of the convolution.
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive).
         activation : tensorflow function
             Activation function. Set None if you don't need activation.
         W : numpy array
@@ -160,7 +160,7 @@ class UpConvLayer(SimpleForwardLayer):
         in_f : int
             Number of input feature maps. Treat as color channels if this layer
             is first one.
-        out_f : int 
+        out_f : int
             Number of output feature maps (number of filters).
         size : tuple
             Tuple of two ints - factors of the size of the output feature map.
@@ -168,7 +168,7 @@ class UpConvLayer(SimpleForwardLayer):
             output feature map of size (a*n, b*m) after performing up-convolution
             with `size` (a, b).
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive).
         activation : tensorflow function
             Activation function. Set None if you don't need activation.
         W : numpy array
@@ -178,7 +178,7 @@ class UpConvLayer(SimpleForwardLayer):
         use_bias : bool
             Add bias to the output tensor.
         """
-        # Shape is different from normal convolution since it's required by 
+        # Shape is different from normal convolution since it's required by
         # transposed convolution. Output feature maps go before input ones.
         self.shape = (kw, kh, out_f, in_f)
         self.size = size
@@ -349,18 +349,18 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         in_f : int
             Number of input feature maps. Treat as color channels if this layer
             is first one.
-        multiplier : int 
+        multiplier : int
             Number of output feature maps equals `in_f`*`multiplier`.
         stride : int
             Defines the stride of the convolution.
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive).
         activation : tensorflow function
             Activation function. Set None if you don't need activation.
         W : numpy array
             Filter's weights. This value is used for the filter initialization with pretrained filters.
         use_bias : bool
-            Add bias to the output tensor. 
+            Add bias to the output tensor.
         name : str
             Name of this layer.
         """
@@ -477,12 +477,12 @@ class SeparableConvLayer(SimpleForwardLayer):
         out_f : int
             Number of the output feature maps after pointwise convolution,
             i.e. it is depth of the final output tensor.
-        multiplier : int 
+        multiplier : int
             Number of output feature maps after depthwise convolution equals `in_f`*`multiplier`.
         stride : int
             Defines the stride of the convolution.
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive).
         activation : tensorflow function
             Activation function. Set None if you don't need activation.
         W_dw : numpy array
@@ -490,7 +490,7 @@ class SeparableConvLayer(SimpleForwardLayer):
         use_bias : bool
             Add bias to the output tensor.
         name : str
-            Name of this layer.  
+            Name of this layer.
         """
         self.dw_shape = (kw, kh, in_f, multiplier)
         self.out_f = out_f
@@ -601,9 +601,9 @@ class DenseLayer(SimpleForwardLayer):
         """
         Paremeters
         ----------
-        in_d : int 
+        in_d : int
             Dimensionality of the input vector. Example: 500.
-        out_d : int 
+        out_d : int
             Dimensionality of the output vector. Example: 100.
         activation : TensorFlow function
             Activation function. Set to None if you don't need activation.
@@ -704,14 +704,14 @@ class AtrousConvLayer(SimpleForwardLayer):
         in_f : int
             Number of input feature maps. Treat as color channels if this layer
             is first one.
-        out_f : int 
+        out_f : int
             Number of output feature maps (number of filters).
         rate : int
             A positive int. The stride with which we sample input values across the height and width dimensions
         stride : int
             Defines the stride of the convolution.
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive). 
+            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive).
         activation : tensorflow function
             Activation function. Set None if you don't need activation.
         W : numpy array

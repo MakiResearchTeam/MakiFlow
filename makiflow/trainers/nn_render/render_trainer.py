@@ -20,12 +20,12 @@ import json
 import os
 import tensorflow as tf
 import numpy as np
-import pandas as pd
-from tqdm import tqdm
 import traceback
 import cv2
 import glob
 import copy
+from scipy.stats import skew, kurtosis
+import pandas as pd
 
 from makiflow.models.nn_render.training_modules.abs_loss import ABS_LOSS
 from makiflow.models.nn_render.training_modules.mse_loss import MSE_LOSS
@@ -61,6 +61,7 @@ experiment_params = {
     'path to arch': path,
     'pretrained layers': [layer_name],
     'utrainable layers': [layer_name],
+    'plot value layers': [layer_name],
     'l1 reg': 1e-6 or None,
     'l1 reg layers': [layer_name],
     'l2 reg': 1e-6 or None,
@@ -74,6 +75,7 @@ class ExpField:
     PRETRAINED_LAYERS = 'pretrained layers'
     WEIGHTS = 'weights'
     UNTRAINABLE_LAYERS = 'untrainable layers'
+    PLOT_VALUE_LAYERS = 'plot value layers'
     EPOCHS = 'epochs'
     TEST_PERIOD = 'test period'
     LOSS_TYPE = 'loss type'
@@ -88,7 +90,6 @@ class ExpField:
     BATCH_SIZE = 'batch_size'
     TEXTURE_SIZE = 'texture_size'
 
-
 class SubExpField:
     OPT_INFO = 'opt_info'
 
@@ -102,7 +103,13 @@ class LossType:
 
 
 class RenderTrainer:
-    def __init__(self, model_creation_function, exp_params: str, path_to_save: str):
+    def __init__(self,
+                 model_creation_function,
+                 exp_params: str,
+                 path_to_save: str,
+                 restore_function=None,
+                 save_texture_info=False,
+                 mask_for_test_info=None):
         """
         Initialize Render trainer.
 
@@ -124,10 +131,33 @@ class RenderTrainer:
                 Path to json file with parameters for training.
             path_to_save : str
                 Path for experiments folder. If its does not exist, it will be created.
+            restore_function : function
+                Function that restore image from network prediction of the neural render network.
+                By default restore function is:
+                    X - predict of the network
+                    Y - final image, then:
+                        Y = (X + 1) * 128
+                So, default normalization for images are next:
+                    I - image
+                    N - normalize result, then:
+                        N = I / 128 - 1
+            save_texture_info : bool
+                If set to True, the std, mean, kurtosis and asymmetry will be written into the csv file,
+                which will be stored in the experiment folder.
+            mask_for_test_info : str
+                Path to binary numpy array. Before computing information about texture, this mask will be used.
         """
         self._exp_params = exp_params
 
         self._model_creation_function = model_creation_function
+        if restore_function is None:
+            def restore_func(image):
+                restored_image = np.clip(image + 1, 0.0, 2.0)
+                restored_image = restored_image * 128
+                return restored_image
+            self._restore_function = restore_func
+        else:
+            self._restore_function = restore_function
 
         if type(exp_params) is str:
             self._exp_params = self._load_exp_params(exp_params)
@@ -136,6 +166,13 @@ class RenderTrainer:
 
         self._path_to_save = path_to_save
         self._sess = None
+
+        self._save_texture_info = save_texture_info
+
+        if mask_for_test_info is None:
+            self._texture_mask = None
+        else:
+            self._texture_mask = np.load(mask_for_test_info).astype(np.float32)
         self.generator = None
 
     def _load_exp_params(self, json_path):
@@ -170,6 +207,7 @@ class RenderTrainer:
             ExpField.PRETRAINED_LAYERS: experiment[ExpField.PRETRAINED_LAYERS],
             ExpField.WEIGHTS: experiment[ExpField.WEIGHTS],
             ExpField.UNTRAINABLE_LAYERS: experiment[ExpField.UNTRAINABLE_LAYERS],
+            ExpField.PLOT_VALUE_LAYERS: experiment[ExpField.PLOT_VALUE_LAYERS],
             ExpField.EPOCHS: experiment[ExpField.EPOCHS],
             ExpField.TEST_PERIOD: experiment[ExpField.TEST_PERIOD],
             ExpField.LOSS_TYPE: experiment[ExpField.LOSS_TYPE],
@@ -181,7 +219,7 @@ class RenderTrainer:
             ExpField.PATH_TEST_UV: experiment[ExpField.PATH_TEST_UV],
             ExpField.BATCH_SIZE: experiment[ExpField.BATCH_SIZE],
             ExpField.ITERATIONS: experiment[ExpField.ITERATIONS],
-            ExpField.TEXTURE_SIZE: experiment[ExpField.TEXTURE_SIZE],
+            ExpField.TEXTURE_SIZE: experiment[ExpField.TEXTURE_SIZE]
         }
         for i, opt_info in enumerate(experiment[ExpField.OPTIMIZERS]):
             exp_params[SubExpField.OPT_INFO] = opt_info
@@ -222,14 +260,6 @@ class RenderTrainer:
         if weights_path is not None:
             self._model.load_weights(weights_path, layer_names=pretrained_layers)
 
-        # Model for test
-        self._test_model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE],
-                                                         texture_size=exp_params[ExpField.TEXTURE_SIZE], sess=self._sess)
-
-        self._test_model.set_session(self._sess)
-        if weights_path is not None:
-            self._test_model.load_weights(weights_path, layer_names=pretrained_layers)
-
         if untrainable_layers is not None:
             layers = []
             for layer_name in untrainable_layers:
@@ -252,20 +282,97 @@ class RenderTrainer:
             reg_config = [(layer, l2_reg) for layer in l2_reg_layers]
             self._model.set_l2_reg(reg_config)
 
+        # Model for test
+        self._test_model = self._model_creation_function(use_gen=False, batch_size=exp_params[ExpField.BATCH_SIZE],
+                                                         texture_size=exp_params[ExpField.TEXTURE_SIZE], sess=self._sess)
+
+        self._test_model.set_session(self._sess)
+        if weights_path is not None:
+            self._test_model.load_weights(weights_path, layer_names=pretrained_layers)
+
     # -----------------------------------------------------------------------------------------------------------------
     # -----------------------------------EXPERIMENT UTILITIES----------------------------------------------------------
+
+    def save_texture_info_to_scv(self, x, folder):
+        print('Prepare data for saving texture info into csv...')
+        std = [x[i, ...].std().astype(np.float32) for i in range(x.shape[0])]
+        mean = [x[i, ...].mean().astype(np.float32) for i in range(x.shape[0])]
+        assym = [np.array(skew(x[i, ...], axis=None)).astype(np.float32) for i in range(x.shape[0])]
+        kurt = [np.array(kurtosis(x[i, ...], fisher=True, axis=None)).astype(np.float32) for i in range(x.shape[0])]
+
+        df = pd.DataFrame({
+            'std': std,
+            'mean': mean,
+            'kurt': kurt,
+            'assym': assym,
+        })
+        df.to_csv(folder)
 
     def _perform_testing(self, exp_params, save_path, path_to_weights, FPS=25):
         # Create test video from pure model.
         # NOTICE output of model and input image size (not UV) must be equal
         print('Testing the model...')
-        print('Collecting predictions...')
 
         # load weights to test model
         self._test_model.load_weights(path_to_weights)
 
         # Collect data and predictions
 
+        self._record_video(exp_params=exp_params, save_path=save_path, FPS=FPS)
+        self._plot_values(exp_params=exp_params, save_path=save_path)
+
+    def _plot_values(self, exp_params, save_path):
+        print('Prepare to plot values...')
+
+        # Choose random uv data from tests set
+        path = exp_params[ExpField.PATH_TEST_UV][int(np.random.choice(len(exp_params[ExpField.PATH_TEST_UV]), 1))]
+        random_number = int(np.random.choice(len(os.path.join(path, '*.npy')), 1))
+        uv = np.load(os.path.join(path, str(random_number) + '.npy')).astype(np.float32)
+        uv = uv.reshape(1, *uv.shape)
+        origin_uv = copy.deepcopy(uv)
+
+        for _ in range(exp_params[ExpField.BATCH_SIZE] - 1):
+            uv = np.concatenate((origin_uv, uv), 0)
+
+        layer_values = []
+
+        # Plot distribution of prediction of the Neural Network at the certain layers
+        for name_layer in exp_params[ExpField.PLOT_VALUE_LAYERS]:
+            tensor_of_layer = self._test_model.get_node(name_layer).get_data_tensor()
+            layer_values.append(self._sess.run(tensor_of_layer,
+                                         feed_dict={self._test_model._input_data_tensors[0]: uv})[0])
+
+        TestVisualizer.plot_numpy_dist_obs(values=layer_values, legends=exp_params[ExpField.PLOT_VALUE_LAYERS],
+                                           save_path=os.path.join(save_path, 'histograms_of_layers.png'),
+        )
+
+        # Plot distribution of weights of the texture
+        texture = self._test_model._sampled_texture.get_parent_layer()._texture[0]
+        texture = self._sess.run(texture).astype(np.float32)
+
+        values_texture = []
+        number_texture = []
+
+        for i in range(int(texture.shape[-1])):
+            if self._texture_mask is not None:
+                # Collect all non-zeros values
+                values_texture.append(texture[:, :, i][self._texture_mask != 0.0])
+            else:
+                values_texture.append(texture[:, :, i])
+            number_texture.append(str(i))
+
+        TestVisualizer.plot_numpy_dist_obs(values=values_texture, legends=number_texture,
+                                           save_path=os.path.join(save_path, 'NN_texture.png'),
+        )
+
+        print('Plot was created!')
+
+        if self._save_texture_info:
+            # Store information about texture
+            self.save_texture_info_to_scv(np.array(values_texture), os.path.join(save_path, 'texture_info.csv'))
+
+    def _record_video(self,  exp_params, save_path, FPS=25):
+        print('Collecting predictions...')
         uv = []
         masks = []
         origin_image = []
@@ -275,8 +382,8 @@ class RenderTrainer:
             path_image = exp_params[ExpField.PATH_TEST_IMAGE][m]
             count = len(glob.glob(path + '/*.npy'))
             for i in range(1, count):
-                load = np.load(path + '/' + str(i) + '.npy')
-                image = cv2.imread(path_image + '/' + str(i) + '.png')
+                load = np.load(os.path.join(path, str(i) + '.npy'))
+                image = cv2.imread(os.path.join(path_image, str(i) + '.png'))
                 mask = copy.deepcopy(load[:, :, 0])
                 mask[mask > 0.0] = 1.0
                 masks.append(mask.astype(np.float32))
@@ -287,36 +394,36 @@ class RenderTrainer:
         for i in range(len(origin_image)):
             mask = masks[i]
             image = copy.deepcopy(origin_image[i])
-            image[:, :, 0] *= (mask != 1)
-            image[:, :, 1] *= (mask != 1)
-            image[:, :, 2] *= (mask != 1)
+            image[..., 0] *= (mask != 1)
+            image[..., 1] *= (mask != 1)
+            image[..., 2] *= (mask != 1)
             without_face.append(image.astype(np.float32))
 
         batch_size = exp_params[ExpField.BATCH_SIZE]
 
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        writer = cv2.VideoWriter(f'{save_path}render_video.mp4', fourcc, FPS,
+        writer = cv2.VideoWriter(os.path.join(save_path, 'render_video.mp4'), fourcc, FPS,
                                  (origin_image[0].shape[0] * 2, origin_image[0].shape[0]), True)
 
         all_pred = []
 
         for i in range(len(uv) // batch_size):
-            answer = self._test_model.predict(uv[i * batch_size:batch_size * (i + 1)])
-            all_pred += [i for i in answer]
+            model_predict = self._test_model.predict(uv[i * batch_size:batch_size * (i + 1)])
+            all_pred += [i for i in model_predict]
 
         print('render video')
         for i in range(len(all_pred)):
-            answer = np.clip(all_pred[i] + 1, 0.0, 2.0)
-            answer = answer * 128
-            answer[:, :, 0] = without_face[i][:, :, 0] + masks[i] * answer[:, :, 0]
-            answer[:, :, 1] = without_face[i][:, :, 1] + masks[i] * answer[:, :, 1]
-            answer[:, :, 2] = without_face[i][:, :, 2] + masks[i] * answer[:, :, 2]
-            answer = np.concatenate([answer, origin_image[i]], axis=1)
-            answer = answer.astype(np.uint8)
-            writer.write(answer)
+            restored_image = self._restore_function(all_pred[i])
+
+            restored_image[..., 0] = without_face[i][..., 0] + masks[i] * restored_image[..., 0]
+            restored_image[..., 1] = without_face[i][..., 1] + masks[i] * restored_image[..., 1]
+            restored_image[..., 2] = without_face[i][..., 2] + masks[i] * restored_image[..., 2]
+            restored_image = np.concatenate([np.clip(restored_image, 0.0, 255.0), origin_image[i]], axis=1)
+            restored_image = restored_image.astype(np.uint8)
+            writer.write(restored_image)
 
         writer.release()
-        print(f'{save_path}/render_video.mp4 video was created!')
+        print('Video was created!')
 
     # -----------------------------------------------------------------------------------------------------------------
     # ------------------------------------EXPERIMENT LOOP--------------------------------------------------------------
@@ -363,13 +470,13 @@ class RenderTrainer:
 
                 # For generators we should save weights and then load them into new model to perform test
                 if i % test_period == 0:
-                    save_path = f'{self._exp_folder}/{number_of_experiment}_exp/epoch_{i}/'
+                    save_path = f'{self._exp_folder}/{number_of_experiment}_exp/epoch_{i}'
                     os.makedirs(
                         save_path, exist_ok=True
                     )
-                    self._model.save_weights(save_path + 'weights.ckpt')
+                    self._model.save_weights(os.path.join(save_path, 'weights.ckpt'))
 
-                    self._perform_testing(exp_params, save_path, save_path + 'weights.ckpt')
+                    self._perform_testing(exp_params, save_path, os.path.join(save_path, 'weights.ckpt'))
                 print('Epochs:', i)
         except KeyboardInterrupt as ex:
             traceback.print_exc()

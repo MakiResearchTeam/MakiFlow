@@ -16,6 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 class TestVisualizer:
@@ -40,4 +41,45 @@ class TestVisualizer:
             fig.show()
         plt.close(fig)
 
-        
+    @staticmethod
+    def plot_numpy_dist_obs(values, legends, save_path=None, x_axis=None, y_axis=None):
+        """
+        Creates histograms of the distribution of values from `values`.
+        Each histogram will be denoted by the correspondent legend from the `legends`. len(`legends`) = len(`values`)
+
+        Parameters
+        ----------
+        values : list
+            A list of numpy.ndarrays of arbitrary shape.
+            For each of `values` distribution will be plotted.
+        legends : list
+            List of values names.
+        save_path : str
+            Path to save plotted figure.
+        x_axis : tuple
+            Tuple of (min, max), where max and min are the maximum and minimum values on the X axis accordingly.
+            If set to None, maximum and minimum values are not constrained.
+        y_axis : tuple
+            Tuple of (min, max), where max and min are the maximum and minimum values on the Y axis accordingly.
+            If set to None, maximum and minimum values are not constrained.
+        """
+        assert (len(values) == len(legends))
+        fig = plt.figure(figsize=(6, len(values) * 6))
+
+        for i in range(len(values)):
+            sub = plt.subplot(len(values),1,i+1)
+            plt.title(legends[i] + f' number {i}')
+            axes = sub.axes
+            if y_axis is not None:
+                axes.set_ylim(y_axis)
+            if x_axis is not None:
+                axes.set_xlim(x_axis)
+            sns.distplot(values[i])
+
+        if save_path is not None:
+            fig.savefig(save_path)
+        else:
+            fig.show()
+
+        plt.close(fig)
+
