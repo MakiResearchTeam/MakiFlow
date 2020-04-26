@@ -52,9 +52,10 @@ class MakiRestorable(ABC):
 
 class MakiLayer(MakiRestorable):
 
-    def __init__(self, name, params, named_params_dict):
+    def __init__(self, name, params, regularize_params, named_params_dict):
         self._name = name
         self._params = params
+        self._regularize_params = regularize_params
         self._named_params_dict = named_params_dict
 
     @abstractmethod
@@ -87,6 +88,15 @@ class MakiLayer(MakiRestorable):
         This data is used for correct saving and loading models using TensorFlow checkpoint files.
         """
         return self._named_params_dict
+
+    def get_params_regularize(self):
+        """
+        This data is used for collect params for regularisation.
+        :return:
+        list
+            List of parameters for regularisation.
+        """
+        return self._regularize_params
 
     def get_name(self):
         return self._name

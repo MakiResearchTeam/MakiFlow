@@ -37,7 +37,7 @@ class InputMakiLayer(MakiTensor, ABC):
         self._name = name
         self._params = []
         self._named_params_dict = {}
-
+        self._regularize_params = []
         super().__init__(
             data_tensor=data_tensor,
             parent_layer=self,
@@ -59,6 +59,16 @@ class InputMakiLayer(MakiTensor, ABC):
         This data is used for correct saving and loading models using TensorFlow checkpoint files.
         """
         return self._named_params_dict
+
+    def get_params_regularize(self):
+        """
+        This code imitates MakiLayer API for the compatibility sake.
+        This data is used for collect params for regularisation.
+        :return:
+        list
+            List of parameters for regularisation.
+        """
+        return self._regularize_params
 
     def get_name(self):
         return self._name
