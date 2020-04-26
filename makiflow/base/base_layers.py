@@ -31,7 +31,8 @@ class BatchNormBaseLayer(MakiLayer):
     USE_GAMMA = 'use_gamma'
     TRACK_RUNNING_STATS = 'track_running_stats'
 
-    def __init__(self, D, decay, eps, name, use_gamma, use_beta, type_norm, mean, var, gamma, beta, track_running_stats):
+    def __init__(self, D, decay, eps, name, use_gamma, use_beta, regularize_gamma, regularize_beta,
+                 type_norm, mean, var, gamma, beta, track_running_stats):
         """
         Batch Normalization Procedure:
             X_normed = (X - mean) / variance
@@ -80,6 +81,7 @@ class BatchNormBaseLayer(MakiLayer):
             gamma = np.ones(D)
 
         params = []
+        regularize_params = []
         named_params_dict = {}
         name = str(name)
 
@@ -89,6 +91,8 @@ class BatchNormBaseLayer(MakiLayer):
             self.gamma = tf.Variable(gamma.astype(np.float32), name=self.name_gamma)
             named_params_dict[self.name_gamma] = self.gamma
             params += [self.gamma]
+            if regularize_gamma:
+                regularize_params += [self.gamma]
         else:
             self.gamma = None
 
@@ -98,10 +102,14 @@ class BatchNormBaseLayer(MakiLayer):
             self.beta = tf.Variable(beta.astype(np.float32), name=self.name_beta)
             named_params_dict[self.name_beta] = self.beta
             params += [self.beta]
+            if regularize_beta:
+                regularize_params += [self.beta]
         else:
             self.beta = None
-
-        super().__init__(name, params, named_params_dict)
+        super().__init__(name, params=params,
+                         regularize_params=regularize_params,
+                         named_params_dict=named_params_dict
+        )
 
     def __call__(self, x):
         data = x.get_data_tensor()

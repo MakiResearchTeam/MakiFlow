@@ -851,8 +851,8 @@ class AtrousConvLayer(SimpleForwardLayer):
 class BatchNormLayer(BatchNormBaseLayer):
     TYPE = 'BatchNormLayer'
 
-    def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
+    def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True, use_beta=True, regularize_gamma=True,
+                 regularize_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         Batch Normalization Procedure:
             X_normed = (X - mean) / variance
@@ -883,6 +883,7 @@ class BatchNormLayer(BatchNormBaseLayer):
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta,
+                         regularize_gamma=regularize_gamma, regularize_beta=regularize_beta,
                          type_norm='Batch', mean=mean, var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
@@ -1002,8 +1003,9 @@ class GroupNormLayer(BatchNormBaseLayer):
     TYPE = 'GroupNormLayer'
     G = 'G'
 
-    def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
+    def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True, regularize_gamma=True,
+                 regularize_beta=True, use_beta=True, mean=None, var=None, gamma=None,
+                 beta=None, track_running_stats=True):
         """
         GroupNormLayer Procedure:
             X_normed = (X - mean) / variance
@@ -1038,6 +1040,7 @@ class GroupNormLayer(BatchNormBaseLayer):
         """
         self.G = G
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma,
+                         regularize_gamma=regularize_gamma, regularize_beta=regularize_beta,
                          type_norm='GroupNorm', use_beta=use_beta, mean=mean, var=var,
                          gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
@@ -1189,8 +1192,9 @@ class GroupNormLayer(BatchNormBaseLayer):
 class NormalizationLayer(BatchNormBaseLayer):
     TYPE = 'NormalizationLayer'
 
-    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
+    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True, regularize_gamma=True,
+                 regularize_beta=True, use_beta=True, mean=None, var=None, gamma=None,
+                 beta=None, track_running_stats=True):
         """
         NormalizationLayer Procedure:
             X_normed = (X - mean) / variance
@@ -1221,6 +1225,7 @@ class NormalizationLayer(BatchNormBaseLayer):
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
+                         regularize_gamma=regularize_gamma, regularize_beta=regularize_beta,
                          type_norm='NormalizationLayer', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
@@ -1356,8 +1361,9 @@ class NormalizationLayer(BatchNormBaseLayer):
 class InstanceNormLayer(BatchNormBaseLayer):
     TYPE = 'InstanceNormLayer'
 
-    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True,
-                 use_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
+    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True, regularize_gamma=True,
+                 regularize_beta=True, use_beta=True, mean=None, var=None, gamma=None,
+                 beta=None, track_running_stats=True):
         """
         InstanceNormLayer Procedure:
             X_normed = (X - mean) / variance
@@ -1390,6 +1396,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
             Batchnorm beta value. Used for initialization beta with pretrained value.
         """
         super().__init__(D=D, decay=decay, eps=eps, name=name, use_gamma=use_gamma, use_beta=use_beta, mean=mean,
+                         regularize_gamma=regularize_gamma, regularize_beta=regularize_beta,
                          type_norm='InstanceNorm', var=var, gamma=gamma, beta=beta, track_running_stats=track_running_stats)
 
     def _init_train_params(self, data):
