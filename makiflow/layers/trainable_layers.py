@@ -36,7 +36,7 @@ class ConvLayer(SimpleForwardLayer):
     INIT_TYPE = 'init_type'
 
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=True, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Parameters
         ----------
@@ -155,7 +155,7 @@ class UpConvLayer(SimpleForwardLayer):
     INIT_TYPE = 'init_type'
 
     def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=True, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Parameters
         ----------
@@ -282,9 +282,12 @@ class BiasLayer(SimpleForwardLayer):
     D = 'D'
     TRAINABLE = 'trainable'
 
-    def __init__(self, D, name, trainable=True, regularize_bias=True, b=None):
+    def __init__(self, D, name, trainable=True, regularize_bias=False, b=None):
         """
         BiasLayer adds a bias vector of dimension D to a tensor.
+        If `trainable` set to False, then the bias is meant to be a constant.
+        It is done this way to prevent the bias from accidential training
+        if the user simply forgot to make this layer untrainable after creating a model.
 
         Parameters
         ----------
@@ -360,7 +363,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
 
     def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME', rate=[1, 1],
                  kernel_initializer=InitConvKernel.HE, use_bias=True, activation=tf.nn.relu,
-                 regularize_bias=True, W=None, b=None):
+                 regularize_bias=False, W=None, b=None):
         """
         Parameters
         ----------
@@ -491,7 +494,7 @@ class SeparableConvLayer(SimpleForwardLayer):
 
     def __init__(self, kw, kh, in_f, out_f, multiplier, name, stride=1, padding='SAME',
                  dw_kernel_initializer=InitConvKernel.XAVIER_GAUSSIAN_INF, pw_kernel_initializer=InitConvKernel.HE,
-                 use_bias=True, regularize_bias=True, activation=tf.nn.relu,
+                 use_bias=True, regularize_bias=False, activation=tf.nn.relu,
                  W_dw=None, W_pw=None, b=None):
         """
         Parameters
@@ -632,7 +635,7 @@ class DenseLayer(SimpleForwardLayer):
     INIT_TYPE = 'init_type'
 
     def __init__(self, in_d, out_d, name, activation=tf.nn.relu, mat_initializer=InitDenseMat.HE,
-                 use_bias=True, regularize_bias=True, W=None, b=None):
+                 use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Paremeters
         ----------
@@ -735,7 +738,7 @@ class AtrousConvLayer(SimpleForwardLayer):
     INIT_TYPE = 'init_type'
 
     def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=True, W=None, b=None):
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Parameters
         ----------
@@ -851,8 +854,8 @@ class AtrousConvLayer(SimpleForwardLayer):
 class BatchNormLayer(BatchNormBaseLayer):
     TYPE = 'BatchNormLayer'
 
-    def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True, use_beta=True, regularize_gamma=True,
-                 regularize_beta=True, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
+    def __init__(self, D, name, decay=0.9, eps=1e-4, use_gamma=True, use_beta=True, regularize_gamma=False,
+                 regularize_beta=False, mean=None, var=None, gamma=None, beta=None, track_running_stats=True):
         """
         Batch Normalization Procedure:
             X_normed = (X - mean) / variance
@@ -899,12 +902,10 @@ class BatchNormLayer(BatchNormBaseLayer):
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
-        self._regularize_params += [self.running_mean]
 
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False,
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
-        self._regularize_params += [self.running_variance]
 
     def _forward(self, X):
         if self._track_running_stats:
@@ -1003,8 +1004,8 @@ class GroupNormLayer(BatchNormBaseLayer):
     TYPE = 'GroupNormLayer'
     G = 'G'
 
-    def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True, regularize_gamma=True,
-                 regularize_beta=True, use_beta=True, mean=None, var=None, gamma=None,
+    def __init__(self, D, name, G=32, decay=0.999, eps=1e-3, use_gamma=True, regularize_gamma=False,
+                 regularize_beta=False, use_beta=True, mean=None, var=None, gamma=None,
                  beta=None, track_running_stats=True):
         """
         GroupNormLayer Procedure:
@@ -1070,12 +1071,10 @@ class GroupNormLayer(BatchNormBaseLayer):
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
-        self._regularize_params += [self.running_mean]
 
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False,
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
-        self._regularize_params += [self.running_variance]
 
     def _forward(self, X):
         # These if statements check if we do batchnorm for convolution or dense
@@ -1192,8 +1191,8 @@ class GroupNormLayer(BatchNormBaseLayer):
 class NormalizationLayer(BatchNormBaseLayer):
     TYPE = 'NormalizationLayer'
 
-    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True, regularize_gamma=True,
-                 regularize_beta=True, use_beta=True, mean=None, var=None, gamma=None,
+    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True, regularize_gamma=False,
+                 regularize_beta=False, use_beta=True, mean=None, var=None, gamma=None,
                  beta=None, track_running_stats=True):
         """
         NormalizationLayer Procedure:
@@ -1253,12 +1252,10 @@ class NormalizationLayer(BatchNormBaseLayer):
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
-        self._regularize_params += [self.running_mean]
 
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False,
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
-        self._regularize_params += [self.running_variance]
 
     def _forward(self, X):
         if self._track_running_stats:
@@ -1361,8 +1358,8 @@ class NormalizationLayer(BatchNormBaseLayer):
 class InstanceNormLayer(BatchNormBaseLayer):
     TYPE = 'InstanceNormLayer'
 
-    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True, regularize_gamma=True,
-                 regularize_beta=True, use_beta=True, mean=None, var=None, gamma=None,
+    def __init__(self, D, name, decay=0.999, eps=1e-3, use_gamma=True, regularize_gamma=False,
+                 regularize_beta=False, use_beta=True, mean=None, var=None, gamma=None,
                  beta=None, track_running_stats=True):
         """
         InstanceNormLayer Procedure:
@@ -1425,12 +1422,10 @@ class InstanceNormLayer(BatchNormBaseLayer):
 
         self.running_mean = tf.Variable(self.running_mean.astype(np.float32), trainable=False, name=self.name_mean)
         self._named_params_dict[self.name_mean] = self.running_mean
-        self._regularize_params += [self.running_mean]
 
         self.running_variance = tf.Variable(self.running_variance.astype(np.float32), trainable=False,
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
-        self._regularize_params += [self.running_variance]
 
     def _forward(self, X):
         if self._track_running_stats:

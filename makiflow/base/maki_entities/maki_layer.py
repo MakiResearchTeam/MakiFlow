@@ -77,24 +77,35 @@ class MakiLayer(MakiRestorable):
 
     def get_params(self):
         """
-        :return
+
+        Return
         ----------
-        Trainable parameters of the layer.
+        list
+            Trainable parameters of this layer.
         """
         return self._params
 
     def get_params_dict(self):
         """
         This data is used for correct saving and loading models using TensorFlow checkpoint files.
+
+        Return
+        ----------
+        dict
+            Dictionary that store name of tensor and tensor itself of this layer.
         """
         return self._named_params_dict
 
     def get_params_regularize(self):
         """
         This data is used for collect params for regularisation.
-        :return:
+        Some of the parameters, like bias, are preferred not to be regularized since it can cause underfitting.
+        Thus, it makes sense to track parameters that are being regularized and that are not.
+
+        Return
+        ----------
         list
-            List of parameters for regularisation.
+            List of parameters to regularized.
         """
         return self._regularize_params
 
