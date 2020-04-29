@@ -75,7 +75,7 @@ class InputMakiLayer(MakiTensor, ABC):
         Return
         ----------
         list
-            List of parameters to regularized.
+            List of parameters to be regularized.
         """
         return self._regularize_params
 
