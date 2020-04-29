@@ -37,8 +37,6 @@ class InputLayer(InputMakiLayer):
         name : str
             Name of this layer.
         """
-
-        self.params = []
         self._name = str(name)
         self._input_shape = input_shape
         self._input = tf.placeholder(tf.float32, shape=input_shape, name=self._name)
@@ -87,7 +85,10 @@ class ReshapeLayer(SimpleForwardLayer):
             Name of this layer.
         """
 
-        super().__init__(name, [], {})
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
         self.new_shape = new_shape
 
     def _forward(self, x):
@@ -131,8 +132,11 @@ class MulByAlphaLayer(SimpleForwardLayer):
             Name of this layer.
         """
 
-        self.alpha = tf.constant(alpha)
-        super().__init__(name, [], {})
+        self.alpha = tf.constant(alpha, dtype=tf.float32, name=name)
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
 
     def _forward(self, x):
         return x * self.alpha
@@ -169,7 +173,10 @@ class SumLayer(MakiLayer):
             Name of this layer.
         """
 
-        super().__init__(name, [], {})
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
 
     def __call__(self, x: list):
         data = [one_tensor.get_data_tensor() for one_tensor in x]
@@ -224,8 +231,11 @@ class ConcatLayer(MakiLayer):
         name : str
             Name of this layer.
         """
-        super().__init__(name, [], {})
         self.axis = axis
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
 
     def __call__(self, x: list):
         data = [one_tensor.get_data_tensor() for one_tensor in x]
@@ -288,7 +298,11 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 
         self.input_padding = padding
         self.padding = [[0, 0], padding[0], padding[1], [0, 0]]
-        super().__init__(name, [], {})
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         return tf.pad(
@@ -329,7 +343,11 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        super().__init__(name, [], {})
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         assert (len(x.shape) == 4)
@@ -365,7 +383,11 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        super().__init__(name, [], {})
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         assert (len(x.shape) == 4)
@@ -409,10 +431,14 @@ class MaxPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
         self.padding = padding
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         return tf.nn.max_pool(
@@ -467,10 +493,14 @@ class AvgPoolLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        super().__init__(name, [], {})
         self.ksize = ksize
         self.strides = strides
         self.padding = padding
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         return tf.nn.avg_pool(
@@ -524,8 +554,12 @@ class UpSamplingLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        super().__init__(name, [], {})
         self.size = size
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         t_shape = x.get_shape()
@@ -569,10 +603,14 @@ class ActivationLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        super().__init__(name, [], {})
         if activation is None:
             raise Exception("Activation can't None")
         self.f = activation
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         return self.f(x)
@@ -609,7 +647,11 @@ class FlattenLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        super().__init__(name, [], {})
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         return tf.contrib.layers.flatten(x)
@@ -654,10 +696,14 @@ class DropoutLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
-        super().__init__(name, [], {})
         self._p_keep = p_keep
         self.noise_shape = noise_shape
         self.seed = seed
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         return x
@@ -716,11 +762,14 @@ class ResizeLayer(SimpleForwardLayer):
         """
         assert (len(new_shape) == 2)
         self.new_shape = new_shape
-        self.name = name
         self.align_corners = align_corners
         self.interpolation = interpolation
 
-        super().__init__(name, [], {})
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
+
 
     def _forward(self, x):
         if self.interpolation == ResizeLayer.INTERPOLATION_BILINEAR:
@@ -728,28 +777,28 @@ class ResizeLayer(SimpleForwardLayer):
                 x,
                 self.new_shape,
                 align_corners=self.align_corners,
-                name=self.name,
+                name=self._name,
             )
         elif self.interpolation == ResizeLayer.INTERPOLATION_NEAREST_NEIGHBOR:
             return tf.image.resize_nearest_neighbor(
                 x,
                 self.new_shape,
                 align_corners=self.align_corners,
-                name=self.name,
+                name=self._name,
             )
         elif self.interpolation == ResizeLayer.INTERPOLATION_AREA:
             return tf.image.resize_area(
                 x,
                 self.new_shape,
                 align_corners=self.align_corners,
-                name=self.name,
+                name=self._name,
             )
         elif self.interpolation == ResizeLayer.INTERPOLATION_BICUBIC:
             return tf.image.resize_bicubic(
                 x,
                 self.new_shape,
                 align_corners=self.align_corners,
-                name=self.name,
+                name=self._name,
             )
         else:
             raise Exception(f"Interpolation {self.interpolation} don't exist")
@@ -771,7 +820,7 @@ class ResizeLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: ResizeLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self._name,
                 ResizeLayer.FIELD_INTERPOLATION: self.interpolation,
                 ResizeLayer.NEW_SHAPE: self.new_shape,
                 ResizeLayer.ALIGN_CORNERS: self.align_corners,
@@ -789,8 +838,10 @@ class L2NormalizationLayer(SimpleForwardLayer):
         Performs L2 normalization along feature dimension.
         """
         self._eps = eps
-        self._name = name
-        super().__init__(name, params=[], named_params_dict={})
+        super().__init__(name, params=[],
+                         regularize_params=[],
+                         named_params_dict={}
+        )
 
     def _forward(self, x):
         return tf.math.l2_normalize(

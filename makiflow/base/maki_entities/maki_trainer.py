@@ -132,7 +132,7 @@ class MakiTrainer(MakiModel, ABC):
             decay = self._l2_regularized_layers[layer_name]
             if decay is not None:
                 layer = self._graph_tensors[layer_name].get_parent_layer()
-                params = layer.get_params()
+                params = layer.get_params_regularize()
                 for param in params:
                     self._l2_reg_loss += tf.nn.l2_loss(param) * tf.constant(decay)
 
@@ -189,7 +189,7 @@ class MakiTrainer(MakiModel, ABC):
             decay = self._l1_regularized_layers[layer_name]
             if decay is not None:
                 layer = self._graph_tensors[layer_name].get_parent_layer()
-                params = layer.get_params()
+                params = layer.get_params_regularize()
                 for param in params:
                     self._l1_reg_loss += tf.abs(tf.reduce_sum(param)) * tf.constant(decay)
 
