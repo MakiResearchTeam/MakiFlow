@@ -71,6 +71,8 @@ class BatchNormBaseLayer(MakiLayer):
         self.running_variance = var
         self._track_running_stats = track_running_stats
 
+        self._is_running_vars_created = False
+
         # These variables are needed to change the mean and variance of the batch after
         # the batchNormaization: result*gamma + beta
         # beta - offset
@@ -114,7 +116,8 @@ class BatchNormBaseLayer(MakiLayer):
     def __call__(self, x):
         data = x.get_data_tensor()
 
-        if self._track_running_stats:
+        if self._track_running_stats and not self._is_running_vars_created:
+            self._is_running_vars_created = True
             self._init_train_params(data)
 
         data = self._forward(data)
