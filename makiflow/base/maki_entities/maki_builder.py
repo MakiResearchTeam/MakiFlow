@@ -20,8 +20,6 @@ from .maki_layer import MakiRestorable
 from .maki_tensor import MakiTensor
 from .input_maki_layer import InputMakiLayer
 
-from makiflow.layers import InputLayer
-
 
 class MakiBuilder:
     # Provides API for model restoration.
@@ -105,7 +103,7 @@ class MakiBuilder:
                             MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
                         )
                         if batch_size is not None:
-                            temp[MakiRestorable.PARAMS][InputLayer.INPUT_SHAPE][0] = batch_size
+                            temp[MakiRestorable.PARAMS][InputMakiLayer.INPUT_SHAPE][0] = batch_size
                         answer = MakiBuilder.__layer_from_dict(temp)
 
                 coll_tensors[from_] = answer
