@@ -15,4 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .rendererbasic import NeuralRenderBasis
+
+from .focal_loss import FocalTrainingModule
+from .maki_loss import MakiTrainingModule
+from .quadratic_crossentropy_loss import QuadraticCrossEntropyTrainingModule
+from .weighted_crossentropy_loss import WeightedCrossEntropyTrainingModule
+from .weighted_focal_loss import WeightedFocalTrainingModule

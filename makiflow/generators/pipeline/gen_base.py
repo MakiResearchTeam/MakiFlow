@@ -17,7 +17,7 @@
 
 from __future__ import absolute_import
 from abc import abstractmethod, ABC
-from makiflow.base.maki_entities import MakiTensor
+from makiflow.base import InputMakiLayer
 
 
 class PathGenerator(ABC):
@@ -26,16 +26,14 @@ class PathGenerator(ABC):
         pass
 
 
-class GenLayer(MakiTensor):
+class GenLayer(InputMakiLayer):
     def __init__(self, name, input_tensor):
         self._name = name
         self._input_tensor = input_tensor
         # noinspection PyTypeChecker
         super().__init__(
-            data_tensor=self._input_tensor,
-            parent_layer=self,
-            parent_tensor_names=None,
-            previous_tensors={}
+            data_tensor=input_tensor,
+            name=name
         )
 
     @abstractmethod
@@ -55,3 +53,4 @@ class GenLayer(MakiTensor):
     # noinspection PyMethodMayBeStatic
     def get_params_dict(self):
         return {}
+

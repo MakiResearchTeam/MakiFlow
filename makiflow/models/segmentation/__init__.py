@@ -16,5 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.models.segmentation.segmentator import Segmentator
+
+from .compile import Segmentator
+
 del absolute_import
