@@ -50,7 +50,7 @@ class MakiBuilder:
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def restore_graph(outputs, graph_info_json, batch_size, input_layer: InputMakiLayer = None):
+    def restore_graph(outputs, graph_info_json, input_layer: InputMakiLayer = None):
         """
         Restore Inference graph with inputs and outputs of model from json.
 
@@ -62,8 +62,6 @@ class MakiBuilder:
         input_layer : InputMakiLayer
             Custom InputLayer. Use this parameter if you want to train the model with pipelines
             or simply want to change the batch size.
-        batch_size : int
-            Soon.
         """
         # dict {NameTensor : Info about this tensor}
         graph_info = {}
@@ -102,8 +100,6 @@ class MakiBuilder:
                             MakiRestorable.FIELD_TYPE: parent_layer_info[MakiRestorable.FIELD_TYPE],
                             MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
                         )
-                        if batch_size is not None:
-                            temp[MakiRestorable.PARAMS][InputMakiLayer.INPUT_SHAPE][0] = batch_size
                         answer = MakiBuilder.__layer_from_dict(temp)
 
                 coll_tensors[from_] = answer

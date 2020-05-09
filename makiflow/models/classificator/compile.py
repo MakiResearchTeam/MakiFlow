@@ -23,7 +23,7 @@ import json
 
 class Classificator(CETrainingModule, QCETrainingModule, FocalTrainingModule, MakiTrainingModule):
     @staticmethod
-    def from_json(path_to_model, batch_size=None):
+    def from_json(path_to_model):
         """Creates and returns ConvModel from json.json file contains its architecture"""
         json_file = open(path_to_model)
         json_value = json_file.read()
@@ -35,7 +35,7 @@ class Classificator(CETrainingModule, QCETrainingModule, FocalTrainingModule, Ma
 
         graph_info = json_info[MakiCore.GRAPH_INFO]
 
-        inputs_outputs = MakiCore.restore_graph([output_tensor_name], graph_info, batch_size)
+        inputs_outputs = MakiCore.restore_graph([output_tensor_name], graph_info)
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')

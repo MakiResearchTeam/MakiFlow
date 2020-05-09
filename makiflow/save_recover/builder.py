@@ -37,7 +37,7 @@ from makiflow.models import TextRecognizer
 class Builder:
 
     @staticmethod
-    def classificator_from_json(json_path, batch_size=None):
+    def classificator_from_json(json_path):
         """Creates and returns ConvModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
@@ -49,14 +49,14 @@ class Builder:
 
         graph_info = json_info[MakiModel.GRAPH_INFO]
 
-        inputs_outputs = Builder.restore_graph([output_tensor_name], graph_info, batch_size)
+        inputs_outputs = Builder.restore_graph([output_tensor_name], graph_info)
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
         return Classificator(input=in_x, output=out_x, name=model_name)
 
     @staticmethod
-    def ssd_from_json(json_path, batch_size=None, generator=None):
+    def ssd_from_json(json_path, generator=None):
         """Creates and returns SSDModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
@@ -71,7 +71,7 @@ class Builder:
             outputs += [params['reg_x_name'], params['class_x_name']]
 
         graph_info = architecture_dict[MakiModel.GRAPH_INFO]
-        inputs_outputs = Builder.restore_graph(outputs, graph_info, batch_size, generator)
+        inputs_outputs = Builder.restore_graph(outputs, graph_info, generator)
         # Restore all the DetectorClassifiers
         dcs = []
         for dc_dict in architecture_dict[MakiModel.MODEL_INFO]['dcs']:
@@ -115,15 +115,13 @@ class Builder:
         )
 
     @staticmethod
-    def text_recognizer_from_json(json_path, batch_size=None):
+    def text_recognizer_from_json(json_path):
         """Creates and returns TextRecognizer from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
         name = architecture_dict['name']
         input_shape = architecture_dict['input_shape']
-        if batch_size is not None:
-            input_shape[0] = batch_size
         chars = architecture_dict['chars']
         max_seq_length = architecture_dict['max_seq_length']
         decoder_type = architecture_dict['decoder_type']
@@ -134,9 +132,6 @@ class Builder:
         rnn_layers = []
         for layer in architecture_dict['rnn_layers']:
             rnn_layers.append(Builder.__layer_from_dict(layer))
-
-        if batch_size is not None:
-            input_shape = [batch_size, *input_shape[1:]]
 
         return TextRecognizer(
             cnn_layers=cnn_layers,
@@ -149,7 +144,7 @@ class Builder:
         )
 
     @staticmethod
-    def segmentator_from_json(json_path, batch_size=None, generator=None):
+    def segmentator_from_json(json_path, generator=None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
         json_file = open(json_path)
         json_value = json_file.read()
@@ -162,7 +157,7 @@ class Builder:
         MakiTensors_of_model = json_info[MakiModel.GRAPH_INFO]
 
         inputs_outputs = Builder.restore_graph(
-            [output_tensor_name], MakiTensors_of_model, batch_size, generator
+            [output_tensor_name], MakiTensors_of_model, generator
         )
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
@@ -200,7 +195,7 @@ class Builder:
     # ------------------------------------------------------------------------------------------------------------------
 
     @staticmethod
-    def restore_graph(outputs, graph_info_json, batch_sz=None, generator=None):
+    def restore_graph(outputs, graph_info_json, generator=None):
         # dict {NameTensor : Info about this tensor}
         graph_info = {}
 
@@ -227,16 +222,14 @@ class Builder:
                     answer = layer(takes[0] if len(takes) == 1 else takes)
                 else:
                     # Input layer
-                    temp = {}
-                    temp.update({
-                        MakiRestorable.FIELD_TYPE: parent_layer_info[MakiRestorable.FIELD_TYPE],
-                        MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
-                    )
-                    if batch_sz is not None:
-                        temp[MakiRestorable.PARAMS][InputLayer.INPUT_SHAPE][0] = batch_sz
                     if generator is not None:
                         answer = generator
                     else:
+                        temp = {}
+                        temp.update({
+                            MakiRestorable.FIELD_TYPE: parent_layer_info[MakiRestorable.FIELD_TYPE],
+                            MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
+                        )
                         answer = Builder.__layer_from_dict(temp)
 
                 coll_tensors[from_] = answer

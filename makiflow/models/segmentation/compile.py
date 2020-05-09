@@ -44,7 +44,7 @@ class Segmentator(
         graph_info = json_info[MakiCore.GRAPH_INFO]
 
         inputs_outputs = MakiCore.restore_graph(
-            [output_tensor_name], graph_info, batch_size=batch_size, input_layer=generator
+            [output_tensor_name], graph_info, input_layer=generator
         )
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
