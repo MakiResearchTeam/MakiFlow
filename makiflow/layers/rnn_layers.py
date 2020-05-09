@@ -69,7 +69,7 @@ class RNNLayer(MakiLayer, ABC):
         self._bidirectional = bidirectional
         self._cell_type = CellType.get_cell_type(bidirectional, dynamic)
         self._cells_state = None
-        super().__init__(name, params, named_params_dict)
+        super().__init__(name, params, params, named_params_dict)
 
     def __call__(self, x):
         data = x.get_data_tensor()
