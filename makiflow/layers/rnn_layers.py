@@ -287,7 +287,8 @@ class LSTMLayer(MakiLayer):
             parent_layer=self,
             parent_tensor_names=parent_tensor_names,
             previous_tensors=previous_tensors,
-            name=self.get_name() + 'HIDDEN_STATES'
+            name=self.get_name() + 'HIDDEN_STATES',
+            index=0
         )
         # Last candidate value
         last_candidate = MakiTensor(
@@ -295,7 +296,8 @@ class LSTMLayer(MakiLayer):
             parent_layer=self,
             parent_tensor_names=parent_tensor_names,
             previous_tensors=previous_tensors,
-            name=self.get_name() + 'LAST_CANDIDATE'
+            name=self.get_name() + 'LAST_CANDIDATE',
+            index=1
         )
         # Last hidden state
         last_hidden_state = MakiTensor(
@@ -303,7 +305,8 @@ class LSTMLayer(MakiLayer):
             parent_layer=self,
             parent_tensor_names=parent_tensor_names,
             previous_tensors=previous_tensors,
-            name=self.get_name() + 'LAST_HIDDEN_STATE'
+            name=self.get_name() + 'LAST_HIDDEN_STATE',
+            index=2
         )
         return hidden_states, last_candidate, last_hidden_state
 
