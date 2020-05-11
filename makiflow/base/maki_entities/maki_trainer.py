@@ -17,6 +17,7 @@
 
 from abc import ABC
 from makiflow.base.maki_entities.maki_model import MakiModel
+from .maki_tensor import MakiTensor
 import tensorflow as tf
 from copy import copy
 
@@ -215,26 +216,35 @@ class MakiTrainer(MakiModel, ABC):
         output_tensors = {}
         used = {}
 
-        def create_tensor(from_):
-            if used.get(from_.get_name()) is None:
-                layer = from_.get_parent_layer()
+        def create_tensor(maki_tensor: MakiTensor):
+            # Check if the parent layer has been already used.
+            # If it has, the required tensor has been already constructed.
+            layer = maki_tensor.get_parent_layer()
+            if used.get(layer.get_name()) is None:
                 used[layer.get_name()] = True
-                X = copy(from_.get_data_tensor())
+                X = copy(maki_tensor.get_data_tensor())
                 takes = []
                 # Check if we at the beginning of the computational graph, i.e. InputLayer
-                if from_.get_parent_tensor_names() is not None:
-                    for elem in from_.get_parent_tensors():
+                if len(maki_tensor.get_parent_tensor_names()) == 0:
+                    # The input layer is found
+                    output_tensors[layer.get_name()] = X
+                    return X
+                else:
+                    for elem in maki_tensor.get_parent_tensors():
                         takes += [create_tensor(elem)]
 
                     if layer.get_name() in self._trainable_layers:
                         X = layer._training_forward(takes[0] if len(takes) == 1 else takes)
                     else:
                         X = layer._forward(takes[0] if len(takes) == 1 else takes)
-
-                output_tensors[layer.get_name()] = X
-                return X
+                    output_tensors[layer.get_name()] = X
+                    # Check if the layer returns several tensors
+                    index = maki_tensor.get_index()
+                    if index is not None:
+                        X = X[index]
+                    return X
             else:
-                return output_tensors[from_.get_name()]
+                return output_tensors[maki_tensor.get_name()]
 
         self._training_outputs = []
         for output in self._outputs:

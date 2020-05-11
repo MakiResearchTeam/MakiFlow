@@ -24,12 +24,35 @@ class MakiTensor:
     PARENT_LAYER_INFO = 'parent_layer_info'
 
     def __init__(self, data_tensor: tf.Tensor, parent_layer, parent_tensor_names: list,
-                 previous_tensors: dict):
+                 previous_tensors: dict, name=None, index=None):
+        """
+        Parameters
+        ----------
+        data_tensor : tf.Tensor
+            Actual data tensor.
+        parent_layer : MakiLayer
+            Layer that produced this MakiTensor.
+        parent_tensor_names : list
+            Name of the MakiTensors used to produce this MakiTensor. I.e., names of the
+            MakiTensors that were inputs to the `parent_layer`.
+        previous_tensors : dict
+            Dictionary of all the MakiTensors that appeared in the graph before creation of this MakiTensor/
+        name : str
+            Custom name for this MakiTensor
+        index : int
+            Layer can produce a list of MakiTensors. This is the index of this MakiTensor from such a list.
+            If the index is None, the `parent_layer` never produces a list of MakiTensors,
+            hence there is no index value.
+        """
         self._data_tensor: tf.Tensor = data_tensor
-        self._name: str = parent_layer.get_name()
+        if name is not None:
+            self._name = name
+        else:
+            self._name: str = parent_layer.get_name()
         self._parent_tensor_names = parent_tensor_names
         self._parent_layer = parent_layer
         self._previous_tensors: dict = previous_tensors
+        self._index = index
 
     def get_data_tensor(self):
         return self._data_tensor
@@ -90,6 +113,9 @@ class MakiTensor:
 
     def get_name(self):
         return self._name
+
+    def get_index(self):
+        return self._index
 
     def to_dict(self):
         parent_layer_dict = self._parent_layer.to_dict()

@@ -210,7 +210,7 @@ class GRULayer(RNNLayer):
         }
 
 
-class LSTMLayer(RNNLayer):
+class LSTMLayer(MakiLayer):
     TYPE = 'LSTMLayer'
     NUM_CELLS = 'num_cells'
     INPUT_DIM = 'input_dim'
@@ -219,14 +219,13 @@ class LSTMLayer(RNNLayer):
     BIDIRECTIONAL = 'bidirectional'
     ACTIVATION = 'activation'
 
-    def __init__(self, num_cells, input_dim, seq_length, name, activation=tf.nn.tanh, dynamic=False,
-                 bidirectional=False):
+    def __init__(self, in_d, out_d, name, activation=tf.nn.tanh, dynamic=True):
         """
         Parameters
         ----------
-        num_cells : int
+        in_d : int
             Number of neurons in the layer.
-        input_dim : int
+        out_d : int
             Dimensionality of the input vectors, e.t. number of features. Dimensionality:
             [batch_size, seq_length, num_features(this is input_dim in this case)].
         seq_length : int
@@ -241,27 +240,69 @@ class LSTMLayer(RNNLayer):
             variable length, but you have to provide list of sequences' lengthes. Currently API for using
             dynamic RNNs is not provided.
             WARNING! THIS PARAMETER DOESN'T PLAY ANY ROLE IF YOU'RE GONNA STACK RNN LAYERS.
-        bidirectional : boolean
-            Influences whether the layer will be bidirectional.
-            WARNING! THIS PARAMETER DOESN'T PLAY ANY ROLE IF YOU'RE GONNA STACK RNN LAYERS.
         """
-        self._num_cells = num_cells
-        self._input_dim = input_dim
+        self._num_cells = in_d
+        self._input_dim = out_d
         self._f = activation
-        cell = LSTMCell(num_units=num_cells, activation=activation, dtype=tf.float32)
-        cell.build(input_shape=[None, tf.Dimension(self._input_dim)])
-        params = cell.variables
-        param_common_name = name + f'_{num_cells}_{input_dim}_{seq_length}'
+        self._cell = LSTMCell(num_units=in_d, activation=activation, dtype=tf.float32)
+        self._cell.build(input_shape=[out_d])
+        self._dynamic = dynamic
+        params = self._cell.variables
+        param_common_name = name + f'_{in_d}_{out_d}'
         named_params_dict = {(param_common_name + '_' + str(i)): param for i, param in enumerate(params)}
         super().__init__(
-            cells=cell,
-            params=params,
-            named_params_dict=named_params_dict,
             name=name,
-            seq_length=seq_length,
-            dynamic=dynamic,
-            bidirectional=bidirectional
+            params=params,
+            regularize_params=params,
+            named_params_dict=named_params_dict
         )
+
+    def _forward(self, x):
+        if self._dynamic:
+            dynamic_x = dynamic_rnn(self._cell, x, dtype=tf.float32)
+            # hidden states, (last candidate value, last hidden state)
+            hs, (c_last, h_last) = dynamic_x
+            return hs, c_last, h_last
+        else:
+            unstack_x = tf.unstack(x, axis=1)
+            static_x = static_rnn(self._cell, unstack_x, dtype=tf.float32)
+            hs_list, (c_last, h_last) = static_x
+            hs = tf.stack(hs_list, axis=1)
+            return hs, c_last, h_last
+
+    def __call__(self, x):
+        data = x.get_data_tensor()
+        hs, c_last, h_last = self._forward(data)
+
+        parent_tensor_names = [x.get_name()]
+        previous_tensors = copy(x.get_previous_tensors())
+        previous_tensors.update(x.get_self_pair())
+
+        # Hidden states
+        hidden_states = MakiTensor(
+            data_tensor=hs,
+            parent_layer=self,
+            parent_tensor_names=parent_tensor_names,
+            previous_tensors=previous_tensors,
+            name=self.get_name() + 'HIDDEN_STATES'
+        )
+        # Last candidate value
+        last_candidate = MakiTensor(
+            data_tensor=c_last,
+            parent_layer=self,
+            parent_tensor_names=parent_tensor_names,
+            previous_tensors=previous_tensors,
+            name=self.get_name() + 'LAST_CANDIDATE'
+        )
+        # Last hidden state
+        last_hidden_state = MakiTensor(
+            data_tensor=h_last,
+            parent_layer=self,
+            parent_tensor_names=parent_tensor_names,
+            previous_tensors=previous_tensors,
+            name=self.get_name() + 'LAST_HIDDEN_STATE'
+        )
+        return hidden_states, last_candidate, last_hidden_state
 
     @staticmethod
     def build(params: dict):
@@ -273,8 +314,8 @@ class LSTMLayer(RNNLayer):
         bidirectional = params[LSTMLayer.BIDIRECTIONAL]
         activation = ActivationConverter.str_to_activation(params[LSTMLayer.ACTIVATION])
         return LSTMLayer(
-            num_cells=num_cells,
-            input_dim=input_dim,
+            in_d=num_cells,
+            out_d=input_dim,
             seq_length=seq_length,
             name=name,
             activation=activation,

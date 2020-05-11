@@ -16,7 +16,6 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from .maki_tensor import MakiTensor
-from .maki_layer import MakiLayer
 from abc import ABC
 
 
@@ -41,7 +40,7 @@ class InputMakiLayer(MakiTensor, ABC):
         super().__init__(
             data_tensor=data_tensor,
             parent_layer=self,
-            parent_tensor_names=None,
+            parent_tensor_names=[],
             previous_tensors={},
         )
 
