@@ -270,6 +270,9 @@ class LSTMLayer(MakiLayer):
             hs = tf.stack(hs_list, axis=1)
             return hs, c_last, h_last
 
+    def _training_forward(self, x):
+        return self._forward(x)
+
     def __call__(self, x):
         data = x.get_data_tensor()
         hs, c_last, h_last = self._forward(data)
