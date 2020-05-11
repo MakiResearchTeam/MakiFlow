@@ -26,6 +26,7 @@ from makiflow.trainers.utils.optimizer_builder import OptimizerBuilder
 from sklearn.utils import shuffle
 from makiflow.save_recover.builder import Builder
 from makiflow.tools.test_visualizer import TestVisualizer
+from makiflow.metrics import confusion_mat
 from tqdm import tqdm
 import traceback
 

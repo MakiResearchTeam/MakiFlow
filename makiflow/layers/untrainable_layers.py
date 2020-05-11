@@ -24,7 +24,6 @@ from makiflow.layers.sf_layer import SimpleForwardLayer
 
 
 class InputLayer(InputMakiLayer):
-    INPUT_SHAPE = 'input_shape'
 
     def __init__(self, input_shape, name):
         """
@@ -64,7 +63,7 @@ class InputLayer(InputMakiLayer):
             MakiRestorable.FIELD_TYPE: InputMakiLayer.TYPE,
             MakiRestorable.PARAMS: {
                 MakiRestorable.NAME: self._name,
-                InputLayer.INPUT_SHAPE: self._input_shape
+                InputMakiLayer.INPUT_SHAPE: self._input_shape
             }
         }
 

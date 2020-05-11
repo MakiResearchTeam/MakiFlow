@@ -92,14 +92,14 @@ class MakiBuilder:
                     answer = layer(takes[0] if len(takes) == 1 else takes)
                 else:
                     # Input layer
-                    temp = {}
-                    temp.update({
-                        MakiRestorable.FIELD_TYPE: parent_layer_info[MakiRestorable.FIELD_TYPE],
-                        MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
-                    )
                     if input_layer is not None:
                         answer = input_layer
                     else:
+                        temp = {}
+                        temp.update({
+                            MakiRestorable.FIELD_TYPE: parent_layer_info[MakiRestorable.FIELD_TYPE],
+                            MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
+                        )
                         answer = MakiBuilder.__layer_from_dict(temp)
 
                 coll_tensors[from_] = answer

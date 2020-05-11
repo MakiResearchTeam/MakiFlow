@@ -21,6 +21,7 @@ from abc import ABC
 
 class InputMakiLayer(MakiTensor, ABC):
     TYPE = 'InputLayer'
+    INPUT_SHAPE = 'input_shape'
 
     def __init__(self, data_tensor, name):
         """
