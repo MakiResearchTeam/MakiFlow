@@ -27,17 +27,14 @@ from makiflow.layers import InputLayer
 from makiflow.base.maki_entities import MakiCore
 
 
-class SParams:
+class SegmentatorBasic(MakiCore):
     DEFAULT_NAME = 'MakiSegmentator'
     INPUT_MT = 'input_mt'
     OUTPUT_MT = 'output_mt'
     NAME = 'name'
     LABELS = 'labels'
 
-
-class SegmentatorBasic(MakiCore):
-
-    def __init__(self, input_s: InputLayer, output: MakiTensor, name=SParams.DEFAULT_NAME):
+    def __init__(self, input_s: InputLayer, output: MakiTensor, name=DEFAULT_NAME):
         self.name = str(name)
         graph_tensors = output.get_previous_tensors()
         graph_tensors.update(output.get_self_pair())
@@ -52,9 +49,9 @@ class SegmentatorBasic(MakiCore):
 
     def _get_model_info(self):
         return {
-            SParams.NAME: self.name,
-            SParams.INPUT_MT: self._inputs[0].get_name(),
-            SParams.OUTPUT_MT: self._outputs[0].get_name()
+            SegmentatorBasic.NAME: self.name,
+            SegmentatorBasic.INPUT_MT: self._inputs[0].get_name(),
+            SegmentatorBasic.OUTPUT_MT: self._outputs[0].get_name()
         }
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -82,7 +79,7 @@ class SegmentatorBasic(MakiCore):
         if use_generator:
             self._labels = self._generator.get_iterator()[SegmentIterator.MASK]
         else:
-            self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name=SParams.LABELS)
+            self._labels = tf.placeholder(tf.int32, shape=out_shape[:-1], name=SegmentatorBasic.LABELS)
 
         training_out = self._training_outputs[0]
         self._flattened_logits = tf.reshape(training_out, shape=[-1, self.total_predictions, self.num_classes])

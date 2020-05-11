@@ -28,6 +28,7 @@ from ..main_modules import SegmentatorBasic
 WEIGHTED_FOCAL_LOSS = 'WEIGHTED FOCAL LOSS'
 TOTAL_LOSS = 'TOTAL LOSS'
 
+
 class WeightedFocalTrainingModule(SegmentatorBasic):
     GAMMA = 'gamma'
     NUM_POSITIVES = 'num_positives'

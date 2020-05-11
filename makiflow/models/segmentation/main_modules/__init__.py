@@ -18,6 +18,6 @@
 
 from __future__ import absolute_import
 
-from .segmentatorbasic import SegmentatorBasic, SParams
+from .segmentatorbasic import SegmentatorBasic
 
 del absolute_import
