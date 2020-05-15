@@ -17,6 +17,6 @@
 
 from __future__ import absolute_import
 
-from .segment_trainer import  SegmentatorTrainer
+from .segment_trainer import SegmentatorTrainer
 
 del absolute_import
