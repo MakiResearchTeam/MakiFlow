@@ -21,14 +21,16 @@ import os
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
+import traceback
+from sklearn.utils import shuffle
+
 from makiflow.metrics import categorical_dice_coeff
 from makiflow.trainers.utils.optimizer_builder import OptimizerBuilder
-from sklearn.utils import shuffle
 from makiflow.save_recover.builder import Builder
 from makiflow.tools.test_visualizer import TestVisualizer
 from makiflow.metrics import confusion_mat
-from tqdm import tqdm
-import traceback
+
 
 """
 EXAMPLE OF THE TEST PARAMETERS:
@@ -217,9 +219,13 @@ class SegmentatorTrainer:
         # what causes deletion of every computational graph was ever built.
         self._update_session()
         arch_path = exp_params[ExpField.path_to_arch]
+
+        # TODO:
+        # Create new input layer for different batch sizes
+        # For now, batch size from json file will be used.
         batch_sz = exp_params[SubExpField.batch_sz]
         if self.generator is None:
-            model = Builder.segmentator_from_json(arch_path, batch_size=batch_sz)
+            model = Builder.segmentator_from_json(arch_path)
         else:
             model = Builder.segmentator_from_json(arch_path, generator=self.generator)
 
