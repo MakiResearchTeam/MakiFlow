@@ -16,8 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-# This class defines the API to add Ops to train a model.
-from tensorflow.python.framework import ops
+import numpy as np
 
 
 class NewtonOptimizer:
@@ -34,8 +33,9 @@ class NewtonOptimizer:
     NEWTON_UPDATE = 'NEWTON_UPDATE'
     SGD_UPDATE = 'SGD_UPDATE'
 
-    def __init__(self, learning_rate, learning_rate_sgd=1e-4, name='NewtonOptimizer'):
+    def __init__(self, learning_rate, learning_rate_sgd=1e-4, alpha=0.1, name='NewtonOptimizer'):
         self._name = name
+        self._alpha = alpha
 
         with tf.name_scope(name):
             self._lr = tf.convert_to_tensor(learning_rate, name=NewtonOptimizer.NEWTON_LEARNING_RATE)
@@ -84,7 +84,7 @@ class NewtonOptimizer:
             self._get_hess_v_op,
             tf.eye(self._total_params_elements, self._total_params_elements),
             dtype='float32'
-        )
+        ) + self._alpha * tf.eye(self._total_params_elements, self._total_params_elements)
 
     # noinspection PyMethodMayBeStatic
     def variables(self):
@@ -106,7 +106,11 @@ class NewtonOptimizer:
         for flat_len, init_shape, param in zip(self._flattened_params_shape, self._params_shape, self._params):
             flat_update = newton_update[0, start_ind: start_ind + flat_len]
             restored_update = tf.reshape(flat_update, init_shape)
-            var_updates += [tf.assign_sub(param, restored_update * self._lr)]
+            if param.constraint is None:
+                var_updates += [tf.assign(param, param - restored_update * self._lr)]
+            else:
+                var_updates += [tf.assign(param, param.constraint(param - restored_update * self._lr))]
+            start_ind += flat_len
 
         return tf.group(*var_updates, name=NewtonOptimizer.NEWTON_UPDATE)
 
@@ -121,6 +125,7 @@ class NewtonOptimizer:
         with tf.name_scope(self._name):
             matrix_rank = tf.linalg.matrix_rank(
                 a=self._hessian,
+                tol=0.00001,
                 name=NewtonOptimizer.HESSIAN_RANK
             )
 
@@ -132,7 +137,7 @@ class NewtonOptimizer:
                 self._compute_grad_var_updates  # sgd mode
             )
 
-    def minimize(self, objective, var_list=None):
+    def minimize(self, objective, var_list=None, global_step=None):
         if var_list is None:
             var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
 
