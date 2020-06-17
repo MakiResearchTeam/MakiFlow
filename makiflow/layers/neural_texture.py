@@ -40,7 +40,11 @@ class SingleTextureLayer(SimpleForwardLayer):
         self._texture = tf.Variable(text_init, name=self._text_name)
         params = [self._texture]
         named_params_dict = {self._text_name: self._texture}
-        super().__init__(name, params, named_params_dict)
+        regularize_params = [self._texture]
+        super().__init__(name=name, params=params,
+                         regularize_params=regularize_params,
+                         named_params_dict=named_params_dict
+        )
 
     def _forward(self, x):
         # Normalize the input UV map so that its coordinates are within [-1, 1] range.
