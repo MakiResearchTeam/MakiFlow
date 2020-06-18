@@ -52,8 +52,8 @@ class LoadDataMethod(TFRMapMethod):
         target_image = tf.io.parse_tensor(example[TARGET_IMAGE_FNAME], out_type=self.target_image_dtype)
 
         # Give the data its shape because it doesn't have it right after being extracted
-        input_image.set_shape(self.input_image_dtype)
-        target_image.set_shape(self.target_image_dtype)
+        input_image.set_shape(self.input_image_shape)
+        target_image.set_shape(self.target_image_shape)
 
         return {
             SGMIterator.INPUT_IMAGE: input_image,
