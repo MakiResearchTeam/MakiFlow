@@ -23,6 +23,12 @@ from makiflow.generators.nn_render import NNRIterator
 
 
 class NeuralRenderBasis(MakiCore):
+
+    INPUT_MT = 'input_mt'
+    OUTPUT_MT = 'output_mt'
+    NAME = 'name'
+    IMAGES = 'images'
+
     @staticmethod
     def from_json(path_to_model):
         # TODO
@@ -48,9 +54,9 @@ class NeuralRenderBasis(MakiCore):
 
     def _get_model_info(self):
         return {
-            'name': self.name,
-            'input_s': self._inputs[0].get_name(),
-            'output': self._outputs[0].get_name()
+            NeuralRenderBasis.NAME: self.name,
+            NeuralRenderBasis.INPUT_MT: self._inputs[0].get_name(),
+            NeuralRenderBasis.OUTPUT_MT: self._outputs[0].get_name()
         }
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -69,7 +75,7 @@ class NeuralRenderBasis(MakiCore):
         if self._generator is not None:
             self._images = self._generator.get_iterator()[NNRIterator.IMAGE]
         else:
-            self._images = tf.placeholder(tf.float32, shape=out_shape, name='images')
+            self._images = tf.placeholder(tf.float32, shape=out_shape, name=NeuralRenderBasis.IMAGES)
         self._training_out = self._training_outputs[0]
 
         # OTHER PREPARATIONS
