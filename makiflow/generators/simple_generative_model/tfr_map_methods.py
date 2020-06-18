@@ -18,7 +18,6 @@
 from makiflow.generators.pipeline.tfr.tfr_map_method import TFRMapMethod, TFRPostMapMethod
 from .data_preparation import INPUT_IMAGE_FNAME, TARGET_IMAGE_FNAME
 import tensorflow as tf
-import numpy as np
 
 
 class SGMIterator:
