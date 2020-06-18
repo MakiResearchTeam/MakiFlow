@@ -71,7 +71,7 @@ class SimpleGenerativeModelBasic(MakiCore, ABC):
 
             self._input_images = self._input_data_tensors[0]
             if self._generator is not None:
-                self._target_images = self._generator.get_iterator()[SGMIterator.IMAGE]
+                self._target_images = self._generator.get_iterator()[SGMIterator.TARGET_IMAGE]
             else:
                 self._target_images = tf.placeholder(tf.float32,
                                                      shape=out_shape,
