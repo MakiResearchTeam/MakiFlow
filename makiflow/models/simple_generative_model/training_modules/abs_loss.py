@@ -33,7 +33,8 @@ class AbsTrainingModule(BasicTrainingModule):
         super()._prepare_training_vars()
 
     def _build_abs_loss(self):
-        self._abs_loss = Loss.abs_loss(self._input_images, self._training_out)
+        abs_loss = Loss.abs_loss(self._input_images, self._training_out)
+        self._abs_loss = super()._build_additional_losses(abs_loss)
         self._final_abs_loss = self._build_final_loss(self._abs_loss)
 
     def _setup_abs_loss_inputs(self):

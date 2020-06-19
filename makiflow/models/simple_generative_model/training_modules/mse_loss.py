@@ -33,7 +33,8 @@ class MseTrainingModule(BasicTrainingModule):
         super()._prepare_training_vars()
 
     def _build_mse_loss(self):
-        self._mse_loss = Loss.mse_loss(self._input_images, self._training_out)
+        mse_loss = Loss.mse_loss(self._input_images, self._training_out)
+        self._mse_loss = super()._build_additional_losses(mse_loss)
         self._final_mse_loss = self._build_final_loss(self._mse_loss)
 
     def _setup_mse_loss_inputs(self):
