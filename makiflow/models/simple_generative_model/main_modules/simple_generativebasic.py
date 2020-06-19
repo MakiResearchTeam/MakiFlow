@@ -62,25 +62,24 @@ class SimpleGenerativeModelBasic(MakiCore, ABC):
     def _prepare_training_vars(self):
         if not self._set_for_training:
             super()._setup_for_training()
-        if not self._training_vars_are_ready:
-            # VARIABLES PREPARATION
-            out_shape = self._outputs[0].get_shape()
-            self._out_h = out_shape[1]
-            self._out_w = out_shape[2]
-            self._batch_sz = out_shape[0]
+        # VARIABLES PREPARATION
+        out_shape = self._outputs[0].get_shape()
+        self._out_h = out_shape[1]
+        self._out_w = out_shape[2]
+        self._batch_sz = out_shape[0]
 
-            self._input_images = self._input_data_tensors[0]
-            if self._generator is not None:
-                self._target_images = self._generator.get_iterator()[SGMIterator.TARGET_IMAGE]
-            else:
-                self._target_images = tf.placeholder(tf.float32,
-                                                     shape=out_shape,
-                                                     name=SimpleGenerativeModelBasic.INPUT_IMAGES
-                )
+        self._input_images = self._input_data_tensors[0]
+        if self._generator is not None:
+            self._target_images = self._generator.get_iterator()[SGMIterator.TARGET_IMAGE]
+        else:
+            self._target_images = tf.placeholder(tf.float32,
+                                                 shape=out_shape,
+                                                 name=SimpleGenerativeModelBasic.INPUT_IMAGES
+            )
 
-            self._training_out = self._training_outputs[0]
+        self._training_out = self._training_outputs[0]
 
-            self._training_vars_are_ready = True
+        self._training_vars_are_ready = True
 
     def set_generator(self, generator):
         self._generator = generator

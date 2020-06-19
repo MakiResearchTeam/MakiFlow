@@ -24,8 +24,6 @@ class PerceptualLossModuleGenerator(SimpleGenerativeModelBasic):
     NOTIFY_BUILD_PERCEPTUAL_LOSS = "Perceptual loss was built"
 
     def _prepare_training_vars_additional_losses(self):
-        if not self._set_for_training:
-            super()._setup_for_training()
         self._scale_per_loss = 1.0
         self._use_perceptual_loss = False
         self._creation_per_loss = None
