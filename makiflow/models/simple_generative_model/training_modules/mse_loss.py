@@ -33,7 +33,13 @@ class MseTrainingModule(BasicTrainingModule):
         super()._prepare_training_vars()
 
     def _build_mse_loss(self):
-        mse_loss = Loss.mse_loss(self._input_images, self._training_out)
+        mse_loss = Loss.mse_loss(self._input_images, self._training_out, raw_tensor=True)
+
+        if self._use_weight_mask_images_for_training:
+            mse_loss = tf.reduce_mean(mse_loss * self._weight_mask_images)
+        else:
+            mse_loss = tf.reduce_mean(mse_loss)
+
         self._mse_loss = super()._build_additional_losses(mse_loss)
         self._final_mse_loss = self._build_final_loss(self._mse_loss)
 
@@ -65,30 +71,35 @@ class MseTrainingModule(BasicTrainingModule):
 
         return self._mse_train_op
 
-    def fit_mse(self, input_images, target_images, optimizer, epochs=1, global_step=None, shuffle_data=True):
+    def fit_mse(self, input_images, target_images,
+                optimizer, weight_mask_images=None,
+                epochs=1,
+                global_step=None, shuffle_data=True):
         """
         Method for training the model.
 
         Parameters
         ----------
         input_images : list
-            Training images.
+            Training images
         target_images : list
-            Target images.
+            Target images
         optimizer : TensorFlow optimizer
-            Model uses TensorFlow optimizers in order train itself.
+            Model uses TensorFlow optimizers in order train itself
+        weight_mask_images : list
+            Weight mask images. By default equal to None, i. e. not used in training
         epochs : int
-            Number of epochs.
+            Number of epochs
         global_step
-            Please refer to TensorFlow documentation about global step for more info.
+            Please refer to TensorFlow documentation about global step for more info
         shuffle_data : bool
-            Set to False if you don't want the data to be shuffled.
+            Set to False if you don't want the data to be shuffled
 
         Returns
         -------
         python dictionary
             Dictionary with all testing data(train error, train cost, test error, test cost)
-            for each test period.
+            for each test period
         """
         assert (optimizer is not None)
         assert (self._session is not None)
@@ -101,7 +112,10 @@ class MseTrainingModule(BasicTrainingModule):
         try:
             for i in range(epochs):
                 if shuffle_data:
-                    input_images, target_images = shuffle(input_images, target_images)
+                    if self._use_weight_mask_images_for_training:
+                        input_images, target_images, weight_mask_images = shuffle(input_images, target_images, weight_mask_images)
+                    else:
+                        input_images, target_images = shuffle(input_images, target_images)
                 mse_loss = 0
                 iterator = tqdm(range(n_batches))
 
@@ -109,12 +123,20 @@ class MseTrainingModule(BasicTrainingModule):
                     Ibatch = input_images[j * self._batch_sz:(j + 1) * self._batch_sz]
                     Tbatch = target_images[j * self._batch_sz:(j + 1) * self._batch_sz]
 
+                    feed_dict = {
+                            self._target_images: Tbatch,
+                            self._input_images: Ibatch
+                        }
+
+                    if self._use_weight_mask_images_for_training:
+                        Wbatch = weight_mask_images[j * self._batch_sz:(j + 1) * self._batch_sz]
+                        feed_dict[self._weight_mask_images] = Wbatch
+
                     batch_mse_loss, _ = self._session.run(
                         [self._final_mse_loss, train_op],
-                        feed_dict={
-                            self._input_images: Ibatch,
-                            self._target_images: Tbatch
-                        })
+                        feed_dict=feed_dict
+                    )
+
                     # Use exponential decay for calculating loss and error
                     mse_loss = moving_average(mse_loss, batch_mse_loss, j)
 
@@ -131,25 +153,24 @@ class MseTrainingModule(BasicTrainingModule):
 
     def gen_fit_mse(self, optimizer, epochs=1, iterations=10, global_step=None):
         """
-        Method for training the model.
+        Method for training the model using generator (i. e. pipeline)
 
         Parameters
         ----------
         optimizer : tensorflow optimizer
-            Model uses tensorflow optimizers in order train itself.
+            Model uses tensorflow optimizers in order train itself
         epochs : int
-            Number of epochs.
+            Number of epochs
         iterations : int
-            Defines how long one epoch is. One operation is a forward pass
-            using one batch.
+            Defines how long one epoch is. One operation is a forward pass using one batch
         global_step
-            Please refer to TensorFlow documentation about global step for more info.
+            Please refer to TensorFlow documentation about global step for more info
 
         Returns
         -------
         python dictionary
             Dictionary with all testing data(train error, train cost, test error, test cost)
-            for each test period.
+            for each test period
         """
         assert (optimizer is not None)
         assert (self._session is not None)

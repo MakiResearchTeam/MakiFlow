@@ -29,21 +29,51 @@ class SimpleGenerativeModelBasic(MakiCore, ABC):
     OUTPUT_MT = 'output_mt'
     NAME = 'name'
     INPUT_IMAGES = 'input_images'
+    WEIGHT_MASK_IMAGES = 'weight_mask_images'
 
     def __init__(self, input_x: MakiTensor,
                  output_x: MakiTensor,
-                 name="SimpleGenerativeModel"
+                 name="SimpleGenerativeModel",
+                 use_weight_mask_images_for_training=False
     ):
+        """
+        Create SimpleGenerativeModel which provides API to train and tests different models.
+        For example: different U-net models to transform input image info something different.
+
+        Parameters
+        ----------
+        input_x : MakiTensor
+            Input MakiTensor
+        output_x : MakiTensor
+            Output MakiTensor
+        name : str
+            Name of this model
+        use_weight_mask_images_for_training : bool
+            If set to True, so what weight mask will be used in training
+        """
         self.name = str(name)
         graph_tensors = output_x.get_previous_tensors()
         graph_tensors.update(output_x.get_self_pair())
         super().__init__(graph_tensors, outputs=[output_x], inputs=[input_x])
 
         self._training_vars_are_ready = False
-        self._sep_loss = None
+        self._use_weight_mask_images_for_training = use_weight_mask_images_for_training
         self._generator = None
 
     def predict(self, x):
+        """
+        Get result from neural network according to certain input
+
+        Parameters
+        ----------
+        x: ndarray
+            Input for neural network, i. e. for this model.
+
+        Returns
+        ----------
+        ndarray
+            Output of the neural network
+        """
         return self._session.run(
             self._output_data_tensors[0],
             feed_dict={self._input_data_tensors[0]: x}
@@ -77,10 +107,30 @@ class SimpleGenerativeModelBasic(MakiCore, ABC):
                                                  name=SimpleGenerativeModelBasic.INPUT_IMAGES
             )
 
+        # Weight mask
+        if self._use_weight_mask_images_for_training:
+            if self._generator is not None:
+                self._weight_mask_images = self._generator.get_iterator()[SGMIterator.WEIGHTS_MASK]
+            else:
+                self._weight_mask_images = tf.placeholder(tf.float32,
+                                                          shape=out_shape,
+                                                          name=SimpleGenerativeModelBasic.WEIGHT_MASK_IMAGES
+                )
+        else:
+            self._weight_mask_images = None
+
         self._training_out = self._training_outputs[0]
 
         self._training_vars_are_ready = True
 
     def set_generator(self, generator):
+        """
+        Set generator (i. e. pipeline) for this model
+
+        Parameters
+        ----------
+        generator : mf.generators
+            Certain generator for this model
+        """
         self._generator = generator
 

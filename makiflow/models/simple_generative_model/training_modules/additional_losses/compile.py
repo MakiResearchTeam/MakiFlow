@@ -18,12 +18,10 @@
 from .perceptual_loss import PerceptualLossModuleGenerator
 from makiflow.base.maki_entities import MakiTensor
 
+# Class that connects all additional losses
+
 
 class BasicTrainingModule(PerceptualLossModuleGenerator):
-    """
-    Connect additional losses
-
-    """
 
     def __init__(self,
                  input_x: MakiTensor,

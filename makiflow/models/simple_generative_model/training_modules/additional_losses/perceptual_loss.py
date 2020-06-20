@@ -49,11 +49,12 @@ class PerceptualLossModuleGenerator(SimpleGenerativeModelBasic):
             Function which will create percetual loss.
             This function must have 3 main input: input_image, target_image, sess.
             Example of function:
-                def create_loss(input_image, target_image, sess):
+                def create_loss(input_image, target_image, weight_mask_image, sess):
                     ...
                     ...
                     return percetual_loss
             Where percetual_loss - is tensorflow Tensor
+            If weight_mask_image is not used in training, this value will be set to None.
         scale_loss : float
             Scale of the perceptual loss.
         """
@@ -68,6 +69,7 @@ class PerceptualLossModuleGenerator(SimpleGenerativeModelBasic):
             self._perceptual_loss = self._creation_per_loss(
                 self._input_images,
                 self._target_images,
+                self._weight_mask_images,
                 self._session
             ) * self._scale_per_loss
 

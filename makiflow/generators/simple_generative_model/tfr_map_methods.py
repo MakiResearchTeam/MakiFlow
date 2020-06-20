@@ -16,13 +16,14 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from makiflow.generators.pipeline.tfr.tfr_map_method import TFRMapMethod, TFRPostMapMethod
-from .data_preparation import INPUT_IMAGE_FNAME, TARGET_IMAGE_FNAME
+from .data_preparation import INPUT_IMAGE_FNAME, TARGET_IMAGE_FNAME, WEIGHT_MASK_FNAME
 import tensorflow as tf
 
 
 class SGMIterator:
     INPUT_IMAGE = 'INPUT_IMAGE'
     TARGET_IMAGE = 'TARGET_IMAGE'
+    WEIGHTS_MASK = 'WEIGHTS_MASK'
 
 
 class LoadDataMethod(TFRMapMethod):
@@ -30,35 +31,73 @@ class LoadDataMethod(TFRMapMethod):
             self,
             input_image_shape,
             target_image_shape,
+            weight_mask_shape=None,
             input_image_dtype=tf.float32,
-            target_image_dtype=tf.int32
+            target_image_dtype=tf.float32,
+            weight_mask_dtype=tf.float32
     ):
+        """
+        Method to load data from records
+
+        Parameters
+        ----------
+        input_image_shape : tuple or list
+            Shape of input image
+        target_image_shape : tuple or list
+            Shape of target image
+        weight_mask_shape : tuple or list
+            Shape of weights mask. By default equal to None, i. e. not use in training
+        input_image_dtype : tf.dtypes
+            Type of target image. By default equal to tf.float32
+        target_image_dtype : tf.dtypes
+            Type of target image. By default equal to tf.float32
+        weight_mask_dtype : tf.dtypes
+            Type of target image. By default equal to tf.float32
+        """
         self.input_image_shape = input_image_shape
         self.target_image_shape = target_image_shape
+        self.weight_mask_shape = weight_mask_shape
 
         self.input_image_dtype = input_image_dtype
         self.target_image_dtype = target_image_dtype
+        self.weight_mask_dtype = weight_mask_dtype
 
     def read_record(self, serialized_example):
-        ssd_feature_description = {
+        sgm_feature_description = {
             INPUT_IMAGE_FNAME: tf.io.FixedLenFeature((), tf.string),
             TARGET_IMAGE_FNAME: tf.io.FixedLenFeature((), tf.string),
         }
 
-        example = tf.io.parse_single_example(serialized_example, ssd_feature_description)
+        if self.weight_mask_shape is not None:
+            sgm_feature_description[WEIGHT_MASK_FNAME] = tf.io.FixedLenFeature((), tf.string)
+
+        example = tf.io.parse_single_example(serialized_example, sgm_feature_description)
 
         # Extract the data from the example
         input_image = tf.io.parse_tensor(example[INPUT_IMAGE_FNAME], out_type=self.input_image_dtype)
         target_image = tf.io.parse_tensor(example[TARGET_IMAGE_FNAME], out_type=self.target_image_dtype)
 
+        if self.weight_mask_shape is not None:
+            weights_mask_image = tf.io.parse_tensor(example[WEIGHT_MASK_FNAME], out_type=self.weight_mask_dtype)
+        else:
+            weights_mask_image = None
+
         # Give the data its shape because it doesn't have it right after being extracted
         input_image.set_shape(self.input_image_shape)
         target_image.set_shape(self.target_image_shape)
 
-        return {
+        if weights_mask_image is not None:
+            weights_mask_image.set_shape(self.weight_mask_shape)
+
+        output_dict = {
             SGMIterator.INPUT_IMAGE: input_image,
             SGMIterator.TARGET_IMAGE: target_image
         }
+
+        if weights_mask_image is not None:
+            output_dict[SGMIterator.WEIGHTS_MASK] = weights_mask_image
+
+        return output_dict
 
 
 class NormalizePostMethod(TFRPostMapMethod):
