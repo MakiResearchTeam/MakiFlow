@@ -20,10 +20,10 @@ from abc import ABC
 
 from makiflow.base.maki_entities import MakiTensor
 from makiflow.base.maki_entities import MakiCore
-from makiflow.generators.simple_generative_model import SGMIterator
+from makiflow.generators.regressor import RIterator
 
 
-class SimpleGenerativeModelBasic(MakiCore, ABC):
+class RegressorBasic(MakiCore, ABC):
 
     INPUT_MT = 'input_mt'
     OUTPUT_MT = 'output_mt'
@@ -33,12 +33,11 @@ class SimpleGenerativeModelBasic(MakiCore, ABC):
 
     def __init__(self, input_x: MakiTensor,
                  output_x: MakiTensor,
-                 name="SimpleGenerativeModel",
-                 use_weight_mask_images_for_training=False
+                 name="Regressor",
+                 use_weight_mask_for_training=False
     ):
         """
-        Create SimpleGenerativeModel which provides API to train and tests different models.
-        For example: different U-net models to transform input image info something different.
+        Create Regressor which provides API to train and tests different models.
 
         Parameters
         ----------
@@ -48,7 +47,7 @@ class SimpleGenerativeModelBasic(MakiCore, ABC):
             Output MakiTensor
         name : str
             Name of this model
-        use_weight_mask_images_for_training : bool
+        use_weight_mask_for_training : bool
             If set to True, so what weight mask will be used in training
         """
         self.name = str(name)
@@ -57,7 +56,7 @@ class SimpleGenerativeModelBasic(MakiCore, ABC):
         super().__init__(graph_tensors, outputs=[output_x], inputs=[input_x])
 
         self._training_vars_are_ready = False
-        self._use_weight_mask_images_for_training = use_weight_mask_images_for_training
+        self._use_weight_mask_for_training = use_weight_mask_for_training
         self._generator = None
 
     def predict(self, x):
@@ -81,9 +80,9 @@ class SimpleGenerativeModelBasic(MakiCore, ABC):
 
     def _get_model_info(self):
         return {
-            SimpleGenerativeModelBasic.NAME: self.name,
-            SimpleGenerativeModelBasic.INPUT_MT: self._inputs[0].get_name(),
-            SimpleGenerativeModelBasic.OUTPUT_MT: self._outputs[0].get_name()
+            RegressorBasic.NAME: self.name,
+            RegressorBasic.INPUT_MT: self._inputs[0].get_name(),
+            RegressorBasic.OUTPUT_MT: self._outputs[0].get_name()
         }
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -94,30 +93,28 @@ class SimpleGenerativeModelBasic(MakiCore, ABC):
             super()._setup_for_training()
         # VARIABLES PREPARATION
         out_shape = self._outputs[0].get_shape()
-        self._out_h = out_shape[1]
-        self._out_w = out_shape[2]
         self._batch_sz = out_shape[0]
 
-        self._input_images = self._input_data_tensors[0]
+        self._input_x = self._input_data_tensors[0]
         if self._generator is not None:
-            self._target_images = self._generator.get_iterator()[SGMIterator.TARGET_IMAGE]
+            self._target_x = self._generator.get_iterator()[RIterator.TARGET_X]
         else:
-            self._target_images = tf.placeholder(tf.float32,
-                                                 shape=out_shape,
-                                                 name=SimpleGenerativeModelBasic.INPUT_IMAGES
+            self._target_x = tf.placeholder(tf.float32,
+                                            shape=out_shape,
+                                            name=RegressorBasic.INPUT_IMAGES
             )
 
         # Weight mask
-        if self._use_weight_mask_images_for_training:
+        if self._use_weight_mask_for_training:
             if self._generator is not None:
-                self._weight_mask_images = self._generator.get_iterator()[SGMIterator.WEIGHTS_MASK]
+                self._weight_mask = self._generator.get_iterator()[RIterator.WEIGHTS_MASK]
             else:
-                self._weight_mask_images = tf.placeholder(tf.float32,
-                                                          shape=out_shape,
-                                                          name=SimpleGenerativeModelBasic.WEIGHT_MASK_IMAGES
+                self._weight_mask = tf.placeholder(tf.float32,
+                                                   shape=out_shape,
+                                                   name=RegressorBasic.WEIGHT_MASK_IMAGES
                 )
         else:
-            self._weight_mask_images = None
+            self._weight_mask = None
 
         self._training_out = self._training_outputs[0]
 

@@ -33,10 +33,10 @@ class AbsTrainingModule(BasicTrainingModule):
         super()._prepare_training_vars()
 
     def _build_abs_loss(self):
-        abs_loss = Loss.abs_loss(self._input_images, self._training_out, raw_tensor=True)
+        abs_loss = Loss.abs_loss(self._input_x, self._training_out, raw_tensor=True)
 
-        if self._use_weight_mask_images_for_training:
-            abs_loss = tf.reduce_mean(abs_loss * self._weight_mask_images)
+        if self._use_weight_mask_for_training:
+            abs_loss = tf.reduce_mean(abs_loss * self._weight_mask)
         else:
             abs_loss = tf.reduce_mean(abs_loss)
 
@@ -71,20 +71,20 @@ class AbsTrainingModule(BasicTrainingModule):
 
         return self._abs_train_op
 
-    def fit_abs(self, input_images, target_images, optimizer, weight_mask_images=None, epochs=1, global_step=None, shuffle_data=True):
+    def fit_abs(self, input_x, target_x, optimizer, weight_mask=None, epochs=1, global_step=None, shuffle_data=True):
         """
         Method for training the model.
 
         Parameters
         ----------
-        input_images : list
-            Training images
-        target_images : list
-            Target images
+        input_x : list
+            Training data
+        target_x : list
+            Target data
         optimizer : TensorFlow optimizer
             Model uses TensorFlow optimizers in order train itself
-        weight_mask_images : list
-            Weight mask images. By default equal to None, i. e. not used in training
+        weight_mask : list
+            Weight mask that applies for training. By default equal to None, i. e. not used in training
         epochs : int
             Number of epochs
         global_step
@@ -103,31 +103,31 @@ class AbsTrainingModule(BasicTrainingModule):
 
         train_op = self._minimize_abs_loss(optimizer, global_step)
 
-        n_batches = len(input_images) // self._batch_sz
+        n_batches = len(input_x) // self._batch_sz
         train_abs_losses = []
         iterator = None
         try:
             for i in range(epochs):
                 if shuffle_data:
-                    if self._use_weight_mask_images_for_training:
-                        input_images, target_images, weight_mask_images = shuffle(input_images, target_images, weight_mask_images)
+                    if self._use_weight_mask_for_training:
+                        input_x, target_x, weight_mask = shuffle(input_x, target_x, weight_mask)
                     else:
-                        input_images, target_images = shuffle(input_images, target_images)
+                        input_x, target_x = shuffle(input_x, target_x)
                 abs_loss = 0
                 iterator = tqdm(range(n_batches))
 
                 for j in iterator:
-                    Ibatch = input_images[j * self._batch_sz:(j + 1) * self._batch_sz]
-                    Tbatch = target_images[j * self._batch_sz:(j + 1) * self._batch_sz]
+                    Ibatch = input_x[j * self._batch_sz:(j + 1) * self._batch_sz]
+                    Tbatch = target_x[j * self._batch_sz:(j + 1) * self._batch_sz]
 
                     feed_dict = {
-                            self._target_images: Tbatch,
-                            self._input_images: Ibatch
+                            self._target_x: Tbatch,
+                            self._input_x: Ibatch
                         }
 
-                    if self._use_weight_mask_images_for_training:
-                        Wbatch = weight_mask_images[j * self._batch_sz:(j + 1) * self._batch_sz]
-                        feed_dict[self._weight_mask_images] = Wbatch
+                    if self._use_weight_mask_for_training:
+                        Wbatch = weight_mask[j * self._batch_sz:(j + 1) * self._batch_sz]
+                        feed_dict[self._weight_mask] = Wbatch
 
                     batch_abs_loss, _ = self._session.run(
                         [self._final_abs_loss, train_op],

@@ -26,12 +26,14 @@ class BasicTrainingModule(PerceptualLossModuleGenerator):
     def __init__(self,
                  input_x: MakiTensor,
                  output_x: MakiTensor,
-                 name="SimpleGenerativeModel"
+                 name="Regressor",
+                 use_weight_mask_for_training=False
     ):
         self._perceptual_loss_vars_are_ready = False
         super().__init__(input_x=input_x,
                          output_x=output_x,
-                         name=name
+                         name=name,
+                         use_weight_mask_for_training=use_weight_mask_for_training
         )
 
     def _build_additional_losses(self, total_loss):

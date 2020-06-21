@@ -16,10 +16,10 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from makiflow.models.simple_generative_model.main_modules import SimpleGenerativeModelBasic
+from makiflow.models.regressor.main_modules import RegressorBasic
 
 
-class PerceptualLossModuleGenerator(SimpleGenerativeModelBasic):
+class PerceptualLossModuleGenerator(RegressorBasic):
 
     NOTIFY_BUILD_PERCEPTUAL_LOSS = "Perceptual loss was built"
 
@@ -47,14 +47,14 @@ class PerceptualLossModuleGenerator(SimpleGenerativeModelBasic):
         ----------
         creation_per_loss : func
             Function which will create percetual loss.
-            This function must have 3 main input: input_image, target_image, sess.
+            This function must have 3 main input: training_output_x, target_x, weight_mask_x, sess.
             Example of function:
-                def create_loss(input_image, target_image, weight_mask_image, sess):
+                def create_loss(training_output_x, target_x, weight_mask_x, sess):
                     ...
                     ...
                     return percetual_loss
             Where percetual_loss - is tensorflow Tensor
-            If weight_mask_image is not used in training, this value will be set to None.
+            If weight_mask_x is not used in training, this value will be set to None.
         scale_loss : float
             Scale of the perceptual loss.
         """
@@ -67,9 +67,9 @@ class PerceptualLossModuleGenerator(SimpleGenerativeModelBasic):
     def _build_perceptual_loss(self):
         if not self._perceptual_loss_is_built:
             self._perceptual_loss = self._creation_per_loss(
-                self._input_images,
-                self._target_images,
-                self._weight_mask_images,
+                self._training_out,
+                self._target_x,
+                self._weight_mask,
                 self._session
             ) * self._scale_per_loss
 

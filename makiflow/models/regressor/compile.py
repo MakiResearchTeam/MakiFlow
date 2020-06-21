@@ -18,7 +18,7 @@
 from .training_modules import AbsTrainingModule, MseTrainingModule
 
 
-class SimpleGenerativeModel(
+class Regressor(
     AbsTrainingModule,
     MseTrainingModule,
 ):

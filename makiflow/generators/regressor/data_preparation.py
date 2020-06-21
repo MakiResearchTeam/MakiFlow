@@ -24,80 +24,82 @@ SAVE_FORM = "{0}_{1}.tfrecord"
 
 
 # Feature names
-INPUT_IMAGE_FNAME = 'INPUT_IMAGE_FNAME'
-TARGET_IMAGE_FNAME = 'TARGET_IMAGE_FNAME'
+INPUT_X_FNAME = 'INPUT_X_FNAME'
+TARGET_X_FNAME = 'TARGET_X_FNAME'
 WEIGHT_MASK_FNAME = 'WEIGHT_MASK_FNAME'
 
 
 # Serialize Object Detection Data Point
-def serialize_sgm_data_point(input_image, target_image, weight_mask_image=None, sess=None):
+def serialize_sgm_data_point(input_tensor, target_tensor, weight_mask_tensor=None, sess=None):
     feature = {
-        INPUT_IMAGE_FNAME: _tensor_to_byte_feature(input_image, sess),
-        TARGET_IMAGE_FNAME: _tensor_to_byte_feature(target_image, sess)
+        INPUT_X_FNAME: _tensor_to_byte_feature(input_tensor, sess),
+        TARGET_X_FNAME: _tensor_to_byte_feature(target_tensor, sess)
     }
 
-    if weight_mask_image is not None:
-        feature[WEIGHT_MASK_FNAME] = _tensor_to_byte_feature(weight_mask_image, sess)
+    if weight_mask_tensor is not None:
+        feature[WEIGHT_MASK_FNAME] = _tensor_to_byte_feature(weight_mask_tensor, sess)
 
     features = tf.train.Features(feature=feature)
     example_proto = tf.train.Example(features=features)
     return example_proto.SerializeToString()
 
 
-def record_sgm_train_data(input_images, target_images, weight_mask_images, tfrecord_path, sess=None):
+def record_sgm_train_data(input_tensors, target_tensors, weight_mask_tensors, tfrecord_path, sess=None):
     with tf.io.TFRecordWriter(tfrecord_path) as writer:
-        for i, (input_image, target_image) in enumerate(zip(input_images, target_images)):
+        for i, (input_tensor, target_tensor) in enumerate(zip(input_tensors, target_tensors)):
 
-            if weight_mask_images is not None:
-                weight_mask_image = weight_mask_images[i]
+            if weight_mask_tensors is not None:
+                weight_mask_tensor = weight_mask_tensors[i]
             else:
-                weight_mask_image = None
+                weight_mask_tensor = None
 
-            serialized_data_point = serialize_sgm_data_point(input_image=input_image,
-                                                             target_image=target_image,
-                                                             weight_mask_image=weight_mask_image,
+            serialized_data_point = serialize_sgm_data_point(input_tensor=input_tensor,
+                                                             target_tensor=target_tensor,
+                                                             weight_mask_tensor=weight_mask_tensor,
                                                              sess=sess
             )
             writer.write(serialized_data_point)
 
 
 # Record data into multiple tfrecords
-def record_mp_sgm_train_data(input_images, target_images, prefix, dp_per_record, weight_mask_images=None, sess=None):
+def record_mp_sgm_train_data(input_tensors, target_tensors, prefix,
+                             dp_per_record, weight_mask_tensors=None, sess=None):
     """
-    Creates tfrecord dataset where each tfrecord contains `dp_per_second` data points.
+    Creates tfrecord dataset where each tfrecord contains `dp_per_second` data points
+
     Parameters
     ----------
-    input_images : list or ndarray
-        Array of input images.
-    target_images : list or ndarray
-        Array of target images.
+    input_tensors : list or ndarray
+        Array of input tensors.
+    target_tensors : list or ndarray
+        Array of target tensors.
     prefix : str
         Prefix for the tfrecords' names. All the filenames will have the same naming pattern:
         `prefix`_`tfrecord index`.tfrecord
     dp_per_record : int
-        Data point per tfrecord. Defines how many images (locs, loc_masks, labels) will be
+        Data point per tfrecord. Defines how many tensors (locs, loc_masks, labels) will be
         put into one tfrecord file. It's better to use such `dp_per_record` that
         yields tfrecords of size 300-200 megabytes.
     sess : tf.Session
         In case if you can't or don't want to run TensorFlow eagerly, you can pass in the session object.
-    weight_mask_images : list or ndarray
+    weight_mask_tensors : list or ndarray
         Array of weight masks. By default equal to None, i. e. not used in recording data.
     """
-    for i in range(len(input_images) // dp_per_record):
-        input_image = input_images[dp_per_record * i: (i + 1) * dp_per_record]
-        target_image = target_images[dp_per_record * i: (i + 1) * dp_per_record]
+    for i in range(len(input_tensors) // dp_per_record):
+        input_tensor = input_tensors[dp_per_record * i: (i + 1) * dp_per_record]
+        target_tensor = target_tensors[dp_per_record * i: (i + 1) * dp_per_record]
 
-        if weight_mask_images is not None:
-            weight_mask_image = weight_mask_images[dp_per_record * i: (i + 1) * dp_per_record]
+        if weight_mask_tensors is not None:
+            weight_mask_tensor = weight_mask_tensors[dp_per_record * i: (i + 1) * dp_per_record]
         else:
-            weight_mask_image = None
+            weight_mask_tensor = None
 
         tfrecord_name = SAVE_FORM.format(prefix, i)
 
         record_sgm_train_data(
-            input_images=input_image,
-            target_images=target_image,
-            weight_mask_images=weight_mask_image,
+            input_tensors=input_tensor,
+            target_tensors=target_tensor,
+            weight_mask_tensors=weight_mask_tensor,
             tfrecord_path=tfrecord_name,
             sess=sess
         )

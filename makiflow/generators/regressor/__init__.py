@@ -16,4 +16,4 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from .data_preparation import record_mp_sgm_train_data
-from .tfr_map_methods import LoadDataMethod, NormalizePostMethod, RGB2BGRPostMethod, SGMIterator
+from .tfr_map_methods import LoadDataMethod, NormalizePostMethod, RGB2BGRPostMethod, RIterator
