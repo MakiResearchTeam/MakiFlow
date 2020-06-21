@@ -30,7 +30,7 @@ WEIGHT_MASK_FNAME = 'WEIGHT_MASK_FNAME'
 
 
 # Serialize Object Detection Data Point
-def serialize_sgm_data_point(input_tensor, target_tensor, weight_mask_tensor=None, sess=None):
+def serialize_regressor_data_point(input_tensor, target_tensor, weight_mask_tensor=None, sess=None):
     feature = {
         INPUT_X_FNAME: _tensor_to_byte_feature(input_tensor, sess),
         TARGET_X_FNAME: _tensor_to_byte_feature(target_tensor, sess)
@@ -44,7 +44,7 @@ def serialize_sgm_data_point(input_tensor, target_tensor, weight_mask_tensor=Non
     return example_proto.SerializeToString()
 
 
-def record_sgm_train_data(input_tensors, target_tensors, weight_mask_tensors, tfrecord_path, sess=None):
+def record_regressor_train_data(input_tensors, target_tensors, weight_mask_tensors, tfrecord_path, sess=None):
     with tf.io.TFRecordWriter(tfrecord_path) as writer:
         for i, (input_tensor, target_tensor) in enumerate(zip(input_tensors, target_tensors)):
 
@@ -53,17 +53,18 @@ def record_sgm_train_data(input_tensors, target_tensors, weight_mask_tensors, tf
             else:
                 weight_mask_tensor = None
 
-            serialized_data_point = serialize_sgm_data_point(input_tensor=input_tensor,
-                                                             target_tensor=target_tensor,
-                                                             weight_mask_tensor=weight_mask_tensor,
-                                                             sess=sess
+            serialized_data_point = serialize_regressor_data_point(
+                input_tensor=input_tensor,
+                target_tensor=target_tensor,
+                weight_mask_tensor=weight_mask_tensor,
+                sess=sess
             )
             writer.write(serialized_data_point)
 
 
 # Record data into multiple tfrecords
-def record_mp_sgm_train_data(input_tensors, target_tensors, prefix,
-                             dp_per_record, weight_mask_tensors=None, sess=None):
+def record_mp_regressor_train_data(input_tensors, target_tensors, prefix,
+                                   dp_per_record, weight_mask_tensors=None, sess=None):
     """
     Creates tfrecord dataset where each tfrecord contains `dp_per_second` data points
 
@@ -96,7 +97,7 @@ def record_mp_sgm_train_data(input_tensors, target_tensors, prefix,
 
         tfrecord_name = SAVE_FORM.format(prefix, i)
 
-        record_sgm_train_data(
+        record_regressor_train_data(
             input_tensors=input_tensor,
             target_tensors=target_tensor,
             weight_mask_tensors=weight_mask_tensor,
