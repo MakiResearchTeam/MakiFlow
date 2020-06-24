@@ -26,22 +26,22 @@ class NewtonOptimizer:
     """
     NEWTON_LEARNING_RATE = 'NEWTON_LEARNING_RATE'
     SGD_LEARNING_RATE = 'SGD_LEARNING_RATE'
-
     HESSIAN_RANK = 'HESSIAN_RANK'
     GLOBAL_NEWTON_UPDATE_VECTOR = 'GLOBAL_NEWTON_UPDATE_VECTOR'
-
     NEWTON_UPDATE = 'NEWTON_UPDATE'
     SGD_UPDATE = 'SGD_UPDATE'
+    CURRENT_ITER = 'CURRENT_ITER'
+    COMPUTED_HESSIAN = 'COMPUTED_HESSIAN'
 
-    def __init__(self, learning_rate, learning_rate_sgd=1e-4, alpha=0.1, name='NewtonOptimizer'):
+    def __init__(self, learning_rate, learning_rate_sgd=1e-4, alpha=0.6, hessian_period=1, name='NewtonOptimizer'):
         self._name = name
         self._alpha = alpha
 
-        with tf.name_scope(name):
-            self._lr = tf.convert_to_tensor(learning_rate, name=NewtonOptimizer.NEWTON_LEARNING_RATE)
-            self._lr_sgd = tf.convert_to_tensor(learning_rate_sgd, name=NewtonOptimizer.SGD_LEARNING_RATE)
+        self._lr = tf.convert_to_tensor(learning_rate, name=NewtonOptimizer.NEWTON_LEARNING_RATE)
+        self._lr_sgd = tf.convert_to_tensor(learning_rate_sgd, name=NewtonOptimizer.SGD_LEARNING_RATE)
 
-            self._prepare_hessian_vars()
+        self._hessian_period = hessian_period
+        self._prepare_hessian_vars()
 
     def _prepare_hessian_vars(self):
         self._params_shape = None
@@ -50,6 +50,7 @@ class NewtonOptimizer:
 
         self._params_vector = None
         self._grad_vector = None
+        self._current_iter = tf.Variable(0, dtype=tf.int32, name=NewtonOptimizer.CURRENT_ITER)
 
     def _init_hessian_vars(self, params, objective):
         self._params = params
@@ -65,9 +66,12 @@ class NewtonOptimizer:
         for param_len in self._flattened_params_shape:
             self._total_params_elements += param_len
 
+        n = self._total_params_elements
+        self._computed_hessian = tf.Variable(np.zeros((n, n)), dtype=np.float32, name=NewtonOptimizer.COMPUTED_HESSIAN)
+
+    # noinspection PyMethodMayBeStatic
     def _flatten(self, tensors):
-        return tf.concat([tf.reshape(tensor, [-1]) \
-                          for tensor in tensors], axis=0)
+        return tf.concat([tf.reshape(tensor, [-1]) for tensor in tensors], axis=0)
 
     def _get_hess_v_op(self, v):
         # Flatten the gradient
@@ -80,15 +84,29 @@ class NewtonOptimizer:
         grad : tf.Tensor
             Computed gradient of a function with respect to `param`.
         """
-        self._hessian = tf.map_fn(
-            self._get_hess_v_op,
-            tf.eye(self._total_params_elements, self._total_params_elements),
-            dtype='float32'
-        ) + self._alpha * tf.eye(self._total_params_elements, self._total_params_elements)
+
+        def hessian_updated():
+            hessian = tf.map_fn(
+                self._get_hess_v_op,
+                tf.eye(self._total_params_elements, self._total_params_elements),
+                dtype='float32'
+            ) + self._alpha * tf.eye(self._total_params_elements, self._total_params_elements)
+            return tf.assign(self._computed_hessian, hessian)
+
+        def hessian_old():
+            return self._computed_hessian
+
+        mod = self._current_iter % self._hessian_period
+        condition = tf.math.equal(mod, 0)
+        self._hessian = tf.cond(
+            condition,
+            hessian_updated,  # newton mode
+            hessian_old  # sgd mode
+        )
 
     # noinspection PyMethodMayBeStatic
     def variables(self):
-        return []
+        return [self._current_iter, self._computed_hessian]
 
     def _compute_newton_var_updates(self):
         # Compute global update vector
@@ -102,14 +120,11 @@ class NewtonOptimizer:
         # Factorize the global update vector into its initial components
         start_ind = 0
 
-        var_updates = []
+        var_updates = [tf.assign_add(self._current_iter, 1)]
         for flat_len, init_shape, param in zip(self._flattened_params_shape, self._params_shape, self._params):
             flat_update = newton_update[0, start_ind: start_ind + flat_len]
             restored_update = tf.reshape(flat_update, init_shape)
-            if param.constraint is None:
-                var_updates += [tf.assign(param, param - restored_update * self._lr)]
-            else:
-                var_updates += [tf.assign(param, param.constraint(param - restored_update * self._lr))]
+            var_updates += [tf.assign_sub(param, restored_update * self._lr)]
             start_ind += flat_len
 
         return tf.group(*var_updates, name=NewtonOptimizer.NEWTON_UPDATE)
@@ -128,7 +143,6 @@ class NewtonOptimizer:
                 tol=0.00001,
                 name=NewtonOptimizer.HESSIAN_RANK
             )
-
             # Number of row must be equal with matrix rank
             condition = tf.math.equal(matrix_rank, self._hessian.get_shape()[0])
             self._update_op = tf.cond(
