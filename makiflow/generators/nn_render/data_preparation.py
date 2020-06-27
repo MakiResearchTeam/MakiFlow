@@ -19,6 +19,9 @@ from __future__ import absolute_import
 import tensorflow as tf
 from makiflow.generators.pipeline.tfr.utils import _tensor_to_byte_feature
 
+# Save form
+SAVE_FORM = "{0}_{1}.tfrecord"
+
 # Feature names
 IMAGE_FNAME = 'IMAGE'
 UVMAP_FNAME = 'LOC_MASK'
@@ -65,7 +68,9 @@ def record_mp_nnr_train_data(images, uvmaps, prefix, dp_per_record, sess=None):
     for i in range(len(images) // dp_per_record):
         image_batch = images[dp_per_record*i: (i+1)*dp_per_record]
         loc_mask_batch = uvmaps[dp_per_record * i: (i + 1) * dp_per_record]
-        tfrecord_name = f'{prefix}_{i}.tfrecord'
+
+        tfrecord_name = SAVE_FORM.format(prefix, i)
+
         record_nnr_train_data(
             images=image_batch,
             uvmaps=loc_mask_batch,

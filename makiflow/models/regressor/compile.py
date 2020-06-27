@@ -15,3 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
+from .training_modules import AbsTrainingModule, MseTrainingModule
+
+
+class Regressor(
+    AbsTrainingModule,
+    MseTrainingModule,
+):
+
+    @staticmethod
+    def from_json(path_to_model):
+        # TODO
+        pass
+
+    pass

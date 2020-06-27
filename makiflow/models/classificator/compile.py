@@ -21,7 +21,12 @@ from makiflow.base.maki_entities import MakiCore
 import json
 
 
-class Classificator(CETrainingModule, QCETrainingModule, FocalTrainingModule, MakiTrainingModule):
+class Classificator(CETrainingModule,
+                    QCETrainingModule,
+                    FocalTrainingModule,
+                    MakiTrainingModule
+    ):
+
     @staticmethod
     def from_json(path_to_model):
         """Creates and returns ConvModel from json.json file contains its architecture"""
@@ -40,4 +45,3 @@ class Classificator(CETrainingModule, QCETrainingModule, FocalTrainingModule, Ma
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
         return Classificator(input=in_x, output=out_x, name=model_name)
-
