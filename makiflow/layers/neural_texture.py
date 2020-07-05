@@ -29,6 +29,8 @@ class SingleTextureLayer(SimpleForwardLayer):
     HEIGHT = 'HEIGHT'
     NUM_F = 'NUM_F'
 
+    TEXTURE_NAME = 'NTexture{}_{}_{}'
+
     def __init__(self, width, height, num_f, name, text_init=None):
         self._w = width
         self._h = height
@@ -36,7 +38,7 @@ class SingleTextureLayer(SimpleForwardLayer):
 
         if text_init is None:
             text_init = np.random.randn(1, height, width, num_f).astype(np.float32)
-        self._text_name = f'NTexture{width}_{height}_{name}'
+        self._text_name = SingleTextureLayer.TEXTURE_NAME.format(width, height, name)
         self._texture = tf.Variable(text_init, name=self._text_name)
         params = [self._texture]
         named_params_dict = {self._text_name: self._texture}

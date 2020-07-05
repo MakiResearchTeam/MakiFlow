@@ -138,7 +138,7 @@ class MulByAlphaLayer(SimpleForwardLayer):
         )
 
     def _forward(self, x):
-        return x * self.alpha
+        return tf.math.multiply(x, self.alpha, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X)
@@ -255,7 +255,7 @@ class ConcatLayer(MakiLayer):
         return maki_tensor
 
     def _forward(self, X):
-        return tf.concat(values=X, axis=self.axis)
+        return tf.concat(values=X, axis=self.axis, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X)
@@ -308,6 +308,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
             tensor=x,
             paddings=self.padding,
             mode="CONSTANT",
+            name=self._name
         )
 
     def _training_forward(self, x):
@@ -350,7 +351,7 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
 
     def _forward(self, x):
         assert (len(x.shape) == 4)
-        return tf.reduce_max(x, axis=[1, 2])
+        return tf.reduce_max(x, axis=[1, 2], name=self._name)
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -390,7 +391,7 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
 
     def _forward(self, x):
         assert (len(x.shape) == 4)
-        return tf.reduce_mean(x, axis=[1, 2])
+        return tf.reduce_mean(x, axis=[1, 2], name=self._name)
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -612,7 +613,7 @@ class ActivationLayer(SimpleForwardLayer):
 
 
     def _forward(self, x):
-        return self.f(x)
+        return self.f(x, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X)
