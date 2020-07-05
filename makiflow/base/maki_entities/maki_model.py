@@ -113,6 +113,41 @@ class MakiModel(ABC):
         save_path = saver.save(self._session, path)
         print(f'Weights are saved to {save_path}')
 
+    def save_model_as_pb(self, path_to_save: str, file_name: str):
+        """
+        Save model (i. e. tensorflow graph) as pb (protobuf) file,
+        which is convenient to use in the future
+
+        Parameters
+        ----------
+        path_to_save : str
+            Path to save model,
+            For example: /home/user_name/weights/
+        file_name : str
+            Name of the file which is pb file,
+            For example: model.pb
+        """
+        # Collect all names of output variables/operations
+        output_names = [
+            single_output.get_data_tensor().name.split(':')[0]
+            for single_output in self._outputs
+        ]
+
+        frozen_graph = None
+        graph = self._session.graph
+        with graph.as_default():
+            # Collects all names of variables which are need to freeze
+            freeze_var_names = [v.op.name for v in tf.global_variables()]
+            output_names += [v.op.name for v in tf.global_variables()]
+            input_graph_def = graph.as_graph_def()
+            frozen_graph = tf.graph_util.convert_variables_to_constants(
+                self._session, input_graph_def, output_names, freeze_var_names
+            )
+
+        tf.train.write_graph(frozen_graph, path_to_save,
+                             file_name, as_text=False
+        )
+
     def save_architecture(self, path):
         """
         This function save architecture of model in certain path.
