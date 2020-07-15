@@ -242,9 +242,9 @@ class LSTMLayer(MakiLayer):
             WARNING! THIS PARAMETER DOESN'T PLAY ANY ROLE IF YOU'RE GONNA STACK RNN LAYERS.
         """
         self._num_cells = in_d
-        self._input_dim = out_d
+        self._input_dim = in_d
         self._f = activation
-        self._cell = LSTMCell(num_units=in_d, activation=activation, dtype=tf.float32)
+        self._cell = LSTMCell(num_units=out_d, activation=activation, dtype=tf.float32)
         self._cell.build(input_shape=[out_d])
         self._dynamic = dynamic
         params = self._cell.variables

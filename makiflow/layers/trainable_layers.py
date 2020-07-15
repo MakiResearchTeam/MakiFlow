@@ -144,7 +144,7 @@ class ConvLayer(SimpleForwardLayer):
             MakiRestorable.PARAMS: {
                 MakiRestorable.NAME: self._name,
                 ConvLayer.SHAPE: list(self.shape),
-                ConvLayer.STRI: self.stride,
+                ConvLayer.STRIDE: self.stride,
                 ConvLayer.PADDING: self.padding,
                 ConvLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
                 ConvLayer.USE_BIAS: self.use_bias,
@@ -152,6 +152,7 @@ class ConvLayer(SimpleForwardLayer):
             }
 
         }
+
 
 class UpConvLayer(SimpleForwardLayer):
     TYPE = 'UpConvLayer'
