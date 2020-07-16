@@ -662,7 +662,7 @@ class ActivationLayer(SimpleForwardLayer):
             return self.f(X, name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X, MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
