@@ -38,6 +38,9 @@ class ConvLayer(SimpleForwardLayer):
     BIAS = '/bias'
     ACTIVATION = '/activation'
 
+    TRAINING_PREFIX = '/training'
+    TEST_PREFIX = '/inference'
+
     NAME_BIAS = 'ConvBias_{}x{}_in{}_out{}_id_{}'
     NAME_CONV_W = 'ConvKernel_{}x{}_in{}_out{}_id_{}'
 
@@ -102,23 +105,22 @@ class ConvLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, x):
-        with tf.name_scope(ConvLayer.TYPE):
-            with tf.name_scope(MakiRestorable.OP):
-                conv_out = tf.nn.conv2d(
-                    x, self.W,
-                    strides=[1, self.stride, self.stride, 1],
-                    padding=self.padding,
-                    name=self._name
-                )
-                if self.use_bias:
-                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + ConvLayer.BIAS)
-                if self.f is None:
-                    return conv_out
-                return self.f(conv_out, name=self._name + ConvLayer.ACTIVATION)
+    def _forward(self, x, prefix_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(ConvLayer.TYPE + prefix_operation):
+            conv_out = tf.nn.conv2d(
+                x, self.W,
+                strides=[1, self.stride, self.stride, 1],
+                padding=self.padding,
+                name=self._name
+            )
+            if self.use_bias:
+                conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + ConvLayer.BIAS)
+            if self.f is None:
+                return conv_out
+            return self.f(conv_out, name=self._name + ConvLayer.ACTIVATION)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -239,28 +241,27 @@ class UpConvLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, x):
-        with tf.name_scope(UpConvLayer.TYPE):
-            with tf.name_scope(MakiRestorable.OP):
-                out_shape = x.get_shape().as_list()
-                out_shape[1] *= self.size[0]
-                out_shape[2] *= self.size[1]
-                # out_f
-                out_shape[3] = self.shape[2]
-                conv_out = tf.nn.conv2d_transpose(
-                    x, self.W,
-                    output_shape=out_shape, strides=self.strides, padding=self.padding,
-                    name=self._name
-                )
-                if self.use_bias:
-                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + UpConvLayer.BIAS)
+    def _forward(self, x, prefix_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(UpConvLayer.TYPE + prefix_operation):
+            out_shape = x.get_shape().as_list()
+            out_shape[1] *= self.size[0]
+            out_shape[2] *= self.size[1]
+            # out_f
+            out_shape[3] = self.shape[2]
+            conv_out = tf.nn.conv2d_transpose(
+                x, self.W,
+                output_shape=out_shape, strides=self.strides, padding=self.padding,
+                name=self._name
+            )
+            if self.use_bias:
+                conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + UpConvLayer.BIAS)
 
-                if self.f is None:
-                    return conv_out
-                return self.f(conv_out, name=self._name + UpConvLayer.ACTIVATION)
+            if self.f is None:
+                return conv_out
+            return self.f(conv_out, name=self._name + UpConvLayer.ACTIVATION)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -1500,44 +1501,43 @@ class InstanceNormLayer(BatchNormBaseLayer):
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
-    def _forward(self, X):
-        with tf.name_scope(InstanceNormLayer.TYPE):
-            with tf.name_scope(MakiRestorable.OP):
-                if self._track_running_stats:
-                    return tf.nn.batch_normalization(
-                        X,
-                        self.running_mean,
-                        self.running_variance,
-                        self.beta,
-                        self.gamma,
-                        self.eps,
-                        name=self._name
-                    )
+    def _forward(self, X, prefix_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(InstanceNormLayer.TYPE + prefix_operation):
+            if self._track_running_stats:
+                return tf.nn.batch_normalization(
+                    X,
+                    self.running_mean,
+                    self.running_variance,
+                    self.beta,
+                    self.gamma,
+                    self.eps,
+                    name=self._name
+                )
+            else:
+                # These if statements check if we do batchnorm for convolution or dense
+                if len(X.shape) == 4:
+                    # conv
+                    axes = [1, 2]
                 else:
-                    # These if statements check if we do batchnorm for convolution or dense
-                    if len(X.shape) == 4:
-                        # conv
-                        axes = [1, 2]
-                    else:
-                        # dense
-                        axes = [1]
+                    # dense
+                    axes = [1]
 
-                    # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
-                    batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+                # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
+                batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
 
-                    return tf.nn.batch_normalization(
-                        X,
-                        batch_mean,
-                        batch_var,
-                        self.beta,
-                        self.gamma,
-                        self.eps,
-                        name=self._name
-                    )
+                return tf.nn.batch_normalization(
+                    X,
+                    batch_mean,
+                    batch_var,
+                    self.beta,
+                    self.gamma,
+                    self.eps,
+                    name=self._name
+                )
 
     def _training_forward(self, X):
         if not self._track_running_stats:
-            return self._forward(X)
+            return self._forward(X, MakiRestorable.TRAINING_PREFIX)
 
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
@@ -1546,31 +1546,31 @@ class InstanceNormLayer(BatchNormBaseLayer):
         else:
             # dense
             axes = [1]
+        with tf.name_scope(InstanceNormLayer.TYPE + MakiRestorable.TRAINING_PREFIX):
+            # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
+            batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
 
-        # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
-        batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
-
-        update_running_mean = tf.assign(
-            self.running_mean,
-            self.running_mean * self.decay + batch_mean * (1 - self.decay)
-        )
-        update_running_variance = tf.assign(
-            self.running_variance,
-            self.running_variance * self.decay + batch_var * (1 - self.decay)
-        )
-
-        with tf.control_dependencies([update_running_mean, update_running_variance]):
-            X = tf.nn.batch_normalization(
-                X,
-                batch_mean,
-                batch_var,
-                self.beta,
-                self.gamma,
-                self.eps,
-                name=self._name
+            update_running_mean = tf.assign(
+                self.running_mean,
+                self.running_mean * self.decay + batch_mean * (1 - self.decay)
+            )
+            update_running_variance = tf.assign(
+                self.running_variance,
+                self.running_variance * self.decay + batch_var * (1 - self.decay)
             )
 
-        return X
+            with tf.control_dependencies([update_running_mean, update_running_variance]):
+                X = tf.nn.batch_normalization(
+                    X,
+                    batch_mean,
+                    batch_var,
+                    self.beta,
+                    self.gamma,
+                    self.eps,
+                    name=self._name
+                )
+
+            return X
 
     @staticmethod
     def build(params: dict):

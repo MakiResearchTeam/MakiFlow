@@ -656,13 +656,12 @@ class ActivationLayer(SimpleForwardLayer):
         )
 
 
-    def _forward(self, x):
-        with tf.name_scope(ActivationLayer.TYPE):
-            with tf.name_scope(MakiRestorable.OP):
-                return self.f(x, name=self._name)
+    def _forward(self, x, prefix_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(ActivationLayer.TYPE + prefix_operation):
+            return self.f(x, name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
