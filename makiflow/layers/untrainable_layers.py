@@ -25,6 +25,8 @@ from makiflow.layers.sf_layer import SimpleForwardLayer
 
 class InputLayer(InputMakiLayer):
 
+    _ERROR_STRING_IS_NOT_IMPLEMENTED = 'This functionality is not implemented in the InputLayer.'
+
     def __init__(self, input_shape, name):
         """
         InputLayer is used to instantiate MakiFlow tensor.
@@ -38,32 +40,38 @@ class InputLayer(InputMakiLayer):
         """
         self._name = str(name)
         self._input_shape = input_shape
+
         self._input = tf.placeholder(tf.float32, shape=input_shape, name=self._name)
+
         super().__init__(
             data_tensor=self._input,
             name=name
         )
 
     def __call__(self, x):
-        raise RuntimeError('This functionality is not implemented in the InputLayer.')
+        raise RuntimeError(InputLayer._ERROR_STRING_IS_NOT_IMPLEMENTED)
 
     def _training_forward(self, x):
-        raise RuntimeError('This functionality is not implemented in the InputLayer.')
+        raise RuntimeError(InputLayer._ERROR_STRING_IS_NOT_IMPLEMENTED)
 
     @staticmethod
     def build(params: dict):
         input_shape = params[InputLayer.INPUT_SHAPE]
         name = params[MakiRestorable.NAME]
-        return InputLayer(name=name, input_shape=input_shape)
+
+        return InputLayer(
+            name=name,
+            input_shape=input_shape
+        )
 
     def to_dict(self):
         return {
-            MakiRestorable.NAME: self._name,
-            MakiTensor.PARENT_TENSOR_NAMES: None,
+            MakiRestorable.NAME: super().get_name(),
+            MakiTensor.PARENT_TENSOR_NAMES: super().get_parent_tensor_names(),
             MakiRestorable.FIELD_TYPE: InputMakiLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
-                InputMakiLayer.INPUT_SHAPE: self._input_shape
+                MakiRestorable.NAME: super().get_name(),
+                InputMakiLayer.INPUT_SHAPE: super().get_shape()
             }
         }
 
@@ -83,15 +91,16 @@ class ReshapeLayer(SimpleForwardLayer):
         name : str
             Name of this layer.
         """
+        self.new_shape = new_shape
 
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
         )
-        self.new_shape = new_shape
 
     def _forward(self, x):
-        return tf.reshape(tensor=x, shape=self.new_shape, name=self._name)
+        with tf.name_scope(ReshapeLayer.TYPE):
+            return tf.reshape(tensor=x, shape=self.new_shape, name=self._name)
 
     def _training_forward(self, x):
         return self._forward(x)
@@ -100,6 +109,7 @@ class ReshapeLayer(SimpleForwardLayer):
     def build(params: dict):
         name = params[MakiRestorable.NAME]
         new_shape = params[ReshapeLayer.NEW_SHAPE]
+
         return ReshapeLayer(
             new_shape=new_shape,
             name=name
@@ -109,7 +119,7 @@ class ReshapeLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: ReshapeLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 ReshapeLayer.NEW_SHAPE: self.new_shape
             }
         }
@@ -147,13 +157,17 @@ class MulByAlphaLayer(SimpleForwardLayer):
     def build(params: dict):
         name = params[MakiRestorable.NAME]
         alpha = params[MulByAlphaLayer.ALPHA]
-        return MulByAlphaLayer(alpha=alpha, name=name)
+
+        return MulByAlphaLayer(
+            alpha=alpha,
+            name=name
+        )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: MulByAlphaLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 MulByAlphaLayer.ALPHA: self.alpha,
             }
         }
@@ -204,13 +218,14 @@ class SumLayer(MakiLayer):
     @staticmethod
     def build(params: dict):
         name = params[MakiRestorable.NAME]
+
         return SumLayer(name=name)
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: SumLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
             }
         }
 
@@ -231,6 +246,7 @@ class ConcatLayer(MakiLayer):
             Name of this layer.
         """
         self.axis = axis
+
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
@@ -264,13 +280,17 @@ class ConcatLayer(MakiLayer):
     def build(params: dict):
         name = params[MakiRestorable.NAME]
         axis = params[ConcatLayer.AXIS]
-        return ConcatLayer(name=name, axis=axis)
+
+        return ConcatLayer(
+            name=name,
+            axis=axis
+        )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: ConcatLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 ConcatLayer.AXIS: self.axis,
             }
         }
@@ -297,6 +317,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 
         self.input_padding = padding
         self.padding = [[0, 0], padding[0], padding[1], [0, 0]]
+
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
@@ -318,13 +339,17 @@ class ZeroPaddingLayer(SimpleForwardLayer):
     def build(params: dict):
         name = params[MakiRestorable.NAME]
         padding = params[ZeroPaddingLayer.PADDING]
-        return ZeroPaddingLayer(padding=padding, name=name)
+
+        return ZeroPaddingLayer(
+            padding=padding,
+            name=name
+        )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: ZeroPaddingLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 ZeroPaddingLayer.PADDING: self.input_padding,
             }
         }
@@ -359,13 +384,14 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
     @staticmethod
     def build(params: dict):
         name = params[MakiRestorable.NAME]
+
         return GlobalMaxPoolLayer(name=name)
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: GlobalMaxPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
             }
         }
 
@@ -399,13 +425,14 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
     @staticmethod
     def build(params: dict):
         name = params[MakiRestorable.NAME]
+
         return GlobalAvgPoolLayer(name=name)
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: GlobalAvgPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
             }
         }
 
@@ -434,6 +461,7 @@ class MaxPoolLayer(SimpleForwardLayer):
         self.ksize = ksize
         self.strides = strides
         self.padding = padding
+
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
@@ -457,14 +485,19 @@ class MaxPoolLayer(SimpleForwardLayer):
         ksize = params[MaxPoolLayer.KSIZE]
         strides = params[MaxPoolLayer.STRIDES]
         padding = params[MaxPoolLayer.PADDING]
-        return MaxPoolLayer(name=name, ksize=ksize,
-                            strides=strides, padding=padding)
+
+        return MaxPoolLayer(
+            name=name,
+            ksize=ksize,
+            strides=strides,
+            padding=padding
+        )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: MaxPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 MaxPoolLayer.KSIZE: self.ksize,
                 MaxPoolLayer.STRIDES: self.strides,
                 MaxPoolLayer.PADDING: self.padding
@@ -496,6 +529,7 @@ class AvgPoolLayer(SimpleForwardLayer):
         self.ksize = ksize
         self.strides = strides
         self.padding = padding
+
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
@@ -521,15 +555,17 @@ class AvgPoolLayer(SimpleForwardLayer):
         name = params[MakiRestorable.NAME]
 
         return AvgPoolLayer(
-            ksize=ksize, strides=strides,
-            padding=padding, name=name
+            ksize=ksize,
+            strides=strides,
+            padding=padding,
+            name=name
         )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: AvgPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 AvgPoolLayer.KSIZE: self.ksize,
                 AvgPoolLayer.STRIDES: self.strides,
                 AvgPoolLayer.PADDING: self.padding
@@ -555,6 +591,7 @@ class UpSamplingLayer(SimpleForwardLayer):
             Name of this layer.
         """
         self.size = size
+
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
@@ -576,13 +613,17 @@ class UpSamplingLayer(SimpleForwardLayer):
     def build(params: dict):
         name = params[MakiRestorable.NAME]
         size = params[UpSamplingLayer.SIZE]
-        return UpSamplingLayer(name=name, size=size)
+
+        return UpSamplingLayer(
+            name=name,
+            size=size
+        )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: UpSamplingLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 UpSamplingLayer.SIZE: self.size
             }
         }
@@ -591,6 +632,8 @@ class UpSamplingLayer(SimpleForwardLayer):
 class ActivationLayer(SimpleForwardLayer):
     TYPE = 'ActivationLayer'
     ACTIVATION = 'activation'
+
+    _ERROR_ACTIVATION_INPUT_NONE = "Activation can't None"
 
     def __init__(self, name, activation=tf.nn.relu):
         """
@@ -604,8 +647,9 @@ class ActivationLayer(SimpleForwardLayer):
             Name of this layer.
         """
         if activation is None:
-            raise Exception("Activation can't None")
+            raise Exception(ActivationLayer._ERROR_ACTIVATION_INPUT_NONE)
         self.f = activation
+
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
@@ -613,7 +657,8 @@ class ActivationLayer(SimpleForwardLayer):
 
 
     def _forward(self, x):
-        return self.f(x, name=self._name)
+        with tf.name_scope(ActivationLayer.TYPE):
+            return self.f(x, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X)
@@ -622,13 +667,17 @@ class ActivationLayer(SimpleForwardLayer):
     def build(params: dict):
         activation = ActivationConverter.str_to_activation(params[ActivationLayer.ACTIVATION])
         name = params[MakiRestorable.NAME]
-        return ActivationLayer(activation=activation, name=name)
+
+        return ActivationLayer(
+            activation=activation,
+            name=name
+        )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: ActivationLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 ActivationLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f)
             }
         }
@@ -662,13 +711,14 @@ class FlattenLayer(SimpleForwardLayer):
     @staticmethod
     def build(params: dict):
         name = params[MakiRestorable.NAME]
+
         return FlattenLayer(name=name)
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: FlattenLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name
+                MakiRestorable.NAME: super().get_name()
             }
         }
 
@@ -699,6 +749,7 @@ class DropoutLayer(SimpleForwardLayer):
         self._p_keep = p_keep
         self.noise_shape = noise_shape
         self.seed = seed
+
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
@@ -721,14 +772,18 @@ class DropoutLayer(SimpleForwardLayer):
         noise_shape = params[DropoutLayer.NOISE_SHAPE]
         seed = params[DropoutLayer.SEED]
 
-        return DropoutLayer(p_keep=p_keep, name=name, noise_shape=noise_shape,
-                            seed=seed)
+        return DropoutLayer(
+            p_keep=p_keep,
+            name=name,
+            noise_shape=noise_shape,
+            seed=seed
+        )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: DropoutLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 DropoutLayer.P_KEEP: self._p_keep,
                 DropoutLayer.NOISE_SHAPE: self.noise_shape,
                 DropoutLayer.SEED: self.seed
@@ -748,6 +803,8 @@ class ResizeLayer(SimpleForwardLayer):
     NEW_SHAPE = 'new_shape'
     ALIGN_CORNERS = 'align_corners'
 
+    _ERROR_INTERPOLATION_IS_NOT_FOUND = "Interpolation {} don't exist"
+
     def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False):
         """
         ResizeLayer resize input MakiTensor to new_shape shape.
@@ -761,6 +818,7 @@ class ResizeLayer(SimpleForwardLayer):
             Name of this layer.
         """
         assert (len(new_shape) == 2)
+
         self.new_shape = new_shape
         self.align_corners = align_corners
         self.interpolation = interpolation
@@ -801,7 +859,9 @@ class ResizeLayer(SimpleForwardLayer):
                 name=self._name,
             )
         else:
-            raise Exception(f"Interpolation {self.interpolation} don't exist")
+            raise Exception(
+                ResizeLayer._ERROR_INTERPOLATION_IS_NOT_FOUND.format(self.interpolation)
+            )
 
     def _training_forward(self, X):
         return self._forward(X)
@@ -813,14 +873,18 @@ class ResizeLayer(SimpleForwardLayer):
         align_corners = params[ResizeLayer.ALIGN_CORNERS]
         interpolation = params[ResizeLayer.FIELD_INTERPOLATION]
 
-        return ResizeLayer(interpolation=interpolation, new_shape=new_shape, name=name,
-                           align_corners=align_corners)
+        return ResizeLayer(
+            interpolation=interpolation,
+            new_shape=new_shape,
+            name=name,
+            align_corners=align_corners
+        )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: ResizeLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 ResizeLayer.FIELD_INTERPOLATION: self.interpolation,
                 ResizeLayer.NEW_SHAPE: self.new_shape,
                 ResizeLayer.ALIGN_CORNERS: self.align_corners,
@@ -838,6 +902,7 @@ class L2NormalizationLayer(SimpleForwardLayer):
         Performs L2 normalization along feature dimension.
         """
         self._eps = eps
+
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
@@ -855,13 +920,17 @@ class L2NormalizationLayer(SimpleForwardLayer):
     def build(params: dict):
         name = params[MakiRestorable.NAME]
         eps = params[L2NormalizationLayer.EPS]
-        return L2NormalizationLayer(name=name, eps=eps)
+
+        return L2NormalizationLayer(
+            name=name,
+            eps=eps
+        )
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: L2NormalizationLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self._name,
+                MakiRestorable.NAME: super().get_name(),
                 L2NormalizationLayer.EPS: self._eps
             }
         }
