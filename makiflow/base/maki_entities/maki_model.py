@@ -47,6 +47,9 @@ class MakiModel(ABC):
         for maki_tensor in self._inputs:
             self._input_data_tensors += [maki_tensor.get_data_tensor()]
 
+        # For training
+        self._training_outputs = []
+
         self._collect_params()
 
     def _collect_params(self):
@@ -131,6 +134,9 @@ class MakiModel(ABC):
         output_names = [
             single_output.get_data_tensor().name.split(':')[0]
             for single_output in self._outputs
+        ] + [
+            single_output.name.split(':')[0]
+            for single_output in self._training_outputs
         ]
 
         frozen_graph = None

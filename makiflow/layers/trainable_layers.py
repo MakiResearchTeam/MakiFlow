@@ -38,9 +38,6 @@ class ConvLayer(SimpleForwardLayer):
     BIAS = '/bias'
     ACTIVATION = '/activation'
 
-    TRAINING_PREFIX = '/training'
-    TEST_PREFIX = '/inference'
-
     NAME_BIAS = 'ConvBias_{}x{}_in{}_out{}_id_{}'
     NAME_CONV_W = 'ConvKernel_{}x{}_in{}_out{}_id_{}'
 
@@ -105,8 +102,8 @@ class ConvLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, x, prefix_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(super().get_name() + prefix_operation):
+    def _forward(self, x, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
             conv_out = tf.nn.conv2d(
                 x, self.W,
                 strides=[1, self.stride, self.stride, 1],
@@ -241,8 +238,8 @@ class UpConvLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, x, prefix_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(super().get_name() + prefix_operation):
+    def _forward(self, x, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
             out_shape = x.get_shape().as_list()
             out_shape[1] *= self.size[0]
             out_shape[2] *= self.size[1]
@@ -1501,8 +1498,8 @@ class InstanceNormLayer(BatchNormBaseLayer):
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
-    def _forward(self, X, prefix_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(super().get_name() + prefix_operation):
+    def _forward(self, x, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
             if self._track_running_stats:
                 return tf.nn.batch_normalization(
                     X,

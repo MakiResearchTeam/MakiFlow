@@ -24,8 +24,8 @@ class MakiRestorable(ABC):
     FIELD_TYPE = 'type'
     NAME = 'name'
 
-    TRAINING_PREFIX = '_training'
-    TEST_PREFIX = '_inference'
+    TRAINING_PREFIX = 'InferenceGraph/'
+    TEST_PREFIX = 'InferenceGraph/'
 
     @staticmethod
     def build(params: dict):

@@ -249,6 +249,5 @@ class MakiTrainer(MakiModel, ABC):
             else:
                 return output_tensors[maki_tensor.get_name()]
 
-        self._training_outputs = []
         for output in self._outputs:
             self._training_outputs += [create_tensor(output)]
