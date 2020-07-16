@@ -23,6 +23,7 @@ class MakiRestorable(ABC):
     PARAMS = 'params'
     FIELD_TYPE = 'type'
     NAME = 'name'
+    OP = 'operations'
 
     @staticmethod
     def build(params: dict):

@@ -658,7 +658,8 @@ class ActivationLayer(SimpleForwardLayer):
 
     def _forward(self, x):
         with tf.name_scope(ActivationLayer.TYPE):
-            return self.f(x, name=self._name)
+            with tf.name_scope(MakiRestorable.OP):
+                return self.f(x, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X)

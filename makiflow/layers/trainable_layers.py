@@ -104,15 +104,18 @@ class ConvLayer(SimpleForwardLayer):
 
     def _forward(self, x):
         with tf.name_scope(ConvLayer.TYPE):
-            conv_out = tf.nn.conv2d(x, self.W,
-                                    strides=[1, self.stride, self.stride, 1],
-                                    padding=self.padding,
-                                    name=self._name)
-            if self.use_bias:
-                conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + ConvLayer.BIAS)
-            if self.f is None:
-                return conv_out
-            return self.f(conv_out, name=self._name + ConvLayer.ACTIVATION)
+            with tf.name_scope(MakiRestorable.OP):
+                conv_out = tf.nn.conv2d(
+                    x, self.W,
+                    strides=[1, self.stride, self.stride, 1],
+                    padding=self.padding,
+                    name=self._name
+                )
+                if self.use_bias:
+                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + ConvLayer.BIAS)
+                if self.f is None:
+                    return conv_out
+                return self.f(conv_out, name=self._name + ConvLayer.ACTIVATION)
 
     def _training_forward(self, X):
         return self._forward(X)
@@ -238,22 +241,23 @@ class UpConvLayer(SimpleForwardLayer):
 
     def _forward(self, x):
         with tf.name_scope(UpConvLayer.TYPE):
-            out_shape = x.get_shape().as_list()
-            out_shape[1] *= self.size[0]
-            out_shape[2] *= self.size[1]
-            # out_f
-            out_shape[3] = self.shape[2]
-            conv_out = tf.nn.conv2d_transpose(
-                x, self.W,
-                output_shape=out_shape, strides=self.strides, padding=self.padding,
-                name=self._name
-            )
-            if self.use_bias:
-                conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + UpConvLayer.BIAS)
+            with tf.name_scope(MakiRestorable.OP):
+                out_shape = x.get_shape().as_list()
+                out_shape[1] *= self.size[0]
+                out_shape[2] *= self.size[1]
+                # out_f
+                out_shape[3] = self.shape[2]
+                conv_out = tf.nn.conv2d_transpose(
+                    x, self.W,
+                    output_shape=out_shape, strides=self.strides, padding=self.padding,
+                    name=self._name
+                )
+                if self.use_bias:
+                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + UpConvLayer.BIAS)
 
-            if self.f is None:
-                return conv_out
-            return self.f(conv_out, name=self._name + UpConvLayer.ACTIVATION)
+                if self.f is None:
+                    return conv_out
+                return self.f(conv_out, name=self._name + UpConvLayer.ACTIVATION)
 
     def _training_forward(self, X):
         return self._forward(X)
@@ -1498,37 +1502,38 @@ class InstanceNormLayer(BatchNormBaseLayer):
 
     def _forward(self, X):
         with tf.name_scope(InstanceNormLayer.TYPE):
-            if self._track_running_stats:
-                return tf.nn.batch_normalization(
-                    X,
-                    self.running_mean,
-                    self.running_variance,
-                    self.beta,
-                    self.gamma,
-                    self.eps,
-                    name=self._name
-                )
-            else:
-                # These if statements check if we do batchnorm for convolution or dense
-                if len(X.shape) == 4:
-                    # conv
-                    axes = [1, 2]
+            with tf.name_scope(MakiRestorable.OP):
+                if self._track_running_stats:
+                    return tf.nn.batch_normalization(
+                        X,
+                        self.running_mean,
+                        self.running_variance,
+                        self.beta,
+                        self.gamma,
+                        self.eps,
+                        name=self._name
+                    )
                 else:
-                    # dense
-                    axes = [1]
+                    # These if statements check if we do batchnorm for convolution or dense
+                    if len(X.shape) == 4:
+                        # conv
+                        axes = [1, 2]
+                    else:
+                        # dense
+                        axes = [1]
 
-                # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
-                batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+                    # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
+                    batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
 
-                return tf.nn.batch_normalization(
-                    X,
-                    batch_mean,
-                    batch_var,
-                    self.beta,
-                    self.gamma,
-                    self.eps,
-                    name=self._name
-                )
+                    return tf.nn.batch_normalization(
+                        X,
+                        batch_mean,
+                        batch_var,
+                        self.beta,
+                        self.gamma,
+                        self.eps,
+                        name=self._name
+                    )
 
     def _training_forward(self, X):
         if not self._track_running_stats:
