@@ -270,7 +270,7 @@ class ConcatLayer(MakiLayer):
         )
         return maki_tensor
 
-    def _forward(self, x, type_graph_operation=MakiRestorable.TEST_PREFIX):
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
         with tf.name_scope(type_graph_operation + super().get_name()):
             return tf.concat(values=X, axis=self.axis, name=self._name)
 
@@ -657,9 +657,9 @@ class ActivationLayer(SimpleForwardLayer):
         )
 
 
-    def _forward(self, x, type_graph_operation=MakiRestorable.TEST_PREFIX):
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
         with tf.name_scope(type_graph_operation + super().get_name()):
-            return self.f(x, name=self._name)
+            return self.f(X, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X, MakiRestorable.TRAINING_PREFIX)
