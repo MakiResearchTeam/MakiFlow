@@ -270,11 +270,12 @@ class ConcatLayer(MakiLayer):
         )
         return maki_tensor
 
-    def _forward(self, X):
-        return tf.concat(values=X, axis=self.axis, name=self._name)
+    def _forward(self, X, prefix_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(super().get_name() + prefix_operation):
+            return tf.concat(values=X, axis=self.axis, name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -657,7 +658,7 @@ class ActivationLayer(SimpleForwardLayer):
 
 
     def _forward(self, x, prefix_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(ActivationLayer.TYPE + prefix_operation):
+        with tf.name_scope(super().get_name() + prefix_operation):
             return self.f(x, name=self._name)
 
     def _training_forward(self, X):

@@ -106,7 +106,7 @@ class ConvLayer(SimpleForwardLayer):
         )
 
     def _forward(self, x, prefix_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(ConvLayer.TYPE + prefix_operation):
+        with tf.name_scope(super().get_name() + prefix_operation):
             conv_out = tf.nn.conv2d(
                 x, self.W,
                 strides=[1, self.stride, self.stride, 1],
@@ -242,7 +242,7 @@ class UpConvLayer(SimpleForwardLayer):
         )
 
     def _forward(self, x, prefix_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(UpConvLayer.TYPE + prefix_operation):
+        with tf.name_scope(super().get_name() + prefix_operation):
             out_shape = x.get_shape().as_list()
             out_shape[1] *= self.size[0]
             out_shape[2] *= self.size[1]
@@ -1502,7 +1502,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
         self._named_params_dict[self.name_var] = self.running_variance
 
     def _forward(self, X, prefix_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(InstanceNormLayer.TYPE + prefix_operation):
+        with tf.name_scope(super().get_name() + prefix_operation):
             if self._track_running_stats:
                 return tf.nn.batch_normalization(
                     X,
@@ -1546,7 +1546,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
         else:
             # dense
             axes = [1]
-        with tf.name_scope(InstanceNormLayer.TYPE + MakiRestorable.TRAINING_PREFIX):
+        with tf.name_scope(super().get_name() + MakiRestorable.TRAINING_PREFIX):
             # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
             batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
 
