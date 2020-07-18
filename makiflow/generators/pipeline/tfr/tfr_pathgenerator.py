@@ -42,7 +42,7 @@ class CycleGenerator(TFRPathGenerator):
         tfrecords : list
             List of paths to the tfrecords.
         """
-        self._tfrecords = tfrecords
+        self._tfrecords = shuffle(tfrecords)
 
     def next_element(self):
         n_records = len(self._tfrecords)

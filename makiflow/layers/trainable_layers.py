@@ -35,8 +35,8 @@ class ConvLayer(SimpleForwardLayer):
     USE_BIAS = 'use_bias'
     INIT_TYPE = 'init_type'
 
-    BIAS = '/bias'
-    ACTIVATION = '/activation'
+    BIAS = '_bias'
+    ACTIVATION = '_activation'
 
     NAME_BIAS = 'ConvBias_{}x{}_in{}_out{}_id_{}'
     NAME_CONV_W = 'ConvKernel_{}x{}_in{}_out{}_id_{}'
@@ -166,8 +166,8 @@ class UpConvLayer(SimpleForwardLayer):
     USE_BIAS = 'use_bias'
     INIT_TYPE = 'init_type'
 
-    BIAS = '/bias'
-    ACTIVATION = '/activation'
+    BIAS = '_bias'
+    ACTIVATION = '_activation'
 
     NAME_BIAS = 'UpConvBias_{}x{}_in{}_out{}_id_{}'
     NAME_CONV_W = 'UpConvKernel_{}x{}_out{}_in{}_id_{}'
