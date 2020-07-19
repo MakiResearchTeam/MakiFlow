@@ -98,12 +98,12 @@ class ReshapeLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, x):
-        with tf.name_scope(ReshapeLayer.TYPE):
-            return tf.reshape(tensor=x, shape=self.new_shape, name=self._name)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return tf.reshape(tensor=X, shape=self.new_shape, name=self._name)
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -147,11 +147,12 @@ class MulByAlphaLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, x):
-        return tf.math.multiply(x, self.alpha, name=self._name)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return tf.math.multiply(X, self.alpha, name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -209,11 +210,12 @@ class SumLayer(MakiLayer):
         )
         return maki_tensor
 
-    def _forward(self, X):
-        return sum(X)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return sum(X)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -275,7 +277,7 @@ class ConcatLayer(MakiLayer):
             return tf.concat(values=X, axis=self.axis, name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X, MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -325,16 +327,17 @@ class ZeroPaddingLayer(SimpleForwardLayer):
         )
 
 
-    def _forward(self, x):
-        return tf.pad(
-            tensor=x,
-            paddings=self.padding,
-            mode="CONSTANT",
-            name=self._name
-        )
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return tf.pad(
+                tensor=X,
+                paddings=self.padding,
+                mode="CONSTANT",
+                name=self._name
+            )
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -374,13 +377,13 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            assert (len(X.shape) == 4)
+            return tf.reduce_max(X, axis=[1, 2], name=self._name)
 
-    def _forward(self, x):
-        assert (len(x.shape) == 4)
-        return tf.reduce_max(x, axis=[1, 2], name=self._name)
-
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -415,13 +418,13 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            assert (len(X.shape) == 4)
+            return tf.reduce_mean(X, axis=[1, 2], name=self._name)
 
-    def _forward(self, x):
-        assert (len(x.shape) == 4)
-        return tf.reduce_mean(x, axis=[1, 2], name=self._name)
-
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -469,16 +472,17 @@ class MaxPoolLayer(SimpleForwardLayer):
         )
 
 
-    def _forward(self, x):
-        return tf.nn.max_pool(
-            x,
-            ksize=self.ksize,
-            strides=self.strides,
-            padding=self.padding
-        )
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return tf.nn.max_pool(
+                X,
+                ksize=self.ksize,
+                strides=self.strides,
+                padding=self.padding
+            )
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -537,16 +541,17 @@ class AvgPoolLayer(SimpleForwardLayer):
         )
 
 
-    def _forward(self, x):
-        return tf.nn.avg_pool(
-            x,
-            ksize=self.ksize,
-            strides=self.strides,
-            padding=self.padding
-        )
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return tf.nn.avg_pool(
+                X,
+                ksize=self.ksize,
+                strides=self.strides,
+                padding=self.padding
+            )
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -599,16 +604,17 @@ class UpSamplingLayer(SimpleForwardLayer):
         )
 
 
-    def _forward(self, x):
-        t_shape = x.get_shape()
-        im_size = (t_shape[1] * self.size[0], t_shape[2] * self.size[1])
-        return tf.image.resize_nearest_neighbor(
-            x,
-            im_size
-        )
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            t_shape = X.get_shape()
+            im_size = (t_shape[1] * self.size[0], t_shape[2] * self.size[1])
+            return tf.image.resize_nearest_neighbor(
+                X,
+                im_size
+            )
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -656,7 +662,6 @@ class ActivationLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-
     def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
         with tf.name_scope(type_graph_operation + super().get_name()):
             return self.f(X, name=self._name)
@@ -703,11 +708,12 @@ class FlattenLayer(SimpleForwardLayer):
         )
 
 
-    def _forward(self, x):
-        return tf.contrib.layers.flatten(x)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return tf.contrib.layers.flatten(X)
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -756,15 +762,16 @@ class DropoutLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-
-    def _forward(self, x):
-        return x
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return X
 
     def _training_forward(self, X):
-        return tf.nn.dropout(X, self._p_keep,
-                             noise_shape=self.noise_shape,
-                             seed=self.seed,
-                             )
+        with tf.name_scope(MakiRestorable.TEST_PREFIX + super().get_name()):
+            return tf.nn.dropout(X, self._p_keep,
+                                 noise_shape=self.noise_shape,
+                                 seed=self.seed,
+            )
 
     @staticmethod
     def build(params: dict):
@@ -829,43 +836,43 @@ class ResizeLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-
-    def _forward(self, x):
-        if self.interpolation == ResizeLayer.INTERPOLATION_BILINEAR:
-            return tf.image.resize_bilinear(
-                x,
-                self.new_shape,
-                align_corners=self.align_corners,
-                name=self._name,
-            )
-        elif self.interpolation == ResizeLayer.INTERPOLATION_NEAREST_NEIGHBOR:
-            return tf.image.resize_nearest_neighbor(
-                x,
-                self.new_shape,
-                align_corners=self.align_corners,
-                name=self._name,
-            )
-        elif self.interpolation == ResizeLayer.INTERPOLATION_AREA:
-            return tf.image.resize_area(
-                x,
-                self.new_shape,
-                align_corners=self.align_corners,
-                name=self._name,
-            )
-        elif self.interpolation == ResizeLayer.INTERPOLATION_BICUBIC:
-            return tf.image.resize_bicubic(
-                x,
-                self.new_shape,
-                align_corners=self.align_corners,
-                name=self._name,
-            )
-        else:
-            raise Exception(
-                ResizeLayer._ERROR_INTERPOLATION_IS_NOT_FOUND.format(self.interpolation)
-            )
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            if self.interpolation == ResizeLayer.INTERPOLATION_BILINEAR:
+                return tf.image.resize_bilinear(
+                    X,
+                    self.new_shape,
+                    align_corners=self.align_corners,
+                    name=self._name,
+                )
+            elif self.interpolation == ResizeLayer.INTERPOLATION_NEAREST_NEIGHBOR:
+                return tf.image.resize_nearest_neighbor(
+                    X,
+                    self.new_shape,
+                    align_corners=self.align_corners,
+                    name=self._name,
+                )
+            elif self.interpolation == ResizeLayer.INTERPOLATION_AREA:
+                return tf.image.resize_area(
+                    X,
+                    self.new_shape,
+                    align_corners=self.align_corners,
+                    name=self._name,
+                )
+            elif self.interpolation == ResizeLayer.INTERPOLATION_BICUBIC:
+                return tf.image.resize_bicubic(
+                    X,
+                    self.new_shape,
+                    align_corners=self.align_corners,
+                    name=self._name,
+                )
+            else:
+                raise Exception(
+                    ResizeLayer._ERROR_INTERPOLATION_IS_NOT_FOUND.format(self.interpolation)
+                )
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -909,13 +916,14 @@ class L2NormalizationLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, x):
-        return tf.math.l2_normalize(
-            x=x, epsilon=self._eps, axis=-1, name=self._name
-        )
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return tf.math.l2_normalize(
+                x=X, epsilon=self._eps, axis=-1, name=self._name
+            )
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):

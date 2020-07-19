@@ -38,6 +38,6 @@ class SimpleForwardLayer(MakiLayer):
         return maki_tensor
 
     @abstractmethod
-    def _forward(self, x):
+    def _forward(self, x, type_graph_operation):
         pass
 

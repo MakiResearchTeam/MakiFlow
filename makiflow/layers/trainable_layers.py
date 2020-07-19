@@ -117,7 +117,7 @@ class ConvLayer(SimpleForwardLayer):
             return self.f(conv_out, name=self._name + ConvLayer.ACTIVATION)
 
     def _training_forward(self, X):
-        return self._forward(X, MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -258,7 +258,7 @@ class UpConvLayer(SimpleForwardLayer):
             return self.f(conv_out, name=self._name + UpConvLayer.ACTIVATION)
 
     def _training_forward(self, X):
-        return self._forward(X, MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -349,11 +349,12 @@ class BiasLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, x):
-        return tf.nn.bias_add(x, self.b, self._name)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return tf.nn.bias_add(X, self.b, self._name)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -383,8 +384,8 @@ class DepthWiseConvLayer(SimpleForwardLayer):
     INIT_TYPE = 'init_type'
     RATE = 'rate'
 
-    BIAS = '/bias'
-    ACTIVATION = '/activation'
+    BIAS = '_bias'
+    ACTIVATION = '_activation'
 
     NAME_CONV_W = 'DepthWiseConvKernel_{}x{}_in{}_out{}_id_{}'
     NAME_BIAS = 'DepthWiseConvBias_{}{}'
@@ -440,7 +441,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         regularize_params = [self.W]
 
         if use_bias:
-            self.bias_name = DepthWiseConvLayer.NAME_BIAS(in_f * multiplier, name)
+            self.bias_name = DepthWiseConvLayer.NAME_BIAS.format(in_f * multiplier, name)
             self.b = tf.Variable(b.astype(np.float32), name=self.bias_name)
             params += [self.b]
             named_params_dict[self.bias_name] = self.b
@@ -452,23 +453,24 @@ class DepthWiseConvLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, x):
-        conv_out = tf.nn.depthwise_conv2d(
-            input=x,
-            filter=self.W,
-            strides=[1, self.stride, self.stride, 1],
-            padding=self.padding,
-            rate=self.rate,
-            name=self._name
-        )
-        if self.use_bias:
-            conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + DepthWiseConvLayer.BIAS)
-        if self.f is None:
-            return conv_out
-        return self.f(conv_out, name=self._name + DepthWiseConvLayer.ACTIVATION)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            conv_out = tf.nn.depthwise_conv2d(
+                input=X,
+                filter=self.W,
+                strides=[1, self.stride, self.stride, 1],
+                padding=self.padding,
+                rate=self.rate,
+                name=self._name
+            )
+            if self.use_bias:
+                conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + DepthWiseConvLayer.BIAS)
+            if self.f is None:
+                return conv_out
+            return self.f(conv_out, name=self._name + DepthWiseConvLayer.ACTIVATION)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -521,8 +523,8 @@ class SeparableConvLayer(SimpleForwardLayer):
     DW_INIT_TYPE = 'dw_init_type'
     PW_INIT_TYPE = 'pw_init_type'
 
-    BIAS = '/bias'
-    ACTIVATION = '/activation'
+    BIAS = '_bias'
+    ACTIVATION = '_activation'
 
     NAME_DW = 'DWConvKernel_{}x{}_in{}_out{}_id_{}'
     NAME_PW = 'PWConvKernel_1x1_in{}_out{}_id_{}'
@@ -601,23 +603,24 @@ class SeparableConvLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, x):
-        conv_out = tf.nn.separable_conv2d(
-            input=x,
-            depthwise_filter=self.W_dw,
-            pointwise_filter=self.W_pw,
-            strides=[1, self.stride, self.stride, 1],
-            padding=self.padding,
-            name=self._name
-        )
-        if self.use_bias:
-            conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + SeparableConvLayer.BIAS)
-        if self.f is None:
-            return conv_out
-        return self.f(conv_out, name=self._name + SeparableConvLayer.ACTIVATION)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            conv_out = tf.nn.separable_conv2d(
+                input=X,
+                depthwise_filter=self.W_dw,
+                pointwise_filter=self.W_pw,
+                strides=[1, self.stride, self.stride, 1],
+                padding=self.padding,
+                name=self._name
+            )
+            if self.use_bias:
+                conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + SeparableConvLayer.BIAS)
+            if self.f is None:
+                return conv_out
+            return self.f(conv_out, name=self._name + SeparableConvLayer.ACTIVATION)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -671,8 +674,8 @@ class DenseLayer(SimpleForwardLayer):
     USE_BIAS = 'use_bias'
     INIT_TYPE = 'init_type'
 
-    BIAS = '/bias'
-    ACTIVATION = '/activation'
+    BIAS = '_bias'
+    ACTIVATION = '_activation'
 
     NAME_DENSE_W = 'DenseMat_{}x{}_id_{}'
     NAME_BIAS = 'DenseBias_{}x{}_id_{}'
@@ -729,16 +732,17 @@ class DenseLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, x):
-        out = tf.matmul(x, self.W, name=self._name)
-        if self.use_bias:
-            out = tf.nn.bias_add(out, self.b, name=self._name + DenseLayer.BIAS)
-        if self.f is None:
-            return out
-        return self.f(out, name=self._name + DenseLayer.ACTIVATION)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            out = tf.matmul(X, self.W, name=self._name)
+            if self.use_bias:
+                out = tf.nn.bias_add(out, self.b, name=self._name + DenseLayer.BIAS)
+            if self.f is None:
+                return out
+            return self.f(out, name=self._name + DenseLayer.ACTIVATION)
 
     def _training_forward(self, X):
-        return self._forward(X)
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -780,8 +784,8 @@ class AtrousConvLayer(SimpleForwardLayer):
     USE_BIAS = 'use_bias'
     INIT_TYPE = 'init_type'
 
-    BIAS = '/bias'
-    ACTIVATION = '/activation'
+    BIAS = '_bias'
+    ACTIVATION = '_activation'
 
     NAME_ATROUS_W = 'AtrousConvKernel_{}x{}_in{}_out{}_id_{}'
     NAME_BIAS = 'AtrousConvBias_{}x{}_in{}_out{}_id_{}'
@@ -850,20 +854,21 @@ class AtrousConvLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, x):
-        conv_out = tf.nn.atrous_conv2d(x, self.W,
-                                       self.rate,
-                                       self.padding,
-                                       name=self._name
-        )
-        if self.use_bias:
-            conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + AtrousConvLayer.BIAS)
-        if self.f is None:
-            return conv_out
-        return self.f(conv_out, name=self._name + AtrousConvLayer.ACTIVATION)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            conv_out = tf.nn.atrous_conv2d(X, self.W,
+                                           self.rate,
+                                           self.padding,
+                                           name=self._name
+            )
+            if self.use_bias:
+                conv_out = tf.nn.bias_add(conv_out, self.b, name=self._name + AtrousConvLayer.BIAS)
+            if self.f is None:
+                return conv_out
+            return self.f(conv_out, name=self._name + AtrousConvLayer.ACTIVATION)
 
     def _training_forward(self, x):
-        return self._forward(x)
+        return self._forward(x, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -963,41 +968,42 @@ class BatchNormLayer(BatchNormBaseLayer):
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
-    def _forward(self, X):
-        if self._track_running_stats:
-            return tf.nn.batch_normalization(
-                X,
-                self.running_mean,
-                self.running_variance,
-                self.beta,
-                self.gamma,
-                self.eps,
-                name=self._name
-            )
-        else:
-            # These if statements check if we do batchnorm for convolution or dense
-            if len(X.shape) == 4:
-                # conv
-                axes = [0, 1, 2]
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            if self._track_running_stats:
+                return tf.nn.batch_normalization(
+                    X,
+                    self.running_mean,
+                    self.running_variance,
+                    self.beta,
+                    self.gamma,
+                    self.eps,
+                    name=self._name
+                )
             else:
-                # dense
-                axes = [0]
+                # These if statements check if we do batchnorm for convolution or dense
+                if len(X.shape) == 4:
+                    # conv
+                    axes = [0, 1, 2]
+                else:
+                    # dense
+                    axes = [0]
 
-            batch_mean, batch_var = tf.nn.moments(X, axes=axes)
+                batch_mean, batch_var = tf.nn.moments(X, axes=axes)
 
-            return tf.nn.batch_normalization(
-                X,
-                batch_mean,
-                batch_var,
-                self.beta,
-                self.gamma,
-                self.eps,
-                name=self._name
-            )
+                return tf.nn.batch_normalization(
+                    X,
+                    batch_mean,
+                    batch_var,
+                    self.beta,
+                    self.gamma,
+                    self.eps,
+                    name=self._name
+                )
 
     def _training_forward(self, X):
         if not self._track_running_stats:
-            return self._forward(X)
+            return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
@@ -1138,43 +1144,44 @@ class GroupNormLayer(BatchNormBaseLayer):
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
-    def _forward(self, X):
-        # These if statements check if we do batchnorm for convolution or dense
-        if len(X.shape) == 4:
-            # conv
-            axes = [1, 2, 4]
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            # These if statements check if we do batchnorm for convolution or dense
+            if len(X.shape) == 4:
+                # conv
+                axes = [1, 2, 4]
 
-            N, H, W, C = X.shape
-            old_shape = [N, H, W, C]
-            X = tf.reshape(X, [N, H, W, self.G, C // self.G])
-        else:
-            # dense
-            axes = [2]
+                N, H, W, C = X.shape
+                old_shape = [N, H, W, C]
+                X = tf.reshape(X, [N, H, W, self.G, C // self.G])
+            else:
+                # dense
+                axes = [2]
 
-            N, F = X.shape
-            old_shape = [N, F]
-            X = tf.reshape(X, [N, self.G, F // self.G])
+                N, F = X.shape
+                old_shape = [N, F]
+                X = tf.reshape(X, [N, self.G, F // self.G])
 
-        if self._track_running_stats:
-            X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
-        else:
-            # Output shape [N, 1, 1, self.G, 1] for Conv and [N, G, 1] for Dense
-            batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
-            X = (X - batch_mean) / tf.sqrt(batch_var + self.eps)
+            if self._track_running_stats:
+                X = (X - self.running_mean) / tf.sqrt(self.running_variance + self.eps)
+            else:
+                # Output shape [N, 1, 1, self.G, 1] for Conv and [N, G, 1] for Dense
+                batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+                X = (X - batch_mean) / tf.sqrt(batch_var + self.eps)
 
-        X = tf.reshape(X, old_shape)
+            X = tf.reshape(X, old_shape)
 
-        if self.gamma is not None:
-            X *= self.gamma
+            if self.gamma is not None:
+                X *= self.gamma
 
-        if self.beta is not None:
-            X += self.beta
+            if self.beta is not None:
+                X += self.beta
 
-        return X
+            return X
 
     def _training_forward(self, X):
         if not self._track_running_stats:
-            return self._forward(X)
+            return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
@@ -1322,42 +1329,43 @@ class NormalizationLayer(BatchNormBaseLayer):
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
-    def _forward(self, X):
-        if self._track_running_stats:
-            return tf.nn.batch_normalization(
-                X,
-                self.running_mean,
-                self.running_variance,
-                self.beta,
-                self.gamma,
-                self.eps,
-                name=self._name
-            )
-        else:
-            # These if statements check if we do batchnorm for convolution or dense
-            if len(X.shape) == 4:
-                # conv
-                axes = [1, 2, 3]
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            if self._track_running_stats:
+                return tf.nn.batch_normalization(
+                    X,
+                    self.running_mean,
+                    self.running_variance,
+                    self.beta,
+                    self.gamma,
+                    self.eps,
+                    name=self._name
+                )
             else:
-                # dense
-                axes = [1]
+                # These if statements check if we do batchnorm for convolution or dense
+                if len(X.shape) == 4:
+                    # conv
+                    axes = [1, 2, 3]
+                else:
+                    # dense
+                    axes = [1]
 
-            # Output shape [N, 1, 1, 1] for Conv and [N, 1] for Dense
-            batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
+                # Output shape [N, 1, 1, 1] for Conv and [N, 1] for Dense
+                batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
 
-            return tf.nn.batch_normalization(
-                X,
-                batch_mean,
-                batch_var,
-                self.beta,
-                self.gamma,
-                self.eps,
-                name=self._name
-            )
+                return tf.nn.batch_normalization(
+                    X,
+                    batch_mean,
+                    batch_var,
+                    self.beta,
+                    self.gamma,
+                    self.eps,
+                    name=self._name
+                )
 
     def _training_forward(self, X):
         if not self._track_running_stats:
-            return self._forward(X)
+            return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
@@ -1534,7 +1542,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
 
     def _training_forward(self, X):
         if not self._track_running_stats:
-            return self._forward(X, MakiRestorable.TRAINING_PREFIX)
+            return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
         # These if statements check if we do batchnorm for convolution or dense
         if len(X.shape) == 4:
@@ -1631,11 +1639,12 @@ class ScaleLayer(SimpleForwardLayer):
                          named_params_dict={self.name_scale: self.scale}
         )
 
-    def _forward(self, x):
-        return tf.math.multiply(x, self.scale, name=self._name)
+    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
+        with tf.name_scope(type_graph_operation + super().get_name()):
+            return tf.math.multiply(X, self.scale, name=self._name)
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def _training_forward(self, X):
+        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
 
     @staticmethod
     def build(params: dict):
