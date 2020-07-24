@@ -36,7 +36,8 @@ class AbsTrainingModule(BasicTrainingModule):
         abs_loss = Loss.abs_loss(self._input_x, self._training_out, raw_tensor=True)
 
         if self._use_weight_mask_for_training:
-            abs_loss = tf.reduce_mean(abs_loss * self._weight_mask)
+            abs_loss = tf.reduce_sum(abs_loss * self._weight_mask)
+            abs_loss = abs_loss / tf.reduce_sum(self._weight_mask)
         else:
             abs_loss = tf.reduce_mean(abs_loss)
 
