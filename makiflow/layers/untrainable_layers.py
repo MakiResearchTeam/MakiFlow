@@ -99,8 +99,9 @@ class ReshapeLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            return tf.reshape(tensor=X, shape=self.new_shape, name=self._name)
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return tf.reshape(tensor=X, shape=self.new_shape, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -148,8 +149,9 @@ class MulByAlphaLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            return tf.math.multiply(X, self.alpha, name=self._name)
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return tf.math.multiply(X, self.alpha, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -211,9 +213,10 @@ class SumLayer(MakiLayer):
         return maki_tensor
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            # Compare with tf.reduce_sum and tf.add_n, sum(X) works faster in running session
-            return sum(X)
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                # Compare with tf.reduce_sum and tf.add_n, sum(X) works faster in running session
+                return sum(X)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -274,8 +277,9 @@ class ConcatLayer(MakiLayer):
         return maki_tensor
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            return tf.concat(values=X, axis=self.axis, name=self._name)
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return tf.concat(values=X, axis=self.axis, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -329,13 +333,14 @@ class ZeroPaddingLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            return tf.pad(
-                tensor=X,
-                paddings=self.padding,
-                mode=ZeroPaddingLayer.CONSTANT,
-                name=self._name
-            )
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return tf.pad(
+                    tensor=X,
+                    paddings=self.padding,
+                    mode=ZeroPaddingLayer.CONSTANT,
+                    name=self._name
+                )
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -380,9 +385,10 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            assert (len(X.shape) == 4), GlobalMaxPoolLayer._ASSERT_WRONG_INPUT_SHAPE
-            return tf.reduce_max(X, axis=[1, 2], name=self._name)
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                assert (len(X.shape) == 4), GlobalMaxPoolLayer._ASSERT_WRONG_INPUT_SHAPE
+                return tf.reduce_max(X, axis=[1, 2], name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -422,9 +428,10 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            assert (len(X.shape) == 4), GlobalAvgPoolLayer._ASSERT_WRONG_INPUT_SHAPE
-            return tf.reduce_mean(X, axis=[1, 2], name=self._name)
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                assert (len(X.shape) == 4), GlobalAvgPoolLayer._ASSERT_WRONG_INPUT_SHAPE
+                return tf.reduce_mean(X, axis=[1, 2], name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -480,13 +487,14 @@ class MaxPoolLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            return tf.nn.max_pool(
-                X,
-                ksize=self.ksize,
-                strides=self.strides,
-                padding=self.padding
-            )
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return tf.nn.max_pool(
+                    X,
+                    ksize=self.ksize,
+                    strides=self.strides,
+                    padding=self.padding
+                )
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -553,13 +561,14 @@ class AvgPoolLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            return tf.nn.avg_pool(
-                X,
-                ksize=self.ksize,
-                strides=self.strides,
-                padding=self.padding
-            )
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return tf.nn.avg_pool(
+                    X,
+                    ksize=self.ksize,
+                    strides=self.strides,
+                    padding=self.padding
+                )
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -615,13 +624,14 @@ class UpSamplingLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            t_shape = X.get_shape()
-            im_size = (t_shape[1] * self.size[0], t_shape[2] * self.size[1])
-            return tf.image.resize_nearest_neighbor(
-                X,
-                im_size
-            )
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                t_shape = X.get_shape()
+                im_size = (t_shape[1] * self.size[0], t_shape[2] * self.size[1])
+                return tf.image.resize_nearest_neighbor(
+                    X,
+                    im_size
+                )
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -673,8 +683,9 @@ class ActivationLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            return self.f(X, name=self._name)
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return self.f(X, name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -718,8 +729,9 @@ class FlattenLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            return tf.contrib.layers.flatten(X)
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return tf.contrib.layers.flatten(X)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -775,11 +787,12 @@ class DropoutLayer(SimpleForwardLayer):
         return X
 
     def _training_forward(self, X):
-        with tf.name_scope(MakiRestorable.INFERENCE_MODE + self.get_name()):
-            return tf.nn.dropout(X, self._p_keep,
-                                 noise_shape=self.noise_shape,
-                                 seed=self.seed,
-            )
+        with tf.name_scope(MakiRestorable.TRAINING_MODE):
+            with tf.name_scope(self.get_name()):
+                return tf.nn.dropout(X, self._p_keep,
+                                     noise_shape=self.noise_shape,
+                                     seed=self.seed,
+                )
 
     @staticmethod
     def build(params: dict):
@@ -845,39 +858,40 @@ class ResizeLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            if self.interpolation == ResizeLayer.INTERPOLATION_BILINEAR:
-                return tf.image.resize_bilinear(
-                    X,
-                    self.new_shape,
-                    align_corners=self.align_corners,
-                    name=self._name,
-                )
-            elif self.interpolation == ResizeLayer.INTERPOLATION_NEAREST_NEIGHBOR:
-                return tf.image.resize_nearest_neighbor(
-                    X,
-                    self.new_shape,
-                    align_corners=self.align_corners,
-                    name=self._name,
-                )
-            elif self.interpolation == ResizeLayer.INTERPOLATION_AREA:
-                return tf.image.resize_area(
-                    X,
-                    self.new_shape,
-                    align_corners=self.align_corners,
-                    name=self._name,
-                )
-            elif self.interpolation == ResizeLayer.INTERPOLATION_BICUBIC:
-                return tf.image.resize_bicubic(
-                    X,
-                    self.new_shape,
-                    align_corners=self.align_corners,
-                    name=self._name,
-                )
-            else:
-                raise Exception(
-                    ResizeLayer._EXCEPTION_INTERPOLATION_IS_NOT_FOUND.format(self.interpolation)
-                )
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                if self.interpolation == ResizeLayer.INTERPOLATION_BILINEAR:
+                    return tf.image.resize_bilinear(
+                        X,
+                        self.new_shape,
+                        align_corners=self.align_corners,
+                        name=self._name,
+                    )
+                elif self.interpolation == ResizeLayer.INTERPOLATION_NEAREST_NEIGHBOR:
+                    return tf.image.resize_nearest_neighbor(
+                        X,
+                        self.new_shape,
+                        align_corners=self.align_corners,
+                        name=self._name,
+                    )
+                elif self.interpolation == ResizeLayer.INTERPOLATION_AREA:
+                    return tf.image.resize_area(
+                        X,
+                        self.new_shape,
+                        align_corners=self.align_corners,
+                        name=self._name,
+                    )
+                elif self.interpolation == ResizeLayer.INTERPOLATION_BICUBIC:
+                    return tf.image.resize_bicubic(
+                        X,
+                        self.new_shape,
+                        align_corners=self.align_corners,
+                        name=self._name,
+                    )
+                else:
+                    raise Exception(
+                        ResizeLayer._EXCEPTION_INTERPOLATION_IS_NOT_FOUND.format(self.interpolation)
+                    )
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -925,10 +939,11 @@ class L2NormalizationLayer(SimpleForwardLayer):
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode + self.get_name()):
-            return tf.math.l2_normalize(
-                x=X, epsilon=self._eps, axis=-1, name=self._name
-            )
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return tf.math.l2_normalize(
+                    x=X, epsilon=self._eps, axis=-1, name=self._name
+                )
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
