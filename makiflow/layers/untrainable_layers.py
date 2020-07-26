@@ -25,7 +25,7 @@ from makiflow.layers.sf_layer import SimpleForwardLayer
 
 class InputLayer(InputMakiLayer):
 
-    _ERROR_STRING_IS_NOT_IMPLEMENTED = 'This functionality is not implemented in the InputLayer.'
+    _EXCEPTION_IS_NOT_IMPLEMENTED = 'This functionality is not implemented in the InputLayer.'
 
     def __init__(self, input_shape, name):
         """
@@ -49,10 +49,10 @@ class InputLayer(InputMakiLayer):
         )
 
     def __call__(self, x):
-        raise RuntimeError(InputLayer._ERROR_STRING_IS_NOT_IMPLEMENTED)
+        raise RuntimeError(InputLayer._EXCEPTION_IS_NOT_IMPLEMENTED)
 
     def _training_forward(self, x):
-        raise RuntimeError(InputLayer._ERROR_STRING_IS_NOT_IMPLEMENTED)
+        raise RuntimeError(InputLayer._EXCEPTION_IS_NOT_IMPLEMENTED)
 
     @staticmethod
     def build(params: dict):
@@ -66,12 +66,12 @@ class InputLayer(InputMakiLayer):
 
     def to_dict(self):
         return {
-            MakiRestorable.NAME: super().get_name(),
-            MakiTensor.PARENT_TENSOR_NAMES: super().get_parent_tensor_names(),
+            MakiRestorable.NAME: self.get_name(),
+            MakiTensor.PARENT_TENSOR_NAMES: self.get_parent_tensor_names(),
             MakiRestorable.FIELD_TYPE: InputMakiLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
-                InputMakiLayer.INPUT_SHAPE: super().get_shape()
+                MakiRestorable.NAME: self.get_name(),
+                InputMakiLayer.INPUT_SHAPE: self.get_shape()
             }
         }
 
@@ -98,12 +98,12 @@ class ReshapeLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             return tf.reshape(tensor=X, shape=self.new_shape, name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -119,7 +119,7 @@ class ReshapeLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: ReshapeLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 ReshapeLayer.NEW_SHAPE: self.new_shape
             }
         }
@@ -147,12 +147,12 @@ class MulByAlphaLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             return tf.math.multiply(X, self.alpha, name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -168,7 +168,7 @@ class MulByAlphaLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: MulByAlphaLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 MulByAlphaLayer.ALPHA: self.alpha,
             }
         }
@@ -210,12 +210,13 @@ class SumLayer(MakiLayer):
         )
         return maki_tensor
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
+            # Compare with tf.reduce_sum and tf.add_n, sum(X) works faster in running session
             return sum(X)
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -227,7 +228,7 @@ class SumLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: SumLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
             }
         }
 
@@ -272,12 +273,12 @@ class ConcatLayer(MakiLayer):
         )
         return maki_tensor
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             return tf.concat(values=X, axis=self.axis, name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -293,7 +294,7 @@ class ConcatLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ConcatLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 ConcatLayer.AXIS: self.axis,
             }
         }
@@ -302,6 +303,7 @@ class ConcatLayer(MakiLayer):
 class ZeroPaddingLayer(SimpleForwardLayer):
     TYPE = 'ZeroPaddingLayer'
     PADDING = 'padding'
+    CONSTANT = "CONSTANT"
 
     def __init__(self, padding, name):
         """
@@ -326,18 +328,17 @@ class ZeroPaddingLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             return tf.pad(
                 tensor=X,
                 paddings=self.padding,
-                mode="CONSTANT",
+                mode=ZeroPaddingLayer.CONSTANT,
                 name=self._name
             )
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -353,7 +354,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: ZeroPaddingLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 ZeroPaddingLayer.PADDING: self.input_padding,
             }
         }
@@ -361,6 +362,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
 
 class GlobalMaxPoolLayer(SimpleForwardLayer):
     TYPE = 'GlobalMaxPoolLayer'
+    _ASSERT_WRONG_INPUT_SHAPE = 'Input MakiTensor must have 4 dimensional shape'
 
     def __init__(self, name):
         """
@@ -377,13 +379,13 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
-            assert (len(X.shape) == 4)
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
+            assert (len(X.shape) == 4), GlobalMaxPoolLayer._ASSERT_WRONG_INPUT_SHAPE
             return tf.reduce_max(X, axis=[1, 2], name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -395,13 +397,14 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: GlobalMaxPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
             }
         }
 
 
 class GlobalAvgPoolLayer(SimpleForwardLayer):
     TYPE = 'GlobalAvgPoolLayer'
+    _ASSERT_WRONG_INPUT_SHAPE = 'Input MakiTensor must have 4 dimensional shape'
 
     def __init__(self, name):
         """
@@ -418,13 +421,13 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
-            assert (len(X.shape) == 4)
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
+            assert (len(X.shape) == 4), GlobalAvgPoolLayer._ASSERT_WRONG_INPUT_SHAPE
             return tf.reduce_mean(X, axis=[1, 2], name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -436,7 +439,7 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: GlobalAvgPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
             }
         }
 
@@ -446,6 +449,9 @@ class MaxPoolLayer(SimpleForwardLayer):
     KSIZE = 'ksize'
     STRIDES = 'strides'
     PADDING = 'padding'
+
+    PADDING_SAME = 'SAME'
+    PADDING_VALID = 'VALID'
 
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
         """
@@ -458,7 +464,9 @@ class MaxPoolLayer(SimpleForwardLayer):
         strides : list
             The stride of the sliding window for each dimension of the input MakiTensor.
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive).
+            Padding mode for convolution operation.
+            Options: MaxPoolLayer.PADDING_SAME which is 'SAME' string
+            or MaxPoolLayer.PADDING_VALID 'VALID' (case sensitive).
         name : str
             Name of this layer.
         """
@@ -471,9 +479,8 @@ class MaxPoolLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             return tf.nn.max_pool(
                 X,
                 ksize=self.ksize,
@@ -482,7 +489,7 @@ class MaxPoolLayer(SimpleForwardLayer):
             )
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -502,7 +509,7 @@ class MaxPoolLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: MaxPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 MaxPoolLayer.KSIZE: self.ksize,
                 MaxPoolLayer.STRIDES: self.strides,
                 MaxPoolLayer.PADDING: self.padding
@@ -516,6 +523,9 @@ class AvgPoolLayer(SimpleForwardLayer):
     STRIDES = 'strides'
     PADDING = 'padding'
 
+    PADDING_SAME = 'SAME'
+    PADDING_VALID = 'VALID'
+
     def __init__(self, name, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'):
         """
         Average pooling operation for spatial data.
@@ -527,7 +537,9 @@ class AvgPoolLayer(SimpleForwardLayer):
         strides : list
             The stride of the sliding window for each dimension of the input MakiTensor.
         padding : str
-            Padding mode for convolution operation. Options: 'SAME', 'VALID' (case sensitive).
+            Padding mode for convolution operation.
+            Options: AvgPoolLayer.PADDING_SAME which is 'SAME' string
+            or AvgPoolLayer.PADDING_VALID 'VALID' (case sensitive).
         name : str
             Name of this layer.
         """
@@ -540,9 +552,8 @@ class AvgPoolLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             return tf.nn.avg_pool(
                 X,
                 ksize=self.ksize,
@@ -551,7 +562,7 @@ class AvgPoolLayer(SimpleForwardLayer):
             )
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -571,7 +582,7 @@ class AvgPoolLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: AvgPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 AvgPoolLayer.KSIZE: self.ksize,
                 AvgPoolLayer.STRIDES: self.strides,
                 AvgPoolLayer.PADDING: self.padding
@@ -603,9 +614,8 @@ class UpSamplingLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             t_shape = X.get_shape()
             im_size = (t_shape[1] * self.size[0], t_shape[2] * self.size[1])
             return tf.image.resize_nearest_neighbor(
@@ -614,7 +624,7 @@ class UpSamplingLayer(SimpleForwardLayer):
             )
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -630,7 +640,7 @@ class UpSamplingLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: UpSamplingLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 UpSamplingLayer.SIZE: self.size
             }
         }
@@ -640,7 +650,7 @@ class ActivationLayer(SimpleForwardLayer):
     TYPE = 'ActivationLayer'
     ACTIVATION = 'activation'
 
-    _ERROR_ACTIVATION_INPUT_NONE = "Activation can't None"
+    _EXCEPTION_ACTIVATION_INPUT_NONE = "Activation can't None"
 
     def __init__(self, name, activation=tf.nn.relu):
         """
@@ -654,7 +664,7 @@ class ActivationLayer(SimpleForwardLayer):
             Name of this layer.
         """
         if activation is None:
-            raise Exception(ActivationLayer._ERROR_ACTIVATION_INPUT_NONE)
+            raise Exception(ActivationLayer._EXCEPTION_ACTIVATION_INPUT_NONE)
         self.f = activation
 
         super().__init__(name, params=[],
@@ -662,12 +672,12 @@ class ActivationLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             return self.f(X, name=self._name)
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -683,7 +693,7 @@ class ActivationLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: ActivationLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 ActivationLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f)
             }
         }
@@ -707,13 +717,12 @@ class FlattenLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             return tf.contrib.layers.flatten(X)
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -725,7 +734,7 @@ class FlattenLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: FlattenLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name()
+                MakiRestorable.NAME: self.get_name()
             }
         }
 
@@ -762,12 +771,11 @@ class DropoutLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
-            return X
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        return X
 
     def _training_forward(self, X):
-        with tf.name_scope(MakiRestorable.TEST_PREFIX + super().get_name()):
+        with tf.name_scope(MakiRestorable.INFERENCE_MODE + self.get_name()):
             return tf.nn.dropout(X, self._p_keep,
                                  noise_shape=self.noise_shape,
                                  seed=self.seed,
@@ -791,7 +799,7 @@ class DropoutLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: DropoutLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 DropoutLayer.P_KEEP: self._p_keep,
                 DropoutLayer.NOISE_SHAPE: self.noise_shape,
                 DropoutLayer.SEED: self.seed
@@ -811,7 +819,7 @@ class ResizeLayer(SimpleForwardLayer):
     NEW_SHAPE = 'new_shape'
     ALIGN_CORNERS = 'align_corners'
 
-    _ERROR_INTERPOLATION_IS_NOT_FOUND = "Interpolation {} don't exist"
+    _EXCEPTION_INTERPOLATION_IS_NOT_FOUND = "Interpolation {} don't exist"
 
     def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False):
         """
@@ -836,8 +844,8 @@ class ResizeLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             if self.interpolation == ResizeLayer.INTERPOLATION_BILINEAR:
                 return tf.image.resize_bilinear(
                     X,
@@ -868,11 +876,11 @@ class ResizeLayer(SimpleForwardLayer):
                 )
             else:
                 raise Exception(
-                    ResizeLayer._ERROR_INTERPOLATION_IS_NOT_FOUND.format(self.interpolation)
+                    ResizeLayer._EXCEPTION_INTERPOLATION_IS_NOT_FOUND.format(self.interpolation)
                 )
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -892,7 +900,7 @@ class ResizeLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: ResizeLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 ResizeLayer.FIELD_INTERPOLATION: self.interpolation,
                 ResizeLayer.NEW_SHAPE: self.new_shape,
                 ResizeLayer.ALIGN_CORNERS: self.align_corners,
@@ -916,14 +924,14 @@ class L2NormalizationLayer(SimpleForwardLayer):
                          named_params_dict={}
         )
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + self.get_name()):
             return tf.math.l2_normalize(
                 x=X, epsilon=self._eps, axis=-1, name=self._name
             )
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -939,7 +947,7 @@ class L2NormalizationLayer(SimpleForwardLayer):
         return {
             MakiRestorable.FIELD_TYPE: L2NormalizationLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: super().get_name(),
+                MakiRestorable.NAME: self.get_name(),
                 L2NormalizationLayer.EPS: self._eps
             }
         }

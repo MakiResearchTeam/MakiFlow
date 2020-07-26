@@ -48,8 +48,8 @@ class SingleTextureLayer(SimpleForwardLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, X, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + super().get_name()):
             # Normalize the input UV map so that its coordinates are within [-1, 1] range.
             x = X * 2.0 - 1.0
             batch_size = x.get_shape().as_list()[0]
@@ -57,7 +57,7 @@ class SingleTextureLayer(SimpleForwardLayer):
             return grid_sample(expanded_texture, x)
 
     def _training_forward(self, X):
-        return self._forward(X, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -114,16 +114,16 @@ class LaplacianPyramidTextureLayer(SimpleForwardLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, x, type_graph_operation=MakiRestorable.TEST_PREFIX):
-        with tf.name_scope(type_graph_operation + super().get_name()):
+    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode + super().get_name()):
             # Normalize the input UV map so that its coordinates are within [-1, 1] range.
             y = []
             for d in range(self._depth):
-                y += [self._textures[d]._forward(x, type_graph_operation)]
+                y += [self._textures[d]._forward(x, computation_mode)]
             return tf.add_n(y)
 
     def _training_forward(self, x):
-        return self._forward(x, type_graph_operation=MakiRestorable.TRAINING_PREFIX)
+        return self._forward(x, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
