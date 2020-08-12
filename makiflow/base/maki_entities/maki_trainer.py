@@ -17,6 +17,7 @@
 
 from abc import ABC
 from makiflow.base.maki_entities.maki_model import MakiModel
+from makiflow.base.maki_entities.maki_layer import MakiRestorable
 from .maki_tensor import MakiTensor
 import tensorflow as tf
 from copy import copy
@@ -234,9 +235,14 @@ class MakiTrainer(MakiModel, ABC):
                         takes += [create_tensor(elem)]
 
                     if layer.get_name() in self._trainable_layers:
-                        X = layer._training_forward(takes[0] if len(takes) == 1 else takes)
+                        X = layer._training_forward(
+                            takes[0] if len(takes) == 1 else takes
+                        )
                     else:
-                        X = layer._forward(takes[0] if len(takes) == 1 else takes)
+                        X = layer._forward(
+                            takes[0] if len(takes) == 1 else takes,
+                            MakiRestorable.TRAINING_MODE
+                        )
                     output_tensors[layer.get_name()] = X
                     # Check if the layer returns several tensors
                     index = maki_tensor.get_index()
@@ -246,6 +252,5 @@ class MakiTrainer(MakiModel, ABC):
             else:
                 return output_tensors[maki_tensor.get_name()]
 
-        self._training_outputs = []
         for output in self._outputs:
             self._training_outputs += [create_tensor(output)]

@@ -23,6 +23,9 @@ class MakiTensor:
     PARENT_TENSOR_NAMES = 'parent_tensor_names'
     PARENT_LAYER_INFO = 'parent_layer_info'
 
+    OBJ2STR = "MakiTensor(name={}, shape={}, dtype={})"
+    OBJ2REPR = "<mf.base.MakiTensor 'name={}' shape={} dtype={}>"
+
     def __init__(self, data_tensor: tf.Tensor, parent_layer, parent_tensor_names: list,
                  previous_tensors: dict, name=None, index=None):
         """
@@ -100,16 +103,16 @@ class MakiTensor:
     def __str__(self):
         name = self._name
         shape = self.get_shape()
-        dtype = self._data_tensor._dtype.name
+        dtype = self._data_tensor.dtype.name
 
-        return f"MakiTensor(name={name}, shape={shape}, dtype={dtype})"
+        return MakiTensor.OBJ2STR.format(name, shape, dtype)
 
     def __repr__(self):
         name = self._name
         shape = self.get_shape()
-        dtype = self._data_tensor._dtype.name
+        dtype = self._data_tensor.dtype.name
 
-        return f"<mf.base.MakiTensor 'name={name}' shape={shape} dtype={dtype}>"
+        return MakiTensor.OBJ2REPR.format(name, shape, dtype)
 
     def get_name(self):
         return self._name

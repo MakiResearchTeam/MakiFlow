@@ -38,6 +38,7 @@ class CParams:
 
 
 class ClassificatorBasis(MakiCore, ABC):
+
     def __init__(self, input: InputLayer, output: MakiTensor, name='MakiClassificator'):
         graph_tensors = copy(output.get_previous_tensors())
         # Add output tensor to `graph_tensors` since it doesn't have it.

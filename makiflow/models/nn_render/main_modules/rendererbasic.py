@@ -23,16 +23,36 @@ from makiflow.generators.nn_render import NNRIterator
 
 
 class NeuralRenderBasis(MakiCore):
+
+    INPUT_MT = 'input_mt'
+    OUTPUT_MT = 'output_mt'
+    NAME = 'name'
+    IMAGES = 'images'
+
     @staticmethod
     def from_json(path_to_model):
         # TODO
         pass
 
-    def __init__(self, input_l, output, sampled_texture: MakiTensor, name):
+    def __init__(self, input_x, output_x, sampled_texture: MakiTensor, name='NeuralRenderModel'):
+        """
+        Create NeuralRender model which provides API to train and tests different models for neural rendering
+
+        Parameters
+        ----------
+        input_x : MakiTensor
+            Input MakiTensor
+        output_x : MakiTensor
+            Output MakiTensor
+        sampled_texture : MakiTensor
+            Sampled texture of the model, which is used for building a loss to force produce RBG texture
+        name : str
+            Name of this model
+        """
         self.name = str(name)
-        graph_tensors = output.get_previous_tensors()
-        graph_tensors.update(output.get_self_pair())
-        super().__init__(graph_tensors, outputs=[output], inputs=[input_l])
+        graph_tensors = output_x.get_previous_tensors()
+        graph_tensors.update(output_x.get_self_pair())
+        super().__init__(graph_tensors, outputs=[output_x], inputs=[input_x])
         self._sampled_texture = sampled_texture
 
         self._training_vars_are_ready = False
@@ -41,6 +61,19 @@ class NeuralRenderBasis(MakiCore):
         self._generator = None
 
     def predict(self, x):
+        """
+        Get result from neural network according to certain input
+
+        Parameters
+        ----------
+        x: ndarray
+            Input for neural network, i. e. for this model.
+
+        Returns
+        ----------
+        ndarray
+            Output of the neural network
+        """
         return self._session.run(
             self._output_data_tensors[0],
             feed_dict={self._input_data_tensors[0]: x}
@@ -48,9 +81,9 @@ class NeuralRenderBasis(MakiCore):
 
     def _get_model_info(self):
         return {
-            'name': self.name,
-            'input_s': self._inputs[0].get_name(),
-            'output': self._outputs[0].get_name()
+            NeuralRenderBasis.NAME: self.name,
+            NeuralRenderBasis.INPUT_MT: self._inputs[0].get_name(),
+            NeuralRenderBasis.OUTPUT_MT: self._outputs[0].get_name()
         }
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -69,7 +102,7 @@ class NeuralRenderBasis(MakiCore):
         if self._generator is not None:
             self._images = self._generator.get_iterator()[NNRIterator.IMAGE]
         else:
-            self._images = tf.placeholder(tf.float32, shape=out_shape, name='images')
+            self._images = tf.placeholder(tf.float32, shape=out_shape, name=NeuralRenderBasis.IMAGES)
         self._training_out = self._training_outputs[0]
 
         # OTHER PREPARATIONS
@@ -78,6 +111,14 @@ class NeuralRenderBasis(MakiCore):
         self._training_vars_are_ready = True
 
     def set_generator(self, generator):
+        """
+        Set generator (i. e. pipeline) for this model
+
+        Parameters
+        ----------
+        generator : mf.generators
+            Certain generator for this model
+        """
         self._generator = generator
 
     # noinspection PyAttributeOutsideInit

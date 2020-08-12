@@ -24,6 +24,9 @@ class MakiRestorable(ABC):
     FIELD_TYPE = 'type'
     NAME = 'name'
 
+    TRAINING_MODE = 'TrainingGraph'
+    INFERENCE_MODE = 'InferenceGraph'
+
     @staticmethod
     def build(params: dict):
         """
@@ -52,7 +55,7 @@ class MakiRestorable(ABC):
 
 class MakiLayer(MakiRestorable):
 
-    def __init__(self, name, params, regularize_params, named_params_dict):
+    def __init__(self, name: str, params: list, regularize_params: list, named_params_dict: dict):
         self._name = name
         self._params = params
         self._regularize_params = regularize_params

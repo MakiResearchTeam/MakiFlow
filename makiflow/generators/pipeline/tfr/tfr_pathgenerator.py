@@ -32,7 +32,7 @@ class TFRPathGenerator(PathGenerator):
 
 
 class CycleGenerator(TFRPathGenerator):
-    def __init__(self, tfrecords):
+    def __init__(self, tfrecords, init_shuffle=False):
         """
         Generator for the tfrecord pipeline which gives next tfrecord in a cyclic order.
         After each cycle data is randomly shuffled.
@@ -41,8 +41,13 @@ class CycleGenerator(TFRPathGenerator):
         ----------
         tfrecords : list
             List of paths to the tfrecords.
+        init_shuffle : bool
+            If True, shuffle of tfrecords will be performed before the cycle begins
         """
-        self._tfrecords = tfrecords
+        if init_shuffle:
+            self._tfrecords = shuffle(tfrecords)
+        else:
+            self._tfrecords = tfrecords
 
     def next_element(self):
         n_records = len(self._tfrecords)

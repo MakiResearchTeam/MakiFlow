@@ -33,7 +33,7 @@ class LoadDataMethod(TFRMapMethod):
             image_shape,
             label_shape,
             image_dtype=tf.float32,
-            uvmap_dtype=tf.int32
+            uvmap_dtype=tf.float32
     ):
         self.image_shape = image_shape
         self.uvmap_shape = label_shape
@@ -42,12 +42,12 @@ class LoadDataMethod(TFRMapMethod):
         self.label_dtype = uvmap_dtype
 
     def read_record(self, serialized_example):
-        ssd_feature_description = {
+        render_feature_description = {
             IMAGE_FNAME: tf.io.FixedLenFeature((), tf.string),
             UVMAP_FNAME: tf.io.FixedLenFeature((), tf.string),
         }
 
-        example = tf.io.parse_single_example(serialized_example, ssd_feature_description)
+        example = tf.io.parse_single_example(serialized_example, render_feature_description)
 
         # Extract the data from the example
         image = tf.io.parse_tensor(example[IMAGE_FNAME], out_type=self.image_dtype)
@@ -64,7 +64,8 @@ class LoadDataMethod(TFRMapMethod):
 
 
 class RandomCropMethod(TFRPostMapMethod):
-    def __init__(self, crop_w, crop_h):
+
+    def __init__(self, crop_w: int, crop_h: int):
         """
         Perform random crop of the input images and their corresponding uvmaps.
         Parameters
@@ -89,7 +90,6 @@ class RandomCropMethod(TFRPostMapMethod):
         # This is an adapted code from the original TensorFlow's `random_crop` method
         limit = tf.shape(image) - self._image_crop_size_tf + 1
         offset = tf.random_uniform(
-
             shape=[3],
             dtype=tf.int32,
             # it is unlikely that a tensor with shape more that 10000 will appear

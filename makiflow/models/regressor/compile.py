@@ -15,29 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
-from abc import abstractmethod
-from copy import copy
-from makiflow.base import MakiLayer, MakiTensor
+from .training_modules import AbsTrainingModule, MseTrainingModule
 
 
-class SimpleForwardLayer(MakiLayer):
-    def __call__(self, x):
-        data = x.get_data_tensor()
-        data = self._forward(data)
+class Regressor(
+    AbsTrainingModule,
+    MseTrainingModule,
+):
 
-        parent_tensor_names = [x.get_name()]
-        previous_tensors = copy(x.get_previous_tensors())
-        previous_tensors.update(x.get_self_pair())
-        maki_tensor = MakiTensor(
-            data_tensor=data,
-            parent_layer=self,
-            parent_tensor_names=parent_tensor_names,
-            previous_tensors=previous_tensors,
-        )
-        return maki_tensor
-
-    @abstractmethod
-    def _forward(self, x, type_graph_operation):
+    @staticmethod
+    def from_json(path_to_model):
+        # TODO
         pass
 
+    pass
