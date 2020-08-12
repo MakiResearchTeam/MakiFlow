@@ -1146,7 +1146,7 @@ class SSDModel(MakiCore):
         self._maki_loss = Loss.maki_loss(
             flattened_logits=self._flattened_logits,
             flattened_labels=self._flattened_labels,
-            maki_num_positives=self._num_positives,
+            num_positives=self._num_positives,
             num_classes=self._num_classes,
             maki_gamma=self._maki_gamma,
             ce_loss=self._ce_loss
@@ -1360,7 +1360,8 @@ class SSDModel(MakiCore):
 
     def _build_quadratic_ce_loss(self):
         self._quadratic_ce_loss = Loss.quadratic_ce_loss(
-            ce_loss=self._ce_loss
+            ce_loss=self._ce_loss,
+            num_positives=self._num_positives
         )
         total_loss = self._loc_loss * self._loc_loss_weight + self._quadratic_ce_loss
         self._final_quadratic_ce_loss = self._build_final_loss(total_loss)

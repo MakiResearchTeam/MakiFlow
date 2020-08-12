@@ -30,7 +30,7 @@ class Loss:
     def maki_loss(
             flattened_logits,
             flattened_labels,
-            maki_num_positives,
+            num_positives,
             num_classes,
             maki_gamma,
             ce_loss
@@ -43,7 +43,7 @@ class Loss:
             Tensor of flattened logits with shape [batch_sz, total_predictions, num_classes].
         flattened_labels : tf.Tensor
             Tensor of flattened labels with shape [batch_sz, total_predictions].
-        maki_num_positives: tf.Tensor
+        num_positives: tf.Tensor
             Tensor of shape [batch_sz]
         num_classes : int
             Number of classes.
@@ -74,7 +74,7 @@ class Loss:
             maki_polynomial -= Loss._create_maki_polynomial_part(k, sparse_confidences, maki_gamma) - \
                                Loss._create_maki_polynomial_part(k, tf.ones_like(sparse_confidences), maki_gamma)
 
-        num_positives = tf.reduce_sum(maki_num_positives)
+        num_positives = tf.reduce_sum(num_positives)
         return tf.reduce_sum(maki_polynomial + ce_loss) / num_positives
 
     @staticmethod
@@ -87,7 +87,7 @@ class Loss:
     def focal_loss(
             flattened_logits,
             flattened_labels,
-            focal_num_positives,
+            num_positives,
             num_classes,
             focal_gamma,
             ce_loss
@@ -100,8 +100,8 @@ class Loss:
             Tensor of flattened logits with shape [batch_sz, total_predictions, num_classes].
         flattened_labels : tf.Tensor
             Tensor of flattened labels with shape [batch_sz, total_predictions].
-        focal_num_positives : tf.Tensor
-            Tensor of shape [batch_sz]
+        num_positives : tf.Tensor
+            Tensor of shape [batch_sz], contains number of hard examples per sample.
         num_classes : int
             Number of classes.
         focal_gamma : int
@@ -124,24 +124,29 @@ class Loss:
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
         ones_arr = tf.ones_like(flattened_labels, dtype=tf.float32)
         focal_weights = tf.pow(ones_arr - sparse_confidences, focal_gamma)
-        num_positives = tf.reduce_sum(focal_num_positives)
+        num_positives = tf.reduce_sum(num_positives)
         return tf.reduce_sum(focal_weights * ce_loss) / num_positives
 
     @staticmethod
-    def quadratic_ce_loss(ce_loss):
+    def quadratic_ce_loss(ce_loss, num_positives=None):
         """
         Creates QuadraticCE Loss from pure CE Loss.
         Parameters
         ----------
         ce_loss : tf.Tensor
             Tensor with the cross-entropy loss of shape [batch_sz, total_predictions].
-
+        num_positives : tf.Tensor
+            Tensor of shape [batch_sz], contains number of hard examples per sample.
+            If `num_positives` set to None the QCE loss will be normalized by taking the mean
+            over a batch.
         Returns
         -------
         tf.Tensor
             Constructed QuadraticCE loss.
         """
         quadratic_ce = ce_loss * ce_loss / 2.0
+        if num_positives is not None:
+            return tf.reduce_sum(quadratic_ce) / tf.reduce_sum(num_positives)
         return tf.reduce_mean(quadratic_ce)
 
     @staticmethod
