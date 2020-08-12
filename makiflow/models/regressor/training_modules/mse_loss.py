@@ -36,7 +36,8 @@ class MseTrainingModule(BasicTrainingModule):
         mse_loss = Loss.mse_loss(self._input_x, self._training_out, raw_tensor=True)
 
         if self._use_weight_mask_for_training:
-            mse_loss = tf.reduce_mean(mse_loss * self._weight_mask)
+            mse_loss = tf.reduce_sum(mse_loss * self._weight_mask)
+            mse_loss = mse_loss / tf.reduce_sum(self._weight_mask)
         else:
             mse_loss = tf.reduce_mean(mse_loss)
 

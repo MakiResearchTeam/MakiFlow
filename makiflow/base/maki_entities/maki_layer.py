@@ -24,6 +24,9 @@ class MakiRestorable(ABC):
     FIELD_TYPE = 'type'
     NAME = 'name'
 
+    TRAINING_MODE = 'TrainingGraph'
+    INFERENCE_MODE = 'InferenceGraph'
+
     @staticmethod
     def build(params: dict):
         """
