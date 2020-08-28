@@ -29,6 +29,7 @@ class MakiRestorable(ABC):
     INFERENCE_MODE = 'InferenceGraph'
 
     @staticmethod
+    @abstractmethod
     def build(params: dict):
         """
         Parameters
