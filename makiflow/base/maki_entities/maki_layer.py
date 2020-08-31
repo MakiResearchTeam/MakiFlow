@@ -130,7 +130,7 @@ class MakiLayer(MakiRestorable):
         MakiTensor or list of MakiTensors
         """
         print(x)
-        if x is not list:
+        if not isinstance(x, list):
             x = [x]
         print(x)
         data_tensors = []
