@@ -129,15 +129,13 @@ class MakiLayer(MakiRestorable):
         -------
         MakiTensor or list of MakiTensors
         """
-        print(x)
         if not isinstance(x, list):
             x = [x]
-        print(x)
+
         data_tensors = []
         previous_tensors = {}
         parent_tensor_names = []
         for _x in x:
-            print(_x)
             data_tensors += [_x.get_data_tensor()]
             previous_tensors.update(_x.get_previous_tensors())
             previous_tensors.update(_x.get_self_pair())
