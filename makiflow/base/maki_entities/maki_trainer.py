@@ -47,11 +47,15 @@ class MakiTrainer(MakiModel, ABC):
         for layer_name in self._trainable_layers:
             self._l2_regularized_layers[layer_name] = 1e-6  # This value seems to be proper as a default
 
+        # Setup L1 regularization
         self._uses_l1_regularization = False
         self._l1_reg_loss_is_build = False
         self._l1_regularized_layers = {}
         for layer_name in self._trainable_layers:
             self._l1_regularized_layers[layer_name] = 1e-6  # This value seems to be proper as a default
+
+        # Setup external loss
+        self._uses_external_loss = False
 
     def set_layers_trainable(self, layers):
         """
@@ -197,19 +201,38 @@ class MakiTrainer(MakiModel, ABC):
 
         self._l1_reg_loss_is_build = True
 
-    def _build_final_loss(self, custom_loss):
+    # noinspection PyAttributeOutsideInit
+    def add_loss(self, loss, scale=1.0):
+        """
+        Adds an external loss that is define outside the model or trainer.
+        Can be used for such things as perceptual loss.
+        Parameters
+        ----------
+        loss : tf.Tensor
+            A scalar that will be added to all the other losses used to train the model.
+        scale : float
+            A scalar by which the loss will be scaled.
+        """
+        # noinspection PyTypeChecker
+        self._external_loss = loss * scale
+        self._uses_external_loss = True
+
+    def _build_final_loss(self, training_loss):
         # Adds regularization terms to the actual loss.
         if self._uses_l1_regularization:
             if not self._l1_reg_loss_is_build:
                 self._build_l1_loss()
-            custom_loss += self._l1_reg_loss
+            training_loss += self._l1_reg_loss
 
         if self._uses_l2_regularization:
             if not self._l2_reg_loss_is_build:
                 self._build_l2_loss()
-            custom_loss += self._l2_reg_loss
+            training_loss += self._l2_reg_loss
 
-        return custom_loss
+        if self._uses_external_loss:
+            training_loss += self._external_loss
+
+        return training_loss
 
     def _build_training_graph(self):
         # Contains pairs {layer_name: tensor}, where `tensor` is output

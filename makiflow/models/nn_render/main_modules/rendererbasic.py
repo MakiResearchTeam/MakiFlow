@@ -142,13 +142,13 @@ class NeuralRenderBasis(MakiCore):
         diff = tf.abs(sampled_rgb_channels - self._images)
         self._texture_loss = tf.reduce_mean(diff)
 
-    def _build_final_loss(self, custom_loss):
+    def _build_final_loss(self, training_loss):
         # Override the method for the later ease of loss building
         if self._learn_rgb_texture:
-            custom_loss = custom_loss + self._texture_loss * self._texture_loss_scale
+            training_loss = training_loss + self._texture_loss * self._texture_loss_scale
         if self._sep_loss is not None:
-            custom_loss = custom_loss + self._sep_loss
-        loss = super()._build_final_loss(custom_loss)
+            training_loss = training_loss + self._sep_loss
+        loss = super()._build_final_loss(training_loss)
         return loss
 
     def add_sep_loss(self, loss):
