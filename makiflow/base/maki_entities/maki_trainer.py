@@ -204,7 +204,7 @@ class MakiTrainer(MakiModel, ABC):
     # noinspection PyAttributeOutsideInit
     def add_loss(self, loss, scale=1.0):
         """
-        Adds an external loss that is define outside the model or trainer.
+        Adds an external loss that is defined outside the model or trainer.
         Can be used for such things as perceptual loss.
         Parameters
         ----------

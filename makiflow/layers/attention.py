@@ -62,10 +62,17 @@ class PositionalEncodingLayer(MakiLayer):
 
 
 class AttentionLayer(MakiLayer):
+    TYPE = 'AttentionLayer'
+    L2_NORMALIZE = 'L2_NORMALIZE'
+    DIM_NORMALIZE = 'DIM_NORMALIZE'
+
     @staticmethod
     def build(params: dict):
-        # TODO
-        pass
+        return AttentionLayer(
+            name=params[MakiRestorable.NAME],
+            l2_normalize=params[AttentionLayer.L2_NORMALIZE],
+            dim_normalize=params[AttentionLayer.DIM_NORMALIZE]
+        )
 
     def __init__(self, name, l2_normalize=True, dim_normalize=True):
         """
@@ -117,7 +124,14 @@ class AttentionLayer(MakiLayer):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     def to_dict(self):
-        return {}
+        return {
+            MakiRestorable.TYPE: AttentionLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+                AttentionLayer.L2_NORMALIZE: self._l2_normalize,
+                AttentionLayer.DIM_NORMALIZE: self._dim_normalize
+            }
+        }
 
 
 class SpatialAttentionLayer(MakiLayer):

@@ -20,8 +20,9 @@ from .maki_tensor import MakiTensor
 
 
 class MakiRestorable(ABC):
-    TYPE = 'Restorable'
+    TYPE = 'type'
     PARAMS = 'params'
+    # old code, refactor some day
     FIELD_TYPE = 'type'
     NAME = 'name'
 
