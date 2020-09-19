@@ -24,7 +24,6 @@ from makiflow.layers.sf_layer import SimpleForwardLayer
 
 
 class InputLayer(InputMakiLayer):
-
     _EXCEPTION_IS_NOT_IMPLEMENTED = 'This functionality is not implemented in the InputLayer.'
 
     def __init__(self, input_shape, name):
@@ -79,8 +78,9 @@ class InputLayer(InputMakiLayer):
 class ReshapeLayer(SimpleForwardLayer):
     TYPE = 'ReshapeLayer'
     NEW_SHAPE = 'new_shape'
+    IGNORE_BATCH = 'ignore_batch'
 
-    def __init__(self, new_shape: list, name):
+    def __init__(self, new_shape: list, name, ignore_batch=False):
         """
         ReshapeLayer is used to changes size from some input_shape to new_shape (include batch_size and color dimension).
 
@@ -90,18 +90,28 @@ class ReshapeLayer(SimpleForwardLayer):
             Shape of output object.
         name : str
             Name of this layer.
+        ignore_batch : bool
+            If set to True, the first dimension in the `new_shape` will replace the batch dimension.
+            Examples:
+            - True - [batch_size, old_shape] -> [new_shape]
+            - False - [batch_size, old_shape] -> [batch_size, new_shape]
         """
         self.new_shape = new_shape
-
-        super().__init__(name, params=[],
-                         regularize_params=[],
-                         named_params_dict={}
+        self.ignore_batch = ignore_batch
+        super().__init__(
+            name, params=[],
+            regularize_params=[],
+            named_params_dict={}
         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
-                return tf.reshape(tensor=X, shape=self.new_shape, name=self._name)
+                if self.ignore_batch:
+                    return tf.reshape(tensor=X, shape=self.new_shape, name=self._name)
+                else:
+                    bs = X.get_shape().as_list()[0]
+                    return tf.reshape(tensor=X, shape=[bs, *self.new_shape], name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -110,10 +120,12 @@ class ReshapeLayer(SimpleForwardLayer):
     def build(params: dict):
         name = params[MakiRestorable.NAME]
         new_shape = params[ReshapeLayer.NEW_SHAPE]
+        ignore_batch = params.get(ReshapeLayer.IGNORE_BATCH, False)
 
         return ReshapeLayer(
             new_shape=new_shape,
-            name=name
+            name=name,
+            ignore_batch=ignore_batch
         )
 
     def to_dict(self):
@@ -121,7 +133,8 @@ class ReshapeLayer(SimpleForwardLayer):
             MakiRestorable.FIELD_TYPE: ReshapeLayer.TYPE,
             MakiRestorable.PARAMS: {
                 MakiRestorable.NAME: self.get_name(),
-                ReshapeLayer.NEW_SHAPE: self.new_shape
+                ReshapeLayer.NEW_SHAPE: self.new_shape,
+                ReshapeLayer.IGNORE_BATCH: self.ignore_batch
             }
         }
 
@@ -146,7 +159,7 @@ class MulByAlphaLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -192,7 +205,7 @@ class SumLayer(MakiLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def __call__(self, x: list):
         data = [one_tensor.get_data_tensor() for one_tensor in x]
@@ -256,7 +269,7 @@ class ConcatLayer(MakiLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def __call__(self, x: list):
         data = [one_tensor.get_data_tensor() for one_tensor in x]
@@ -330,7 +343,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -382,7 +395,7 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -425,7 +438,7 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -484,7 +497,7 @@ class MaxPoolLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -558,7 +571,7 @@ class AvgPoolLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -621,7 +634,7 @@ class UpSamplingLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -680,7 +693,7 @@ class ActivationLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -726,7 +739,7 @@ class FlattenLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -781,7 +794,7 @@ class DropoutLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         return X
@@ -792,7 +805,7 @@ class DropoutLayer(SimpleForwardLayer):
                 return tf.nn.dropout(X, self._p_keep,
                                      noise_shape=self.noise_shape,
                                      seed=self.seed,
-                )
+                                     )
 
     @staticmethod
     def build(params: dict):
@@ -855,7 +868,7 @@ class ResizeLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
@@ -936,7 +949,7 @@ class L2NormalizationLayer(SimpleForwardLayer):
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
-        )
+                         )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
