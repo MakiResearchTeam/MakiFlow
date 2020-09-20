@@ -1764,8 +1764,11 @@ class WeightStandConvLayer(SimpleForwardLayer):
         # Training weights
         self.W_train = tf.Variable(W.astype(np.float32), name=self.name_conv + '_train')
         params = [self.W_train]
-        named_params_dict = {self.name_conv: self.W_infer}      # inference weights will be saved
-        regularize_params = [self.W_train]                      # training weights will be regularized
+        named_params_dict = {
+            self.name_conv: self.W_infer,
+            self.name_conv + '_train': self.W_train
+        }
+        regularize_params = [self.W_train]                      # only training weights will be regularized
 
         if use_bias:
             self.name_bias = ConvLayer.NAME_BIAS.format(kw, kh, in_f, out_f, name)
