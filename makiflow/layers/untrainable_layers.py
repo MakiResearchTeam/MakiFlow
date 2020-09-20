@@ -21,6 +21,7 @@ import tensorflow as tf
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.base import MakiLayer, MakiTensor, MakiRestorable, InputMakiLayer
 from makiflow.layers.sf_layer import SimpleForwardLayer
+import numpy as np
 
 
 class InputLayer(InputMakiLayer):
@@ -149,13 +150,12 @@ class MulByAlphaLayer(SimpleForwardLayer):
 
         Parameters
         ----------
-        alpha : int
+        alpha : float
             The constant to multiply by.
         name : str
             Name of this layer.
         """
-
-        self.alpha = tf.constant(alpha, dtype=tf.float32, name=name)
+        self.alpha = np.float32(alpha)
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}

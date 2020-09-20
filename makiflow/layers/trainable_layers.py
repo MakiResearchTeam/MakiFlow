@@ -1849,7 +1849,7 @@ class WeightStandConvLayer(SimpleForwardLayer):
 
     def to_dict(self):
         return {
-            MakiRestorable.FIELD_TYPE: ConvLayer.TYPE,
+            MakiRestorable.FIELD_TYPE: WeightStandConvLayer.TYPE,
             MakiRestorable.PARAMS: {
                 MakiRestorable.NAME: self.get_name(),
                 ConvLayer.SHAPE: list(self.shape),
