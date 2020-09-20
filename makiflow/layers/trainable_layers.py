@@ -19,7 +19,7 @@ from __future__ import absolute_import
 import numpy as np
 import tensorflow as tf
 
-from makiflow.base.maki_entities.maki_layer import MakiRestorable
+from makiflow.base.maki_entities.maki_layer import MakiRestorable, MakiLayer
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.layers.sf_layer import SimpleForwardLayer
 from makiflow.base import BatchNormBaseLayer
@@ -1707,6 +1707,162 @@ class ScaleLayer(SimpleForwardLayer):
         }
 
 
+class WeightStandConvLayer(SimpleForwardLayer):
+    TYPE = 'WeightStandConvLayer'
+
+    def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
+                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=False, W=None, b=None):
+        """
+        Convolutional layer that incorporates weights standardization.
+
+        Parameters
+        ----------
+        kw : int
+            Kernel width.
+        kh : int
+            Kernel height.
+        in_f : int
+            Number of input feature maps. Treat as color channels if this layer
+            is first one.
+        out_f : int
+            Number of output feature maps (number of filters).
+        stride : int
+            Defines the stride of the convolution.
+        padding : str
+            Padding mode for convolution operation.
+            Options: ConvLayer.PADDING_SAME which is 'SAME' string
+            or ConvLayer.PADDING_VALID 'VALID' (case sensitive).
+        activation : tensorflow function
+            Activation function. Set None if you don't need activation.
+        W : numpy array
+            Filter's weights. This value is used for the filter initialization with pretrained filters.
+        b : numpy array
+            Bias' weights. This value is used for the bias initialization with pretrained bias.
+        use_bias : bool
+            Add bias to the output tensor.
+        name : str
+            Name of this layer.
+        """
+        self.shape = (kw, kh, in_f, out_f)
+        self.stride = stride
+        self.padding = padding
+        self.f = activation
+        self.use_bias = use_bias
+        self.init_type = kernel_initializer
+
+        name = str(name)
+
+        # CREATE WEIGHTS
+        if W is None:
+            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
+        if b is None:
+            b = np.zeros(out_f)
+
+        self.name_conv = ConvLayer.NAME_CONV_W.format(kw, kh, in_f, out_f, name)
+        # Inference weights
+        self.W_infer = tf.Variable(W.astype(np.float32), name=self.name_conv)
+        # Training weights
+        self.W_train = tf.Variable(W.astype(np.float32), name=self.name_conv + '_train')
+        params = [self.W_train]
+        named_params_dict = {
+            self.name_conv: self.W_infer,
+            self.name_conv + '_train': self.W_train
+        }
+        regularize_params = [self.W_train]                      # only training weights will be regularized
+
+        if use_bias:
+            self.name_bias = ConvLayer.NAME_BIAS.format(kw, kh, in_f, out_f, name)
+            self.b = tf.Variable(b.astype(np.float32), name=self.name_bias)
+            params += [self.b]
+            named_params_dict[self.name_bias] = self.b
+            if regularize_bias:
+                regularize_params += [self.b]
+
+        super().__init__(name, params=params,
+                         regularize_params=regularize_params,
+                         named_params_dict=named_params_dict
+                         )
+
+    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                conv_out = tf.nn.conv2d(
+                    X, self.W_infer,
+                    strides=[1, self.stride, self.stride, 1],
+                    padding=self.padding,
+                    name=self.get_name()
+                )
+
+                if self.use_bias:
+                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.get_name() + ConvLayer.BIAS)
+
+                if self.f is None:
+                    return conv_out
+
+                return self.f(conv_out, name=self.get_name() + ConvLayer.ACTIVATION_PREFIX)
+
+    def _training_forward(self, x):
+        with tf.name_scope(MakiRestorable.TRAINING_MODE):
+            with tf.name_scope(self.get_name()):
+                W_mean, W_var = tf.nn.moments(self.W_train, axes=[1, 2, 3], keep_dims=True)
+                W_hat = (self.W_train - W_mean) / (tf.sqrt(W_var) + 1e-6)
+                # Update inference weights.
+                # Using normalized weights during inference speeds up the performance.
+                update_W = tf.assign(self.W_infer, W_hat)
+                with tf.control_dependencies([update_W]):
+                    conv_out = tf.nn.conv2d(
+                        x, W_hat,
+                        strides=[1, self.stride, self.stride, 1],
+                        padding=self.padding,
+                        name=self.get_name()
+                    )
+
+                    if self.use_bias:
+                        conv_out = tf.nn.bias_add(conv_out, self.b, name=self.get_name() + ConvLayer.BIAS)
+
+                    if self.f is None:
+                        return conv_out
+
+                    return self.f(conv_out, name=self.get_name() + ConvLayer.ACTIVATION_PREFIX)
+
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+
+        kw = params[ConvLayer.SHAPE][0]
+        kh = params[ConvLayer.SHAPE][1]
+        in_f = params[ConvLayer.SHAPE][2]
+        out_f = params[ConvLayer.SHAPE][3]
+
+        stride = params[ConvLayer.STRIDE]
+        padding = params[ConvLayer.PADDING]
+        activation = ActivationConverter.str_to_activation(params[ConvLayer.ACTIVATION])
+
+        init_type = params[ConvLayer.INIT_TYPE]
+        use_bias = params[ConvLayer.USE_BIAS]
+
+        return WeightStandConvLayer(
+            kw=kw, kh=kh, in_f=in_f, out_f=out_f,
+            stride=stride, name=name, padding=padding, activation=activation,
+            kernel_initializer=init_type, use_bias=use_bias
+        )
+
+    def to_dict(self):
+        return {
+            MakiRestorable.FIELD_TYPE: WeightStandConvLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+                ConvLayer.SHAPE: list(self.shape),
+                ConvLayer.STRIDE: self.stride,
+                ConvLayer.PADDING: self.padding,
+                ConvLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
+                ConvLayer.USE_BIAS: self.use_bias,
+                ConvLayer.INIT_TYPE: self.init_type
+            }
+
+        }
+
+
 class TrainableLayerAddress:
 
     ADDRESS_TO_CLASSES = {
@@ -1715,6 +1871,7 @@ class TrainableLayerAddress:
         AtrousConvLayer.TYPE: AtrousConvLayer,
         DepthWiseConvLayer.TYPE: DepthWiseConvLayer,
         SeparableConvLayer.TYPE: SeparableConvLayer,
+        WeightStandConvLayer.TYPE: WeightStandConvLayer,
 
         BiasLayer.TYPE: BiasLayer,
         DenseLayer.TYPE: DenseLayer,
