@@ -172,7 +172,7 @@ class MulByAlphaLayer(SimpleForwardLayer):
     @staticmethod
     def build(params: dict):
         name = params[MakiRestorable.NAME]
-        alpha = params[MulByAlphaLayer.ALPHA]
+        alpha = float(params[MulByAlphaLayer.ALPHA])
 
         return MulByAlphaLayer(
             alpha=alpha,
@@ -184,7 +184,7 @@ class MulByAlphaLayer(SimpleForwardLayer):
             MakiRestorable.FIELD_TYPE: MulByAlphaLayer.TYPE,
             MakiRestorable.PARAMS: {
                 MakiRestorable.NAME: self.get_name(),
-                MulByAlphaLayer.ALPHA: self.alpha,
+                MulByAlphaLayer.ALPHA: float(self.alpha),
             }
         }
 
