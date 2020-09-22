@@ -364,7 +364,7 @@ class BiasLayer(SimpleForwardLayer):
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
-                return tf.nn.bias_add(X, self.b, self.get_name())
+                return tf.nn.bias_add(X, self.b, name=self.get_name())
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
