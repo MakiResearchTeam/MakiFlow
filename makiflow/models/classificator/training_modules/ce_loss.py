@@ -147,3 +147,74 @@ class CETrainingModule(ClassificatorBasis):
                 iterator.close()
             return {'train costs': train_costs,
                     'test costs': test_costs, 'test errors': test_errors}
+
+    def genfit_ce(
+            self, train_gen, test_data=None, optimizer=None, epochs=1, iter=10, test_period=1, global_step=None
+    ):
+        """
+        Method for training the model.
+
+        Parameters
+        ----------
+        train_gen : generator
+            Generator that yields training images and labels with the batch size specified during model construction.
+        test_data : tuple of ndarrays or lists
+            Tuple (Xtest, Ytest), where Xtest - array of test images, Ytest - test labels.
+        iter : int
+            How many iterations is in one epoch.
+        optimizer : tensorflow optimizer
+            Model uses tensorflow optimizers in order train itself.
+        epochs : int
+            Number of epochs.
+        test_period : int
+            Test begins each `test_period` epochs. You can set a larger number in order to
+            speed up training.
+
+        Returns
+        -------
+            python dictionary
+                Dictionary with all testing data(train error, train cost, test error, test cost)
+                for each test period.
+        """
+
+        assert (optimizer is not None)
+        assert (self._session is not None)
+        train_op = self._minimize_ce_loss(optimizer, global_step)
+
+        train_costs = []
+        test_costs = []
+        test_errors = []
+        iterator = None
+        try:
+            for i in range(epochs):
+                train_cost = 0
+                iterator = tqdm(range(iter))
+                for j in iterator:
+                    Xbatch, Ybatch = next(train_gen)
+                    y_ish, train_cost_batch, _ = self._session.run(
+                        [self._logits, self._final_ce_loss, train_op],
+                        feed_dict={self._images: Xbatch, self._labels: Ybatch})
+                    # Use exponential decay for calculating loss and error
+                    train_cost = moving_average(train_cost, train_cost_batch, j)
+
+                train_costs.append(train_cost)
+                train_info = [(TRAIN_LOSS, train_cost)]
+                # Validating the network on test data
+                if test_period != -1 and i % test_period == 0 and test_data is not None:
+                    Xtest, Ytest = test_data
+                    test_error, test_cost = self.evaluate(Xtest, Ytest)
+                    test_errors.append(test_error)
+                    test_costs.append(test_cost)
+                    train_info += [(TEST_ACCURACY, 1 - test_error), (TEST_LOSS, test_cost)]
+
+                print_train_info(i, *train_info)
+        except Exception as ex:
+            print(ex)
+            print('type of error is ', type(ex))
+        finally:
+            if iterator is not None:
+                iterator.close()
+            return {'train costs': train_costs,
+                    'test costs': test_costs, 'test errors': test_errors}
+
+
