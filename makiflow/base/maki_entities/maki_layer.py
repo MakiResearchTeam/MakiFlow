@@ -57,6 +57,9 @@ class MakiRestorable(ABC):
 
 
 class MakiLayer(MakiRestorable):
+    TRAINING_MODE = 'TrainingGraph'
+    INFERENCE_MODE = 'InferenceGraph'
+
     __EXC_OUTPUT_NAMES_NOT_ALIGNED = 'Number of the output tensors and the given outputs names is not aligned.' + \
                                      'Given names {0}, got output tensors {1}.'
     __EXC_OUTPUT_NONE = 'Output of the layer is None. Check whether the `_forward` method works correctly.'
