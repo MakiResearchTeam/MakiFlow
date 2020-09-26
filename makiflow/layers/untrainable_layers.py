@@ -206,24 +206,6 @@ class SumLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def __call__(self, x: list):
-        data = [one_tensor.get_data_tensor() for one_tensor in x]
-        data = self._forward(data)
-
-        parent_tensor_names = [one_tensor.get_name() for one_tensor in x]
-        previous_tensors = {}
-        for one_tensor in x:
-            previous_tensors.update(one_tensor.get_previous_tensors())
-            previous_tensors.update(one_tensor.get_self_pair())
-
-        maki_tensor = MakiTensor(
-            data_tensor=data,
-            parent_layer=self,
-            parent_tensor_names=parent_tensor_names,
-            previous_tensors=previous_tensors,
-        )
-        return maki_tensor
-
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
@@ -269,24 +251,6 @@ class ConcatLayer(MakiLayer):
                          regularize_params=[],
                          named_params_dict={}
                          )
-
-    def __call__(self, x: list):
-        data = [one_tensor.get_data_tensor() for one_tensor in x]
-        data = self._forward(data)
-
-        parent_tensor_names = [one_tensor.get_name() for one_tensor in x]
-        previous_tensors = {}
-        for one_tensor in x:
-            previous_tensors.update(one_tensor.get_previous_tensors())
-            previous_tensors.update(one_tensor.get_self_pair())
-
-        maki_tensor = MakiTensor(
-            data_tensor=data,
-            parent_layer=self,
-            parent_tensor_names=parent_tensor_names,
-            previous_tensors=previous_tensors,
-        )
-        return maki_tensor
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
