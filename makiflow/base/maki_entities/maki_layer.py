@@ -319,3 +319,4 @@ class MakiLayer(MakiRestorable):
             List of the names of the MakiTensors that were created after passing in a MakiTensor
             with `makitensor_name` name.
         """
+        return self._children_dict[makitensor_name]
