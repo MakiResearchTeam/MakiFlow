@@ -16,6 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
+from .maki_layer import MakiLayer
 
 
 class MakiTensor:
@@ -26,7 +27,7 @@ class MakiTensor:
     OBJ2STR = "MakiTensor(name={}, shape={}, dtype={})"
     OBJ2REPR = "<mf.base.MakiTensor 'name={}' shape={} dtype={}>"
 
-    def __init__(self, data_tensor: tf.Tensor, parent_layer, parent_tensor_names: list,
+    def __init__(self, data_tensor: tf.Tensor, parent_layer: MakiLayer, parent_tensor_names: list,
                  previous_tensors: dict, name=None, index=None):
         """
         Parameters
@@ -60,7 +61,7 @@ class MakiTensor:
     def get_data_tensor(self):
         return self._data_tensor
 
-    def get_parent_layer(self):
+    def get_parent_layer(self) -> MakiLayer:
         """
         Returns
         -------
