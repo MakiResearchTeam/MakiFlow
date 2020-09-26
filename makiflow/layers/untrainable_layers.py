@@ -20,7 +20,6 @@ import tensorflow as tf
 
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.base import MakiLayer, MakiTensor, MakiRestorable, InputMakiLayer
-from makiflow.layers.sf_layer import SimpleForwardLayer
 import numpy as np
 
 
@@ -76,7 +75,7 @@ class InputLayer(InputMakiLayer):
         }
 
 
-class ReshapeLayer(SimpleForwardLayer):
+class ReshapeLayer(MakiLayer):
     TYPE = 'ReshapeLayer'
     NEW_SHAPE = 'new_shape'
     IGNORE_BATCH = 'ignore_batch'
@@ -140,7 +139,7 @@ class ReshapeLayer(SimpleForwardLayer):
         }
 
 
-class MulByAlphaLayer(SimpleForwardLayer):
+class MulByAlphaLayer(MakiLayer):
     TYPE = 'MulByAlphaLayer'
     ALPHA = 'alpha'
 
@@ -317,7 +316,7 @@ class ConcatLayer(MakiLayer):
         }
 
 
-class ZeroPaddingLayer(SimpleForwardLayer):
+class ZeroPaddingLayer(MakiLayer):
     TYPE = 'ZeroPaddingLayer'
     PADDING = 'padding'
     CONSTANT = "CONSTANT"
@@ -378,7 +377,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
         }
 
 
-class GlobalMaxPoolLayer(SimpleForwardLayer):
+class GlobalMaxPoolLayer(MakiLayer):
     TYPE = 'GlobalMaxPoolLayer'
     _ASSERT_WRONG_INPUT_SHAPE = 'Input MakiTensor must have 4 dimensional shape'
 
@@ -421,7 +420,7 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
         }
 
 
-class GlobalAvgPoolLayer(SimpleForwardLayer):
+class GlobalAvgPoolLayer(MakiLayer):
     TYPE = 'GlobalAvgPoolLayer'
     _ASSERT_WRONG_INPUT_SHAPE = 'Input MakiTensor must have 4 dimensional shape'
 
@@ -464,7 +463,7 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
         }
 
 
-class MaxPoolLayer(SimpleForwardLayer):
+class MaxPoolLayer(MakiLayer):
     TYPE = 'MaxPoolLayer'
     KSIZE = 'ksize'
     STRIDES = 'strides'
@@ -538,7 +537,7 @@ class MaxPoolLayer(SimpleForwardLayer):
         }
 
 
-class AvgPoolLayer(SimpleForwardLayer):
+class AvgPoolLayer(MakiLayer):
     TYPE = 'AvgPoolLayer'
     KSIZE = 'ksize'
     STRIDES = 'strides'
@@ -612,7 +611,7 @@ class AvgPoolLayer(SimpleForwardLayer):
         }
 
 
-class UpSamplingLayer(SimpleForwardLayer):
+class UpSamplingLayer(MakiLayer):
     TYPE = 'UpSamplingLayer'
     SIZE = 'size'
 
@@ -669,7 +668,7 @@ class UpSamplingLayer(SimpleForwardLayer):
         }
 
 
-class ActivationLayer(SimpleForwardLayer):
+class ActivationLayer(MakiLayer):
     TYPE = 'ActivationLayer'
     ACTIVATION = 'activation'
 
@@ -723,7 +722,7 @@ class ActivationLayer(SimpleForwardLayer):
         }
 
 
-class FlattenLayer(SimpleForwardLayer):
+class FlattenLayer(MakiLayer):
     TYPE = 'FlattenLayer'
 
     def __init__(self, name):
@@ -764,7 +763,7 @@ class FlattenLayer(SimpleForwardLayer):
         }
 
 
-class DropoutLayer(SimpleForwardLayer):
+class DropoutLayer(MakiLayer):
     TYPE = 'DropoutLayer'
     P_KEEP = 'p_keep'
     NOISE_SHAPE = 'noise_shape'
@@ -833,7 +832,7 @@ class DropoutLayer(SimpleForwardLayer):
         }
 
 
-class ResizeLayer(SimpleForwardLayer):
+class ResizeLayer(MakiLayer):
     TYPE = 'ResizeLayer'
 
     INTERPOLATION_BILINEAR = 'bilinear'
@@ -935,7 +934,7 @@ class ResizeLayer(SimpleForwardLayer):
         }
 
 
-class L2NormalizationLayer(SimpleForwardLayer):
+class L2NormalizationLayer(MakiLayer):
     TYPE = 'L2NormalizationLayer'
     EPS = 'eps'
 

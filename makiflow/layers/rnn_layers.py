@@ -26,7 +26,6 @@ from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
 from makiflow.base.maki_entities import MakiLayer, MakiTensor, MakiRestorable
-from makiflow.layers.sf_layer import SimpleForwardLayer
 from makiflow.layers.activation_converter import ActivationConverter
 
 
@@ -71,22 +70,7 @@ class RNNLayer(MakiLayer, ABC):
         self._cells_state = None
         super().__init__(name, params, params, named_params_dict)
 
-    def __call__(self, x):
-        data = x.get_data_tensor()
-        outputs = self._forward(data)
-
-        parent_tensor_names = [x.get_name()]
-        previous_tensors = copy(x.get_previous_tensors())
-        previous_tensors.update(x.get_self_pair())
-        maki_tensor_outputs = MakiTensor(
-            data_tensor=outputs,
-            parent_layer=self,
-            parent_tensor_names=parent_tensor_names,
-            previous_tensors=previous_tensors,
-        )
-        return maki_tensor_outputs
-
-    def _forward(self, x):
+    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         if self._cell_type == CellType.BIDIR_DYNAMIC:
             (outputs_f, outputs_b), (states_f, states_b) = \
                 bidirectional_dynamic_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=x, dtype=tf.float32)
@@ -257,7 +241,7 @@ class LSTMLayer(MakiLayer):
             named_params_dict=named_params_dict
         )
 
-    def _forward(self, x):
+    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         if self._dynamic:
             dynamic_x = dynamic_rnn(self._cell, x, dtype=tf.float32)
             # hidden states, (last candidate value, last hidden state)
@@ -433,7 +417,7 @@ class RNNBlock(RNNLayer):
         return rnnblock_dict
 
 
-class EmbeddingLayer(SimpleForwardLayer):
+class EmbeddingLayer(MakiLayer):
     TYPE = 'EmbeddingLayer'
     NUM_EMBEDDINGS = 'num_embeddings'
     DIM = 'dim'
@@ -459,7 +443,7 @@ class EmbeddingLayer(SimpleForwardLayer):
         named_params_dict = {name: self.embed}
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, x):
+    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         return tf.nn.embedding_lookup(self.embed, x)
 
     def _training_forward(self, x):
@@ -496,6 +480,7 @@ class RNNLayerAddress:
         RNNBlock.TYPE: RNNBlock,
         EmbeddingLayer.TYPE: EmbeddingLayer,
     }
+
 
 from makiflow.base.maki_entities.maki_builder import MakiBuilder
 

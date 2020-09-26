@@ -17,6 +17,7 @@
 
 from abc import abstractmethod, ABC
 from .maki_tensor import MakiTensor
+from warnings import warn
 
 
 class MakiRestorable(ABC):
@@ -28,6 +29,17 @@ class MakiRestorable(ABC):
 
     TRAINING_MODE = 'TrainingGraph'
     INFERENCE_MODE = 'InferenceGraph'
+
+    # Gurren Lagann
+    NO_PARAMETER = 'What the hell do you think this is!?'
+
+    @staticmethod
+    def get_param(params: dict, param_name, default_value):
+        value = params.get(param_name, MakiRestorable.NO_PARAMETER)
+        if value == MakiRestorable.NO_PARAMETER:
+            warn(f"Parameter {param_name} wasn't found. The default value is used: default={default_value}")
+            return default_value
+        return value
 
     @staticmethod
     @abstractmethod
@@ -87,6 +99,8 @@ class MakiLayer(MakiRestorable):
             If the layer outputs several tensors, then names in the list will be concatenated with the parent layer's
             name.
         """
+        # Counts the number of time the `__call__` method was called.
+        self._n_calls = 0
         self._name = name
         self._params = params
         self._regularize_params = regularize_params
@@ -152,28 +166,40 @@ class MakiLayer(MakiRestorable):
         self.__check_output(output)
 
         # Output MakiTensors
-        if output is list:
+        if isinstance(output, list):
+            # OUTPUT CONTAINS SEVERAL TENSORS
             output_mt = []
             for i, t, name in enumerate(zip(output, self._outputs_names)):
+                makitensor_name = self.get_name() + '/' + name
+                makitensor_name = self._output_tensor_name(makitensor_name)
                 output_mt += [
                     MakiTensor(
                         data_tensor=t,
                         parent_layer=self,
                         parent_tensor_names=parent_tensor_names,
                         previous_tensors=previous_tensors,
-                        name=self.get_name() + '/' + name,
+                        name=makitensor_name,
                         index=i
                     )
                 ]
+            self._n_calls += 1
             return output_mt
         else:
+            # OUTPUTS IS A SINGLE TENSOR
+            makitensor_name = self._output_tensor_name(self.get_name())
+            self._n_calls += 1
             return MakiTensor(
                 data_tensor=output,
                 parent_layer=self,
                 parent_tensor_names=parent_tensor_names,
                 previous_tensors=previous_tensors,
-                name=self.get_name()
+                name=makitensor_name
             )
+
+    def _output_tensor_name(self, name):
+        if self._n_calls != 0:
+            name += f':{self._n_calls}'
+        return name
 
     @abstractmethod
     def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
@@ -252,3 +278,12 @@ class MakiLayer(MakiRestorable):
             Name of the layer.
         """
         return self._name
+
+    def get_n_calls(self):
+        """
+        Returns
+        -------
+        int
+            The number of times the layer was called.
+        """
+        return self._n_calls
