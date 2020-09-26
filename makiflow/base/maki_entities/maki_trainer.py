@@ -300,7 +300,7 @@ class MakiTrainer(MakiModel, ABC):
             output_names = layer.get_children(parent_name)
             for _x, x_name in zip(X, output_names):
                 outputs.update({x_name: _x})
-
+            print(layer.get_name(), maki_tensor.get_name(), outputs)
             return outputs.get(maki_tensor.get_name())
 
         for output in self._outputs:
