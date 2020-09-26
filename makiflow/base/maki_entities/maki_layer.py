@@ -176,7 +176,7 @@ class MakiLayer(MakiRestorable):
             )
 
     @abstractmethod
-    def _forward(self, x, computation_mode=MakiLayer.INFERENCE_MODE):
+    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         """
         Method that contains the logic of the transformation that the layer performs.
 
