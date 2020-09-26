@@ -297,10 +297,11 @@ class MakiTrainer(MakiModel, ABC):
             # of the returned tensors.
             # This is done this way because the same layer can be reused several times.
             parent_name = maki_tensor.get_parent_tensor_names()[0]
+            print('+++', maki_tensor.get_name(), parent_name)
             output_names = layer.get_children(parent_name)
             for _x, x_name in zip(X, output_names):
                 outputs.update({x_name: _x})
-            print(layer.get_name(), maki_tensor.get_name(), outputs)
+            print('---', layer.get_name(), maki_tensor.get_name(), outputs)
             return outputs.get(maki_tensor.get_name())
 
         for output in self._outputs:
