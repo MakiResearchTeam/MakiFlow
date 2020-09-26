@@ -213,7 +213,7 @@ class MakiLayer(MakiRestorable):
 
         output_mt_names = []
         for output_tensor in output_mt:
-            output_mt_names += output_tensor.get_name()
+            output_mt_names += [output_tensor.get_name()]
 
         for parent_tensor_name in parent_tensor_names:
             self._children_dict[parent_tensor_name] = output_mt_names
