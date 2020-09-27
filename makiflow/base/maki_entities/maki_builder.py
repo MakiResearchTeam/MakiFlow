@@ -91,7 +91,8 @@ class MakiBuilder:
             MakiLayer
                 Built layer object.
             """
-            name = parent_layer_info[MakiRestorable.NAME]
+            params = parent_layer_info[MakiRestorable.PARAMS]
+            name = params[MakiRestorable.NAME]
 
             if layer is not None:
                 layers[name] = layer
