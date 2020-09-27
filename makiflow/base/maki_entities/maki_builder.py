@@ -120,7 +120,7 @@ class MakiBuilder:
                 layer = get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO], layer=input_layer)
                 # The input layer is a MakiTensor as well.
                 makitensors[makitensor_name] = layer
-                return input_layer
+                return layer
 
             parent_makitensors = []
             for parent_makitensor_name in parent_makitensor_names:
