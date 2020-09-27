@@ -117,7 +117,10 @@ class MakiBuilder:
             parent_makitensor_names = makitensor_info[MakiTensor.PARENT_TENSOR_NAMES]
             # Check if we at the beginning of the graph. In this case we create InputLayer and return it.
             if len(parent_makitensor_names) == 0:
-                return get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO], layer=input_layer)
+                layer = get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO], layer=input_layer)
+                # The input layer is a MakiTensor as well.
+                makitensors[makitensor_name] = layer
+                return input_layer
 
             parent_makitensors = []
             for parent_makitensor_name in parent_makitensor_names:
