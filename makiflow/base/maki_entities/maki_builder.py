@@ -56,16 +56,27 @@ class MakiBuilder:
 
         Parameters
         ----------
-        outputs
+        outputs : list
+            List of the names of the output MakiTensors of the model.
         graph_info_json : dict
             Graph info section from the architecture file.
         input_layer : InputMakiLayer
             Custom InputLayer. Use this parameter if you want to train the model with pipelines
             or simply want to change the batch size.
-        """
-        # dict {NameTensor : Info about this tensor}
-        graph_info = {}
 
+        Returns
+        -------
+        dict
+            Contains all the MakiTensors that appear in the graph before `outputs`, including
+            the `outputs` MakiTensors.
+        """
+        # dict {makitensor_name : {
+        #           name: makitensor_name,
+        #           parent_layer_info: {...},
+        #           parent_tensor_names: [...]
+        # }
+        # Used for fast querying of the MakiTensors during graph restoration.
+        graph_info = {}
         for tensor in graph_info_json:
             graph_info[tensor[MakiRestorable.NAME]] = tensor
 
@@ -102,12 +113,10 @@ class MakiBuilder:
 
             return layers[name]
 
-        def restore_in_and_out_x(makitensor_name):
+        def restore_makitensor(makitensor_name):
             """
-            Restore inputs and outputs of model from json.
+            Restores the requested MakiTensor.
             """
-            # from_ - name of layer
-            #
             makitensor_info = graph_info[makitensor_name]
 
             # Check if the makitensor was already created.
@@ -124,23 +133,22 @@ class MakiBuilder:
 
             parent_makitensors = []
             for parent_makitensor_name in parent_makitensor_names:
-                parent_makitensors += [restore_in_and_out_x(parent_makitensor_name)]
+                parent_makitensors += [restore_makitensor(parent_makitensor_name)]
 
-            print(parent_makitensors)
             # If only one MakiTensor was used to create the current one,
             # then the layer does not expect a list as input
             if len(parent_makitensors) == 1:
                 parent_makitensors = parent_makitensors[0]
 
-            # Get the parent layer object.
+            # Get the parent layer object and pass the parent makitensors through it.
             parent_layer = get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO])
-            # Get the output tensors of the parent layer and save them to the `makitensors` dictionary.
             output_makitensors = parent_layer(parent_makitensors)
 
             # The rest of the code expects `output_makitensors` to be a list.
             if not isinstance(output_makitensors, list):
                 output_makitensors = [output_makitensors]
 
+            # Save the output makitensors to the dictionary.
             output_makitensors_names = parent_layer.get_children(parent_makitensor_names[0])
             for output_makitensor, output_makitensor_name in zip(output_makitensors, output_makitensors_names):
                 makitensors[output_makitensor_name] = output_makitensor
@@ -148,7 +156,7 @@ class MakiBuilder:
             return makitensors[makitensor_name]
 
         for name_output in outputs:
-            restore_in_and_out_x(name_output)
+            restore_makitensor(name_output)
 
         return makitensors
 
