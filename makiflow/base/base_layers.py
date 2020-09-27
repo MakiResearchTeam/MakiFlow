@@ -120,18 +120,7 @@ class BatchNormBaseLayer(MakiLayer):
             self._is_running_vars_created = True
             self._init_train_params(data)
 
-        data = self._forward(data)
-
-        parent_tensor_names = [x.get_name()]
-        previous_tensors = copy(x.get_previous_tensors())
-        previous_tensors.update(x.get_self_pair())
-        maki_tensor = MakiTensor(
-            data_tensor=data,
-            parent_layer=self,
-            parent_tensor_names=parent_tensor_names,
-            previous_tensors=previous_tensors,
-        )
-        return maki_tensor
+        return super().__call__(x)
 
     @abstractmethod
     def _init_train_params(self, data):

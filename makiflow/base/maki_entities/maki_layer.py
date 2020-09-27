@@ -17,6 +17,7 @@
 
 from abc import abstractmethod, ABC
 from .maki_tensor import MakiTensor
+from warnings import warn
 
 
 class MakiRestorable(ABC):
@@ -28,6 +29,17 @@ class MakiRestorable(ABC):
 
     TRAINING_MODE = 'TrainingGraph'
     INFERENCE_MODE = 'InferenceGraph'
+
+    # Gurren Lagann
+    NO_PARAMETER = 'What the hell do you think this is!?'
+
+    @staticmethod
+    def get_param(params: dict, param_name, default_value):
+        value = params.get(param_name, MakiRestorable.NO_PARAMETER)
+        if value == MakiRestorable.NO_PARAMETER:
+            warn(f"Parameter {param_name} wasn't found. The default value is used: default={default_value}")
+            return default_value
+        return value
 
     @staticmethod
     @abstractmethod
@@ -87,6 +99,7 @@ class MakiLayer(MakiRestorable):
             If the layer outputs several tensors, then names in the list will be concatenated with the parent layer's
             name.
         """
+        # Counts the number of time the `__call__` method was called.
         self._name = name
         self._params = params
         self._regularize_params = regularize_params
@@ -94,6 +107,12 @@ class MakiLayer(MakiRestorable):
         if outputs_names is None:
             outputs_names = []
         self._outputs_names = outputs_names
+        self._n_calls = 0
+        # This is used during training graph construction and is a solution for cases
+        # when the same layer is being used several times. Unfortunately
+        # there is no better solution yet.
+        # Dictionary of pairs { parent MakiTensor name : list child MakiTensor name }
+        self._children_dict = {}
 
     def __check_output(self, output):
         if output is None:
@@ -152,28 +171,52 @@ class MakiLayer(MakiRestorable):
         self.__check_output(output)
 
         # Output MakiTensors
-        if output is list:
+        if isinstance(output, list):
+            # OUTPUT CONTAINS SEVERAL TENSORS
             output_mt = []
             for i, t, name in enumerate(zip(output, self._outputs_names)):
+                makitensor_name = self.get_name() + '/' + name
+                makitensor_name = self._output_tensor_name(makitensor_name)
                 output_mt += [
                     MakiTensor(
                         data_tensor=t,
                         parent_layer=self,
                         parent_tensor_names=parent_tensor_names,
                         previous_tensors=previous_tensors,
-                        name=self.get_name() + '/' + name,
+                        name=makitensor_name,
                         index=i
                     )
                 ]
-            return output_mt
         else:
-            return MakiTensor(
+            # OUTPUTS IS A SINGLE TENSOR
+            makitensor_name = self._output_tensor_name(self.get_name())
+            output_mt = MakiTensor(
                 data_tensor=output,
                 parent_layer=self,
                 parent_tensor_names=parent_tensor_names,
                 previous_tensors=previous_tensors,
-                name=self.get_name()
+                name=makitensor_name
             )
+
+        self._n_calls += 1
+        self._update_children(parent_tensor_names, output_mt)
+        return output_mt
+
+    def _output_tensor_name(self, name):
+        if self._n_calls != 0:
+            name += f':{self._n_calls}'
+        return name
+
+    def _update_children(self, parent_tensor_names: list, output_mt):
+        if not isinstance(output_mt, list):
+            output_mt = [output_mt]
+
+        output_mt_names = []
+        for output_tensor in output_mt:
+            output_mt_names += [output_tensor.get_name()]
+
+        for parent_tensor_name in parent_tensor_names:
+            self._children_dict[parent_tensor_name] = output_mt_names
 
     @abstractmethod
     def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
@@ -252,3 +295,28 @@ class MakiLayer(MakiRestorable):
             Name of the layer.
         """
         return self._name
+
+    def get_n_calls(self):
+        """
+        Returns
+        -------
+        int
+            The number of times the layer was called.
+        """
+        return self._n_calls
+
+    def get_children(self, makitensor_name):
+        """
+
+        Parameters
+        ----------
+        makitensor_name : str
+            Name of the MakiTensor that was once passed through this layer.
+
+        Returns
+        -------
+        list
+            List of the names of the MakiTensors that were created after passing in a MakiTensor
+            with `makitensor_name` name.
+        """
+        return self._children_dict[makitensor_name]
