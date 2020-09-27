@@ -126,6 +126,7 @@ class MakiBuilder:
             for parent_makitensor_name in parent_makitensor_names:
                 parent_makitensors += [restore_in_and_out_x(parent_makitensor_name)]
 
+            print(parent_makitensors)
             # If only one MakiTensor was used to create the current one,
             # then the layer does not expect a list as input
             if len(parent_makitensors) == 1:
