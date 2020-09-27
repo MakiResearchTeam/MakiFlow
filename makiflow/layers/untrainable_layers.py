@@ -67,10 +67,12 @@ class InputLayer(InputMakiLayer):
         return {
             MakiRestorable.NAME: self.get_name(),
             MakiTensor.PARENT_TENSOR_NAMES: self.get_parent_tensor_names(),
-            MakiRestorable.FIELD_TYPE: InputMakiLayer.TYPE,
-            MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
-                InputMakiLayer.INPUT_SHAPE: self.get_shape()
+            MakiTensor.PARENT_LAYER_INFO: {
+                MakiRestorable.TYPE: InputMakiLayer.TYPE,
+                MakiRestorable.PARAMS: {
+                    MakiRestorable.NAME: self.get_name(),
+                    InputMakiLayer.INPUT_SHAPE: self.get_shape()
+                }
             }
         }
 

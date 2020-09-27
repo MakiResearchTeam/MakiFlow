@@ -69,48 +69,78 @@ class MakiBuilder:
         for tensor in graph_info_json:
             graph_info[tensor[MakiRestorable.NAME]] = tensor
 
-        used = {}
-        coll_tensors = {}
+        # Collects all the created MakiTensors.
+        # Contains pairs {makitensor_name: MakiTensor}.
+        makitensors = {}
+        # Collects all the created layers.
+        # Contains pairs {layer_name: MakiLayer}.
+        layers = {}
 
-        def restore_in_and_out_x(from_):
+        def get_parent_layer(parent_layer_info, layer=None):
+            """
+            Builds the layer, saves to the `layers` dictionary and returns it or returns an already built layer.
+            Parameters
+            ----------
+            parent_layer_info : dict
+                Information for building the layer.
+            layer : MakiLayer
+                Already built layer object. This parameter is used only in cases
+                when the input layer is supplied.
+            Returns
+            -------
+            MakiLayer
+                Built layer object.
+            """
+            name = parent_layer_info[MakiRestorable.NAME]
+
+            if layer is not None:
+                layers[name] = layer
+
+            if layers.get(name) is None:
+                layers[name] = MakiBuilder.__layer_from_dict(parent_layer_info)
+
+            return layers[name]
+
+        def restore_in_and_out_x(makitensor_name):
             """
             Restore inputs and outputs of model from json.
             """
             # from_ - name of layer
-            parent_layer_info = graph_info[from_]
-            if used.get(from_) is None:
-                used[from_] = True
-                # like "to"
-                all_parent_names = parent_layer_info[MakiTensor.PARENT_TENSOR_NAMES]
-                # store ready tensors
-                takes = []
-                if len(all_parent_names) != 0:
-                    # All layer except input layer
-                    layer = MakiBuilder.__layer_from_dict(parent_layer_info[MakiTensor.PARENT_LAYER_INFO])
-                    for elem in all_parent_names:
-                        takes += [restore_in_and_out_x(elem)]
-                    answer = layer(takes[0] if len(takes) == 1 else takes)
-                else:
-                    # Input layer
-                    if input_layer is not None:
-                        answer = input_layer
-                    else:
-                        temp = {}
-                        temp.update({
-                            MakiRestorable.FIELD_TYPE: parent_layer_info[MakiRestorable.FIELD_TYPE],
-                            MakiRestorable.PARAMS: parent_layer_info[MakiRestorable.PARAMS]}
-                        )
-                        answer = MakiBuilder.__layer_from_dict(temp)
+            #
+            makitensor_info = graph_info[makitensor_name]
 
-                coll_tensors[from_] = answer
-                return answer
-            else:
-                return coll_tensors[from_]
+            # Check if the makitensor was already created.
+            if makitensors.get(makitensor_name) is not None:
+                return makitensors[makitensor_name]
+
+            parent_makitensor_names = makitensor_info[MakiTensor.PARENT_TENSOR_NAMES]
+            # Check if we at the beginning of the graph. In this case we create InputLayer and return it.
+            if len(parent_makitensor_names) == 0:
+                return get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO], layer=input_layer)
+
+            parent_makitensors = []
+            for parent_makitensor_name in parent_makitensor_names:
+                parent_makitensors += [restore_in_and_out_x(parent_makitensor_name)]
+
+            # If only one MakiTensor was used to create the current one,
+            # then the layer does not expect a list as input
+            if len(parent_makitensors) == 1:
+                parent_makitensors = parent_makitensors[0]
+
+            # Get the parent layer object.
+            parent_layer = get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO])
+            # Get the output tensors of the parent layer and save them to the `makitensors` dictionary.
+            output_makitensors = parent_layer(parent_makitensors)
+            output_makitensors_names = parent_layer.get_children(parent_makitensor_names[0])
+            for output_makitensor, output_makitensor_name in zip(output_makitensors, output_makitensors_names):
+                makitensors[output_makitensor_name] = output_makitensor
+
+            return makitensors[makitensor_name]
 
         for name_output in outputs:
             restore_in_and_out_x(name_output)
 
-        return coll_tensors
+        return makitensors
 
     @staticmethod
     @abstractmethod
