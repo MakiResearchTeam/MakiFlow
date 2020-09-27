@@ -132,6 +132,11 @@ class MakiBuilder:
             parent_layer = get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO])
             # Get the output tensors of the parent layer and save them to the `makitensors` dictionary.
             output_makitensors = parent_layer(parent_makitensors)
+
+            # The rest of the code expects `output_makitensors` to be a list.
+            if not isinstance(output_makitensors, list):
+                output_makitensors = [output_makitensors]
+
             output_makitensors_names = parent_layer.get_children(parent_makitensor_names[0])
             for output_makitensor, output_makitensor_name in zip(output_makitensors, output_makitensors_names):
                 makitensors[output_makitensor_name] = output_makitensor
