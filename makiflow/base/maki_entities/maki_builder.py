@@ -101,12 +101,20 @@ class MakiBuilder:
             # Check if we at the beginning of the graph. In this case we create InputLayer and return it.
             if len(parent_makitensor_names) == 0:
                 layer = get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO], layer=input_layer)
-                print(layer)
+                # If a custom InputLayer is passed, then it may have a different name. It this case
+                # we need to update parent tensors names. If no inputlayer is passed, the code below
+                # will change nothing.
                 return layer
 
             parent_makitensors = []
             for parent_makitensor_name in parent_makitensor_names:
+                # This call may modify `graph_info` if a custom InputLayer is passed.
                 parent_makitensors += [restore_makitensor(parent_makitensor_name)]
+
+            # If a custom InputLayer is passed, then it may have a different name. It this case
+            # we need to update parent tensors names. If no InputLayer is passed, the code below
+            # will change nothing.
+            parent_makitensor_names = makitensor_info[MakiTensor.PARENT_TENSOR_NAMES]
 
             # If only one MakiTensor was used to create the current one,
             # then the layer does not expect a list as input
