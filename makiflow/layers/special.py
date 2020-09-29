@@ -1,6 +1,22 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 import tensorflow as tf
-from .sf_layer import SimpleForwardLayer
-from makiflow.base.maki_entities.maki_layer import MakiRestorable
+from makiflow.base import MakiRestorable, MakiLayer
 
 
 def _tf_log10(x):
@@ -17,7 +33,7 @@ def _power_to_db(magnitude, amin=1e-16, top_db=80):
     return log_spec
 
 
-class LogMelSpectrogramLayer(SimpleForwardLayer):
+class LogMelSpectrogramLayer(MakiLayer):
     TYPE = 'LogMelSpectrogramLayer'
     SAMPLE_RATE = 'SAMPLE_RATE'
     FFT_SIZE = 'FFT_SIZE'
@@ -25,6 +41,25 @@ class LogMelSpectrogramLayer(SimpleForwardLayer):
     N_MELS = 'N_MELS'
     F_MIN = 'F_MIN'
     F_MAX = 'F_MAX'
+
+    @staticmethod
+    def build(params: dict):
+        sample_rate = params[LogMelSpectrogramLayer.SAMPLE_RATE]
+        name = params[MakiRestorable.NAME]
+        fft_size = params[LogMelSpectrogramLayer.FFT_SIZE]
+        hop_size = params[LogMelSpectrogramLayer.HOP_SIZE]
+        n_mels = params[LogMelSpectrogramLayer.N_MELS]
+        f_min = params[LogMelSpectrogramLayer.F_MIN]
+        f_max = params[LogMelSpectrogramLayer.F_MAX]
+        return LogMelSpectrogramLayer(
+            sample_rate=sample_rate,
+            name=name,
+            fft_size=fft_size,
+            hop_size=hop_size,
+            n_mels=n_mels,
+            f_min=f_min,
+            f_max=f_max
+        )
 
     def __init__(self, sample_rate, name, fft_size=1024, hop_size=512, n_mels=128,
                  f_min=0.0, f_max=None):

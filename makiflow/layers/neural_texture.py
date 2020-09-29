@@ -15,14 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .sf_layer import SimpleForwardLayer
 from makiflow.models.nn_render.utils import grid_sample
-from makiflow.base import MakiRestorable
+from makiflow.base import MakiRestorable, MakiLayer
 import tensorflow as tf
 import numpy as np
 
 
-class SingleTextureLayer(SimpleForwardLayer):
+class SingleTextureLayer(MakiLayer):
 
     TYPE = 'SingleTextureLayer'
     WIDTH = 'WIDTH'
@@ -81,7 +80,7 @@ class SingleTextureLayer(SimpleForwardLayer):
         }
 
 
-class LaplacianPyramidTextureLayer(SimpleForwardLayer):
+class LaplacianPyramidTextureLayer(MakiLayer):
 
     TYPE = 'LaplacianPyramidTextureLayer'
     WIDTH = 'WIDTH'

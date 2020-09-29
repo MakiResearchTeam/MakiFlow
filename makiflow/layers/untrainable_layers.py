@@ -20,7 +20,6 @@ import tensorflow as tf
 
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.base import MakiLayer, MakiTensor, MakiRestorable, InputMakiLayer
-from makiflow.layers.sf_layer import SimpleForwardLayer
 import numpy as np
 
 
@@ -68,15 +67,17 @@ class InputLayer(InputMakiLayer):
         return {
             MakiRestorable.NAME: self.get_name(),
             MakiTensor.PARENT_TENSOR_NAMES: self.get_parent_tensor_names(),
-            MakiRestorable.FIELD_TYPE: InputMakiLayer.TYPE,
-            MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
-                InputMakiLayer.INPUT_SHAPE: self.get_shape()
+            MakiTensor.PARENT_LAYER_INFO: {
+                MakiRestorable.TYPE: InputMakiLayer.TYPE,
+                MakiRestorable.PARAMS: {
+                    MakiRestorable.NAME: self.get_name(),
+                    InputMakiLayer.INPUT_SHAPE: self.get_shape()
+                }
             }
         }
 
 
-class ReshapeLayer(SimpleForwardLayer):
+class ReshapeLayer(MakiLayer):
     TYPE = 'ReshapeLayer'
     NEW_SHAPE = 'new_shape'
     IGNORE_BATCH = 'ignore_batch'
@@ -140,7 +141,7 @@ class ReshapeLayer(SimpleForwardLayer):
         }
 
 
-class MulByAlphaLayer(SimpleForwardLayer):
+class MulByAlphaLayer(MakiLayer):
     TYPE = 'MulByAlphaLayer'
     ALPHA = 'alpha'
 
@@ -207,24 +208,6 @@ class SumLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def __call__(self, x: list):
-        data = [one_tensor.get_data_tensor() for one_tensor in x]
-        data = self._forward(data)
-
-        parent_tensor_names = [one_tensor.get_name() for one_tensor in x]
-        previous_tensors = {}
-        for one_tensor in x:
-            previous_tensors.update(one_tensor.get_previous_tensors())
-            previous_tensors.update(one_tensor.get_self_pair())
-
-        maki_tensor = MakiTensor(
-            data_tensor=data,
-            parent_layer=self,
-            parent_tensor_names=parent_tensor_names,
-            previous_tensors=previous_tensors,
-        )
-        return maki_tensor
-
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
@@ -271,24 +254,6 @@ class ConcatLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def __call__(self, x: list):
-        data = [one_tensor.get_data_tensor() for one_tensor in x]
-        data = self._forward(data)
-
-        parent_tensor_names = [one_tensor.get_name() for one_tensor in x]
-        previous_tensors = {}
-        for one_tensor in x:
-            previous_tensors.update(one_tensor.get_previous_tensors())
-            previous_tensors.update(one_tensor.get_self_pair())
-
-        maki_tensor = MakiTensor(
-            data_tensor=data,
-            parent_layer=self,
-            parent_tensor_names=parent_tensor_names,
-            previous_tensors=previous_tensors,
-        )
-        return maki_tensor
-
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
@@ -317,7 +282,7 @@ class ConcatLayer(MakiLayer):
         }
 
 
-class ZeroPaddingLayer(SimpleForwardLayer):
+class ZeroPaddingLayer(MakiLayer):
     TYPE = 'ZeroPaddingLayer'
     PADDING = 'padding'
     CONSTANT = "CONSTANT"
@@ -378,7 +343,7 @@ class ZeroPaddingLayer(SimpleForwardLayer):
         }
 
 
-class GlobalMaxPoolLayer(SimpleForwardLayer):
+class GlobalMaxPoolLayer(MakiLayer):
     TYPE = 'GlobalMaxPoolLayer'
     _ASSERT_WRONG_INPUT_SHAPE = 'Input MakiTensor must have 4 dimensional shape'
 
@@ -421,7 +386,7 @@ class GlobalMaxPoolLayer(SimpleForwardLayer):
         }
 
 
-class GlobalAvgPoolLayer(SimpleForwardLayer):
+class GlobalAvgPoolLayer(MakiLayer):
     TYPE = 'GlobalAvgPoolLayer'
     _ASSERT_WRONG_INPUT_SHAPE = 'Input MakiTensor must have 4 dimensional shape'
 
@@ -464,7 +429,7 @@ class GlobalAvgPoolLayer(SimpleForwardLayer):
         }
 
 
-class MaxPoolLayer(SimpleForwardLayer):
+class MaxPoolLayer(MakiLayer):
     TYPE = 'MaxPoolLayer'
     KSIZE = 'ksize'
     STRIDES = 'strides'
@@ -538,7 +503,7 @@ class MaxPoolLayer(SimpleForwardLayer):
         }
 
 
-class AvgPoolLayer(SimpleForwardLayer):
+class AvgPoolLayer(MakiLayer):
     TYPE = 'AvgPoolLayer'
     KSIZE = 'ksize'
     STRIDES = 'strides'
@@ -612,7 +577,7 @@ class AvgPoolLayer(SimpleForwardLayer):
         }
 
 
-class UpSamplingLayer(SimpleForwardLayer):
+class UpSamplingLayer(MakiLayer):
     TYPE = 'UpSamplingLayer'
     SIZE = 'size'
 
@@ -669,7 +634,7 @@ class UpSamplingLayer(SimpleForwardLayer):
         }
 
 
-class ActivationLayer(SimpleForwardLayer):
+class ActivationLayer(MakiLayer):
     TYPE = 'ActivationLayer'
     ACTIVATION = 'activation'
 
@@ -723,7 +688,7 @@ class ActivationLayer(SimpleForwardLayer):
         }
 
 
-class FlattenLayer(SimpleForwardLayer):
+class FlattenLayer(MakiLayer):
     TYPE = 'FlattenLayer'
 
     def __init__(self, name):
@@ -764,7 +729,7 @@ class FlattenLayer(SimpleForwardLayer):
         }
 
 
-class DropoutLayer(SimpleForwardLayer):
+class DropoutLayer(MakiLayer):
     TYPE = 'DropoutLayer'
     P_KEEP = 'p_keep'
     NOISE_SHAPE = 'noise_shape'
@@ -833,7 +798,7 @@ class DropoutLayer(SimpleForwardLayer):
         }
 
 
-class ResizeLayer(SimpleForwardLayer):
+class ResizeLayer(MakiLayer):
     TYPE = 'ResizeLayer'
 
     INTERPOLATION_BILINEAR = 'bilinear'
@@ -935,7 +900,7 @@ class ResizeLayer(SimpleForwardLayer):
         }
 
 
-class L2NormalizationLayer(SimpleForwardLayer):
+class L2NormalizationLayer(MakiLayer):
     TYPE = 'L2NormalizationLayer'
     EPS = 'eps'
 

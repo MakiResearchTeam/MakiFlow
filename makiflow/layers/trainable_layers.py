@@ -21,12 +21,11 @@ import tensorflow as tf
 
 from makiflow.base.maki_entities.maki_layer import MakiRestorable, MakiLayer
 from makiflow.layers.activation_converter import ActivationConverter
-from makiflow.layers.sf_layer import SimpleForwardLayer
 from makiflow.base import BatchNormBaseLayer
 from makiflow.layers.utils import InitConvKernel, InitDenseMat
 
 
-class ConvLayer(SimpleForwardLayer):
+class ConvLayer(MakiLayer):
     TYPE = 'ConvLayer'
     SHAPE = 'shape'
     STRIDE = 'stride'
@@ -163,7 +162,7 @@ class ConvLayer(SimpleForwardLayer):
         }
 
 
-class UpConvLayer(SimpleForwardLayer):
+class UpConvLayer(MakiLayer):
     TYPE = 'UpConvLayer'
     SHAPE = 'shape'
     SIZE = 'size'
@@ -309,7 +308,7 @@ class UpConvLayer(SimpleForwardLayer):
         }
 
 
-class BiasLayer(SimpleForwardLayer):
+class BiasLayer(MakiLayer):
     TYPE = 'BiasLayer'
     D = 'D'
     TRAINABLE = 'trainable'
@@ -387,7 +386,7 @@ class BiasLayer(SimpleForwardLayer):
         }
 
 
-class DepthWiseConvLayer(SimpleForwardLayer):
+class DepthWiseConvLayer(MakiLayer):
     TYPE = 'DepthWiseLayer'
     SHAPE = 'shape'
     STRIDE = 'stride'
@@ -531,7 +530,7 @@ class DepthWiseConvLayer(SimpleForwardLayer):
         }
 
 
-class SeparableConvLayer(SimpleForwardLayer):
+class SeparableConvLayer(MakiLayer):
     TYPE = 'SeparableConvLayer'
     DW_SHAPE = 'dw_shape'
     OUT_F = 'out_f'
@@ -691,7 +690,7 @@ class SeparableConvLayer(SimpleForwardLayer):
         }
 
 
-class DenseLayer(SimpleForwardLayer):
+class DenseLayer(MakiLayer):
     TYPE = 'DenseLayer'
     INPUT_SHAPE = 'input_shape'
     OUTPUT_SHAPE = 'output_shape'
@@ -708,7 +707,7 @@ class DenseLayer(SimpleForwardLayer):
     def __init__(self, in_d, out_d, name, activation=tf.nn.relu, mat_initializer=InitDenseMat.HE,
                  use_bias=True, regularize_bias=False, W=None, b=None):
         """
-        Paremeters
+        Parameters
         ----------
         in_d : int
             Dimensionality of the input vector. Example: 500.
@@ -801,7 +800,7 @@ class DenseLayer(SimpleForwardLayer):
         }
 
 
-class AtrousConvLayer(SimpleForwardLayer):
+class AtrousConvLayer(MakiLayer):
     TYPE = 'AtrousConvLayer'
     SHAPE = 'shape'
     RATE = 'rate'
@@ -1652,7 +1651,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
         }
 
 
-class ScaleLayer(SimpleForwardLayer):
+class ScaleLayer(MakiLayer):
     TYPE = 'ScaleLayer'
     INIT_VALUE = 'init_value'
 
@@ -1707,7 +1706,7 @@ class ScaleLayer(SimpleForwardLayer):
         }
 
 
-class WeightStandConvLayer(SimpleForwardLayer):
+class WeightStandConvLayer(MakiLayer):
     TYPE = 'WeightStandConvLayer'
 
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
