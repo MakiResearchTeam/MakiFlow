@@ -87,32 +87,6 @@ class MakiBuilder:
         # Contains pairs {layer_name: MakiLayer}.
         layers = {}
 
-        def get_parent_layer(parent_layer_info, layer=None):
-            """
-            Builds the layer, saves to the `layers` dictionary and returns it or returns an already built layer.
-            Parameters
-            ----------
-            parent_layer_info : dict
-                Information for building the layer.
-            layer : MakiLayer
-                Already built layer object. This parameter is used only in cases
-                when the input layer is supplied.
-            Returns
-            -------
-            MakiLayer
-                Built layer object.
-            """
-            params = parent_layer_info[MakiRestorable.PARAMS]
-            name = params[MakiRestorable.NAME]
-
-            if layer is not None:
-                layers[name] = layer
-
-            if layers.get(name) is None:
-                layers[name] = MakiBuilder.__layer_from_dict(parent_layer_info)
-
-            return layers[name]
-
         def restore_makitensor(makitensor_name):
             """
             Restores the requested MakiTensor.
@@ -127,8 +101,6 @@ class MakiBuilder:
             # Check if we at the beginning of the graph. In this case we create InputLayer and return it.
             if len(parent_makitensor_names) == 0:
                 layer = get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO], layer=input_layer)
-                # The input layer is a MakiTensor as well.
-                makitensors[makitensor_name] = layer
                 return layer
 
             parent_makitensors = []
@@ -154,6 +126,54 @@ class MakiBuilder:
                 makitensors[output_makitensor_name] = output_makitensor
 
             return makitensors[makitensor_name]
+
+        def get_parent_layer(parent_layer_info, layer=None):
+            """
+            Builds the layer, saves to the `layers` dictionary and returns it or returns an already built layer.
+            Parameters
+            ----------
+            parent_layer_info : dict
+                Information for building the layer.
+            layer : MakiLayer
+                Already built layer object. This parameter is used only in cases
+                when the input layer is supplied.
+            Returns
+            -------
+            MakiLayer
+                Built layer object.
+            """
+            params = parent_layer_info[MakiRestorable.PARAMS]
+            name = params[MakiRestorable.NAME]
+
+            # This IF statement only for cases when a custom InputLayer is passed.
+            if layer is not None:
+                # If a custom InputLayer is passed, it probably has a different name.
+                # Therefore, we need to change 'parent_tensor_names' list for each makitensor there is in the graph.
+                # P.S. If we don't do that we'll get an exception during graph restoration.
+                old_name = name
+                new_name = layer.get_name()
+                for makitensor_name in makitensors:
+                    mt_info = graph_info_json[makitensor_name]
+                    # Change tensor names
+                    new_parent_tensor_names = []
+                    for parent_t_name in mt_info[MakiTensor.PARENT_TENSOR_NAMES]:
+                        if parent_t_name == old_name:
+                            # Found the old InputLayer, change its name to the new one
+                            new_parent_tensor_names += [new_name]
+                            continue
+                        new_parent_tensor_names += [parent_t_name]
+                    # Update parent tensor names
+                    mt_info[MakiTensor.PARENT_TENSOR_NAMES] = new_parent_tensor_names
+                # The input layer is a MakiTensor as well.
+                makitensors[new_name] = layer
+
+                layers[new_name] = layer
+                name = new_name
+
+            if layers.get(name) is None:
+                layers[name] = MakiBuilder.__layer_from_dict(parent_layer_info)
+
+            return layers[name]
 
         for name_output in outputs:
             restore_makitensor(name_output)
