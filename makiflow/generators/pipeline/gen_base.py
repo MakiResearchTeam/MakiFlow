@@ -17,7 +17,7 @@
 
 from __future__ import absolute_import
 from abc import abstractmethod, ABC
-from makiflow.base import InputMakiLayer
+from makiflow.base import InputMakiLayer, MakiRestorable, MakiTensor
 
 
 class PathGenerator(ABC):
@@ -54,3 +54,15 @@ class GenLayer(InputMakiLayer):
     def get_params_dict(self):
         return {}
 
+    def to_dict(self):
+        return {
+            MakiRestorable.NAME: self.get_name(),
+            MakiTensor.PARENT_TENSOR_NAMES: self.get_parent_tensor_names(),
+            MakiTensor.PARENT_LAYER_INFO: {
+                MakiRestorable.TYPE: InputMakiLayer.TYPE,
+                MakiRestorable.PARAMS: {
+                    MakiRestorable.NAME: self.get_name(),
+                    InputMakiLayer.INPUT_SHAPE: self.get_shape()
+                }
+            }
+        }
