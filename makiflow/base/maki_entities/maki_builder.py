@@ -101,6 +101,7 @@ class MakiBuilder:
             # Check if we at the beginning of the graph. In this case we create InputLayer and return it.
             if len(parent_makitensor_names) == 0:
                 layer = get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO], layer=input_layer)
+                print(layer)
                 return layer
 
             parent_makitensors = []
@@ -152,8 +153,8 @@ class MakiBuilder:
                 # P.S. If we don't do that we'll get an exception during graph restoration.
                 old_name = name
                 new_name = layer.get_name()
-                for makitensor_name in makitensors:
-                    mt_info = graph_info_json[makitensor_name]
+                for makitensor_name in graph_info:
+                    mt_info = graph_info[makitensor_name]
                     # Change tensor names
                     new_parent_tensor_names = []
                     for parent_t_name in mt_info[MakiTensor.PARENT_TENSOR_NAMES]:
