@@ -777,7 +777,7 @@ class ResizeLayer(MakiLayer):
             Example: input MakiTensor have shape [N1, H1, W1, C1], after this operation it would be [N1, H2, W2, C1],
             where H2 = H1 * scales[0], W2 = W2 * scales[1]
         """
-        assert len(new_shape) == 2 or (scales is not None and len(scales) == 2)
+        assert (new_shape is not None and len(new_shape) == 2) or (scales is not None and len(scales) == 2)
 
         self.new_shape = new_shape
         self.align_corners = align_corners
