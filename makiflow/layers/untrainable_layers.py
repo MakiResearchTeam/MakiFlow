@@ -577,63 +577,6 @@ class AvgPoolLayer(MakiLayer):
         }
 
 
-class UpSamplingLayer(MakiLayer):
-    TYPE = 'UpSamplingLayer'
-    SIZE = 'size'
-
-    def __init__(self, name, size=(2, 2)):
-        """
-        Upsampling layer which changes height and width of MakiTensor.
-        Example: input MakiTensor have shape [N1, H1, W1, C1], after this operation it would be [N1, H2, W2, C1],
-        where H2 = H1 * size[0], W2 = W2 * size[1]
-
-        Parameters
-        ----------
-        size : list
-            The upsampling factors for rows and columns.
-        name : str
-            Name of this layer.
-        """
-        self.size = size
-
-        super().__init__(name, params=[],
-                         regularize_params=[],
-                         named_params_dict={}
-                         )
-
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
-        with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
-                t_shape = X.get_shape()
-                im_size = (t_shape[1] * self.size[0], t_shape[2] * self.size[1])
-                return tf.image.resize_nearest_neighbor(
-                    X,
-                    im_size
-                )
-
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
-
-    @staticmethod
-    def build(params: dict):
-        name = params[MakiRestorable.NAME]
-        size = params[UpSamplingLayer.SIZE]
-
-        return UpSamplingLayer(
-            name=name,
-            size=size
-        )
-
-    def to_dict(self):
-        return {
-            MakiRestorable.FIELD_TYPE: UpSamplingLayer.TYPE,
-            MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
-                UpSamplingLayer.SIZE: self.size
-            }
-        }
-
-
 class ActivationLayer(MakiLayer):
     TYPE = 'ActivationLayer'
     ACTIVATION = 'activation'
@@ -809,60 +752,81 @@ class ResizeLayer(MakiLayer):
     FIELD_INTERPOLATION = 'interpolation'
     NEW_SHAPE = 'new_shape'
     ALIGN_CORNERS = 'align_corners'
+    SCALES = 'scales'
 
     _EXCEPTION_INTERPOLATION_IS_NOT_FOUND = "Interpolation {} don't exist"
 
-    def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False):
+    H_DIMENSION_SCALES = 0
+    W_DIMENSION_SCALES = 1
+
+    def __init__(self, new_shape: list, name, interpolation='bilinear', align_corners=False, scales=None):
         """
         ResizeLayer resize input MakiTensor to new_shape shape.
+
         Parameters
         ----------
         interpolation : str
             One of type resize images. ('bilinear', 'nearest_neighbor', 'area', 'bicubic')
         new_shape : list
             List the number of new shape tensor (Height and Width).
+            NOTICE! The parameter `scales` has a higher priority
         name : str
             Name of this layer.
+        scales : list
+            List of int values.
+            Example: input MakiTensor have shape [N1, H1, W1, C1], after this operation it would be [N1, H2, W2, C1],
+            where H2 = H1 * scales[0], W2 = W2 * scales[1]
         """
         assert (len(new_shape) == 2)
 
         self.new_shape = new_shape
         self.align_corners = align_corners
         self.interpolation = interpolation
+        self.scales = scales
 
-        super().__init__(name, params=[],
-                         regularize_params=[],
-                         named_params_dict={}
-                         )
+        super().__init__(
+            name, params=[],
+            regularize_params=[],
+            named_params_dict={}
+        )
 
     def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
+
+                if self.scales is not None:
+                    # Take size of the H and W
+                    new_shape = X.get_shape().as_list()[1:-1]
+                    new_shape[self.H_DIMENSION_SCALES] *= int(self.scales[self.H_DIMENSION_SCALES])
+                    new_shape[self.W_DIMENSION_SCALES] *= int(self.scales[self.W_DIMENSION_SCALES])
+                else:
+                    new_shape = self.new_shape
+
                 if self.interpolation == ResizeLayer.INTERPOLATION_BILINEAR:
                     return tf.image.resize_bilinear(
                         X,
-                        self.new_shape,
+                        new_shape,
                         align_corners=self.align_corners,
                         name=self._name,
                     )
                 elif self.interpolation == ResizeLayer.INTERPOLATION_NEAREST_NEIGHBOR:
                     return tf.image.resize_nearest_neighbor(
                         X,
-                        self.new_shape,
+                        new_shape,
                         align_corners=self.align_corners,
                         name=self._name,
                     )
                 elif self.interpolation == ResizeLayer.INTERPOLATION_AREA:
                     return tf.image.resize_area(
                         X,
-                        self.new_shape,
+                        new_shape,
                         align_corners=self.align_corners,
                         name=self._name,
                     )
                 elif self.interpolation == ResizeLayer.INTERPOLATION_BICUBIC:
                     return tf.image.resize_bicubic(
                         X,
-                        self.new_shape,
+                        new_shape,
                         align_corners=self.align_corners,
                         name=self._name,
                     )
@@ -880,12 +844,13 @@ class ResizeLayer(MakiLayer):
         name = params[MakiRestorable.NAME]
         align_corners = params[ResizeLayer.ALIGN_CORNERS]
         interpolation = params[ResizeLayer.FIELD_INTERPOLATION]
-
+        scales = params[ResizeLayer.SCALES]
         return ResizeLayer(
             interpolation=interpolation,
             new_shape=new_shape,
             name=name,
-            align_corners=align_corners
+            align_corners=align_corners,
+            scales=scales
         )
 
     def to_dict(self):
@@ -896,6 +861,7 @@ class ResizeLayer(MakiLayer):
                 ResizeLayer.FIELD_INTERPOLATION: self.interpolation,
                 ResizeLayer.NEW_SHAPE: self.new_shape,
                 ResizeLayer.ALIGN_CORNERS: self.align_corners,
+                ResizeLayer.SCALES: self.scales
             }
         }
 
@@ -960,8 +926,6 @@ class UnTrainableLayerAddress:
 
         MaxPoolLayer.TYPE: MaxPoolLayer,
         AvgPoolLayer.TYPE: AvgPoolLayer,
-
-        UpSamplingLayer.TYPE: UpSamplingLayer,
         ActivationLayer.TYPE: ActivationLayer,
 
         FlattenLayer.TYPE: FlattenLayer,
