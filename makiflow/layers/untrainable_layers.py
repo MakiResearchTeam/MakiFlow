@@ -21,6 +21,7 @@ import tensorflow as tf
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.base import MakiLayer, MakiTensor, MakiRestorable, InputMakiLayer
 import numpy as np
+import copy
 
 
 class InputLayer(InputMakiLayer):
@@ -90,6 +91,7 @@ class ReshapeLayer(MakiLayer):
         ----------
         new_shape : list
             Shape of output object.
+            List can have None values which mean that in this dimension will be set shape from input tensor
         name : str
             Name of this layer.
         ignore_batch : bool
@@ -110,10 +112,26 @@ class ReshapeLayer(MakiLayer):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 if self.ignore_batch:
-                    return tf.reshape(tensor=X, shape=self.new_shape, name=self._name)
+                    origin_shape = X.get_shape().as_list()
+                    new_shape = copy.deepcopy(self.new_shape)
+
+                    size_iter = min(len(origin_shape), len(self.new_shape))
+                    for i in range(size_iter):
+                        if self.new_shape[i] is None:
+                            new_shape[i] = origin_shape[i]
+
+                    return tf.reshape(tensor=X, shape=new_shape, name=self._name)
                 else:
                     bs = X.get_shape().as_list()[0]
-                    return tf.reshape(tensor=X, shape=[bs, *self.new_shape], name=self._name)
+                    origin_shape = X.get_shape().as_list()[1:]
+                    new_shape = copy.deepcopy(self.new_shape)
+
+                    size_iter = min(len(origin_shape), len(self.new_shape))
+                    for i in range(size_iter):
+                        if self.new_shape[i] is None:
+                            new_shape[i] = origin_shape[i]
+
+                    return tf.reshape(tensor=X, shape=[bs, *new_shape], name=self._name)
 
     def _training_forward(self, X):
         return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
