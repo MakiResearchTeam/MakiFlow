@@ -1,11 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from makiflow.base.maki_entities import MakiCore
 
 
-class SSPInterface(ABC):
+class SSPInterface(MakiCore):
     @abstractmethod
     def get_heads(self):
-        pass
-
-    @abstractmethod
-    def training_on(self):
         pass

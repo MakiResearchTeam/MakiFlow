@@ -28,6 +28,12 @@ class MakiTrainer(MakiModel, ABC):
         self._set_for_training = False
         super().__init__(graph_tensors, outputs, inputs)
 
+    def training_on(self):
+        """
+        Sets the model up for training. Must be called from the trainer.
+        """
+        self._setup_for_training()
+
     def _setup_for_training(self):
         self._set_for_training = True
 

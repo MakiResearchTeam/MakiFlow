@@ -191,4 +191,10 @@ class MakiModel(ABC):
         return tensor_dicts
 
     def get_node(self, node_name):
-        return self._graph_tensors.get(node_name)
+        node = self._graph_tensors.get(node_name)
+        if node is None:
+            raise KeyError(f'Could not find node with name={node_name}')
+        return node
+
+    def get_data_node(self, node_name):
+        return self.get_node(node_name).get_data_tensor()
