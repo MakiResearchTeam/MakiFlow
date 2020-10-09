@@ -21,4 +21,8 @@ from abc import ABC
 
 
 class MakiCore(MakiBuilder, MakiTrainer, ABC):
-    pass
+    def training_on(self):
+        """
+        Sets the model up for training. Must be called from the trainer.
+        """
+        self._setup_for_training()

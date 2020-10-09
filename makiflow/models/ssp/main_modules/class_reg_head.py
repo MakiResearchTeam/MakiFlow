@@ -28,6 +28,10 @@ class ClassRegHead:
     conv layers -> detector -> confidences + localization regression.
     """
 
+    CLASS_LOGITS = 'CLASS_LOGITS'
+    HUMANI_LOGITS = 'HUMANI_LOGITS'
+    POINTS_OFFSETS = 'POINTS_OFFSETS'
+
     def __init__(
             self,
             reg_f: MakiTensor,
@@ -66,7 +70,7 @@ class ClassRegHead:
         _, CH, CW, _ = self._class_f.get_shape()
         _, RH, RW, _ = self._reg_f.get_shape()
         _, HH, HW, _ = self._humani_f.get_shape()
-        msg = 'Dimensionaility of {0} and {1} are not the same. Dim of {0} is {2}, dim of {1} is {3}'
+        msg = 'Dimensionality of {0} and {1} are not the same. Dim of {0} is {2}, dim of {1} is {3}'
         assert CH == RH and CW == RW, msg.format('class_f', 'reg_f', (CH, CW), (RH, RW))
         assert CH == HH and CW == HW, msg.format('class_f', 'human_indicator_f', (CH, CW), (HH, HW))
         assert RH == HH and RW == HW, msg.format('reg_f', 'human_indicator_f', (RH, RW), (HH, HW))
@@ -133,13 +137,16 @@ class ClassRegHead:
     def get_points_offsets(self):
         return self._points_offsets
 
-    def get_regressed_points_tensor(self, image_shape):
+    def get_regressed_points_tensor(self, points_offsets, image_shape):
         """
         Applies offsets to the skeleton points and returns ready to use coordinates.
+        This function is needed to create separate training and inference tensors for points regression later.
 
         Parameters
         ----------
-        scale : tuple of two ints
+        points_offsets : MakiTensor
+            Tensor of the offsets that will be applied to shift the default points.
+        image_shape : tuple of two ints
             Contains width and height of the image. (width, height)
 
         Returns
@@ -149,6 +156,9 @@ class ClassRegHead:
         """
         points = self._default_points
         B, H, W, C = self._points_offsets.get_shape()
+        B_, H_, W_, C_ = points_offsets.get_shape()
+        assert (B, H, W, C) == (B_, H_, W_, C_), f'{self.name} / Original and new shapes must be the same.' \
+                                                 f' Original={(B, H, W, C)}, new={(B_, H_, W_, C_)}'
 
         cell_h = H / image_shape[1]
         cell_w = W / image_shape[0]
@@ -160,7 +170,7 @@ class ClassRegHead:
                 points_map[i, j] = points + shift
 
         points_map = points_map.reshape([1, H, W, -1])
-        regressed_points_tensor = points_map + self._points_offsets.get_data_tensor()
+        regressed_points_tensor = points_map + points_offsets.get_data_tensor()
 
         # In case some of the dimensions is None, we pass a -1
         if B is None:
@@ -181,4 +191,12 @@ class ClassRegHead:
 
         return flat_regressed
 
+    def get_name(self):
+        return self.name
 
+    def get_tensor_dict(self):
+        return {
+            ClassRegHead.CLASS_LOGITS: self.get_classification_logits(),
+            ClassRegHead.HUMANI_LOGITS: self.get_human_presence_logits(),
+            ClassRegHead.POINTS_OFFSETS: self.get_points_offsets()
+        }

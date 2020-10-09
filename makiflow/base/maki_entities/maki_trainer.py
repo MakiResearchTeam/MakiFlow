@@ -20,7 +20,6 @@ from makiflow.base.maki_entities.maki_model import MakiModel
 from makiflow.base.maki_entities.maki_layer import MakiRestorable
 from .maki_tensor import MakiTensor
 import tensorflow as tf
-from copy import copy
 
 
 class MakiTrainer(MakiModel, ABC):
