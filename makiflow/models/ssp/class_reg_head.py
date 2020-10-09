@@ -22,34 +22,11 @@ import tensorflow as tf
 import numpy as np
 
 
-class DCParams:
-    TYPE = 'DetectorClassifier'
-    NAME = 'name'
-    CLASS_NUMBER = 'class_number'
-    DBOXES = 'dboxes'
-
-    REG_X_NAME = 'reg_x_name'
-    RKW = 'rkw'
-    RKH = 'rkh'
-    RIN_F = 'rin_f'
-    USE_REG_BIAS = 'use_reg_bias'
-    REG_INIT_TYPE = 'reg_init_type'
-
-    CLASS_X_NAME = 'class_x_name'
-    CKW = 'ckw'
-    CKH = 'ckh'
-    CIN_F = 'cin_f'
-    USE_CLASS_BIAS = 'use_class_bias'
-    CLASS_INIT_TYPE = 'class_init_type'
-
-
 class ClassRegHead:
     """
     This class represents a part of SSD algorithm. It consists of several parts:
     conv layers -> detector -> confidences + localization regression.
     """
-
-    BBOX_OFFSET = np.array([0.5, 0.5], dtype='float32')
 
     def __init__(
             self,
@@ -147,11 +124,14 @@ class ClassRegHead:
 
         _, H, W, _ = self._class_f.get_shape()
 
-    def get_classification_logits_tensor(self):
-        return self._flat_classification_logits.get_data_tensor()
+    def get_classification_logits(self):
+        return self._flat_classification_logits
 
-    def get_human_presence_logits_tensor(self):
-        return self._flat_human_presence_logits.get_data_tensor()
+    def get_human_presence_logits(self):
+        return self._flat_human_presence_logits
+
+    def get_points_offsets(self):
+        return self._points_offsets
 
     def get_regressed_points_tensor(self, image_shape):
         """
