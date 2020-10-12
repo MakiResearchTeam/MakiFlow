@@ -207,7 +207,29 @@ class MakiModel(ABC):
         return self.get_node(node_name).get_data_tensor()
 
     def get_layer(self, layer_name):
+        """
+        Return a layer object with the given name.
+
+        Parameters
+        ----------
+        layer_name : str
+            The name of the layer.
+
+        Returns
+        -------
+        MakiLayer
+        """
         layer = self._layers.get(layer_name)
         if layer is None:
             raise KeyError(f'Could not find layer with name={layer_name}')
         return layer
+
+    def get_layers(self):
+        """
+        Returns
+        -------
+        dict
+            Contains all the layers of the model.
+        """
+        return self._layers.copy()
+
