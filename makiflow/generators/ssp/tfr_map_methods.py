@@ -21,6 +21,9 @@ from .data_preparation import IMAGE_FNAME
 
 
 class SSPIterator:
+    CLASS_LABELS = 'CLASS_LABELS'
+    HUMANP_LABELS = 'HUMANP_LABELS'
+    POINTS_LABELS = 'POINTS_LABELS'
     IMAGE = 'IMAGE'
 
 

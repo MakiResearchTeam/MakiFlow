@@ -17,13 +17,12 @@
 
 from __future__ import absolute_import
 from makiflow.layers import InputLayer
-from makiflow.base.maki_entities import MakiCore
 from .class_reg_head import ClassRegHead
 import tensorflow as tf
 from .ssp_interface import SSPInterface
 
 
-class SSPModel(MakiCore, SSPInterface):
+class SSPModel(SSPInterface):
     def get_heads(self):
         return self._heads
 
