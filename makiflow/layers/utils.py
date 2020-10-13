@@ -29,6 +29,7 @@ class InitConvKernel:
     XAVIER_UNIFORM_AVG = 'xavier_uniform_avg'
     LASANGE = 'lasange'
     HE = 'he'
+    HE_UNIFORM = 'he_uniform'
 
     @staticmethod
     def init_by_name(kw, kh, out_f, in_f, name_init, dtype=np.float32):
@@ -65,12 +66,19 @@ class InitConvKernel:
         return w.astype(dtype)
 
     @staticmethod
+    def he_uniform(kw, kh, out_f, in_f, dtype=np.float32):
+        w = np.random.uniform(low=-1.0, high=1.0, size=(kw, kh, in_f, out_f))
+        w *= np.sqrt(2. / (kw * kh * in_f))
+        return w.astype(dtype)
+
+    @staticmethod
     def lasange(kw, kh, out_f, in_f, dtype=np.float32):
         w = np.random.randn(kw, kh, in_f, out_f)
         w *= np.sqrt(12. / (kw * kh * in_f + kw * kh * out_f))
         return w.astype(dtype)
 
     SET_INITS = {}
+
 
 InitConvKernel.SET_INITS = {
             InitConvKernel.XAVIER_GAUSSIAN_AVG: InitConvKernel.xavier_gaussian_avg,
@@ -81,6 +89,7 @@ InitConvKernel.SET_INITS = {
 
             InitConvKernel.LASANGE: InitConvKernel.lasange,
             InitConvKernel.HE: InitConvKernel.he,
+            InitConvKernel.HE_UNIFORM: InitConvKernel.he_uniform
     }
 
 
