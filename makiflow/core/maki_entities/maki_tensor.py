@@ -24,7 +24,7 @@ class MakiTensor:
     PARENT_LAYER_INFO = 'parent_layer_info'
 
     OBJ2STR = "MakiTensor(name={}, shape={}, dtype={})"
-    OBJ2REPR = "<mf.base.MakiTensor 'name={}' shape={} dtype={}>"
+    OBJ2REPR = "<mf.core.MakiTensor 'name={}' shape={} dtype={}>"
 
     def __init__(self, data_tensor: tf.Tensor, parent_layer, parent_tensor_names: list,
                  previous_tensors: dict, name=None, index=None):

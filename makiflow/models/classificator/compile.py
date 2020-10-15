@@ -17,7 +17,7 @@
 
 from .training_modules import QCETrainingModule, CETrainingModule, FocalTrainingModule, MakiTrainingModule
 from .main_modules import CParams
-from makiflow.base.maki_entities import MakiCore
+from makiflow.core.maki_entities import MakiCore
 import json
 
 

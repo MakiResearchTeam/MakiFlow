@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from makiflow.models.nn_render.utils import grid_sample
-from makiflow.base import MakiRestorable, MakiLayer
+from makiflow.core import MakiRestorable, MakiLayer
 import tensorflow as tf
 import numpy as np
 

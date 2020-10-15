@@ -17,7 +17,7 @@
 
 import tensorflow as tf
 from ..main_modules import NeuralRenderBasis
-from makiflow.base.loss_builder import Loss
+from makiflow.core.loss_builder import Loss
 from makiflow.models.common.utils import print_train_info, moving_average
 from makiflow.models.common.utils import loss_is_built, new_optimizer_used
 from sklearn.utils import shuffle

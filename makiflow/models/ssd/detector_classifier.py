@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.base import MakiTensor
+from makiflow.core import MakiTensor
 from makiflow.layers import ConvLayer
 from makiflow.layers import ReshapeLayer
 

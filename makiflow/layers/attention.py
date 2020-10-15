@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from makiflow.base import MakiLayer, MakiRestorable
+from makiflow.core import MakiLayer, MakiRestorable
 from .untrainable_layers import ReshapeLayer
 from .trainable_layers import ConvLayer
 

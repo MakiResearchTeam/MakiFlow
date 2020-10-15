@@ -25,9 +25,9 @@ from makiflow.layers.trainable_layers import TrainableLayerAddress
 from makiflow.layers.untrainable_layers import UnTrainableLayerAddress, InputLayer
 from makiflow.layers.rnn_layers import RNNLayerAddress
 
-from makiflow.base.maki_entities.maki_layer import MakiRestorable
-from makiflow.base.maki_entities.maki_tensor import MakiTensor
-from makiflow.base.maki_entities.maki_model import MakiModel
+from makiflow.core.maki_entities.maki_layer import MakiRestorable
+from makiflow.core.maki_entities.maki_tensor import MakiTensor
+from makiflow.core.maki_entities.maki_model import MakiModel
 
 from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel

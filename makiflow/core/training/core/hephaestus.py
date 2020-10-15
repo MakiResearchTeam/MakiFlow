@@ -1,0 +1,193 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
+from abc import ABC
+
+from makiflow.core import MakiTensor, MakiRestorable
+from makiflow.core.maki_entities.maki_model import MakiModel
+
+
+class Hephaestus(ABC):
+    # This entity is responsible for building the training graph and
+    # the final loss
+    def __init__(self, model: MakiModel, train_inputs: list):
+        self._model = model
+        self._training_inputs = {}
+        for train_input in train_inputs:
+            self._training_inputs.update(train_input.get_self_pair())
+
+        self._is_compiled = False
+        self._setup_for_training()
+
+    def get_session(self):
+        return self._model.get_session()
+
+    def get_model(self):
+        return self._model
+
+    def compile(self):
+        """
+        Initiates building the training graph. Has to be called before the training.
+        """
+        print('Compile the model...')
+        self._build_training_graph()
+        self._is_compiled = True
+        print('Model is compiled.')
+
+    def is_compiled(self):
+        return self._is_compiled
+
+    def _setup_for_training(self):
+        # Collect all the layers names since all of them are trainable from
+        # the beginning.
+        self._trainable_layers = []
+        for layer_name in self._graph_tensors:
+            self._trainable_layers.append(layer_name)
+        self._trainable_vars = []
+        self._collect_train_params()
+
+        # Setup external loss
+        self._uses_external_loss = False
+
+    def set_layers_trainable(self, layers):
+        """
+        Parameters
+        ----------
+        layers: list
+            List of tuples: (layer_name, bool).
+            Example: to make layer called `conv1` untrainable use
+            the following tuple (`conv1`, False), if you want to make it trainable
+            use the following tuple (`conv1`, True).
+        """
+        for layer_name, is_trainable in layers:
+            if is_trainable and layer_name not in self._trainable_layers:
+                self._trainable_layers.append(layer_name)
+            elif not is_trainable and layer_name in self._trainable_layers:
+                self._trainable_layers.remove(layer_name)
+        # It will collect the trainable parameters and rebuild the graph.
+        # Graph rebuild is needed since some of the layers behave differently in
+        # training mode.
+        self._collect_train_params()
+
+    def _collect_train_params(self):
+        self._trainable_vars.clear()
+        for layer_name in self._trainable_layers:
+            layer = self._graph_tensors[layer_name].get_parent_layer()
+            self._trainable_vars += layer.get_params()
+        # Create graph or refresh it
+        self._build_training_graph()
+
+    # noinspection PyAttributeOutsideInit
+    def add_loss(self, loss):
+        """
+        Adds an external loss that is defined outside the model or trainer.
+        Can be used for such things as perceptual loss.
+        Parameters
+        ----------
+        loss : tf.Tensor
+            A scalar that will be added to all the other losses used to train the model.
+        """
+        # noinspection PyTypeChecker
+        self._external_loss = loss
+        self._uses_external_loss = True
+
+    def _build_final_loss(self, training_loss):
+        if self._uses_external_loss:
+            training_loss += self._external_loss
+
+        return training_loss
+
+    def _build_training_graph(self):
+        # The algorithm recursively goes down the graph until it finds the input layer
+        # and then passes its tensor through all the layers it has encountered so far.
+
+        # Contains pairs {layer_name: {MakiTensor name: data_tensor}}, where the inner dictionary
+        # contains all the MakiTensor that were produced by the layer with the `layer_name` name.
+        output_tensors = {}
+        # Collection of all the tf.Tensor that stem from the training graph.
+        self._traingraph_tensors = {}
+
+        def create_tensor(maki_tensor: MakiTensor):
+            # Check if the parent layer has been already used.
+            # If it has, the required tensor has already been constructed.
+            layer = maki_tensor.get_parent_layer()
+
+            # Check if we haven't used this layer before.
+            # If haven't, add an empty dictionary.
+            if output_tensors.get(layer.get_name()) is None:
+                output_tensors[layer.get_name()] = dict()
+
+            outputs = output_tensors.get(layer.get_name())
+            # Check if the tensor has already been created.
+            if outputs.get(maki_tensor.get_name()) is not None:
+                return outputs.get(maki_tensor.get_name())
+
+            # If we are here, then the tensor hasn't been created.
+            # Check if we at the beginning of the computational graph, i.e. InputLayer
+            if len(maki_tensor.get_parent_tensor_names()) == 0:
+                X = maki_tensor.get_data_tensor()
+                outputs.update(
+                    {maki_tensor.get_name(): X}
+                )
+                return X
+
+            # Collect tensors that were used to create current `maki_tensor`
+            parent_tensors = []
+            for tensor in maki_tensor.get_parent_tensors():
+                parent_tensors += [create_tensor(tensor)]
+
+            # If only one tensor is used for creation, then the layer does not expect
+            # a list.
+            if len(parent_tensors) == 1:
+                parent_tensors = parent_tensors[0]
+
+            if layer.get_name() in self._trainable_layers:
+                X = layer._training_forward(
+                    parent_tensors
+                )
+            else:
+                X = layer._forward(
+                    parent_tensors,
+                    computation_mode=MakiRestorable.TRAINING_MODE
+                )
+
+            # Check if the layer outputs several tensors.
+            # If not, put the returned tensor into a list.
+            if not isinstance(X, list):
+                X = [X]
+
+            # Get names of the MakiTensors that were created
+            # after passing parent of the `maki_tensor` through the `layer`.
+            # Order of the names is always the same as the order
+            # of the returned tensors.
+            # This is done this way because the same layer can be reused several times.
+            parent_name = maki_tensor.get_parent_tensor_names()[0]
+            output_names = layer.get_children(parent_name)
+            for _x, x_name in zip(X, output_names):
+                outputs.update({x_name: _x})
+                self._traingraph_tensors[x_name] = _x
+
+            return outputs.get(maki_tensor.get_name())
+
+        for output in self._outputs:
+            self._training_outputs += [create_tensor(output)]
+
+    def get_traingraph_tensor(self, tensor_name):
+        tensor = self._traingraph_tensors.get(tensor_name)
+        if tensor is None:
+            raise KeyError(f'Could not find training tensor with name={tensor_name}')
+        return tensor

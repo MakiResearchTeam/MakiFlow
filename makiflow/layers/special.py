@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from makiflow.base import MakiRestorable, MakiLayer
+from makiflow.core import MakiRestorable, MakiLayer
 
 
 def _tf_log10(x):

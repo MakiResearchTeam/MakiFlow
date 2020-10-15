@@ -79,6 +79,10 @@ class MakiModel(ABC):
         init_op = tf.variables_initializer(params)
         self._session.run(init_op)
 
+    def get_session(self):
+        assert self._session is not None, 'The session is not set.'
+        return self._session
+
     def load_weights(self, path, layer_names=None):
         """
         This function uses default TensorFlow's way for restoring models - checkpoint files.

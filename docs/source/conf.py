@@ -122,7 +122,7 @@ html_css_files = [
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
-# Output file base name for HTML help builder.
+# Output file core name for HTML help builder.
 htmlhelp_basename = 'MakiFlowdoc'
 
 

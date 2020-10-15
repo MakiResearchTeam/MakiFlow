@@ -23,9 +23,9 @@ from tqdm import tqdm
 from makiflow.models.classificator.utils import error_rate, sparse_cross_entropy
 from copy import copy
 
-from makiflow.base import MakiTensor
+from makiflow.core import MakiTensor
 from makiflow.layers import InputLayer
-from makiflow.base.maki_entities import MakiCore
+from makiflow.core.maki_entities import MakiCore
 from abc import ABC
 
 EPSILON = np.float32(1e-37)

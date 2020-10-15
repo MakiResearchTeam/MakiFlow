@@ -52,7 +52,7 @@ def mutate_masks(masks, mapping):
 
 def merging_masks(masks, index_of_main_mask, priority):
     """
-    We choose the base mask which have index `index_of_main_mask` on which is put other classes
+    We choose the core mask which have index `index_of_main_mask` on which is put other classes
     according to `priority` of other classes
 
     Parameters
@@ -60,7 +60,7 @@ def merging_masks(masks, index_of_main_mask, priority):
     masks : list or numpy.array
         List or numpy array of masks.
     index_of_main_mask : int
-        Index of base mask.
+        Index of core mask.
     priority : list
         List of priority of classes. Classes will be installed in the prescribed manner,
         from highest priority to least priority in the list (from left to right in list).
@@ -70,7 +70,7 @@ def merging_masks(masks, index_of_main_mask, priority):
     Returns
     ---------
     main_mask : numpy.array
-        The base mask after merging other classes.
+        The core mask after merging other classes.
     """
 
     # For easy access and stay `masks[index_of_main_mask]` unchanged

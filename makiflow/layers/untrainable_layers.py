@@ -19,7 +19,7 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 from makiflow.layers.activation_converter import ActivationConverter
-from makiflow.base import MakiLayer, MakiTensor, MakiRestorable, InputMakiLayer
+from makiflow.core import MakiLayer, MakiTensor, MakiRestorable, InputMakiLayer
 import numpy as np
 import copy
 
@@ -953,7 +953,7 @@ class UnTrainableLayerAddress:
     }
 
 
-from makiflow.base.maki_entities.maki_builder import MakiBuilder
+from makiflow.core.maki_entities.maki_builder import MakiBuilder
 
 MakiBuilder.register_layers(UnTrainableLayerAddress.ADDRESS_TO_CLASSES)
 

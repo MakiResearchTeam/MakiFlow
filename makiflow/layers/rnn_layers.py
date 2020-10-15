@@ -25,7 +25,7 @@ from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 # noinspection PyUnresolvedReferences
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
-from makiflow.base.maki_entities import MakiLayer, MakiTensor, MakiRestorable
+from makiflow.core.maki_entities import MakiLayer, MakiTensor, MakiRestorable
 from makiflow.layers.activation_converter import ActivationConverter
 
 
@@ -454,7 +454,7 @@ class RNNLayerAddress:
     }
 
 
-from makiflow.base.maki_entities.maki_builder import MakiBuilder
+from makiflow.core.maki_entities.maki_builder import MakiBuilder
 
 MakiBuilder.register_layers(RNNLayerAddress.ADDRESS_TO_CLASSES)
 

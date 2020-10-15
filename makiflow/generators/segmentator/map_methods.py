@@ -73,7 +73,7 @@ class LoadResizeNormalize(MapMethod):
 class LoadDataMethod(MapMethod):
     def __init__(self, image_shape, mask_shape):
         """
-        The base map method. Simply loads the data and assigns shapes to it.
+        The core map method. Simply loads the data and assigns shapes to it.
         Images are loaded in the RGB format.
         Warning! Shape must be specified according to the actual image (mask) shapes!
         Otherwise set it to [None, None, None].
