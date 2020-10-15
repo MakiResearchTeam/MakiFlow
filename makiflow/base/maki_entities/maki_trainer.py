@@ -283,7 +283,7 @@ class MakiTrainer(MakiModel, ABC):
             if len(parent_tensors) == 1:
                 parent_tensors = parent_tensors[0]
 
-            if layer.get_name in self._trainable_layers:
+            if layer.get_name() in self._trainable_layers:
                 X = layer._training_forward(
                     parent_tensors
                 )
