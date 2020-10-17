@@ -24,7 +24,7 @@ from scipy.special import binom
 from makiflow.core import MakiTensor
 from makiflow.generators.segmentator import SegmentIterator
 from makiflow.layers import InputLayer
-from makiflow.core.maki_entities import MakiCore
+from makiflow.core.inference import MakiCore
 
 
 class SegmentatorBasic(MakiCore):

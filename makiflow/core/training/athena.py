@@ -51,6 +51,7 @@ class Athena(TrainingCore):
         # Must return the training loss scalar
         pass
 
+
     def fit(self, optimizer, epochs=1, iter=10, print_period=None, global_step=None):
         """
         Performs fitting of the model.
@@ -96,6 +97,73 @@ class Athena(TrainingCore):
 
             # Performs training iterations
             for j in it:
+                tracked_losses_vals, summary, _ = sess.run(
+                    [track_losses, total_summary, train_op]
+                )
+                # Interpolate loss values and collect them
+                for loss_name in tracked_losses_vals:
+                    loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
+                    loss_collectors[loss_name].append(loss_holders[loss_name])
+
+                self._hermes.increment()
+                if (j + 1) % print_period == 0:
+                    name_loss = list(loss_holders.items())
+                    print_train_info(
+                        i,
+                        *name_loss
+                    )
+                    self._hermes.write_summary(summary)
+
+        return loss_collectors
+
+    def fit_generator(self, generator, optimizer, epochs=1, iter=10, print_period=None, global_step=None):
+        """
+        Performs fitting of the model.
+
+        Parameters
+        ----------
+        optimizer : TensorFlow optimizer
+            Model uses TensorFlow optimizers in order train itself.
+        epochs : int
+            Number of epochs to run.
+        iter : int
+            Number of training iterations per update.
+        print_period : int
+            Every `print_period` training iterations the training info will be displayed.
+        global_step
+            Please refer to TensorFlow documentation about the global step for more info.
+        Returns
+        -------
+        dict
+            Dictionary with values of the tracked losses.
+        """
+        train_op = self.__minimize_loss(optimizer, global_step)
+
+        if print_period is None:
+            print_period = iter
+
+        # Loss value collectors. They will collect all the loss values during this training cycle.
+        loss_collectors = {}
+        for loss_name in self.get_track_losses():
+            loss_collectors[loss_name] = []
+
+        sess = super().get_session()
+        track_losses = self.get_track_losses()
+        total_summary = self._hermes.get_total_summary()
+        train_inputs = self.get
+        for i in range(epochs):
+            it = tqdm(range(iter))
+
+            # Loss value holders. They will hold an interpolated loss value for one iteration.
+            # This loss value will then be passed to an appropriate loss value collector.
+            loss_holders = {}
+            for loss_name in self.get_track_losses():
+                loss_holders[loss_name] = 0.0
+
+            # Performs training iterations
+            for j in it:
+                data = next(generator)
+                self
                 tracked_losses_vals, summary, _ = sess.run(
                     [track_losses, total_summary, train_op]
                 )

@@ -19,7 +19,7 @@ from __future__ import absolute_import
 import numpy as np
 import tensorflow as tf
 
-from makiflow.core.maki_entities.maki_layer import MakiRestorable, MakiLayer
+from makiflow.core.graph_entities.maki_layer import MakiRestorable, MakiLayer
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.core import BatchNormBaseLayer
 from makiflow.layers.utils import InitConvKernel, InitDenseMat
@@ -1884,7 +1884,7 @@ class TrainableLayerAddress:
     }
 
 
-from makiflow.core.maki_entities.maki_builder import MakiBuilder
+from makiflow.core.inference.maki_builder import MakiBuilder
 
 MakiBuilder.register_layers(TrainableLayerAddress.ADDRESS_TO_CLASSES)
 

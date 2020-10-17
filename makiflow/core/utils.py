@@ -1,4 +1,4 @@
-from .maki_entities import MakiTensor
+from .graph_entities import MakiTensor
 
 
 def to_makitensor(tf_tensor, name, parent_layer=None, parent_tensor_names=None, previous_tensors=None):

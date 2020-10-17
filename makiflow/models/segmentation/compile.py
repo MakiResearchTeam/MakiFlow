@@ -19,7 +19,7 @@ from .training_modules import FocalTrainingModule, MakiTrainingModule, Quadratic
     WeightedFocalTrainingModule, WeightedCrossEntropyTrainingModule
 
 import json
-from makiflow.core.maki_entities import MakiCore
+from makiflow.core.inference import MakiCore
 from .main_modules import SegmentatorBasic
 
 class Segmentator(

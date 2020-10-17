@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from makiflow.core.maki_entities import MakiCore
+from makiflow.core.inference import MakiCore
 
 
 class SSPInterface(MakiCore):

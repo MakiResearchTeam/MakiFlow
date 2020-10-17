@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..main_modules import ClassificatorBasis
-from makiflow.core.loss_builder import Loss
+from makiflow.core.training.loss_builder import Loss
 from makiflow.models.common.utils import print_train_info, moving_average
 from makiflow.models.common.utils import new_optimizer_used, loss_is_built
 import tensorflow as tf

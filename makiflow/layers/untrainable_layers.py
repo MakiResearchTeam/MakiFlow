@@ -953,7 +953,7 @@ class UnTrainableLayerAddress:
     }
 
 
-from makiflow.core.maki_entities.maki_builder import MakiBuilder
+from makiflow.core.inference.maki_builder import MakiBuilder
 
 MakiBuilder.register_layers(UnTrainableLayerAddress.ADDRESS_TO_CLASSES)
 

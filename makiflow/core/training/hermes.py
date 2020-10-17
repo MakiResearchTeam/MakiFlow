@@ -1,5 +1,5 @@
 from .tensorboard import TensorBoard
-from makiflow.core.maki_entities.maki_model import MakiModel
+from makiflow.core.inference.maki_model import MakiModel
 import tensorflow as tf
 
 

@@ -15,10 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
-
-from .maki_entities import MakiRestorable, MakiTensor, MakiLayer, InputMakiLayer
+from .graph_entities import MakiRestorable, MakiTensor, MakiLayer, InputMakiLayer
 from .base_layers import BatchNormBaseLayer
-from .loss_builder import Loss
+from .training import MakiTrainer, Loss
+from .inference import MakiModel
 
-del absolute_import

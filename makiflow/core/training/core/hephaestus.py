@@ -17,8 +17,8 @@
 
 from abc import ABC
 
-from makiflow.core import MakiTensor, MakiRestorable
-from makiflow.core.maki_entities.maki_model import MakiModel
+from makiflow.core.graph_entities import MakiTensor, MakiRestorable
+from makiflow.core.inference.maki_model import MakiModel
 
 
 class Hephaestus(ABC):
@@ -36,12 +36,16 @@ class Hephaestus(ABC):
         """
         self._model = model
         self._graph_tensors = model.get_graph_tensors()
+        self._train_inputs_list = train_inputs
         self._train_inputs = {}
         for train_input in train_inputs:
             self._train_inputs.update(train_input.get_self_pair())
 
         self._is_compiled = False
         self._setup_for_training()
+
+    def get_train_inputs_list(self):
+        return self._train_inputs_list.copy()
 
     def get_session(self):
         return self._model.get_session()

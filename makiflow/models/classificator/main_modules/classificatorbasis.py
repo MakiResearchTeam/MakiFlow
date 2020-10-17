@@ -25,7 +25,7 @@ from copy import copy
 
 from makiflow.core import MakiTensor
 from makiflow.layers import InputLayer
-from makiflow.core.maki_entities import MakiCore
+from makiflow.core.inference import MakiCore
 from abc import ABC
 
 EPSILON = np.float32(1e-37)
@@ -46,7 +46,7 @@ class ClassificatorBasis(MakiCore, ABC):
         graph_tensors.update(output.get_self_pair())
         outputs = [output]
         inputs = [input]
-        super().__init__(graph_tensors, outputs, inputs)
+        super().__init__(outputs, inputs)
         self.name = str(name)
         self._batch_sz = input.get_shape()[0]
         self._images = self._input_data_tensors[0]
@@ -86,22 +86,6 @@ class ClassificatorBasis(MakiCore, ABC):
             raise ValueError(f'Please provide the necessary transformation function. Got {labels_transform}')
         self._labels_transform = labels_transform
         self._labels = labels
-
-    def _prepare_training_vars(self):
-        if not self._set_for_training:
-            super()._setup_for_training()
-
-        self._logits = self._training_outputs[0]
-        self._num_classes = self._logits.get_shape()[-1]
-        # Number of labels does not always equal to the size of the batch size (with RNNs).
-        # It is more safe to take the first dimension as the number of the labels.
-        num_labels = self._logits.get_shape()[0]
-        if self._labels is None:
-            self._labels = tf.placeholder(tf.int32, shape=[num_labels])
-        self._ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=self._logits, labels=self._labels_transform(self._labels)
-        )
-        self._training_vars_are_ready = True
 
     def evaluate(self, Xtest, Ytest):
         Xtest = Xtest.astype(np.float32)
