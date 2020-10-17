@@ -30,9 +30,32 @@ class MakiModel(ABC):
     MODEL_INFO = 'model_info'
     GRAPH_INFO = 'graph_info'
 
-    def __init__(self, graph_tensors: dict, outputs: list, inputs: list):
+    def __init__(self, outputs: list, inputs: list, graph_tensors: dict = None):
+        """
+        Provides basic functionality for all the models.
+
+        Parameters
+        ----------
+        outputs : list
+            List of output MakiTensors. These are defined by the model's developer. There might more
+            tensors being involved in the model's computations, but they will be created and kept within the model
+            object. Those tensors have to be created by STATELESS objects/MakiLayers, otherwise it will be impossible
+            to save all the weights of the model.
+        inputs : list
+            List of all the input MakiTensors.
+        graph_tensors : dict optional
+            Must contain all the MakiTensors that were produced by stateful objects (MakiLayers that have weights).
+        """
         # Contains all the MakiTensor that appear in the computational graph
         self._graph_tensors = graph_tensors
+        if graph_tensors is None:
+            for output in outputs:
+                graph_tensors = output.get_previous_tensors().copy()
+                # Add output tensor to `graph_tensors` since it doesn't have it.
+                # It is assumed that graph_tensors contains ALL THE TENSORS graph consists of.
+                graph_tensors.update(output.get_self_pair())
+            self._graph_tensors = graph_tensors
+
         self._outputs = outputs
         self._inputs = inputs
         self._session = None
@@ -58,6 +81,23 @@ class MakiModel(ABC):
         self._training_outputs = []
 
         self._collect_params()
+
+    def get_outputs(self):
+        """
+        Returns
+        -------
+        list of output MakiTensors specified by the model. This does not necessary returns
+        the output MakiTensor of the predict method.
+        """
+        return self._outputs
+
+    def get_inputs(self):
+        """
+        Returns
+        -------
+        list of input MakiTensors
+        """
+        return self._inputs
 
     def _collect_params(self):
         self._params = []
@@ -237,3 +277,11 @@ class MakiModel(ABC):
         """
         return self._layers.copy()
 
+    def get_graph_tensors(self):
+        """
+        Returns
+        -------
+        dict
+            Contains all the MakiTensors in the model's graph.
+        """
+        return self._graph_tensors.copy()

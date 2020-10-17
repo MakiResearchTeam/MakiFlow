@@ -108,7 +108,7 @@ class ReshapeLayer(MakiLayer):
             named_params_dict={}
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 if self.ignore_batch:
@@ -133,8 +133,8 @@ class ReshapeLayer(MakiLayer):
 
                     return tf.reshape(tensor=X, shape=[bs, *new_shape], name=self._name)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -180,13 +180,13 @@ class MulByAlphaLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return tf.math.multiply(X, self.alpha, name=self._name)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -226,14 +226,14 @@ class SumLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 # Compare with tf.reduce_sum and tf.add_n, sum(X) works faster in running session
                 return sum(X)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -272,13 +272,13 @@ class ConcatLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return tf.concat(values=X, axis=self.axis, name=self._name)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -328,7 +328,7 @@ class ZeroPaddingLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return tf.pad(
@@ -338,8 +338,8 @@ class ZeroPaddingLayer(MakiLayer):
                     name=self._name
                 )
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -380,14 +380,14 @@ class GlobalMaxPoolLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 assert (len(X.shape) == 4), GlobalMaxPoolLayer._ASSERT_WRONG_INPUT_SHAPE
                 return tf.reduce_max(X, axis=[1, 2], name=self._name)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -423,14 +423,14 @@ class GlobalAvgPoolLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 assert (len(X.shape) == 4), GlobalAvgPoolLayer._ASSERT_WRONG_INPUT_SHAPE
                 return tf.reduce_mean(X, axis=[1, 2], name=self._name)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -482,7 +482,7 @@ class MaxPoolLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return tf.nn.max_pool(
@@ -492,8 +492,8 @@ class MaxPoolLayer(MakiLayer):
                     padding=self.padding
                 )
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -556,7 +556,7 @@ class AvgPoolLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return tf.nn.avg_pool(
@@ -566,8 +566,8 @@ class AvgPoolLayer(MakiLayer):
                     padding=self.padding
                 )
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -621,13 +621,13 @@ class ActivationLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return self.f(X, name=self._name)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -667,13 +667,13 @@ class FlattenLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return tf.contrib.layers.flatten(X)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -722,10 +722,10 @@ class DropoutLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         return X
 
-    def _training_forward(self, X):
+    def training_forward(self, X):
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
             with tf.name_scope(self.get_name()):
                 return tf.nn.dropout(X, self._p_keep,
@@ -808,7 +808,7 @@ class ResizeLayer(MakiLayer):
             named_params_dict={}
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
 
@@ -853,8 +853,8 @@ class ResizeLayer(MakiLayer):
                         ResizeLayer._EXCEPTION_INTERPOLATION_IS_NOT_FOUND.format(self.interpolation)
                     )
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -900,15 +900,15 @@ class L2NormalizationLayer(MakiLayer):
                          named_params_dict={}
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return tf.math.l2_normalize(
                     x=X, epsilon=self._eps, axis=-1, name=self._name
                 )
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):

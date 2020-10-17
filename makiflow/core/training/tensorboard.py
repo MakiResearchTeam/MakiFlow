@@ -26,6 +26,8 @@ class TensorBoard:
         # Counter for total number of training iterations.
         self._tb_summaries = []
         self._total_summary = None
+        # Counter of iterations
+        self._counter = 0
 
     def set_tensorboard_writer(self, writer):
         """
@@ -62,22 +64,6 @@ class TensorBoard:
         assert len(self._tb_summaries) != 0, 'No summaries found.'
         print('Collecting histogram tensors...')
 
-        # Collect all layers histograms
-        for layer_name in self._layers_histograms:
-            # Add weights histograms
-            with tf.name_scope(f'{layer_name}/weight'):
-                for weight in self._layer_weights[layer_name]:
-                    self.add_summary(tf.summary.histogram(name=weight.name, values=weight))
-
-            # Add grads histograms
-            with tf.name_scope(f'{layer_name}/grad'):
-                for weight in self._layer_weights[layer_name]:
-                    grad = self._var2grad.get(weight)
-                    if grad is None:
-                        print(f'Did not find gradient for layer={layer_name}, var={weight.name}')
-                        continue
-                    self.add_summary(tf.summary.histogram(name=weight.name, values=grad))
-
         self._total_summary = tf.summary.merge(self._tb_summaries)
         self._tb_is_setup = True
 
@@ -87,3 +73,22 @@ class TensorBoard:
 
     def is_setup(self):
         return self._tb_is_setup
+
+    def increment(self):
+        # Must be called during each iteration of the training cycle
+        self._counter += 1
+
+    def write_summary(self, summary):
+        """
+        Writes the summary to the Tensorboard. If the tensorboard writer is not provided, does nothing.
+        Parameters
+        ----------
+        summary : tf.Summary
+            The total summary (received from the `get_total_summary` method).
+        Returns
+        -------
+
+        """
+        if self._tb_writer is None:
+            return
+        self._tb_writer.add_summary(summary, self._counter)

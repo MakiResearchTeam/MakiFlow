@@ -4,6 +4,7 @@ from makiflow.models.common.utils import new_optimizer_used, loss_is_built
 from .core import TrainingCore
 from tqdm import tqdm
 from abc import abstractmethod
+from .hermes import Hermes
 
 
 class Athena(TrainingCore):
@@ -14,6 +15,10 @@ class Athena(TrainingCore):
         super()._setup_for_training()
         self._track_losses = {}
         self._training_loss = None
+        self._hermes = Hermes(super().get_model())
+
+    def get_hermes(self):
+        return self._hermes
 
     def track_loss(self, loss_tensor, loss_name):
         loss = self._track_losses.get(loss_name)
@@ -21,6 +26,7 @@ class Athena(TrainingCore):
             print(f'Overriding already existing {loss_name} loss tensor.')
 
         self._track_losses[loss_name] = loss_tensor
+        self._hermes.add_scalar(loss, loss_name)
 
     def compile(self):
         """
@@ -28,6 +34,7 @@ class Athena(TrainingCore):
         """
         super().compile()
         self.build_loss()
+        self._hermes.setup_tensorboard()
 
     def build_loss(self):
         # noinspection PyAttributeOutsideInit
@@ -63,7 +70,7 @@ class Athena(TrainingCore):
         Returns
         -------
         dict
-            Dictionary with information about: total loss, paf loss, heatmap loss.
+            Dictionary with values of the tracked losses.
         """
         train_op = self.__minimize_loss(optimizer, global_step)
 
@@ -75,6 +82,9 @@ class Athena(TrainingCore):
         for loss_name in self.get_track_losses():
             loss_collectors[loss_name] = []
 
+        sess = super().get_session()
+        track_losses = self.get_track_losses()
+        total_summary = self._hermes.get_total_summary()
         for i in range(epochs):
             it = tqdm(range(iter))
 
@@ -86,23 +96,22 @@ class Athena(TrainingCore):
 
             # Performs training iterations
             for j in it:
-                tracked_losses_vals, _ = self._sess.run(
-                    [self.get_track_losses(), self._total_summary, train_op]
+                tracked_losses_vals, summary, _ = sess.run(
+                    [track_losses, total_summary, train_op]
                 )
                 # Interpolate loss values and collect them
                 for loss_name in tracked_losses_vals:
                     loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
                     loss_collectors[loss_name].append(loss_holders[loss_name])
 
-                self._tb_counter += 1
+                self._hermes.increment()
                 if (j + 1) % print_period == 0:
                     name_loss = list(loss_holders.items())
                     print_train_info(
                         i,
                         *name_loss
                     )
-                    if self._tb_writer is not None:
-                        self._tb_writer.add_summary(summary, self._tb_counter)
+                    self._hermes.write_summary(summary)
 
         return loss_collectors
 
@@ -123,8 +132,7 @@ class Athena(TrainingCore):
             # Returns list of tuples: [ (grad, var) ]
             self._grads_and_vars = optimizer.compute_gradients(self._training_loss, training_vars)
             vars_and_grads = [(var, grad) for grad, var in self._grads_and_vars]
-            # Collect mapping from the variable to its grad for tensorboard
-            self._var2grad = dict(vars_and_grads)
+            self._hermes.set_vars_grads(vars_and_grads)
 
         self._train_op = optimizer.apply_gradients(
             grads_and_vars=self._grads_and_vars, global_step=global_step

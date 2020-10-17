@@ -46,7 +46,7 @@ class PositionalEncodingLayer(MakiLayer):
     def __init__(self, name='PositionalEncodingLayer'):
         super().__init__(name, [], [], {})
 
-    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 _, h, w, d = x.get_shape().as_list()
@@ -54,8 +54,8 @@ class PositionalEncodingLayer(MakiLayer):
                 x = x + pe
                 return x
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     def to_dict(self):
         return {}
@@ -104,7 +104,7 @@ class AttentionLayer(MakiLayer):
         """
         return super().__call__(x)
 
-    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 keys, queries, values = x
@@ -120,8 +120,8 @@ class AttentionLayer(MakiLayer):
                 output = tf.matmul(self.attention, values)
                 return output
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     def to_dict(self):
         return {
@@ -222,13 +222,13 @@ class SpatialAttentionLayer(MakiLayer):
         output = self._to_grid(output)
         return super().__call__([x, output])
 
-    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return x[0] + x[1]
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     def to_dict(self):
         return {}

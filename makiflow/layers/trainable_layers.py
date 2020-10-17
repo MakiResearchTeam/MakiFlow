@@ -106,7 +106,7 @@ class ConvLayer(MakiLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 conv_out = tf.nn.conv2d(
@@ -121,8 +121,8 @@ class ConvLayer(MakiLayer):
                     return conv_out
                 return self.f(conv_out, name=self.get_name() + ConvLayer.ACTIVATION_PREFIX)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -248,7 +248,7 @@ class UpConvLayer(MakiLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 out_shape = X.get_shape().as_list()
@@ -268,8 +268,8 @@ class UpConvLayer(MakiLayer):
                     return conv_out
                 return self.f(conv_out, name=self.get_name() + UpConvLayer.ACTIVATION_PREFIX)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -360,13 +360,13 @@ class BiasLayer(MakiLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return tf.nn.bias_add(X, self.b, name=self.get_name())
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -470,7 +470,7 @@ class DepthWiseConvLayer(MakiLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 conv_out = tf.nn.depthwise_conv2d(
@@ -487,8 +487,8 @@ class DepthWiseConvLayer(MakiLayer):
                     return conv_out
                 return self.f(conv_out, name=self.get_name() + DepthWiseConvLayer.ACTIVATION_PREFIX)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -626,7 +626,7 @@ class SeparableConvLayer(MakiLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 conv_out = tf.nn.separable_conv2d(
@@ -643,8 +643,8 @@ class SeparableConvLayer(MakiLayer):
                     return conv_out
                 return self.f(conv_out, name=self.get_name() + SeparableConvLayer.ACTIVATION_PREFIX)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -756,7 +756,7 @@ class DenseLayer(MakiLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 out = tf.matmul(X, self.W, name=self.get_name())
@@ -766,8 +766,8 @@ class DenseLayer(MakiLayer):
                     return out
                 return self.f(out, name=self.get_name() + DenseLayer.ACTIVATION_PREFIX)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -884,7 +884,7 @@ class AtrousConvLayer(MakiLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 conv_out = tf.nn.atrous_conv2d(X, self.W,
@@ -898,8 +898,8 @@ class AtrousConvLayer(MakiLayer):
                     return conv_out
                 return self.f(conv_out, name=self.get_name() + AtrousConvLayer.ACTIVATION_PREFIX)
 
-    def _training_forward(self, x):
-        return self._forward(x, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, x):
+        return self.forward(x, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -999,7 +999,7 @@ class BatchNormLayer(BatchNormBaseLayer):
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 if self._track_running_stats:
@@ -1033,9 +1033,9 @@ class BatchNormLayer(BatchNormBaseLayer):
                         name=self.get_name()
                     )
 
-    def _training_forward(self, X):
+    def training_forward(self, X):
         if not self._track_running_stats:
-            return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+            return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
             with tf.name_scope(self.get_name()):
@@ -1178,7 +1178,7 @@ class GroupNormLayer(BatchNormBaseLayer):
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 # These if statements check if we do batchnorm for convolution or dense
@@ -1214,9 +1214,9 @@ class GroupNormLayer(BatchNormBaseLayer):
 
                 return X
 
-    def _training_forward(self, X):
+    def training_forward(self, X):
         if not self._track_running_stats:
-            return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+            return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
             with tf.name_scope(self.get_name()):
@@ -1366,7 +1366,7 @@ class NormalizationLayer(BatchNormBaseLayer):
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 if self._track_running_stats:
@@ -1401,9 +1401,9 @@ class NormalizationLayer(BatchNormBaseLayer):
                         name=self.get_name()
                     )
 
-    def _training_forward(self, X):
+    def training_forward(self, X):
         if not self._track_running_stats:
-            return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+            return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
             with tf.name_scope(self.get_name()):
@@ -1546,7 +1546,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
                                             name=self.name_var)
         self._named_params_dict[self.name_var] = self.running_variance
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 if self._track_running_stats:
@@ -1581,9 +1581,9 @@ class InstanceNormLayer(BatchNormBaseLayer):
                         name=self.get_name()
                     )
 
-    def _training_forward(self, X):
+    def training_forward(self, X):
         if not self._track_running_stats:
-            return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+            return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
             with tf.name_scope(self.get_name()):
@@ -1682,13 +1682,13 @@ class ScaleLayer(MakiLayer):
                          named_params_dict={self.name_scale: self.scale}
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 return tf.math.multiply(X, self.scale, name=self.get_name())
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -1782,7 +1782,7 @@ class WeightStandConvLayer(MakiLayer):
                          named_params_dict=named_params_dict
                          )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 conv_out = tf.nn.conv2d(
@@ -1800,7 +1800,7 @@ class WeightStandConvLayer(MakiLayer):
 
                 return self.f(conv_out, name=self.get_name() + ConvLayer.ACTIVATION_PREFIX)
 
-    def _training_forward(self, x):
+    def training_forward(self, x):
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
             with tf.name_scope(self.get_name()):
                 W_mean, W_var = tf.nn.moments(self.W_train, axes=[1, 2, 3], keep_dims=True)

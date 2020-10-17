@@ -47,7 +47,7 @@ class SingleTextureLayer(MakiLayer):
                          named_params_dict=named_params_dict
         )
 
-    def _forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 # Normalize the input UV map so that its coordinates are within [-1, 1] range.
@@ -56,8 +56,8 @@ class SingleTextureLayer(MakiLayer):
                 expanded_texture = tf.concat([self._texture] * batch_size, axis=0)
                 return grid_sample(expanded_texture, x)
 
-    def _training_forward(self, X):
-        return self._forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
@@ -114,17 +114,17 @@ class LaplacianPyramidTextureLayer(MakiLayer):
 
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 # Normalize the input UV map so that its coordinates are within [-1, 1] range.
                 y = []
                 for d in range(self._depth):
-                    y += [self._textures[d]._forward(x, computation_mode)]
+                    y += [self._textures[d].forward(x, computation_mode)]
                 return tf.add_n(y)
 
-    def _training_forward(self, x):
-        return self._forward(x, computation_mode=MakiRestorable.TRAINING_MODE)
+    def training_forward(self, x):
+        return self.forward(x, computation_mode=MakiRestorable.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):

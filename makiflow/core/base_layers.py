@@ -127,11 +127,11 @@ class BatchNormBaseLayer(MakiLayer):
         pass
 
     @abstractmethod
-    def _training_forward(self, X):
+    def training_forward(self, X):
         pass
 
     @abstractmethod
-    def _forward(self, X):
+    def forward(self, X):
         pass
 
     @abstractmethod

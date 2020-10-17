@@ -166,7 +166,7 @@ class MakiLayer(MakiRestorable):
 
         if len(data_tensors) == 1:
             data_tensors = data_tensors[0]
-        output = self._forward(data_tensors)
+        output = self.forward(data_tensors)
 
         self.__check_output(output)
 
@@ -219,7 +219,7 @@ class MakiLayer(MakiRestorable):
             self._children_dict[parent_tensor_name] = output_mt_names
 
     @abstractmethod
-    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         """
         Method that contains the logic of the transformation that the layer performs.
 
@@ -237,7 +237,7 @@ class MakiLayer(MakiRestorable):
         pass
 
     @abstractmethod
-    def _training_forward(self, x):
+    def training_forward(self, x):
         """
         Used in during the construction of the training graph.
         Logic of some of the layers may change depending on whether the model is

@@ -25,10 +25,20 @@ class Hephaestus(ABC):
     # This entity is responsible for building the training graph and
     # the final loss
     def __init__(self, model: MakiModel, train_inputs: list):
+        """
+        Provides basic tools for the training setup. Builds final loss tensor and the training graph.
+        Parameters
+        ----------
+        model : MakiModel
+            The model's object.
+        train_inputs : list
+            List of the input training tensors. Their names must be the same as their inference counterparts!
+        """
         self._model = model
-        self._training_inputs = {}
+        self._graph_tensors = model.get_graph_tensors()
+        self._train_inputs = {}
         for train_input in train_inputs:
-            self._training_inputs.update(train_input.get_self_pair())
+            self._train_inputs.update(train_input.get_self_pair())
 
         self._is_compiled = False
         self._setup_for_training()
@@ -117,29 +127,37 @@ class Hephaestus(ABC):
 
         # Contains pairs {layer_name: {MakiTensor name: data_tensor}}, where the inner dictionary
         # contains all the MakiTensor that were produced by the layer with the `layer_name` name.
-        output_tensors = {}
+        layer_name2output_tensors = {}
         # Collection of all the tf.Tensor that stem from the training graph.
         self._traingraph_tensors = {}
 
         def create_tensor(maki_tensor: MakiTensor):
-            # Check if the parent layer has been already used.
-            # If it has, the required tensor has already been constructed.
+            # If the parent layer has been used, the required tensor is already constructed.
             layer = maki_tensor.get_parent_layer()
 
             # Check if we haven't used this layer before.
             # If haven't, add an empty dictionary.
-            if output_tensors.get(layer.get_name()) is None:
-                output_tensors[layer.get_name()] = dict()
+            if layer_name2output_tensors.get(layer.get_name()) is None:
+                layer_name2output_tensors[layer.get_name()] = dict()
 
-            outputs = output_tensors.get(layer.get_name())
+            outputs = layer_name2output_tensors.get(layer.get_name())
+
             # Check if the tensor has already been created.
             if outputs.get(maki_tensor.get_name()) is not None:
                 return outputs.get(maki_tensor.get_name())
 
             # If we are here, then the tensor hasn't been created.
+
             # Check if we at the beginning of the computational graph, i.e. InputLayer
             if len(maki_tensor.get_parent_tensor_names()) == 0:
-                X = maki_tensor.get_data_tensor()
+                # Replace an inference input tensor with its training counterpart
+                name = maki_tensor.get_name()
+                training_makitensor = self._train_inputs.get(name)
+                if training_makitensor is None:
+                    raise KeyError(f'There is no training input tensor with name {name}. The names of the training'
+                                   f'input tensors must be the same with their corresponding inference counterparts.')
+
+                X = training_makitensor.get_data_tensor()
                 outputs.update(
                     {maki_tensor.get_name(): X}
                 )
@@ -156,11 +174,11 @@ class Hephaestus(ABC):
                 parent_tensors = parent_tensors[0]
 
             if layer.get_name() in self._trainable_layers:
-                X = layer._training_forward(
+                X = layer.training_forward(
                     parent_tensors
                 )
             else:
-                X = layer._forward(
+                X = layer.forward(
                     parent_tensors,
                     computation_mode=MakiRestorable.TRAINING_MODE
                 )
@@ -183,11 +201,18 @@ class Hephaestus(ABC):
 
             return outputs.get(maki_tensor.get_name())
 
-        for output in self._outputs:
-            self._training_outputs += [create_tensor(output)]
+        for output in self._model.get_outputs():
+            # Even though the method does return some tensors, they are not being collected here.
+            # It is done internally in the method. All the necessary tensors can be accessed
+            # via the `get_traingraph_tensor` method.
+            create_tensor(output)
 
     def get_traingraph_tensor(self, tensor_name):
         tensor = self._traingraph_tensors.get(tensor_name)
         if tensor is None:
             raise KeyError(f'Could not find training tensor with name={tensor_name}')
         return tensor
+
+    def get_traingraph_datatensor(self, tensor_name):
+        makitensor = self.get_traingraph_tensor(tensor_name)
+        return makitensor.get_data_tensor()
