@@ -65,12 +65,12 @@ class ModelSerializer(MakiModel):
         """
         # Collect all names of output variables/operations
         output_names = [
-            single_output.get_data_tensor().name.split(':')[0]
-            for single_output in self._outputs
-        ] + [
-            single_output.name.split(':')[0]
-            for single_output in self._training_outputs
-        ]
+                           single_output.get_data_tensor().name.split(':')[0]
+                           for single_output in self._outputs
+                       ] + [
+                           single_output.name.split(':')[0]
+                           for single_output in self._training_outputs
+                       ]
 
         frozen_graph = None
         graph = self._session.graph
@@ -85,7 +85,7 @@ class ModelSerializer(MakiModel):
 
         tf.train.write_graph(frozen_graph, path_to_save,
                              file_name, as_text=False
-        )
+                             )
 
     def save_architecture(self, path):
         """

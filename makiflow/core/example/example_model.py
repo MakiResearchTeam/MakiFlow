@@ -2,6 +2,11 @@ from makiflow.core import MakiModel, MakiTensor
 
 
 class ExampleModel(MakiModel):
+    def get_feed_dict_config(self) -> dict:
+        return {
+            self._in_x: 0
+        }
+
     def _get_model_info(self):
         return {
             'param': 'value'

@@ -5,6 +5,7 @@ from .core import TrainingCore
 from tqdm import tqdm
 from abc import abstractmethod
 from .hermes import Hermes
+from ..utils import pack_data
 
 
 class Athena(TrainingCore):
@@ -19,14 +20,6 @@ class Athena(TrainingCore):
 
     def get_hermes(self):
         return self._hermes
-
-    def track_loss(self, loss_tensor, loss_name):
-        loss = self._track_losses.get(loss_name)
-        if loss is not None:
-            print(f'Overriding already existing {loss_name} loss tensor.')
-
-        self._track_losses[loss_name] = loss_tensor
-        self._hermes.add_scalar(loss, loss_name)
 
     def compile(self):
         """
@@ -43,6 +36,14 @@ class Athena(TrainingCore):
         self.track_loss(self._training_loss, Athena.TRAINING_LOSS)
         loss_is_built()
 
+    def track_loss(self, loss_tensor, loss_name):
+        loss = self._track_losses.get(loss_name)
+        if loss is not None:
+            print(f'Overriding already existing {loss_name} loss tensor.')
+
+        self._track_losses[loss_name] = loss_tensor
+        self._hermes.add_scalar(loss, loss_name)
+
     def get_track_losses(self):
         return self._track_losses.copy()
 
@@ -50,7 +51,6 @@ class Athena(TrainingCore):
     def _build_loss(self):
         # Must return the training loss scalar
         pass
-
 
     def fit(self, optimizer, epochs=1, iter=10, print_period=None, global_step=None):
         """
@@ -122,6 +122,8 @@ class Athena(TrainingCore):
 
         Parameters
         ----------
+        generator : python iterator
+            Returns tuple of (data, labels). Data and labels can be tuples or lists themselves.
         optimizer : TensorFlow optimizer
             Model uses TensorFlow optimizers in order train itself.
         epochs : int
@@ -150,7 +152,8 @@ class Athena(TrainingCore):
         sess = super().get_session()
         track_losses = self.get_track_losses()
         total_summary = self._hermes.get_total_summary()
-        train_inputs = self.get
+        input_feed_dict = self.get_input_feed_dict_config()
+        label_feed_dict = self.get_label_feed_dict_config()
         for i in range(epochs):
             it = tqdm(range(iter))
 
@@ -162,10 +165,13 @@ class Athena(TrainingCore):
 
             # Performs training iterations
             for j in it:
-                data = next(generator)
-                self
+                input_data, labels = next(generator)
+                packed_data = pack_data(input_feed_dict, input_data)
+                packed_labels = pack_data(label_feed_dict, labels)
+                feed_dict = packed_data.update(packed_labels)
                 tracked_losses_vals, summary, _ = sess.run(
-                    [track_losses, total_summary, train_op]
+                    [track_losses, total_summary, train_op],
+                    feed_dict=feed_dict
                 )
                 # Interpolate loss values and collect them
                 for loss_name in tracked_losses_vals:
@@ -208,3 +214,31 @@ class Athena(TrainingCore):
 
         self.get_session().run(tf.variables_initializer(optimizer.variables()))
         new_optimizer_used()
+
+    def get_input_feed_dict_config(self):
+        """
+        Returns
+        -------
+        dict
+            The same as the one the model returns via its `get_feed_dict_config` method, except
+            that the input tensors are replaced with their counterparts from the training graph.
+        """
+        model = super().get_model()
+        feed_dict_config = model.get_feed_dict_config()
+        train_feed_dict_config = dict()
+        for t, i in feed_dict_config.items():
+            name = t.get_name()
+            tensor = super().get_traingraph_tensor(name)
+            train_feed_dict_config[tensor] = i
+
+        return train_feed_dict_config
+
+    @abstractmethod
+    def get_label_feed_dict_config(self):
+        """
+        Returns
+        -------
+        dict
+            Same as the input feed dict config, except it is for tensors with labels.
+        """
+        pass
