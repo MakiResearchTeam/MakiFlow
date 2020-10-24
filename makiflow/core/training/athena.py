@@ -1,6 +1,6 @@
 import tensorflow as tf
-from makiflow.core.training.common import print_train_info, moving_average
-from makiflow.core.training.common import new_optimizer_used, loss_is_built
+from .utils import print_train_info, moving_average
+from .utils import new_optimizer_used, loss_is_built
 from .core import TrainingCore
 from tqdm import tqdm
 from abc import abstractmethod
