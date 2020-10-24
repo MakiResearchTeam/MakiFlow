@@ -29,19 +29,19 @@ def set_main_gpu(gpu_id):
 
 def get_low_memory_sess(new_sess=False):
     """
-	Creates tf.Session which dynamically takes GPU memory. Note that taken memory won't
-	be freed.
+    Creates tf.Session which dynamically takes GPU memory. Note that taken memory won't
+    be freed.
 
-	Parameters
-	----------
-	new_sess : bool
-		If `new_sess == False`, the function will return previously created session.
-		Set `new_sess` to True if you need a new one.
+    Parameters
+    ----------
+    new_sess : bool
+        If `new_sess == False`, the function will return previously created session.
+        Set `new_sess` to True if you need a new one.
 
-	Returns
-	-------
-	tf.Session
-	"""
+    Returns
+    -------
+    tf.Session
+    """
     global LOW_MEMORY_SESS
     if LOW_MEMORY_SESS is None or new_sess:
         config = tf.ConfigProto()
@@ -52,21 +52,21 @@ def get_low_memory_sess(new_sess=False):
 
 def get_fraction_memory_sess(fraction=0.5, new_sess=False):
     """
-	Creates tf.Session which takes only a given fraction of a GPU memory.
+    Creates tf.Session which takes only a given fraction of a GPU memory.
 
-	Parameters
-	----------
-	fraction : float
-		How much of a GPU memory the session will take.
-		Example: 0.5 - 50%, 0.7 - 70% of the memory.
-	new_sess : bool
-		If `new_sess == False`, the function will return previously created session.
-		Set `new_sess` to True if you need a new one.
+    Parameters
+    ----------
+    fraction : float
+        How much of a GPU memory the session will take.
+        Example: 0.5 - 50%, 0.7 - 70% of the memory.
+    new_sess : bool
+        If `new_sess == False`, the function will return previously created session.
+        Set `new_sess` to True if you need a new one.
 
-	Returns
-	-------
-	tf.Session
-	"""
+    Returns
+    -------
+    tf.Session
+    """
     global FRACTION_MEMORY_SESS
     if FRACTION_MEMORY_SESS is None or new_sess:
         config = tf.ConfigProto()
@@ -77,22 +77,22 @@ def get_fraction_memory_sess(fraction=0.5, new_sess=False):
 
 def freeze_model(checkpoint_path, protobuf_name, output_node_names):
     """
-	Freezes model by converting its weights to constants and saves
-	it to protobuf (.pb) file.
+    Freezes model by converting its weights to constants and saves
+    it to protobuf (.pb) file.
 
-	Parameters
-	----------
-	checkpoint_path : str
-		Path to the model's checkpoint file.
-		There must be `.meta` file with the graph info.
-		Example: 'model_folder/weights.ckpt'
-	protobuf_name : str
-		Name of the protobuf file which model will be
-		saved to.
-	output_node_names : list
-		List of strings. Contains names of the output nodes
-		of your model.
-	"""
+    Parameters
+    ----------
+    checkpoint_path : str
+        Path to the model's checkpoint file.
+        There must be `.meta` file with the graph info.
+        Example: 'model_folder/weights.ckpt'
+    protobuf_name : str
+        Name of the protobuf file which model will be
+        saved to.
+    output_node_names : list
+        List of strings. Contains names of the output nodes
+        of your model.
+    """
     sess = tf.Session()
     saver = tf.train.import_meta_graph(checkpoint_path + '.meta')
     saver.restore(sess, checkpoint_path)
