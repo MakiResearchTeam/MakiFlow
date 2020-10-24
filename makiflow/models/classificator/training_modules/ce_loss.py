@@ -26,7 +26,7 @@ class CETrainingModule(MakiTrainer):
         super()._setup_for_training()
         self._labels = super().get_label_tensors()[CETrainingModule.LABELS]
         logits_makitensor = super().get_model().get_logits()
-        self._logits_training_tensor = super().get_traingraph_datatensor(logits_makitensor.get_name())
+        self._logits_training_tensor = super().get_traingraph_tensor(logits_makitensor.get_name())
 
     def _setup_label_placeholders(self):
         return {

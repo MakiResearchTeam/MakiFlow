@@ -225,7 +225,3 @@ class Hephaestus(ABC):
         if tensor is None:
             raise KeyError(f'Could not find training tensor with name={tensor_name}')
         return tensor
-
-    def get_traingraph_datatensor(self, tensor_name):
-        makitensor = self.get_traingraph_tensor(tensor_name)
-        return makitensor.get_data_tensor()
