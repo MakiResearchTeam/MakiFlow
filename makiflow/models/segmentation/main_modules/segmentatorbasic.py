@@ -15,16 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from sklearn.utils import shuffle
 import tensorflow as tf
-from tqdm import tqdm
-
-from scipy.special import binom
-
 from makiflow.core import MakiTensor
 from makiflow.generators.segmentator import SegmentIterator
 from makiflow.layers import InputLayer
-from makiflow.core.inference import MakiCore
+from makiflow.core.inference import MakiModel as MakiCore
 
 
 class SegmentatorBasic(MakiCore):

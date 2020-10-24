@@ -22,8 +22,8 @@ from tqdm import tqdm
 from scipy.special import binom
 
 from makiflow.generators.segmentator import SegmentIterator
-from makiflow.core.training.common import print_train_info, moving_average
-from makiflow.core.training.common import new_optimizer_used, loss_is_built
+from makiflow.core.training.utils import print_train_info, moving_average
+from makiflow.core.training.utils import new_optimizer_used, loss_is_built
 
 from ..main_modules import SegmentatorBasic
 

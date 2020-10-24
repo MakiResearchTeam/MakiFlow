@@ -16,8 +16,8 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from makiflow.core.inference import MakiTensor
-from makiflow.core.inference import MakiCore
+from makiflow.core.graph_entities import MakiTensor
+from makiflow.core.inference import MakiModel as MakiCore
 
 from makiflow.generators.nn_render import NNRIterator
 

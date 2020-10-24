@@ -17,8 +17,8 @@
 
 from ..main_modules import ClassificatorBasis
 from makiflow.core.training.loss_builder import Loss
-from makiflow.core.training.common import print_train_info, moving_average
-from makiflow.core.training.common import new_optimizer_used, loss_is_built
+from makiflow.core.training.utils import print_train_info, moving_average
+from makiflow.core.training.utils import new_optimizer_used, loss_is_built
 import tensorflow as tf
 import numpy as np
 from sklearn.utils import shuffle

@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from .perceptual_loss import PerceptualLossModuleGenerator
-from makiflow.core.inference import MakiTensor
+from makiflow.core.graph_entities import MakiTensor
 
 # Class that connects all additional losses
 

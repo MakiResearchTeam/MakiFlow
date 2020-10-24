@@ -18,8 +18,8 @@
 import tensorflow as tf
 from abc import ABC
 
-from makiflow.core.inference import MakiTensor
-from makiflow.core.inference import MakiCore
+from makiflow.core.graph_entities import MakiTensor
+from makiflow.core.inference import MakiModel as MakiCore
 from makiflow.generators.regressor import RIterator
 
 
