@@ -17,9 +17,8 @@
 
 from abc import abstractmethod
 import tensorflow as tf
-from copy import copy
 import numpy as np
-from makiflow.core.inference import MakiLayer, MakiTensor
+from .graph_entities import MakiLayer
 
 
 class BatchNormBaseLayer(MakiLayer):
