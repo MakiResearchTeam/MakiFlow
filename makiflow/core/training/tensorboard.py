@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
-from .athena import Athena
-from abc import ABC
 import tensorflow as tf
 
 
