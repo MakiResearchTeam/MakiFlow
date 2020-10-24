@@ -26,7 +26,6 @@ from copy import copy
 from makiflow.core import MakiTensor
 from makiflow.layers import InputLayer
 from makiflow.core.inference import MakiModel
-from abc import ABC
 
 EPSILON = np.float32(1e-37)
 

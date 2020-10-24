@@ -41,7 +41,7 @@ class Athena(TrainingCore):
         """
         if self._label_tensors is None:
             self._label_tensors = self._setup_label_placeholders()
-        self._label_tensors.copy()
+        return self._label_tensors.copy()
 
     @abstractmethod
     def _setup_label_placeholders(self):
