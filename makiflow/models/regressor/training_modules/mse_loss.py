@@ -18,8 +18,8 @@
 import tensorflow as tf
 from .additional_losses import BasicTrainingModule
 from makiflow.core.training.loss_builder import Loss
-from makiflow.models.common.utils import print_train_info, moving_average
-from makiflow.models.common.utils import loss_is_built, new_optimizer_used
+from makiflow.core.training.common import print_train_info, moving_average
+from makiflow.core.training.common import loss_is_built, new_optimizer_used
 from sklearn.utils import shuffle
 from tqdm import tqdm
 

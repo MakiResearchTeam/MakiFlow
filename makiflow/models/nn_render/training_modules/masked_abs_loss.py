@@ -18,8 +18,8 @@
 import tensorflow as tf
 from ..main_modules import NeuralRenderBasis
 from makiflow.core.training.loss_builder import Loss
-from makiflow.models.common.utils import print_train_info, moving_average
-from makiflow.models.common.utils import new_optimizer_used, loss_is_built
+from makiflow.core.training.common import print_train_info, moving_average
+from makiflow.core.training.common import new_optimizer_used, loss_is_built
 from makiflow.generators.nn_render import NNRIterator
 from tqdm import tqdm
 
