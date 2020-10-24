@@ -30,7 +30,7 @@ class CETrainingModule(MakiTrainer):
 
     def _setup_label_placeholders(self):
         return {
-            CETrainingModule.LABELS, tf.placeholder(dtype=tf.int32, shape=[super().get_batch_size()])
+            CETrainingModule.LABELS: tf.placeholder(dtype=tf.int32, shape=[super().get_batch_size()])
         }
 
     def _build_loss(self):

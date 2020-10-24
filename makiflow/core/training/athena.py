@@ -32,7 +32,7 @@ class Athena(TrainingCore):
         super().__init__(model, train_inputs)
         self._track_losses = {}
         self._training_loss = None
-        self._hermes = Hermes(super().get_model())
+        self._hermes = Hermes(model)
 
     def get_label_tensors(self):
         """
