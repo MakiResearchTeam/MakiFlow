@@ -27,6 +27,7 @@ class Athena(TrainingCore):
             Contains pairs (tensor_name, tf.Tensor), where tf.Tensor contains the required training data.
         """
         self._label_tensors = label_tensors
+        print(self._label_tensors)
         self._track_losses = {}
         self._training_loss = None
         self._hermes = Hermes(super().get_model())
