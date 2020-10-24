@@ -25,7 +25,7 @@ from copy import copy
 
 from makiflow.core import MakiTensor
 from makiflow.layers import InputLayer
-from makiflow.core.inference import MakiCore
+from makiflow.core.inference import MakiModel
 from abc import ABC
 
 EPSILON = np.float32(1e-37)
@@ -37,18 +37,23 @@ class CParams:
     NAME = 'name'
 
 
-class ClassificatorBasis(MakiCore, ABC):
+class ClassificatorBasis(MakiModel):
+    def get_feed_dict_config(self) -> dict:
+        return {
+            self._input: 0
+        }
 
-    def __init__(self, input: InputLayer, output: MakiTensor, name='MakiClassificator'):
-        graph_tensors = copy(output.get_previous_tensors())
+    def __init__(self, in_x: InputLayer, out_x: MakiTensor, name='MakiClassificator'):
+        self._input = in_x
+        graph_tensors = copy(out_x.get_previous_tensors())
         # Add output tensor to `graph_tensors` since it doesn't have it.
         # It is assumed that graph_tensors contains ALL THE TENSORS graph consists of.
-        graph_tensors.update(output.get_self_pair())
-        outputs = [output]
-        inputs = [input]
+        graph_tensors.update(out_x.get_self_pair())
+        outputs = [out_x]
+        inputs = [in_x]
         super().__init__(outputs, inputs)
         self.name = str(name)
-        self._batch_sz = input.get_shape()[0]
+        self._batch_sz = in_x.get_shape()[0]
         self._images = self._input_data_tensors[0]
         self._inference_out = self._output_data_tensors[0]
         self._softmax_out = tf.nn.softmax(self._inference_out)
@@ -66,26 +71,6 @@ class ClassificatorBasis(MakiCore, ABC):
             CParams.OUTPUT_MT: output_mt.get_name(),
             CParams.NAME: self.name
         }
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # ----------------------------------------------------------SETTING UP TRAINING-------------------------------------
-
-    def set_label_input(self, labels, labels_transform):
-        """
-        Replaces basic labels placeholder with the custom one.
-        Parameters
-        ----------
-        labels : tf.placeholder
-            The placeholder for the input data.
-        labels_transform : python function
-            This transformation will be applied to the labels placeholder for later loss calculation.
-        """
-        if labels is None:
-            raise ValueError(f'Please provide the necessary tf.placeholder. Got {labels}')
-        if labels_transform is None:
-            raise ValueError(f'Please provide the necessary transformation function. Got {labels_transform}')
-        self._labels_transform = labels_transform
-        self._labels = labels
 
     def evaluate(self, Xtest, Ytest):
         Xtest = Xtest.astype(np.float32)

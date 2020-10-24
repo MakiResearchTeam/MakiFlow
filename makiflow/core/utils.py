@@ -35,16 +35,16 @@ def to_makitensor(tf_tensor, name, parent_layer=None, parent_tensor_names=None, 
     )
 
 
-def pack_data(feed_dict_config, data):
+def pack_data(feed_dict_config, data: list):
     """
     Packs data into a dictionary with pairs (tf.Tensor, data).
     This dictionary is then used as the `feed_dict` argument in the session.run() method.
     Parameters
     ----------
     feed_dict_config : dict
-        Contains pairs (MakiTensor, int), where int is the index of data point in the `data`.
+        Contains pairs (MakiTensor, int) or (tf.Tensor, int), where int is the index of the data point in the `data`.
     data : list
-        The data to pack
+        The data to pack.
 
     Returns
     -------
@@ -54,6 +54,9 @@ def pack_data(feed_dict_config, data):
 
     feed_dict = dict()
     for t, i in feed_dict_config.items():
-        data_tensor = t.get_data_tensor()
+        # If the `t` is a tf.Tensor
+        data_tensor = t
+        if isinstance(t, MakiTensor):
+            data_tensor = t.get_data_tensor()
         feed_dict[data_tensor] = data[i]
     return feed_dict

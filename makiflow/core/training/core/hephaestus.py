@@ -53,6 +53,15 @@ class Hephaestus(ABC):
     def get_model(self):
         return self._model
 
+    def get_batch_size(self):
+        """
+        Returns
+        -------
+        int
+            The batch size. It uses the first shape dimension of the first input MakiTensor.
+        """
+        return self._train_inputs_list[0].get_shape()[0]
+
     def compile(self):
         """
         Initiates building the training graph. Has to be called before the training.

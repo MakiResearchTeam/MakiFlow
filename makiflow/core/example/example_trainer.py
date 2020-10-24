@@ -1,20 +1,26 @@
 from __future__ import absolute_import
 from makiflow.core.training import MakiTrainer, Loss
 import tensorflow as tf
-from ..utils import to_makitensor
 
 
 class ExampleTrainer(MakiTrainer):
+    LABELS = 'LABELS'
+
+    def _setup_label_placeholders(self):
+        return {
+            ExampleTrainer.LABELS: tf.placeholder(dtype='float32', shape=[None], name='labels')
+        }
+
     def get_label_feed_dict_config(self):
         return {
-            to_makitensor(self._labels, 'labels'): 0
+            self._labels: 0
         }
 
     def _setup_for_training(self):
         # Always call the super()._setup_for_training() first
         super()._setup_for_training()
         # Define here all the necessary variables
-        self._labels = tf.placeholder(dtype='float32', shape=[None], name='labels')
+        self._labels = super().get_label_tensors()[ExampleTrainer.LABELS]
 
     def _build_loss(self):
         # This method must return a scalar of the training loss

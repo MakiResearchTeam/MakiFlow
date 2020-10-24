@@ -6,17 +6,54 @@ from tqdm import tqdm
 from abc import abstractmethod
 from .hermes import Hermes
 from ..utils import pack_data
+from ..inference import MakiModel
 
 
 class Athena(TrainingCore):
-    # Athena is the goddess of wisdom and intelligence. Athena is the one who trains your model.
+    # Athena is the goddess of wisdom and intelligence.
+    # This entity is responsible for training the model.
     TRAINING_LOSS = 'TRAINING_LOSS'
 
-    def _setup_for_training(self):
-        super()._setup_for_training()
+    def __init__(self, model: MakiModel, train_inputs: list, label_tensors: dict = None):
+        """
+        Provides basic tools for the training setup. Builds final loss tensor and the training graph.
+        Parameters
+        ----------
+        model : MakiModel
+            The model's object.
+        train_inputs : list
+            List of the input training MakiTensors. Their names must be the same as their inference counterparts!
+        label_tensors : dict
+            Contains pairs (tensor_name, tf.Tensor), where tf.Tensor contains the required training data.
+        """
+        super().__init__(model, train_inputs)
+        self._label_tensors = label_tensors
         self._track_losses = {}
         self._training_loss = None
         self._hermes = Hermes(super().get_model())
+
+    def get_label_tensors(self):
+        """
+        Returns
+        -------
+        dict
+            Contains pairs (tensor_name, tf.Tensor) of required tensors of labels.
+        """
+        if self._label_tensors is None:
+            self._label_tensors = self._setup_label_placeholders()
+        self._label_tensors.copy()
+
+    @abstractmethod
+    def _setup_label_placeholders(self):
+        """
+        In case generator tensors are not provided, tf.placeholders will be used instead.
+
+        Returns
+        -------
+        dict
+            Contains pairs (tensor_name, tf.Tensor) of required tensors of labels.
+        """
+        pass
 
     def get_hermes(self):
         return self._hermes
@@ -31,10 +68,16 @@ class Athena(TrainingCore):
 
     def build_loss(self):
         # noinspection PyAttributeOutsideInit
-        self._training_loss = self._build_loss()
+        loss = self._build_loss()
+        self._training_loss = super()._build_final_loss(loss)
         assert self._training_loss is not None, '_build_loss method returned None, but must return the loss scalar.'
         self.track_loss(self._training_loss, Athena.TRAINING_LOSS)
         loss_is_built()
+
+    @abstractmethod
+    def _build_loss(self):
+        # Must return the training loss scalar
+        pass
 
     def track_loss(self, loss_tensor, loss_name):
         loss = self._track_losses.get(loss_name)
@@ -46,11 +89,6 @@ class Athena(TrainingCore):
 
     def get_track_losses(self):
         return self._track_losses.copy()
-
-    @abstractmethod
-    def _build_loss(self):
-        # Must return the training loss scalar
-        pass
 
     def fit(self, optimizer, epochs=1, iter=10, print_period=None, global_step=None):
         """
@@ -224,6 +262,7 @@ class Athena(TrainingCore):
             that the input tensors are replaced with their counterparts from the training graph.
         """
         model = super().get_model()
+        # Feed dict with inference input tensors
         feed_dict_config = model.get_feed_dict_config()
         train_feed_dict_config = dict()
         for t, i in feed_dict_config.items():

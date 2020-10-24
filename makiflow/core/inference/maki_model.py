@@ -177,7 +177,7 @@ class MakiModel(ABC):
         -------
         dict
             Dictionary with the following structure:
-            { MakiTensor: int }, where tf.Tensor is input tensor to the model and int is the index of the data point
+            { MakiTensor: int }, where MakiTensor is input tensor to the model and int is the index of the data point
             in the input data array.
             Example code of usage of such a dict:
             data = next(generator)
@@ -186,19 +186,3 @@ class MakiModel(ABC):
                 feed_dict[t] = data[i]
         """
         pass
-
-
-    def predict(self, *args, **kwargs):
-        """
-        Basic predict method.
-
-        Parameters
-        ----------
-        args
-        kwargs
-
-        Returns
-        -------
-        prediction (depends on the model)
-        """
-
