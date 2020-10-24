@@ -25,7 +25,7 @@ from copy import copy
 
 from makiflow.core import MakiTensor
 from makiflow.layers import InputLayer
-from makiflow.core.inference import MakiModel
+from .classificator_interface import ClassificatorInterface
 
 EPSILON = np.float32(1e-37)
 
@@ -36,7 +36,10 @@ class CParams:
     NAME = 'name'
 
 
-class ClassificatorBasis(MakiModel):
+class ClassificatorBasis(ClassificatorInterface):
+    def get_logits(self):
+        return self._output
+
     def get_feed_dict_config(self) -> dict:
         return {
             self._input: 0
@@ -44,6 +47,7 @@ class ClassificatorBasis(MakiModel):
 
     def __init__(self, in_x: InputLayer, out_x: MakiTensor, name='MakiClassificator'):
         self._input = in_x
+        self._output = out_x
         graph_tensors = copy(out_x.get_previous_tensors())
         # Add output tensor to `graph_tensors` since it doesn't have it.
         # It is assumed that graph_tensors contains ALL THE TENSORS graph consists of.
