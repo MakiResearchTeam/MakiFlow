@@ -26,12 +26,13 @@ class Athena(TrainingCore):
         label_tensors : dict
             Contains pairs (tensor_name, tf.Tensor), where tf.Tensor contains the required training data.
         """
+        # Can be required during _setup_for_training call. Thus, create this variable
+        # first and then call super init.
         self._label_tensors = label_tensors
-        print(self._label_tensors)
+        super().__init__(model, train_inputs)
         self._track_losses = {}
         self._training_loss = None
         self._hermes = Hermes(super().get_model())
-        super().__init__(model, train_inputs)
 
     def get_label_tensors(self):
         """
