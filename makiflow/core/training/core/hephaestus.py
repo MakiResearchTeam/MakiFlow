@@ -221,6 +221,16 @@ class Hephaestus(ABC):
             create_tensor(output)
 
     def get_traingraph_tensor(self, tensor_name):
+        """
+        Returns a datatensor of a MakiTensor with the specified `tensor_name`.
+        Parameters
+        ----------
+        tensor_name : str
+            Name of the MakiTensor which datatensor to get.
+        Returns
+        -------
+        tf.Tensor
+        """
         tensor = self._traingraph_tensors.get(tensor_name)
         if tensor is None:
             raise KeyError(f'Could not find training tensor with name={tensor_name}')

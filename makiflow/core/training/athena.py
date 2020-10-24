@@ -87,7 +87,7 @@ class Athena(TrainingCore):
             print(f'Overriding already existing {loss_name} loss tensor.')
 
         self._track_losses[loss_name] = loss_tensor
-        self._hermes.add_scalar(loss, loss_name)
+        self._hermes.add_scalar(loss_tensor, loss_name)
 
     def get_track_losses(self):
         return self._track_losses.copy()
