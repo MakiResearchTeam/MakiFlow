@@ -18,14 +18,13 @@
 from __future__ import absolute_import
 
 from abc import ABC
-from copy import copy
 import tensorflow as tf
 import numpy as np
 from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 # noinspection PyUnresolvedReferences
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
-from makiflow.core.inference import MakiLayer, MakiTensor, MakiRestorable
+from makiflow.core.graph_entities import MakiLayer, MakiRestorable
 from makiflow.layers.activation_converter import ActivationConverter
 
 
