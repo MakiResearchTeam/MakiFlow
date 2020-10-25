@@ -16,9 +16,9 @@ class ExampleTrainer(MakiTrainer):
             self._labels: 0
         }
 
-    def _init(self):
+    def _init_(self):
         # Always call the super()._setup_for_training() first
-        super()._init()
+        super()._init_()
         # Define here all the necessary variables
         self._labels = super().get_label_tensors()[ExampleTrainer.LABELS]
 

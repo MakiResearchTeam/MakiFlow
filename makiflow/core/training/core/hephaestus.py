@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from makiflow.core.graph_entities import MakiTensor, MakiRestorable
 from makiflow.core.inference.maki_model import MakiModel
@@ -42,7 +42,7 @@ class Hephaestus(ABC):
             self._train_inputs.update(train_input.get_self_pair())
 
         self._is_compiled = False
-        self._setup_for_training()
+        self._init()
 
     def get_train_inputs_list(self):
         return self._train_inputs_list.copy()
@@ -68,21 +68,18 @@ class Hephaestus(ABC):
         """
         print('Compile the model...')
         self._build_training_graph()
-        self._init()
+        self._init_()
         self._is_compiled = True
         print('Model is compiled.')
-
-    def _init(self):
-        # This method must be used by other trainers to create training variables.
-        # It is required to do so since the trainer will be able to access
-        # training graph tensors after the training graph construction. Therefore,
-        # this method is being called during compilation.
-        pass
 
     def is_compiled(self):
         return self._is_compiled
 
-    def _setup_for_training(self):
+    def _init(self):
+        """
+        This method must be used by other trainers to create necessary variables.
+        The parent's `_init` must be called first.
+        """
         # Collect all the layers names since all of them are trainable from
         # the beginning.
         self._trainable_layers = []

@@ -20,6 +20,7 @@ from ..core import ClassificatorTrainer
 
 
 class CETrainer(ClassificatorTrainer):
+    TYPE = 'CETrainer'
     CROSS_ENTROPY = 'CROSS_ENTROPY'
 
     def _build_loss(self):

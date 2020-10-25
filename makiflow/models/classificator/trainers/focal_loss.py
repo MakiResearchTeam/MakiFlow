@@ -16,12 +16,23 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..core import ClassificatorTrainer
-from makiflow.core.training.loss_builder import Loss
+from makiflow.core import Loss, TrainerBuilder
 import tensorflow as tf
 
 
 class FocalTrainer(ClassificatorTrainer):
+    TYPE = 'FocalTrainer'
+    GAMMA = 'gamma'
+
     FOCAL_LOSS = 'FOCAL_LOSS'
+
+    def to_dict(self):
+        return {
+            TrainerBuilder.TYPE: FocalTrainer.TYPE,
+            TrainerBuilder.PARAMS: {
+                FocalTrainer.GAMMA: self._focal_gamma
+            }
+        }
 
     def _init(self):
         super()._init()

@@ -17,11 +17,12 @@
 
 import tensorflow as tf
 from .l1_regularization import L1
+from abc import ABC
 
 
-class L2(L1):
-    def _setup_for_training(self):
-        super()._setup_for_training()
+class L2(L1, ABC):
+    def _init(self):
+        super()._init()
         # Setup L2 regularization
         self._uses_l2_regularization = False
         self._l2_reg_loss_is_build = False

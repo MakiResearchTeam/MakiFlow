@@ -3,12 +3,17 @@ from abc import abstractmethod, ABC
 
 
 class MakiRestorable(ABC):
+    NAME = 'NAME'
+    TYPE = 'TYPE'
+    PARAMS = 'PARAMS'
+
     @abstractmethod
     def to_dict(self):
         pass
 
-    def to_json(self, path):
-        params = self.to_dict()
+    @staticmethod
+    @abstractmethod
+    def build(**kwargs):
+        pass
 
-        with open(path, 'w') as f:
-            json.dumps(f, params, indent=4)
+

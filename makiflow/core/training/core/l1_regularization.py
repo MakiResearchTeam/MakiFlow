@@ -16,13 +16,14 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from .hephaestus import Hephaestus
+from .aion import Aion
+from abc import ABC
 
 
-class L1(Hephaestus):
+class L1(Aion, ABC):
     # L1 REGULARIZATION
-    def _setup_for_training(self):
-        super()._setup_for_training()
+    def _init(self):
+        super()._init()
         # Setup L1 regularization
         self._uses_l1_regularization = False
         self._l1_reg_loss_is_build = False

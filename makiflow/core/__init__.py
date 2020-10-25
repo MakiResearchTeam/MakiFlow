@@ -17,6 +17,6 @@
 
 from .graph_entities import MakiRestorable, MakiTensor, MakiLayer, InputMakiLayer
 from .base_layers import BatchNormBaseLayer
-from .training import MakiTrainer, Loss
+from .training import MakiTrainer, Loss, TrainerBuilder
 from .inference import MakiModel
 
