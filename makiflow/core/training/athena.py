@@ -215,6 +215,7 @@ class Athena(TrainingCore):
                 print(packed_data)
                 print(packed_labels)
                 feed_dict = packed_data.update(packed_labels)
+                assert feed_dict is not None
                 print(feed_dict)
                 tracked_losses_vals, summary, _ = sess.run(
                     [track_losses, total_summary, train_op],
