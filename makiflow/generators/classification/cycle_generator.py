@@ -1,4 +1,4 @@
-from random import shuffle
+from sklearn.utils import shuffle
 from copy import copy
 
 
@@ -37,5 +37,4 @@ def cycle_generator(Xtrain, Ytrain, batch_size, shuffle_data=True):
 
         if counter == n_batches and shuffle_data:
             counter = 0
-            shuffle(Xtrain)
-            shuffle(Ytrain)
+            Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
