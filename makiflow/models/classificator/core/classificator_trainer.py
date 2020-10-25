@@ -42,7 +42,11 @@ class ClassificatorTrainer(MakiTrainer, ABC):
 
     def _setup_label_placeholders(self):
         return {
-            ClassificatorTrainer.LABELS: tf.placeholder(dtype=tf.int32, shape=[super().get_batch_size()])
+            ClassificatorTrainer.LABELS: tf.placeholder(
+                dtype=tf.int32,
+                shape=[super().get_batch_size()],
+                name=ClassificatorTrainer.LABELS
+            )
         }
 
     def get_label_feed_dict_config(self):

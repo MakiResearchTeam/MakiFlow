@@ -32,7 +32,7 @@ def cycle_generator(Xtrain, Ytrain, batch_size, shuffle_data=True):
         Xbatch = Xtrain[counter * batch_size: (counter + 1) * batch_size]
         Ybatch = Ytrain[counter * batch_size: (counter + 1) * batch_size]
 
-        yield Xbatch, Ybatch
+        yield (Xbatch,), (Ybatch,)
         counter += 1
 
         if counter == n_batches and shuffle_data:
