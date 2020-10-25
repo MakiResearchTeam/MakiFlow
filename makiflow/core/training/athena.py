@@ -68,13 +68,12 @@ class Athena(TrainingCore):
         """
         super().compile()
         self.build_loss()
-        self._hermes.setup_tensorboard()
 
     def build_loss(self):
         # noinspection PyAttributeOutsideInit
         loss = self._build_loss()
+        assert loss is not None, '_build_loss method returned None, but must return the loss scalar.'
         self._training_loss = super()._build_final_loss(loss)
-        assert self._training_loss is not None, '_build_loss method returned None, but must return the loss scalar.'
         self.track_loss(self._training_loss, Athena.TRAINING_LOSS)
         loss_is_built()
 
@@ -249,6 +248,7 @@ class Athena(TrainingCore):
             self._grads_and_vars = optimizer.compute_gradients(self._training_loss, training_vars)
             vars_and_grads = [(var, grad) for grad, var in self._grads_and_vars]
             self._hermes.set_vars_grads(vars_and_grads)
+            self._hermes.setup_tensorboard()
 
         self._train_op = optimizer.apply_gradients(
             grads_and_vars=self._grads_and_vars, global_step=global_step
