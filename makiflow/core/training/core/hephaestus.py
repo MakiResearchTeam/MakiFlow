@@ -43,6 +43,7 @@ class Hephaestus(ABC):
 
         self._is_compiled = False
         self._setup_for_training()
+        self._init()
 
     def get_train_inputs_list(self):
         return self._train_inputs_list.copy()
@@ -68,8 +69,16 @@ class Hephaestus(ABC):
         """
         print('Compile the model...')
         self._build_training_graph()
+        self._init()
         self._is_compiled = True
         print('Model is compiled.')
+
+    def _init(self):
+        # This method must be used by other trainers to create training variables.
+        # It is required to do so since the trainer will be able to access
+        # training graph tensors after the training graph construction. Therefore,
+        # this method is being called during compilation.
+        pass
 
     def is_compiled(self):
         return self._is_compiled

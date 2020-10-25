@@ -23,8 +23,8 @@ import tensorflow as tf
 class FocalTrainer(ClassificatorTrainer):
     FOCAL_LOSS = 'FOCAL_LOSS'
 
-    def _setup_for_training(self):
-        super()._setup_for_training()
+    def _init(self):
+        super()._init()
         self._focal_gamma = 2.0
 
     def set_gamma(self, gamma):

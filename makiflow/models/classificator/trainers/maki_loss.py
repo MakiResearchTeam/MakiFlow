@@ -23,8 +23,8 @@ import tensorflow as tf
 class MakiLossTrainer(ClassificatorTrainer):
     MAKI_LOSS = 'MAKI_LOSS'
 
-    def _setup_for_training(self):
-        super()._setup_for_training()
+    def _init(self):
+        super()._init()
         self._maki_gamma = 1
 
     def set_gamma(self, gamma):

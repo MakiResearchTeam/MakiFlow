@@ -23,8 +23,8 @@ class ClassificatorTrainer(MakiTrainer, ABC):
         self._num_classes = num_classes
         super().__init__(model, train_inputs, label_tensors)
 
-    def _setup_for_training(self):
-        super()._setup_for_training()
+    def _init(self):
+        super()._init()
         self._labels = super().get_label_tensors()[ClassificatorTrainer.LABELS]
         logits_makitensor = super().get_model().get_logits()
         self._logits_training_tensor = super().get_traingraph_tensor(logits_makitensor.get_name())
