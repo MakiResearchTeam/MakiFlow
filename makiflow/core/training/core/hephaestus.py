@@ -183,6 +183,9 @@ class Hephaestus(ABC):
                 outputs.update(
                     {maki_tensor.get_name(): X}
                 )
+                self._traingraph_tensors.update(
+                    {name: X}
+                )
                 return X
 
             # Collect tensors that were used to create current `maki_tensor`
