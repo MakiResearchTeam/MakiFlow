@@ -100,7 +100,7 @@ class Classificator(ClassificatorInterface):
             Ytestbatch = Ytest[k * self._batch_sz:(k + 1) * self._batch_sz]
             Yish_test_done = self._session.run(self._softmax_out, feed_dict={self._images: Xtestbatch}) + EPSILON
             test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
-            predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=1)
+            predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=-1)
 
         error_r = error_rate(predictions, Ytest)
         test_cost = test_cost / (len(Xtest) // self._batch_sz)

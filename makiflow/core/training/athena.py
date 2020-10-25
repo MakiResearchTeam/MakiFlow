@@ -17,6 +17,7 @@ class Athena(TrainingCore):
     def __init__(self, model: MakiModel, train_inputs: list, label_tensors: dict = None):
         """
         Provides basic tools for the training setup. Builds final loss tensor and the training graph.
+
         Parameters
         ----------
         model : MakiModel
@@ -70,6 +71,9 @@ class Athena(TrainingCore):
         self.build_loss()
 
     def build_loss(self):
+        """
+        Builds the training loss and adds it to the track list.
+        """
         # noinspection PyAttributeOutsideInit
         loss = self._build_loss()
         assert loss is not None, '_build_loss method returned None, but must return the loss scalar.'
@@ -83,6 +87,18 @@ class Athena(TrainingCore):
         pass
 
     def track_loss(self, loss_tensor, loss_name):
+        """
+        Adds loss to the track list. The loss value will be printed in the fit cycle and its value will also
+        be shown on the tensorboard.
+        Tip: this method can be used to add any scalar value calculated by the tensorflow means.
+
+        Parameters
+        ----------
+        loss_tensor : tf.Tensor
+            Scalar of the loss to track.
+        loss_name : str
+            Name of the loss.
+        """
         loss = self._track_losses.get(loss_name)
         if loss is not None:
             print(f'Overriding already existing {loss_name} loss tensor.')
