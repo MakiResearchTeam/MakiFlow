@@ -210,14 +210,10 @@ class Athena(TrainingCore):
                 input_data, labels = next(generator)
                 packed_data = pack_data(input_feed_dict, input_data)
                 packed_labels = pack_data(label_feed_dict, labels)
-                print(packed_data)
-                print(packed_labels)
-                feed_dict = packed_data.update(packed_labels)
-                assert feed_dict is not None
-                print(feed_dict)
+                packed_data.update(packed_labels)
                 tracked_losses_vals, summary, _ = sess.run(
                     [track_losses, total_summary, train_op],
-                    feed_dict=feed_dict
+                    feed_dict=packed_data
                 )
                 # Interpolate loss values and collect them
                 for loss_name in tracked_losses_vals:
