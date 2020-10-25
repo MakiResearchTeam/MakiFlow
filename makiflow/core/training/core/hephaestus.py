@@ -43,7 +43,6 @@ class Hephaestus(ABC):
 
         self._is_compiled = False
         self._setup_for_training()
-        self._init()
 
     def get_train_inputs_list(self):
         return self._train_inputs_list.copy()
