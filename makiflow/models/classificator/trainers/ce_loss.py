@@ -16,35 +16,17 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from makiflow.core import MakiTrainer
+from ..core import ClassificatorTrainer
 
 
-class CETrainingModule(MakiTrainer):
-    LABELS = 'LABELS'
-
-    def _setup_for_training(self):
-        super()._setup_for_training()
-        self._labels = super().get_label_tensors()[CETrainingModule.LABELS]
-        logits_makitensor = super().get_model().get_logits()
-        self._logits_training_tensor = super().get_traingraph_tensor(logits_makitensor.get_name())
-
-    def _setup_label_placeholders(self):
-        return {
-            CETrainingModule.LABELS: tf.placeholder(dtype=tf.int32, shape=[super().get_batch_size()])
-        }
+class CETrainer(ClassificatorTrainer):
+    CROSS_ENTROPY = 'CROSS_ENTROPY'
 
     def _build_loss(self):
         ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=self._labels,
-            logits=self._logits_training_tensor
+            labels=super().get_labels(),
+            logits=super().get_logits()
         )
-        return tf.reduce_mean(ce_loss)
-
-    def get_label_feed_dict_config(self):
-        return {
-            self._labels: 0
-        }
-
-
-
-
+        ce_loss = tf.reduce_mean(ce_loss)
+        super().track_loss(ce_loss, CETrainer.CROSS_ENTROPY)
+        return ce_loss

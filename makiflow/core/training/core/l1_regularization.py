@@ -16,11 +16,10 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
+from .hephaestus import Hephaestus
 
-from makiflow.core.training.core.l2_regularization import L2
 
-
-class L1(L2):
+class L1(Hephaestus):
     # L1 REGULARIZATION
     def _setup_for_training(self):
         super()._setup_for_training()

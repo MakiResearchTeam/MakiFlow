@@ -104,8 +104,8 @@ class Loss:
             Tensor of shape [batch_sz], contains number of hard examples per sample.
         num_classes : int
             Number of classes.
-        focal_gamma : int
-            The Maki Loss hyperparameter. Higher the `maki_gamma` - higher the penalty for the
+        focal_gamma : float
+            The Focal Loss hyperparameter. Higher the `focal_gamma` - higher the penalty for the
             predominant classes.
         ce_loss : tf.Tensor
             Tensor with the cross-entropy loss of shape [batch_sz, total_predictions].

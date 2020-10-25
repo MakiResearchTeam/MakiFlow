@@ -22,10 +22,10 @@ import numpy as np
 from tqdm import tqdm
 from makiflow.models.classificator.utils import error_rate, sparse_cross_entropy
 from copy import copy
-
-from makiflow.core import MakiTensor
+import json
+from makiflow.core import MakiTensor, MakiModel
 from makiflow.layers import InputLayer
-from .classificator_interface import ClassificatorInterface
+from makiflow.models.classificator.core.classificator_interface import ClassificatorInterface
 
 EPSILON = np.float32(1e-37)
 
@@ -36,7 +36,26 @@ class CParams:
     NAME = 'name'
 
 
-class ClassificatorBasis(ClassificatorInterface):
+class Classificator(ClassificatorInterface):
+    @staticmethod
+    def from_json(path_to_model):
+        """Creates and returns ConvModel from json.json file contains its architecture"""
+        json_file = open(path_to_model)
+        json_value = json_file.read()
+        json_info = json.loads(json_value)
+
+        output_tensor_name = json_info[MakiModel.MODEL_INFO][CParams.OUTPUT_MT]
+        input_tensor_name = json_info[MakiModel.MODEL_INFO][CParams.INPUT_MT]
+        model_name = json_info[MakiModel.MODEL_INFO][CParams.NAME]
+
+        graph_info = json_info[MakiModel.GRAPH_INFO]
+
+        inputs_outputs = MakiModel.restore_graph([output_tensor_name], graph_info)
+        out_x = inputs_outputs[output_tensor_name]
+        in_x = inputs_outputs[input_tensor_name]
+        print('Model is restored!')
+        return Classificator(in_x=in_x, out_x=out_x, name=model_name)
+
     def get_logits(self):
         return self._output
 

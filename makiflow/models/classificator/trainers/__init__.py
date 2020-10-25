@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .maki_loss import MakiTrainingModule
-from .focal_loss import FocalTrainingModule
-from .ce_loss import CETrainingModule
-from .qce_loss import QCETrainingModule
+from .maki_loss import MakiLossTrainer
+from .focal_loss import FocalTrainer
+from .ce_loss import CETrainer
+from .qce_loss import QCETrainer
