@@ -111,8 +111,9 @@ class Hephaestus(ABC):
         for layer_name in self._trainable_layers:
             layer = self._graph_tensors[layer_name].get_parent_layer()
             self._trainable_vars += layer.get_params()
-        # Create graph or refresh it
-        self._build_training_graph()
+
+    def get_trainable_params(self):
+        return self._trainable_vars
 
     # noinspection PyAttributeOutsideInit
     def add_loss(self, loss):

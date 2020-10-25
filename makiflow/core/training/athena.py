@@ -244,7 +244,7 @@ class Athena(TrainingCore):
         self._optimizer = optimizer
 
         if self._grads_and_vars is None:
-            training_vars = self._model.get_training_vars()
+            training_vars = super().get_trainable_params()
             # Returns list of tuples: [ (grad, var) ]
             self._grads_and_vars = optimizer.compute_gradients(self._training_loss, training_vars)
             vars_and_grads = [(var, grad) for grad, var in self._grads_and_vars]
