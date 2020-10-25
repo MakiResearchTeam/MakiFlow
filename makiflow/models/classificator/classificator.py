@@ -76,14 +76,9 @@ class Classificator(ClassificatorInterface):
         super().__init__(outputs, inputs)
         self.name = str(name)
         self._batch_sz = in_x.get_shape()[0]
-        self._images = self._input_data_tensors[0]
-        self._inference_out = self._output_data_tensors[0]
+        self._images = in_x.get_data_tensor()
+        self._inference_out = out_x.get_data_tensor()
         self._softmax_out = tf.nn.softmax(self._inference_out)
-        # For training
-        self._training_vars_are_ready = False
-        # Identity transformation
-        self._labels_transform = lambda x: x
-        self._labels = None
 
     def _get_model_info(self):
         input_mt = self._inputs[0]
@@ -96,7 +91,6 @@ class Classificator(ClassificatorInterface):
 
     def evaluate(self, Xtest, Ytest):
         Xtest = Xtest.astype(np.float32)
-        Yish_test = tf.nn.softmax(self._inference_out)
         n_batches = Xtest.shape[0] // self._batch_sz
 
         test_cost = 0
@@ -104,7 +98,7 @@ class Classificator(ClassificatorInterface):
         for k in tqdm(range(n_batches)):
             Xtestbatch = Xtest[k * self._batch_sz:(k + 1) * self._batch_sz]
             Ytestbatch = Ytest[k * self._batch_sz:(k + 1) * self._batch_sz]
-            Yish_test_done = self._session.run(Yish_test, feed_dict={self._images: Xtestbatch}) + EPSILON
+            Yish_test_done = self._session.run(self._softmax_out, feed_dict={self._images: Xtestbatch}) + EPSILON
             test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
             predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=1)
 
@@ -124,7 +118,7 @@ class Classificator(ClassificatorInterface):
             Xbatch = Xtest[i * self._batch_sz:(i + 1) * self._batch_sz]
             predictions += [self._session.run(out, feed_dict={self._images: Xbatch})]
         if len(predictions) > 1:
-            return np.vstack(predictions, axis=0)
+            return np.stack(predictions, axis=0)
         else:
             return predictions[0]
 
