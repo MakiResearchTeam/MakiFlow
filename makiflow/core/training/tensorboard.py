@@ -48,10 +48,6 @@ class TensorBoard:
     def add_summary(self, summary):
         self._tb_summaries.append(summary)
 
-    def set_layers_histograms(self, layer_names):
-        # noinspection PyAttributeOutsideInit
-        self._layers_histograms = layer_names
-
     def close_tensorboard(self):
         """
         Closes the logging writer for the Tensorboard

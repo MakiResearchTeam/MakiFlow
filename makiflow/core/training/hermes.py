@@ -23,7 +23,7 @@ class Hermes(TensorBoard):
 
     def setup_tensorboard(self):
         # Collect all layers histograms
-        for layer_name in self._layers_histograms:
+        for layer_name in self._layers_to_show:
             # Add weights histograms
             layer_weights = self._model.get_layer(layer_name).get_params()
             with tf.name_scope(f'{layer_name}/weight'):
