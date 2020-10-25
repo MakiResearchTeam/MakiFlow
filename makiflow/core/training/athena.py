@@ -196,6 +196,8 @@ class Athena(TrainingCore):
         total_summary = self._hermes.get_total_summary()
         input_feed_dict = self.get_input_feed_dict_config()
         label_feed_dict = self.get_label_feed_dict_config()
+        print(input_feed_dict)
+        print(label_feed_dict)
         for i in range(epochs):
             it = tqdm(range(iter))
 
@@ -273,7 +275,6 @@ class Athena(TrainingCore):
             name = t.get_name()
             tensor = super().get_traingraph_tensor(name)
             train_feed_dict_config[tensor] = i
-
         return train_feed_dict_config
 
     @abstractmethod
