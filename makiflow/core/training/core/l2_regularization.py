@@ -20,8 +20,8 @@ from .l1_regularization import L1
 
 
 class L2(L1):
-    def _init(self):
-        super()._init()
+    def _setup_for_training(self):
+        super()._setup_for_training()
         # Setup L2 regularization
         self._uses_l2_regularization = False
         self._l2_reg_loss_is_build = False

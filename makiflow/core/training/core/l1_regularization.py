@@ -21,8 +21,8 @@ from .hephaestus import Hephaestus
 
 class L1(Hephaestus):
     # L1 REGULARIZATION
-    def _init(self):
-        super()._init()
+    def _setup_for_training(self):
+        super()._setup_for_training()
         # Setup L1 regularization
         self._uses_l1_regularization = False
         self._l1_reg_loss_is_build = False
