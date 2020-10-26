@@ -16,14 +16,14 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..core import ClassificatorTrainer
-from makiflow.core.training.loss_builder import Loss
+from makiflow.core import Loss, TrainerBuilder
 import tensorflow as tf
 
 
 class QCETrainer(ClassificatorTrainer):
     QCE_LOSS = 'QCE_LOSS'
 
-    def _build_quadratic_ce_loss(self):
+    def _build_loss(self):
         ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
             labels=super().get_labels(),
             logits=super().get_logits()
@@ -32,4 +32,7 @@ class QCETrainer(ClassificatorTrainer):
             ce_loss=ce_loss
         )
         super().track_loss(qce_loss, QCETrainer.QCE_LOSS)
-        self._final_quadratic_ce_loss = super()._build_final_loss(self._quadratic_ce_loss)
+        return qce_loss
+
+
+TrainerBuilder.register_trainer(QCETrainer)

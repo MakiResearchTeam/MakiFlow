@@ -34,6 +34,9 @@ class FocalTrainer(ClassificatorTrainer):
             }
         }
 
+    def set_params(self, params):
+        self.set_gamma(params[FocalTrainer.GAMMA])
+
     def _init(self):
         super()._init()
         self._focal_gamma = 2.0
@@ -77,3 +80,5 @@ class FocalTrainer(ClassificatorTrainer):
         super().track_loss(focal_loss, FocalTrainer.FOCAL_LOSS)
         return focal_loss
 
+
+TrainerBuilder.register_trainer(FocalTrainer)

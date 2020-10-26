@@ -17,6 +17,7 @@
 
 import tensorflow as tf
 from ..core import ClassificatorTrainer
+from makiflow.core import TrainerBuilder
 
 
 class CETrainer(ClassificatorTrainer):
@@ -31,3 +32,6 @@ class CETrainer(ClassificatorTrainer):
         ce_loss = tf.reduce_mean(ce_loss)
         super().track_loss(ce_loss, CETrainer.CROSS_ENTROPY)
         return ce_loss
+
+
+TrainerBuilder.register_trainer(CETrainer)

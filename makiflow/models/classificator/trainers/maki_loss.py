@@ -16,12 +16,25 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..core import ClassificatorTrainer
-from makiflow.core.training.loss_builder import Loss
+from makiflow.core import Loss, TrainerBuilder
 import tensorflow as tf
 
 
 class MakiLossTrainer(ClassificatorTrainer):
+    TYPE = 'MakiLossTrainer'
+    GAMMA = 'GAMMA'
     MAKI_LOSS = 'MAKI_LOSS'
+
+    def to_dict(self):
+        return {
+            TrainerBuilder.TYPE: MakiLossTrainer.TYPE,
+            TrainerBuilder.PARAMS: {
+                MakiLossTrainer.GAMMA: self._maki_gamma
+            }
+        }
+
+    def set_params(self, params):
+        self.set_gamma(params[MakiLossTrainer.GAMMA])
 
     def _init(self):
         super()._init()
@@ -66,3 +79,6 @@ class MakiLossTrainer(ClassificatorTrainer):
         )
         super().track_loss(maki_loss, MakiLossTrainer.MAKI_LOSS)
         return maki_loss
+
+
+TrainerBuilder.register_trainer(MakiLossTrainer)
