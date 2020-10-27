@@ -18,9 +18,6 @@
 from __future__ import absolute_import
 import json
 
-from makiflow.models.classificator import Classificator
-from makiflow.models.classificator.main_modules import CParams
-
 from makiflow.layers.trainable_layers import TrainableLayerAddress
 from makiflow.layers.untrainable_layers import UnTrainableLayerAddress
 from makiflow.layers.rnn_layers import RNNLayerAddress
@@ -34,27 +31,8 @@ from makiflow.models import SSDModel
 from makiflow.models import Segmentator
 from makiflow.models import TextRecognizer
 
+
 class Builder:
-
-    @staticmethod
-    def classificator_from_json(json_path):
-        """Creates and returns ConvModel from json.json file contains its architecture"""
-        json_file = open(json_path)
-        json_value = json_file.read()
-        json_info = json.loads(json_value)
-
-        output_tensor_name = json_info[MakiModel.MODEL_INFO][CParams.OUTPUT_MT]
-        input_tensor_name = json_info[MakiModel.MODEL_INFO][CParams.INPUT_MT]
-        model_name = json_info[MakiModel.MODEL_INFO][CParams.NAME]
-
-        graph_info = json_info[MakiModel.GRAPH_INFO]
-
-        inputs_outputs = Builder.restore_graph([output_tensor_name], graph_info)
-        out_x = inputs_outputs[output_tensor_name]
-        in_x = inputs_outputs[input_tensor_name]
-        print('Model is restored!')
-        return Classificator(input=in_x, output=out_x, name=model_name)
-
     @staticmethod
     def ssd_from_json(json_path, generator=None):
         """Creates and returns SSDModel from json.json file contains its architecture"""
