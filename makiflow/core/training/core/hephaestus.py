@@ -68,7 +68,6 @@ class Hephaestus(ABC):
         """
         print('Compile the model...')
         self._build_training_graph()
-        self._init_()
         self._is_compiled = True
         print('Model is compiled.')
 
