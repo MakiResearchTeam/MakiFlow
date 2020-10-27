@@ -31,8 +31,8 @@ EPSILON = np.float32(1e-37)
 
 
 class CParams:
-    INPUT_MT = 'input_mt'
-    OUTPUT_MT = 'output_mt'
+    INPUT_MT = 'in_x'
+    OUTPUT_MT = 'out_x'
     NAME = 'name'
 
 
