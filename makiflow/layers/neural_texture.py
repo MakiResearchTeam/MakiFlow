@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.models.nn_render.utils import grid_sample
+from .neural_render_utils import grid_sample
 from makiflow.core import MakiRestorable, MakiLayer
 import tensorflow as tf
 import numpy as np
