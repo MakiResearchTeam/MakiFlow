@@ -20,7 +20,7 @@ import tensorflow as tf
 import json
 
 
-class MakiModel(ABC):
+class MakiCore(ABC):
     # Provides basic API for all the models:
     # saving/loading weights;
     # saving model architecture;

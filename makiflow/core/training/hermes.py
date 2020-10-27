@@ -1,10 +1,10 @@
 from .tensorboard import TensorBoard
-from makiflow.core.inference.maki_model import MakiModel
+from makiflow.core.inference.maki_model import MakiCore
 import tensorflow as tf
 
 
 class Hermes(TensorBoard):
-    def __init__(self, model: MakiModel):
+    def __init__(self, model: MakiCore):
         super().__init__()
         self._model = model
         self._layers_to_show = []

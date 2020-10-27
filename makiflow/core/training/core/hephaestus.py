@@ -18,18 +18,18 @@
 from abc import ABC, abstractmethod
 
 from makiflow.core.graph_entities import MakiTensor, MakiRestorable
-from makiflow.core.inference.maki_model import MakiModel
+from makiflow.core.inference.maki_model import MakiCore
 
 
 class Hephaestus(ABC):
     # This entity is responsible for building the training graph and
     # the final loss
-    def __init__(self, model: MakiModel, train_inputs: list):
+    def __init__(self, model: MakiCore, train_inputs: list):
         """
         Provides basic tools for the training setup. Builds final loss tensor and the training graph.
         Parameters
         ----------
-        model : MakiModel
+        model : MakiCore
             The model's object.
         train_inputs : list
             List of the input training tensors. Their names must be the same as their inference counterparts!

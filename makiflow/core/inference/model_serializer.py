@@ -1,10 +1,10 @@
-from .maki_model import MakiModel
+from .maki_model import MakiCore
 import tensorflow as tf
 from abc import abstractmethod, ABC
 import json
 
 
-class ModelSerializer(MakiModel):
+class ModelSerializer(MakiCore):
     def load_weights(self, path, layer_names=None):
         """
         This function uses default TensorFlow's way for restoring models - checkpoint files.
@@ -99,8 +99,8 @@ class ModelSerializer(MakiModel):
         model_info = self._get_model_info()
         graph_info = self._get_graph_info()
         model_dict = {
-            MakiModel.MODEL_INFO: model_info,
-            MakiModel.GRAPH_INFO: graph_info
+            MakiCore.MODEL_INFO: model_info,
+            MakiCore.GRAPH_INFO: graph_info
         }
 
         model_json = json.dumps(model_dict, indent=1)

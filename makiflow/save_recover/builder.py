@@ -24,7 +24,7 @@ from makiflow.layers.rnn_layers import RNNLayerAddress
 
 from makiflow.core.graph_entities.maki_layer import MakiRestorable
 from makiflow.core.graph_entities.maki_tensor import MakiTensor
-from makiflow.core.inference.maki_model import MakiModel
+from makiflow.core.inference.maki_model import MakiCore
 
 from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel
@@ -39,24 +39,24 @@ class Builder:
         json_file = open(json_path)
         json_value = json_file.read()
         architecture_dict = json.loads(json_value)
-        name = architecture_dict[MakiModel.MODEL_INFO]['name']
+        name = architecture_dict[MakiCore.MODEL_INFO]['name']
         # Collect names of the MakiTensors that are inputs for the DetectorClassifiers
         # for restoring the graph.
-        dcs_dicts = architecture_dict[MakiModel.MODEL_INFO]['dcs']
+        dcs_dicts = architecture_dict[MakiCore.MODEL_INFO]['dcs']
         outputs = []
         for dcs_dict in dcs_dicts:
             params = dcs_dict['params']
             outputs += [params['reg_x_name'], params['class_x_name']]
 
-        graph_info = architecture_dict[MakiModel.GRAPH_INFO]
+        graph_info = architecture_dict[MakiCore.GRAPH_INFO]
         inputs_outputs = Builder.restore_graph(outputs, graph_info, generator)
         # Restore all the DetectorClassifiers
         dcs = []
-        for dc_dict in architecture_dict[MakiModel.MODEL_INFO]['dcs']:
+        for dc_dict in architecture_dict[MakiCore.MODEL_INFO]['dcs']:
             dcs.append(Builder.__detector_classifier_from_dict(dc_dict, inputs_outputs))
-        input_name = architecture_dict[MakiModel.MODEL_INFO]['input_s']
+        input_name = architecture_dict[MakiCore.MODEL_INFO]['input_s']
         input_s = inputs_outputs[input_name]
-        offset_reg_type = architecture_dict[MakiModel.MODEL_INFO]['reg_type']
+        offset_reg_type = architecture_dict[MakiCore.MODEL_INFO]['reg_type']
         print('Model is recovered.')
 
         return SSDModel(dcs=dcs, input_s=input_s, name=name, offset_reg_type=offset_reg_type)
@@ -128,11 +128,11 @@ class Builder:
         json_value = json_file.read()
         json_info = json.loads(json_value)
 
-        output_tensor_name = json_info[MakiModel.MODEL_INFO]['output']
-        input_tensor_name = json_info[MakiModel.MODEL_INFO]['input_s']
-        model_name = json_info[MakiModel.MODEL_INFO]['name']
+        output_tensor_name = json_info[MakiCore.MODEL_INFO]['output']
+        input_tensor_name = json_info[MakiCore.MODEL_INFO]['input_s']
+        model_name = json_info[MakiCore.MODEL_INFO]['name']
 
-        MakiTensors_of_model = json_info[MakiModel.GRAPH_INFO]
+        MakiTensors_of_model = json_info[MakiCore.GRAPH_INFO]
 
         inputs_outputs = Builder.restore_graph(
             [output_tensor_name], MakiTensors_of_model, generator
