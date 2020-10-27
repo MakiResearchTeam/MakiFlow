@@ -29,6 +29,7 @@ class InitConvKernel:
     XAVIER_UNIFORM_AVG = 'xavier_uniform_avg'
     LASANGE = 'lasange'
     HE = 'he'
+    HE_GRAD = 'he_grad'
     HE_UNIFORM = 'he_uniform'
 
     @staticmethod
@@ -66,6 +67,12 @@ class InitConvKernel:
         return w.astype(dtype)
 
     @staticmethod
+    def he_grad(kw, kh, out_f, in_f, dtype=np.float32):
+        w = np.random.randn(kw, kh, in_f, out_f)
+        w *= np.sqrt(2. / (kw * kh * out_f))
+        return w.astype(dtype)
+
+    @staticmethod
     def he_uniform(kw, kh, out_f, in_f, dtype=np.float32):
         w = np.random.uniform(low=-1.0, high=1.0, size=(kw, kh, in_f, out_f))
         w *= np.sqrt(2. / (kw * kh * in_f))
@@ -89,6 +96,7 @@ InitConvKernel.SET_INITS = {
 
             InitConvKernel.LASANGE: InitConvKernel.lasange,
             InitConvKernel.HE: InitConvKernel.he,
+            InitConvKernel.HE_GRAD: InitConvKernel.he_grad,
             InitConvKernel.HE_UNIFORM: InitConvKernel.he_uniform
     }
 

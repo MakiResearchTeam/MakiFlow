@@ -5,7 +5,7 @@ from .core import TrainingCore
 from tqdm import tqdm
 from abc import abstractmethod
 from .hermes import Hermes
-from ..utils import pack_data
+from makiflow.core.training.utils import pack_data
 from ..inference import MakiModel
 
 

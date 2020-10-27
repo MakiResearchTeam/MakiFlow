@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+from makiflow.core import MakiTensor
 
 EPOCH = 'Epoch:'
 
@@ -41,3 +42,30 @@ def new_optimizer_used():
 
 def loss_is_built():
     print('Loss is built.')
+
+
+def pack_data(feed_dict_config, data: list):
+    """
+    Packs data into a dictionary with pairs (tf.Tensor, data).
+    This dictionary is then used as the `feed_dict` argument in the session.run() method.
+    Parameters
+    ----------
+    feed_dict_config : dict
+        Contains pairs (MakiTensor, int) or (tf.Tensor, int), where int is the index of the data point in the `data`.
+    data : list
+        The data to pack.
+
+    Returns
+    -------
+    dict
+        Dictionary with packed data.
+    """
+
+    feed_dict = dict()
+    for t, i in feed_dict_config.items():
+        # If the `t` is a tf.Tensor
+        data_tensor = t
+        if isinstance(t, MakiTensor):
+            data_tensor = t.get_data_tensor()
+        feed_dict[data_tensor] = data[i]
+    return feed_dict
