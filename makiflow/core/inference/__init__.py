@@ -16,3 +16,4 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from .model_serializer import ModelSerializer as MakiModel
+from .maki_builder import MakiBuilder

@@ -85,23 +85,25 @@ class Loss:
 
     @staticmethod
     def focal_loss(
-            flattened_logits,
-            flattened_labels,
-            num_positives,
+            logits,
+            labels,
             num_classes,
-            focal_gamma,
-            ce_loss
+            focal_gamma=2.0,
+            num_positives=False,
+            ce_loss=False,
+            raw_tensor=False
     ):
         """
         Creates Focal Loss.
         Parameters
         ----------
-        flattened_logits : tf.Tensor
+        logits : tf.Tensor
             Tensor of flattened logits with shape [batch_sz, total_predictions, num_classes].
-        flattened_labels : tf.Tensor
+        labels : tf.Tensor
             Tensor of flattened labels with shape [batch_sz, total_predictions].
         num_positives : tf.Tensor
-            Tensor of shape [batch_sz], contains number of hard examples per sample.
+            Tensor of shape [batch_sz], contains number of hard examples per sample. If the `num_positives` is
+            provided, then the loss will be divided by the sum of `num_positives`.
         num_classes : int
             Number of classes.
         focal_gamma : float
@@ -109,23 +111,35 @@ class Loss:
             predominant classes.
         ce_loss : tf.Tensor
             Tensor with the cross-entropy loss of shape [batch_sz, total_predictions].
+        raw_tensor : bool
+            Whether to return a sum of all values or an original loss tensor with shape [batch_sz, ...].
         Returns
         -------
         tf.Tensor
             Constructed Focal loss.
         """
+        if ce_loss is None:
+            ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels)
         # [batch_sz, total_predictions, num_classes]
-        train_confidences = tf.nn.softmax(flattened_logits)
+        train_confidences = tf.nn.softmax(logits)
         # Create one-hot encoding for picking predictions we need
         # [batch_sz, total_predictions, num_classes]
-        one_hot_labels = tf.one_hot(flattened_labels, depth=num_classes, on_value=1.0, off_value=0.0)
+        one_hot_labels = tf.one_hot(labels, depth=num_classes, on_value=1.0, off_value=0.0)
         filtered_confidences = train_confidences * one_hot_labels
         # [batch_sz, total_predictions]
         sparse_confidences = tf.reduce_max(filtered_confidences, axis=-1)
-        ones_arr = tf.ones_like(flattened_labels, dtype=tf.float32)
+        ones_arr = tf.ones_like(labels, dtype=tf.float32)
         focal_weights = tf.pow(ones_arr - sparse_confidences, focal_gamma)
-        num_positives = tf.reduce_sum(num_positives)
-        return tf.reduce_sum(focal_weights * ce_loss) / num_positives
+        focal_loss = focal_weights * ce_loss
+
+        if num_positives is not None:
+            num_positives = tf.reduce_sum(num_positives)
+            focal_loss = focal_loss / num_positives
+
+        if raw_tensor:
+            return focal_loss
+
+        return tf.reduce_sum(focal_loss)
 
     @staticmethod
     def quadratic_ce_loss(ce_loss, num_positives=None):

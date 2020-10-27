@@ -20,7 +20,7 @@ from makiflow.core import Loss, TrainerBuilder
 import tensorflow as tf
 
 
-class FocalTrainer(ClassificatorTrainer):
+class WeightedFocalTrainer(ClassificatorTrainer):
     TYPE = 'FocalTrainer'
     GAMMA = 'gamma'
 
@@ -28,14 +28,14 @@ class FocalTrainer(ClassificatorTrainer):
 
     def to_dict(self):
         return {
-            TrainerBuilder.TYPE: FocalTrainer.TYPE,
+            TrainerBuilder.TYPE: WeightedFocalTrainer.TYPE,
             TrainerBuilder.PARAMS: {
-                FocalTrainer.GAMMA: self._focal_gamma
+                WeightedFocalTrainer.GAMMA: self._focal_gamma
             }
         }
 
     def set_params(self, params):
-        self.set_gamma(params[FocalTrainer.GAMMA])
+        self.set_gamma(params[WeightedFocalTrainer.GAMMA])
 
     def _init(self):
         super()._init()
@@ -58,20 +58,24 @@ class FocalTrainer(ClassificatorTrainer):
         labels = super().get_labels()
         num_classes = super().get_num_classes()
 
-        positives = tf.not_equal(labels, 0)  # [BATCH_SIZE, ...]
+        positives = tf.not_equal(labels, 0)                     # [BATCH_SIZE, ...]
         positives_dim_n = len(positives.get_shape())
         axis = list(range(1, positives_dim_n))
-        num_positives = tf.reduce_sum(positives, axis=axis)  # [BATCH_SIZE, N_POSITIVES]
+        num_positives = tf.reduce_sum(positives, axis=axis)     # [BATCH_SIZE, N_POSITIVES]
 
         focal_loss = Loss.focal_loss(
             logits=logits,
             labels=labels,
             num_classes=num_classes,
             num_positives=num_positives,
-            focal_gamma=self._focal_gamma
+            focal_gamma=self._focal_gamma,
+            raw_tensor=True
         )
-        super().track_loss(focal_loss, FocalTrainer.FOCAL_LOSS)
+
+        weights = super().get_weight_map()
+        focal_loss = tf.reduce_sum(focal_loss * weights)
+        super().track_loss(focal_loss, WeightedFocalTrainer.FOCAL_LOSS)
         return focal_loss
 
 
-TrainerBuilder.register_trainer(FocalTrainer)
+TrainerBuilder.register_trainer(WeightedFocalTrainer)

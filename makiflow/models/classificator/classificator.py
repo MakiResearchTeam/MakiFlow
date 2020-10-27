@@ -23,7 +23,7 @@ from tqdm import tqdm
 from makiflow.models.classificator.utils import error_rate, sparse_cross_entropy
 from copy import copy
 import json
-from makiflow.core import MakiTensor, MakiModel
+from makiflow.core import MakiTensor, MakiModel, MakiBuilder
 from makiflow.layers import InputLayer
 from makiflow.models.classificator.core.classificator_interface import ClassificatorInterface
 
@@ -50,7 +50,7 @@ class Classificator(ClassificatorInterface):
 
         graph_info = json_info[MakiModel.GRAPH_INFO]
 
-        inputs_outputs = MakiModel.restore_graph([output_tensor_name], graph_info)
+        inputs_outputs = MakiBuilder.restore_graph([output_tensor_name], graph_info)
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')

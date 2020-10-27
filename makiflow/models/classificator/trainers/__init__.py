@@ -19,3 +19,4 @@ from .maki_loss import MakiLossTrainer
 from .focal_loss import FocalTrainer
 from .ce_loss import CETrainer
 from .qce_loss import QCETrainer
+from .weighted_ce_loss import WeightedCETrainer

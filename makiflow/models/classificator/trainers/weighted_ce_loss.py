@@ -15,9 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
+import tensorflow as tf
+from ..core import ClassificatorTrainer
+from makiflow.core import TrainerBuilder
 
-from .focal_loss import FocalTrainingModule
-from .maki_loss import MakiTrainingModule
-from .quadratic_crossentropy_loss import QuadraticCrossEntropyTrainingModule
-from .weighted_crossentropy_loss import WeightedCrossEntropyTrainingModule
-from .weighted_focal_loss import WeightedFocalTrainingModule
+
+class WeightedCETrainer(ClassificatorTrainer):
+    TYPE = 'WeightedCETrainer'
+
+    WEIGHTED_CE_LOSS = 'WEIGHTED_CE_LOSS'
+
+    def _build_loss(self):
+        ce_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            labels=super().get_labels(),
+            logits=super().get_logits()
+        )
+        weights = super().get_weight_map()
+        weighted_ce_loss = tf.reduce_mean(ce_loss * weights)
+        super().track_loss(weighted_ce_loss, WeightedCETrainer.WEIGHTED_CE_LOSS)
+        return weighted_ce_loss
+
+
+TrainerBuilder.register_trainer(WeightedCETrainer)
