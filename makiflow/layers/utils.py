@@ -29,6 +29,7 @@ class InitConvKernel:
     XAVIER_UNIFORM_AVG = 'xavier_uniform_avg'
     LASANGE = 'lasange'
     HE = 'he'
+    HE_UNIFORM = 'he_uniform'
 
     @staticmethod
     def init_by_name(kw, kh, out_f, in_f, name_init, dtype=np.float32):
@@ -37,7 +38,7 @@ class InitConvKernel:
     @staticmethod
     def xavier_gaussian_avg(kw, kh, out_f, in_f, dtype=np.float32):
         w = np.random.randn(kw, kh, in_f, out_f)
-        w *= np.sqrt(3. / (kw * kh * in_f + kw * kh * out_f))
+        w *= np.sqrt(2. / (kw * kh * in_f + kw * kh * out_f))
         return w.astype(dtype)
 
     @staticmethod
@@ -48,19 +49,25 @@ class InitConvKernel:
 
     @staticmethod
     def xavier_uniform_avg(kw, kh, out_f, in_f, dtype=np.float32):
-        w = np.random.randn(kw, kh, in_f, out_f)
+        w = np.random.uniform(low=-1.0, high=1.0, size=(kw, kh, in_f, out_f))
         w *= np.sqrt(6. / (kw * kh * in_f + kw * kh * out_f))
         return w.astype(dtype)
 
     @staticmethod
     def xavier_uniform_inf(kw, kh, out_f, in_f, dtype=np.float32):
-        w = np.random.randn(kw, kh, in_f, out_f)
+        w = np.random.uniform(low=-1.0, high=1.0, size=(kw, kh, in_f, out_f))
         w *= np.sqrt(3. / (kw * kh * in_f))
         return w.astype(dtype)
 
     @staticmethod
     def he(kw, kh, out_f, in_f, dtype=np.float32):
         w = np.random.randn(kw, kh, in_f, out_f)
+        w *= np.sqrt(2. / (kw * kh * in_f))
+        return w.astype(dtype)
+
+    @staticmethod
+    def he_uniform(kw, kh, out_f, in_f, dtype=np.float32):
+        w = np.random.uniform(low=-1.0, high=1.0, size=(kw, kh, in_f, out_f))
         w *= np.sqrt(2. / (kw * kh * in_f))
         return w.astype(dtype)
 
@@ -72,6 +79,7 @@ class InitConvKernel:
 
     SET_INITS = {}
 
+
 InitConvKernel.SET_INITS = {
             InitConvKernel.XAVIER_GAUSSIAN_AVG: InitConvKernel.xavier_gaussian_avg,
             InitConvKernel.XAVIER_GAUSSIAN_INF: InitConvKernel.xavier_gaussian_inf,
@@ -81,6 +89,7 @@ InitConvKernel.SET_INITS = {
 
             InitConvKernel.LASANGE: InitConvKernel.lasange,
             InitConvKernel.HE: InitConvKernel.he,
+            InitConvKernel.HE_UNIFORM: InitConvKernel.he_uniform
     }
 
 
@@ -98,12 +107,12 @@ class InitDenseMat:
     @staticmethod
     def xavier_gaussian(in_d, out_d, dtype=np.float32):
         w = np.random.randn(in_d, out_d)
-        w *= np.sqrt(3. / (in_d + out_d))
+        w *= np.sqrt(2. / (in_d + out_d))
         return w.astype(dtype)
 
     @staticmethod
     def xavier_uniform(in_d, out_d, dtype=np.float32):
-        w = np.random.uniform(low=-1., high=1.0, size=[in_d, out_d])
+        w = np.random.uniform(low=-1.0, high=1.0, size=[in_d, out_d])
         w *= np.sqrt(6. / (in_d + out_d))
         return w.astype(dtype)
 

@@ -47,6 +47,13 @@ class MakiModel(ABC):
         for maki_tensor in self._inputs:
             self._input_data_tensors += [maki_tensor.get_data_tensor()]
 
+        # Collect layers
+        self._layers = {}
+        for tensor_name in self._graph_tensors:
+            maki_tensor = self._graph_tensors[tensor_name]
+            layer = maki_tensor.get_parent_layer()
+            self._layers[layer.get_name()] = layer
+
         # For training
         self._training_outputs = []
 
@@ -191,4 +198,38 @@ class MakiModel(ABC):
         return tensor_dicts
 
     def get_node(self, node_name):
-        return self._graph_tensors.get(node_name)
+        node = self._graph_tensors.get(node_name)
+        if node is None:
+            raise KeyError(f'Could not find node with name={node_name}')
+        return node
+
+    def get_data_node(self, node_name):
+        return self.get_node(node_name).get_data_tensor()
+
+    def get_layer(self, layer_name):
+        """
+        Return a layer object with the given name.
+
+        Parameters
+        ----------
+        layer_name : str
+            The name of the layer.
+
+        Returns
+        -------
+        MakiLayer
+        """
+        layer = self._layers.get(layer_name)
+        if layer is None:
+            raise KeyError(f'Could not find layer with name={layer_name}')
+        return layer
+
+    def get_layers(self):
+        """
+        Returns
+        -------
+        dict
+            Contains all the layers of the model.
+        """
+        return self._layers.copy()
+

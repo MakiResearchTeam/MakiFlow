@@ -21,4 +21,11 @@ from makiflow.tf_scripts import get_low_memory_sess, set_main_gpu, get_fraction_
 from makiflow.tf_scripts import freeze_model, load_frozen_graph
 import makiflow.metrics as metrics
 
+import makiflow.layers
+import makiflow.models
+import makiflow.generators
+import makiflow.metrics
+import makiflow.experimental
+import makiflow.augmentation
+
 del absolute_import

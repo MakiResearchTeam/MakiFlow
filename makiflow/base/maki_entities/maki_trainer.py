@@ -20,7 +20,6 @@ from makiflow.base.maki_entities.maki_model import MakiModel
 from makiflow.base.maki_entities.maki_layer import MakiRestorable
 from .maki_tensor import MakiTensor
 import tensorflow as tf
-from copy import copy
 
 
 class MakiTrainer(MakiModel, ABC):
@@ -28,6 +27,12 @@ class MakiTrainer(MakiModel, ABC):
     def __init__(self, graph_tensors: dict, outputs: list, inputs: list):
         self._set_for_training = False
         super().__init__(graph_tensors, outputs, inputs)
+
+    def training_on(self):
+        """
+        Sets the model up for training. Must be called from the trainer.
+        """
+        self._setup_for_training()
 
     def _setup_for_training(self):
         self._set_for_training = True
@@ -241,6 +246,8 @@ class MakiTrainer(MakiModel, ABC):
         # Contains pairs {layer_name: {MakiTensor name: data_tensor}}, where the inner dictionary
         # contains all the MakiTensor that were produced by the layer with the `layer_name` name.
         output_tensors = {}
+        # Collection of all the tf.Tensor that stem from the training graph.
+        self._traingraph_tensors = {}
 
         def create_tensor(maki_tensor: MakiTensor):
             # Check if the parent layer has been already used.
@@ -276,7 +283,7 @@ class MakiTrainer(MakiModel, ABC):
             if len(parent_tensors) == 1:
                 parent_tensors = parent_tensors[0]
 
-            if layer.get_name in self._trainable_layers:
+            if layer.get_name() in self._trainable_layers:
                 X = layer._training_forward(
                     parent_tensors
                 )
@@ -300,8 +307,15 @@ class MakiTrainer(MakiModel, ABC):
             output_names = layer.get_children(parent_name)
             for _x, x_name in zip(X, output_names):
                 outputs.update({x_name: _x})
+                self._traingraph_tensors[x_name] = _x
 
             return outputs.get(maki_tensor.get_name())
 
         for output in self._outputs:
             self._training_outputs += [create_tensor(output)]
+
+    def get_traingraph_tensor(self, tensor_name):
+        tensor = self._traingraph_tensors.get(tensor_name)
+        if tensor is None:
+            raise KeyError(f'Could not find training tensor with name={tensor_name}')
+        return tensor
