@@ -52,7 +52,7 @@ class NeuralRenderBasis(MakiCore):
         self.name = str(name)
         graph_tensors = output_x.get_previous_tensors()
         graph_tensors.update(output_x.get_self_pair())
-        super().__init__(graph_tensors, outputs=[output_x], inputs=[input_x])
+        super().__init__(outputs=[output_x], inputs=[input_x])
         self._sampled_texture = sampled_texture
 
         self._training_vars_are_ready = False

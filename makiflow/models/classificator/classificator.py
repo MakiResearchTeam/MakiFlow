@@ -30,13 +30,11 @@ from makiflow.models.classificator.core.classificator_interface import Classific
 EPSILON = np.float32(1e-37)
 
 
-class CParams:
-    INPUT_MT = 'in_x'
-    OUTPUT_MT = 'out_x'
+class Classificator(ClassificatorInterface):
+    INPUT = 'in_x'
+    OUTPUT = 'out_x'
     NAME = 'name'
 
-
-class Classificator(ClassificatorInterface):
     @staticmethod
     def from_json(path_to_model):
         """Creates and returns ConvModel from json.json file contains its architecture"""
@@ -44,9 +42,9 @@ class Classificator(ClassificatorInterface):
         json_value = json_file.read()
         json_info = json.loads(json_value)
 
-        output_tensor_name = json_info[MakiModel.MODEL_INFO][CParams.OUTPUT_MT]
-        input_tensor_name = json_info[MakiModel.MODEL_INFO][CParams.INPUT_MT]
-        model_name = json_info[MakiModel.MODEL_INFO][CParams.NAME]
+        output_tensor_name = json_info[MakiModel.MODEL_INFO][Classificator.OUTPUT]
+        input_tensor_name = json_info[MakiModel.MODEL_INFO][Classificator.INPUT]
+        model_name = json_info[MakiModel.MODEL_INFO][Classificator.NAME]
 
         graph_info = json_info[MakiModel.GRAPH_INFO]
 
@@ -84,9 +82,9 @@ class Classificator(ClassificatorInterface):
         input_mt = self._inputs[0]
         output_mt = self._outputs[0]
         return {
-            CParams.INPUT_MT: input_mt.get_name(),
-            CParams.OUTPUT_MT: output_mt.get_name(),
-            CParams.NAME: self.name
+            Classificator.INPUT: input_mt.get_name(),
+            Classificator.OUTPUT: output_mt.get_name(),
+            Classificator.NAME: self.name
         }
 
     def evaluate(self, Xtest, Ytest):
