@@ -16,10 +16,10 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from abc import abstractmethod
-from makiflow.core.inference import MakiCore
+from makiflow.core import MakiModel
 
 
-class SSPInterface(MakiCore):
+class SSPInterface(MakiModel):
     @abstractmethod
     def get_heads(self):
         pass

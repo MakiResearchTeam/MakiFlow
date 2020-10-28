@@ -20,6 +20,7 @@ from .l1_regularization import L1
 from abc import ABC
 
 
+# noinspection PyTypeChecker
 class L2(L1, ABC):
     def _init(self):
         super()._init()
@@ -28,15 +29,12 @@ class L2(L1, ABC):
         self._l2_reg_loss_is_build = False
         self._l2_regularized_layers = {}
         for layer_name in self._trainable_layers:
-            self._l2_regularized_layers[layer_name] = 1e-6  # This value seems to be proper as a default
+            self._l2_regularized_layers[layer_name] = None
 
-    # L2 REGULARIZATION
     def set_l2_reg(self, layers):
         """
         Enables L2 regularization while training and allows to set different
         decays to different weights.
-        WARNING! It is assumed that `set_layers_trainable` method won't
-        be used anymore.
 
         Parameters
         ----------
@@ -44,6 +42,7 @@ class L2(L1, ABC):
             Contains tuples (layer_name, decay) where decay is float number(set it to
             None if you want to turn off regularization on this weight).
         """
+        # noinspection PyAttributeOutsideInit
         self._uses_l2_regularization = True
 
         for layer_name, decay in layers:
@@ -51,11 +50,7 @@ class L2(L1, ABC):
 
     def set_common_l2_weight_decay(self, decay=1e-6):
         """
-        Enables L2 regularization while training.
-        `decay` will be set as decay for each regularized weight.
-        If you haven't used `set_l2_reg` method and did not turn off
-        the regularization on certain layers, the regularization will be
-        set on all the trainable layers.
+        Sets `decay` for all trainable weights (that can be regularized).
 
         Parameters
         ----------
@@ -66,8 +61,7 @@ class L2(L1, ABC):
         self._uses_l2_regularization = True
 
         for layer_name in self._l2_regularized_layers:
-            if self._l2_regularized_layers[layer_name] is not None:
-                self._l2_regularized_layers[layer_name] = decay
+            self._l2_regularized_layers[layer_name] = decay
 
     def __build_l2_loss(self):
         self._l2_reg_loss = tf.constant(0.0)

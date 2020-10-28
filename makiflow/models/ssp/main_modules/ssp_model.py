@@ -23,6 +23,11 @@ from .ssp_interface import SSPInterface
 
 
 class SSPModel(SSPInterface):
+    def get_feed_dict_config(self) -> dict:
+        return {
+            self._in_x: 0
+        }
+
     def get_heads(self):
         return self._heads
 
@@ -36,6 +41,7 @@ class SSPModel(SSPInterface):
         pass
 
     def __init__(self, cr_heads: list, in_x: InputLayer, name='MakiSSD'):
+        self._in_x = in_x
         self._crh = cr_heads
         self._name = str(name)
         inputs = [in_x]
@@ -59,7 +65,7 @@ class SSPModel(SSPInterface):
             graph_tensors.update(hp_logits.get_self_pair())
             graph_tensors.update(p_offsets.get_self_pair())
 
-        super().__init__(graph_tensors, outputs, inputs)
+        super().__init__(outputs, inputs, graph_tensors=graph_tensors)
 
         # Create tensors that will be ran in predict method
         self._setup_inference()

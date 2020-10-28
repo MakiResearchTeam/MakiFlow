@@ -26,10 +26,9 @@ class L1(Aion, ABC):
         super()._init()
         # Setup L1 regularization
         self._uses_l1_regularization = False
-        self._l1_reg_loss_is_build = False
         self._l1_regularized_layers = {}
         for layer_name in self._trainable_layers:
-            self._l1_regularized_layers[layer_name] = 1e-6  # This value seems to be proper as a default
+            self._l1_regularized_layers[layer_name] = None
 
     def set_l1_reg(self, layers):
         """
@@ -52,11 +51,7 @@ class L1(Aion, ABC):
 
     def set_common_l1_weight_decay(self, decay=1e-6):
         """
-        Enables L2 regularization while training.
-        `decay` will be set as decay for each regularized weight.
-        If you haven't used `set_l1_reg` method and did not turn off
-        the regularization on certain layers, the regularization will be
-        set on all the trainable layers.
+        Sets `decay` for all trainable weights (that can be regularized).
 
         Parameters
         ----------
@@ -67,8 +62,7 @@ class L1(Aion, ABC):
         self._uses_l1_regularization = True
 
         for layer_name in self._l1_regularized_layers:
-            if self._l1_regularized_layers[layer_name] is not None:
-                self._l1_regularized_layers[layer_name] = decay
+            self._l1_regularized_layers[layer_name] = decay
 
     def __build_l1_loss(self):
         self._l1_reg_loss = tf.constant(0.0)
@@ -78,7 +72,7 @@ class L1(Aion, ABC):
                 layer = self._graph_tensors[layer_name].get_parent_layer()
                 params = layer.get_params_regularize()
                 for param in params:
-                    self._l1_reg_loss += tf.abs(tf.reduce_sum(param)) * tf.constant(decay)
+                    self._l1_reg_loss += tf.reduce_sum(tf.abs(param)) * tf.constant(decay)
 
         self._l1_reg_loss_is_build = True
 
@@ -88,3 +82,7 @@ class L1(Aion, ABC):
             training_loss += self._l1_reg_loss
 
         return super()._build_final_loss(training_loss)
+
+    def get_l1_regularization_loss(self):
+        assert self._l1_reg_loss_is_build, 'The loss has not been built yet. Please compile the model'
+        return self._l1_reg_loss

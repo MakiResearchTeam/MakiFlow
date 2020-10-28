@@ -15,23 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from ..main_modules import SSPInterface
-from makiflow.generators.pipeline.gen_base import GenLayer
-from makiflow.generators.ssp import SSPIterator
+from makiflow.core import MakiBuilder, MakiTrainer
 
 
-class VanillaTrainer:
-    def __init__(self, model: SSPInterface, generator: GenLayer):
-        model.training_on()
-        self._model = model
-        self._generator = generator
-        self._iterator = generator.get_iterator()
-        # Training data tensors
-        self._training_classification_labels = self._iterator[SSPIterator.CLASS_LABELS]
-        self._training_human_presence_labels = self._iterator[SSPIterator.HUMANP_LABELS]
-        self._training_points_coords_labels = self._iterator[SSPIterator.POINTS_LABELS]
+class VanillaTrainer(MakiTrainer):
+    def _setup_label_placeholders(self):
+        pass
 
-        self._build_training_tensors()
+    def _build_loss(self):
+        pass
 
-    def _build_training_tensors(self):
+    def get_label_feed_dict_config(self):
         pass
