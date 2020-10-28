@@ -28,8 +28,10 @@ from makiflow.core.inference.maki_model import MakiCore
 
 from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel
-from makiflow.models import Segmentator
+#from makiflow.models import Segmentator
 from makiflow.models import TextRecognizer
+
+# TODO: Remove this builder
 
 
 class Builder:
@@ -121,9 +123,11 @@ class Builder:
             name=name
         )
 
+    # TODO: Delete this part, if its full 100% safety
+    """ 
     @staticmethod
     def segmentator_from_json(json_path, generator=None):
-        """Creates and returns ConvModel from json.json file contains its architecture"""
+        #Creates and returns ConvModel from json.json file contains its architecture
         json_file = open(json_path)
         json_value = json_file.read()
         json_info = json.loads(json_value)
@@ -144,7 +148,7 @@ class Builder:
             model.set_generator(generator)
         print('Model is restored!')
         return model
-
+    """
 # -----------------------------------------------------------LAYERS RESTORATION-----------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
