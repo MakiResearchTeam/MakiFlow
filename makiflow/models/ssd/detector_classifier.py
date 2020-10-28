@@ -164,6 +164,9 @@ class DetectorClassifier:
         """
         return self.reg_x.get_shape()
 
+    def get_height_width(self):
+        pass
+
     def to_dict(self):
         return {
             'type': DCParams.TYPE,
