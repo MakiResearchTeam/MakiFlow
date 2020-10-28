@@ -1,3 +1,20 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 import tensorflow as tf
 from .utils import print_train_info, moving_average
 from .utils import new_optimizer_used, loss_is_built
@@ -143,35 +160,45 @@ class Athena(TrainingCore):
         sess = super().get_session()
         track_losses = self.get_track_losses()
         total_summary = self._hermes.get_total_summary()
-        for i in range(epochs):
-            it = tqdm(range(iter))
+        # Variable for tqdm-iterator
+        it = None
 
-            # Loss value holders. They will hold an interpolated loss value for one iteration.
-            # This loss value will then be passed to an appropriate loss value collector.
-            loss_holders = {}
-            for loss_name in self.get_track_losses():
-                loss_holders[loss_name] = 0.0
+        try:
+            for i in range(epochs):
+                it = tqdm(range(iter))
 
-            # Performs training iterations
-            for j in it:
-                tracked_losses_vals, summary, _ = sess.run(
-                    [track_losses, total_summary, train_op]
-                )
-                # Interpolate loss values and collect them
-                for loss_name in tracked_losses_vals:
-                    loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
-                    loss_collectors[loss_name].append(loss_holders[loss_name])
+                # Loss value holders. They will hold an interpolated loss value for one iteration.
+                # This loss value will then be passed to an appropriate loss value collector.
+                loss_holders = {}
+                for loss_name in self.get_track_losses():
+                    loss_holders[loss_name] = 0.0
 
-                self._hermes.increment()
-                if (j + 1) % print_period == 0:
-                    name_loss = list(loss_holders.items())
-                    print_train_info(
-                        i,
-                        *name_loss
+                # Performs training iterations
+                for j in it:
+                    tracked_losses_vals, summary, _ = sess.run(
+                        [track_losses, total_summary, train_op]
                     )
-                    self._hermes.write_summary(summary)
+                    # Interpolate loss values and collect them
+                    for loss_name in tracked_losses_vals:
+                        loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
+                        loss_collectors[loss_name].append(loss_holders[loss_name])
 
-        return loss_collectors
+                    self._hermes.increment()
+                    if (j + 1) % print_period == 0:
+                        name_loss = list(loss_holders.items())
+                        print_train_info(
+                            i,
+                            *name_loss
+                        )
+                        self._hermes.write_summary(summary)
+        except Exception as ex:
+            print(ex)
+        finally:
+            # Close iterator, if it were created
+            if it is not None:
+                it.close()
+
+            return loss_collectors
 
     def fit_generator(self, generator, optimizer, epochs=1, iter=10, print_period=None, global_step=None):
         """
@@ -211,40 +238,50 @@ class Athena(TrainingCore):
         total_summary = self._hermes.get_total_summary()
         input_feed_dict = self.get_input_feed_dict_config()
         label_feed_dict = self.get_label_feed_dict_config()
-        for i in range(epochs):
-            it = tqdm(range(iter))
+        # Variable for tqdm-iterator
+        it = None
 
-            # Loss value holders. They will hold an interpolated loss value for one iteration.
-            # This loss value will then be passed to an appropriate loss value collector.
-            loss_holders = {}
-            for loss_name in self.get_track_losses():
-                loss_holders[loss_name] = 0.0
+        try:
+            for i in range(epochs):
+                it = tqdm(range(iter))
 
-            # Performs training iterations
-            for j in it:
-                input_data, labels = next(generator)
-                packed_data = pack_data(input_feed_dict, input_data)
-                packed_labels = pack_data(label_feed_dict, labels)
-                packed_data.update(packed_labels)
-                tracked_losses_vals, summary, _ = sess.run(
-                    [track_losses, total_summary, train_op],
-                    feed_dict=packed_data
-                )
-                # Interpolate loss values and collect them
-                for loss_name in tracked_losses_vals:
-                    loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
-                    loss_collectors[loss_name].append(loss_holders[loss_name])
+                # Loss value holders. They will hold an interpolated loss value for one iteration.
+                # This loss value will then be passed to an appropriate loss value collector.
+                loss_holders = {}
+                for loss_name in self.get_track_losses():
+                    loss_holders[loss_name] = 0.0
 
-                self._hermes.increment()
-                if (j + 1) % print_period == 0:
-                    name_loss = list(loss_holders.items())
-                    print_train_info(
-                        i,
-                        *name_loss
+                # Performs training iterations
+                for j in it:
+                    input_data, labels = next(generator)
+                    packed_data = pack_data(input_feed_dict, input_data)
+                    packed_labels = pack_data(label_feed_dict, labels)
+                    packed_data.update(packed_labels)
+                    tracked_losses_vals, summary, _ = sess.run(
+                        [track_losses, total_summary, train_op],
+                        feed_dict=packed_data
                     )
-                    self._hermes.write_summary(summary)
+                    # Interpolate loss values and collect them
+                    for loss_name in tracked_losses_vals:
+                        loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
+                        loss_collectors[loss_name].append(loss_holders[loss_name])
 
-        return loss_collectors
+                    self._hermes.increment()
+                    if (j + 1) % print_period == 0:
+                        name_loss = list(loss_holders.items())
+                        print_train_info(
+                            i,
+                            *name_loss
+                        )
+                        self._hermes.write_summary(summary)
+        except Exception as ex:
+            print(ex)
+        finally:
+            # Close iterator, if it were created
+            if it is not None:
+                it.close()
+
+            return loss_collectors
 
     def __minimize_loss(self, optimizer, global_step):
         assert optimizer is not None, 'No optimizer is provided.'
