@@ -136,7 +136,8 @@ class InitDenseMat:
         w *= np.sqrt(12. / (in_d + out_d))
         return w.astype(dtype)
 
-    SET_INITS = { }
+    SET_INITS = {}
+
 
 InitDenseMat.SET_INITS = {
             InitDenseMat.XAVIER_GAUSSIAN: InitDenseMat.xavier_gaussian,
