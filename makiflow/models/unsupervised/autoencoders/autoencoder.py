@@ -24,6 +24,7 @@ import numpy as np
 from sklearn.utils import shuffle
 from tqdm import tqdm
 
+
 class AutoEncoder:
     def __init__(self, encoder: Encoder, decoder: Decoder, name):
         """

@@ -87,7 +87,7 @@ class IteratorCloser:
         self._tqdm_iterator = None
 
     def __enter__(self):
-        pass
+        return self
 
     def set_iterator(self, it):
         self._tqdm_iterator = it
