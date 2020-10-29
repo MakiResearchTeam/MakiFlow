@@ -862,7 +862,7 @@ class ResizeLayer(MakiLayer):
         name = params[MakiRestorable.NAME]
         align_corners = params[ResizeLayer.ALIGN_CORNERS]
         interpolation = params[ResizeLayer.FIELD_INTERPOLATION]
-        scales = params[ResizeLayer.SCALES]
+        scales = params.get(ResizeLayer.SCALES)
         return ResizeLayer(
             interpolation=interpolation,
             new_shape=new_shape,
