@@ -37,6 +37,5 @@ def cycle_generator(Xtrain, Ytrain, batch_size, shuffle_data=True):
 
         if counter == n_batches:
             counter = 0
-
-        if shuffle_data:
-            Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
+            if shuffle_data:
+                Xtrain, Ytrain = shuffle(Xtrain, Ytrain)
