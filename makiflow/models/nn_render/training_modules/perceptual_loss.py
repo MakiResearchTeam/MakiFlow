@@ -17,8 +17,8 @@
 
 import tensorflow as tf
 from ..main_modules import NeuralRenderBasis
-from makiflow.models.common.utils import print_train_info, moving_average
-from makiflow.models.common.utils import new_optimizer_used, loss_is_built
+from makiflow.core.training.utils import print_train_info, moving_average
+from makiflow.core.training.utils import new_optimizer_used, loss_is_built
 from tqdm import tqdm
 
 PERCEPTUAL_LOSS = 'PERCEPTUAL LOSS'

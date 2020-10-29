@@ -18,14 +18,13 @@
 from __future__ import absolute_import
 
 from abc import ABC
-from copy import copy
 import tensorflow as tf
 import numpy as np
 from tensorflow.contrib.rnn import GRUCell, LSTMCell, MultiRNNCell
 # noinspection PyUnresolvedReferences
 from tensorflow.nn import static_rnn, dynamic_rnn, bidirectional_dynamic_rnn, static_bidirectional_rnn
 
-from makiflow.base.maki_entities import MakiLayer, MakiTensor, MakiRestorable
+from makiflow.core.graph_entities import MakiLayer, MakiRestorable
 from makiflow.layers.activation_converter import ActivationConverter
 
 
@@ -70,7 +69,7 @@ class RNNLayer(MakiLayer, ABC):
         self._cells_state = None
         super().__init__(name, params, params, named_params_dict)
 
-    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         if self._cell_type == CellType.BIDIR_DYNAMIC:
             (outputs_f, outputs_b), (states_f, states_b) = \
                 bidirectional_dynamic_rnn(cell_fw=self._cells, cell_bw=self._cells, inputs=x, dtype=tf.float32)
@@ -95,8 +94,8 @@ class RNNLayer(MakiLayer, ABC):
             self._cells_state = states
             return tf.stack(outputs, axis=1)
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def training_forward(self, x):
+        return self.forward(x)
 
     def get_cells(self):
         return self._cells
@@ -250,7 +249,7 @@ class LSTMLayer(MakiLayer):
             ]
         )
 
-    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         if self._dynamic:
             dynamic_x = dynamic_rnn(self._cell, x, dtype=tf.float32)
             # hidden states, (last candidate value, last hidden state)
@@ -263,8 +262,8 @@ class LSTMLayer(MakiLayer):
             hs = tf.stack(hs_list, axis=1)
             return hs, c_last, h_last
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def training_forward(self, x):
+        return self.forward(x)
 
     @staticmethod
     def build(params: dict):
@@ -415,11 +414,11 @@ class EmbeddingLayer(MakiLayer):
         named_params_dict = {name: self.embed}
         super().__init__(name, params, named_params_dict)
 
-    def _forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         return tf.nn.embedding_lookup(self.embed, x)
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def training_forward(self, x):
+        return self.forward(x)
 
     @staticmethod
     def build(params: dict):
@@ -454,7 +453,7 @@ class RNNLayerAddress:
     }
 
 
-from makiflow.base.maki_entities.maki_builder import MakiBuilder
+from makiflow.core.inference.maki_builder import MakiBuilder
 
 MakiBuilder.register_layers(RNNLayerAddress.ADDRESS_TO_CLASSES)
 

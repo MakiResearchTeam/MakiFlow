@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from makiflow.base import MakiRestorable, MakiLayer
+from makiflow.core import MakiRestorable, MakiLayer
 
 
 def _tf_log10(x):
@@ -83,7 +83,7 @@ class LogMelSpectrogramLayer(MakiLayer):
             named_params_dict={}
         )
 
-    def _forward(self, x):
+    def forward(self, x):
         spectrograms = tf.signal.stft(
             x,
             frame_length=self._fft_size,
@@ -96,8 +96,8 @@ class LogMelSpectrogramLayer(MakiLayer):
         log_mel_spectrograms = _power_to_db(mel_spectrograms)
         return log_mel_spectrograms
 
-    def _training_forward(self, x):
-        return self._forward(x)
+    def training_forward(self, x):
+        return self.forward(x)
 
     def to_dict(self):
         return {

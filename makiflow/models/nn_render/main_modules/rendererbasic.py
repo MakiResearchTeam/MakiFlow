@@ -16,8 +16,8 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from makiflow.base.maki_entities import MakiTensor
-from makiflow.base.maki_entities import MakiCore
+from makiflow.core.graph_entities import MakiTensor
+from makiflow.core.inference import MakiModel as MakiCore
 
 from makiflow.generators.nn_render import NNRIterator
 
@@ -52,7 +52,7 @@ class NeuralRenderBasis(MakiCore):
         self.name = str(name)
         graph_tensors = output_x.get_previous_tensors()
         graph_tensors.update(output_x.get_self_pair())
-        super().__init__(graph_tensors, outputs=[output_x], inputs=[input_x])
+        super().__init__(outputs=[output_x], inputs=[input_x])
         self._sampled_texture = sampled_texture
 
         self._training_vars_are_ready = False

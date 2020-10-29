@@ -17,7 +17,7 @@
 
 from __future__ import absolute_import
 from abc import abstractmethod, ABC
-from makiflow.base import InputMakiLayer, MakiRestorable, MakiTensor
+from makiflow.core import InputMakiLayer, MakiRestorable, MakiTensor
 
 
 class PathGenerator(ABC):
