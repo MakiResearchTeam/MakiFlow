@@ -50,7 +50,7 @@ class InitConvKernel:
 
     @staticmethod
     def xavier_uniform_avg(kw, kh, out_f, in_f, dtype=np.float32):
-        w = np.random.randn(kw, kh, in_f, out_f)
+        w = np.random.uniform(low=-1.0, high=1.0, size=(kw, kh, in_f, out_f))
         w *= np.sqrt(6. / (kw * kh * in_f + kw * kh * out_f))
         return w.astype(dtype)
 

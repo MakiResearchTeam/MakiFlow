@@ -47,6 +47,7 @@ def to_makitensor(tf_tensor, name, parent_layer=None, parent_tensor_names=None, 
     return MakiTensor(
         data_tensor=tf_tensor,
         parent_layer=parent_layer,
+        name=name,
         parent_tensor_names=parent_tensor_names,
         previous_tensors=previous_tensors
     )
