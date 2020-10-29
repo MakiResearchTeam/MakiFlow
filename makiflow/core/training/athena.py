@@ -22,7 +22,7 @@ from .core import TrainingCore
 from tqdm import tqdm
 from abc import abstractmethod
 from .hermes import Hermes
-from makiflow.core.training.utils import pack_data
+from makiflow.core.training.utils import pack_data, IteratorCloser
 from ..inference import MakiModel
 
 
@@ -160,13 +160,12 @@ class Athena(TrainingCore):
         sess = super().get_session()
         track_losses = self.get_track_losses()
         total_summary = self._hermes.get_total_summary()
-        # Variable for tqdm-iterator
-        it = None
 
-        try:
+        # This context manager is used to prevent tqdm from breaking in case of exception
+        with IteratorCloser() as ic:
             for i in range(epochs):
                 it = tqdm(range(iter))
-
+                ic.set_iterator(it)
                 # Loss value holders. They will hold an interpolated loss value for one iteration.
                 # This loss value will then be passed to an appropriate loss value collector.
                 loss_holders = {}
@@ -191,14 +190,8 @@ class Athena(TrainingCore):
                             *name_loss
                         )
                         self._hermes.write_summary(summary)
-        except Exception as ex:
-            print(ex)
-        finally:
-            # Close iterator, if it were created
-            if it is not None:
-                it.close()
 
-            return loss_collectors
+        return loss_collectors
 
     def fit_generator(self, generator, optimizer, epochs=1, iter=10, print_period=None, global_step=None):
         """
@@ -238,12 +231,12 @@ class Athena(TrainingCore):
         total_summary = self._hermes.get_total_summary()
         input_feed_dict = self.get_input_feed_dict_config()
         label_feed_dict = self.get_label_feed_dict_config()
-        # Variable for tqdm-iterator
-        it = None
 
-        try:
+        # This context manager is used to prevent tqdm from breaking in case of exception
+        with IteratorCloser() as ic:
             for i in range(epochs):
                 it = tqdm(range(iter))
+                ic.set_iterator(it)
 
                 # Loss value holders. They will hold an interpolated loss value for one iteration.
                 # This loss value will then be passed to an appropriate loss value collector.
@@ -274,14 +267,8 @@ class Athena(TrainingCore):
                             *name_loss
                         )
                         self._hermes.write_summary(summary)
-        except Exception as ex:
-            print(ex)
-        finally:
-            # Close iterator, if it were created
-            if it is not None:
-                it.close()
 
-            return loss_collectors
+        return loss_collectors
 
     def __minimize_loss(self, optimizer, global_step):
         assert optimizer is not None, 'No optimizer is provided.'

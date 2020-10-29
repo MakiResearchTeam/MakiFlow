@@ -69,3 +69,36 @@ def pack_data(feed_dict_config, data: list):
             data_tensor = t.get_data_tensor()
         feed_dict[data_tensor] = data[i]
     return feed_dict
+
+
+class IteratorCloser:
+    def __init__(self, raise_exception=False):
+        """
+        Used for tqdm loops. If a tqdm loop was closed by unnatural means (exception),
+        in most case its print breaks. To avoid such situation, one must always close
+        the tqdm iterator.
+        Just wrap the cycle code using `with` statement.
+        Parameters
+        ----------
+        raise_exception : bool
+            Set to True if you want an exception raised in a loop to be re-raised after `with`.
+        """
+        self._raise_exception = raise_exception
+        self._tqdm_iterator = None
+
+    def __enter__(self):
+        pass
+
+    def set_iterator(self, it):
+        self._tqdm_iterator = it
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._tqdm_iterator is not None:
+            self._tqdm_iterator.close()
+
+        if exc_type is not None:
+            print(f'Exception type: {exc_type}')
+            print(f'Exception values: {exc_val}')
+
+        # An exception is not raised if True is returned
+        return not self._raise_exception
