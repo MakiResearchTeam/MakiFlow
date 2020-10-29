@@ -207,7 +207,7 @@ class Loss:
 
     @staticmethod
     def mse_loss(labels, predictions, raw_tensor=False):
-        diff = tf.pow(labels - predictions, 2.0)
+        diff = tf.square(labels - predictions)
         if raw_tensor:
             return diff
         return tf.reduce_mean(diff)
