@@ -49,8 +49,9 @@ class MakiCore(ABC):
         # Contains all the MakiTensor that appear in the computational graph
         self._graph_tensors = graph_tensors
         if graph_tensors is None:
+            graph_tensors = {}
             for output in outputs:
-                graph_tensors = output.get_previous_tensors().copy()
+                graph_tensors.update(output.get_previous_tensors())
                 # Add output tensor to `graph_tensors` since it doesn't have it.
                 # It is assumed that graph_tensors contains ALL THE TENSORS graph consists of.
                 graph_tensors.update(output.get_self_pair())
