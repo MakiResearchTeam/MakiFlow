@@ -32,6 +32,8 @@ class InitConvKernel:
     HE_GRAD = 'he_grad'
     HE_UNIFORM = 'he_uniform'
 
+    RANDOM_NORMAL = "random_normal"
+
     @staticmethod
     def init_by_name(kw, kh, out_f, in_f, name_init, dtype=np.float32):
         return InitConvKernel.SET_INITS[name_init](kw, kh, out_f, in_f, dtype)
@@ -84,6 +86,10 @@ class InitConvKernel:
         w *= np.sqrt(12. / (kw * kh * in_f + kw * kh * out_f))
         return w.astype(dtype)
 
+    @staticmethod
+    def random_normal(kw, kh, out_f, in_f, dtype=np.float32):
+        return np.random.normal(scale=0.01, size=(kw, kh, in_f, out_f)).astype(dtype)
+
     SET_INITS = {}
 
 
@@ -97,7 +103,9 @@ InitConvKernel.SET_INITS = {
             InitConvKernel.LASANGE: InitConvKernel.lasange,
             InitConvKernel.HE: InitConvKernel.he,
             InitConvKernel.HE_GRAD: InitConvKernel.he_grad,
-            InitConvKernel.HE_UNIFORM: InitConvKernel.he_uniform
+            InitConvKernel.HE_UNIFORM: InitConvKernel.he_uniform,
+
+            InitConvKernel.RANDOM_NORMAL: InitConvKernel.random_normal
     }
 
 
