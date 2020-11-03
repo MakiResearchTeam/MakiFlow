@@ -85,11 +85,10 @@ class ModelSerializer(MakiCore):
                            single_output.get_data_tensor().name.split(':')[0]
                            for single_output in self._outputs
                        ] + [
-                           single_output.name.split(':')[0]
-                           for single_output in self._training_outputs
+                           single_output.get_data_tensor().name.split(':')[0]
+                           for single_output in super().get_graph_tensors().values()
                        ]
 
-        frozen_graph = None
         graph = self._session.graph
         with graph.as_default():
             # Collects all names of variables which are need to freeze
