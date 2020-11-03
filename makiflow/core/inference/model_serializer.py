@@ -82,12 +82,12 @@ class ModelSerializer(MakiCore):
         """
         # Collect all names of output variables/operations
         output_names = [
-                           single_output.get_data_tensor().name.split(':')[0]
-                           for single_output in self._outputs
-                       ] + [
-                           single_output.get_data_tensor().name.split(':')[0]
-                           for single_output in super().get_graph_tensors().values()
-                       ]
+            single_output.get_data_tensor().name.split(':')[0]
+            for single_output in self._outputs
+        ] + [
+            single_output.get_data_tensor().name.split(':')[0]
+            for single_output in super().get_graph_tensors().values()
+        ]
 
         graph = self._session.graph
         with graph.as_default():
