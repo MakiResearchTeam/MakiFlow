@@ -396,7 +396,7 @@ class SegmentatorTrainer:
                     else:
                         raise ValueError('Unknown loss type!')
 
-                self.loss_list += sub_train_info['train losses']
+                self.loss_list += sub_train_info[list(sub_train_info.keys())[0]]
 
                 if i % test_period == 0:
                     self._perform_testing(model, exp_params, i)
