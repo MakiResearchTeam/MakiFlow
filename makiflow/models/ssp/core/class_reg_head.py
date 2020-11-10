@@ -37,7 +37,7 @@ class ClassRegHead:
             reg_f: MakiTensor,
             class_f: MakiTensor,
             human_indicator_f: MakiTensor,
-            default_points: np.ndarray, name,
+            points_embedding: np.ndarray, name,
             reg_init_type='he', class_init_type='he'
     ):
         """
@@ -47,7 +47,7 @@ class ClassRegHead:
             Source of features for the bbox regressor.
         class_f : MakiTensor
             Source of features for the classificator.
-        default_points : ndarray of shape (n_points, 2)
+        points_embedding : ndarray of shape (n_points, 2)
             Default points of the skeleton. Their coordinates (x, y) must be centered and normalized
             in the [-1, 1] interval.
         name : str or int
@@ -56,7 +56,7 @@ class ClassRegHead:
         self._reg_f = reg_f
         self._class_f = class_f
         self._humani_f = human_indicator_f
-        self._default_points = default_points
+        self._default_points = points_embedding
         self.name = str(name)
         self.reg_init_type = reg_init_type
         self.class_init_type = class_init_type
