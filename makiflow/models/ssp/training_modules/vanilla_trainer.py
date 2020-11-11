@@ -38,6 +38,10 @@ class VanillaTrainer(MakiTrainer):
         raise NotImplementedError('This method is not implemented for the SSP trainer. You need to pass'
                                   'in the necessary placeholders/Tensors yourself.')
 
+    def _init(self):
+        super()._init()
+
+
     def _build_loss(self):
         pass
 

@@ -113,6 +113,15 @@ class Head:
     def get_bbox_configuration(self):
         return self._bbox_configuration
 
+    def get_coords(self):
+        return self._coords
+
+    def get_point_indicators(self):
+        return self._point_indicators
+
+    def get_human_indicators(self):
+        return self._human_indicators
+
 
 # For debug
 if __name__ == '__main__':

@@ -17,7 +17,6 @@
 
 from __future__ import absolute_import
 from makiflow.layers import InputLayer
-from .class_reg_head import ClassRegHead
 import tensorflow as tf
 from .ssp_interface import SSPInterface
 
@@ -28,9 +27,6 @@ class SSPModel(SSPInterface):
             self._in_x: 0
         }
 
-    def get_heads(self):
-        return self._heads
-
     def _get_model_info(self):
         # TODO
         pass
@@ -40,56 +36,59 @@ class SSPModel(SSPInterface):
         # TODO
         pass
 
-    def __init__(self, cr_heads: list, in_x: InputLayer, name='MakiSSD'):
+    def __init__(self, in_x: InputLayer, heads: list, name='MakiSSP'):
         self._in_x = in_x
-        self._crh = cr_heads
+        self._heads = heads
         self._name = str(name)
         inputs = [in_x]
 
-        graph_tensors = {}
         outputs = []
         self._heads = {}
-        for head in cr_heads:
-            c_logits = head.get_classification_logits()
-            hp_logits = head.get_human_presence_logits()
-            p_offsets = head.get_points_offsets()
+        for head in heads:
+            coords = head.get_coords()
+            point_indicators = head.get_point_indicators()
+            human_indicators = head.get_human_indicators()
 
-            outputs += [c_logits]
-            outputs += [hp_logits]
-            outputs += [p_offsets]
+            outputs += [coords]
+            outputs += [point_indicators]
+            outputs += [human_indicators]
 
-            graph_tensors.update(c_logits.get_previous_tensors())
-            graph_tensors.update(hp_logits.get_previous_tensors())
-            graph_tensors.update(p_offsets.get_previous_tensors())
-            graph_tensors.update(c_logits.get_self_pair())
-            graph_tensors.update(hp_logits.get_self_pair())
-            graph_tensors.update(p_offsets.get_self_pair())
-
-        super().__init__(outputs, inputs, graph_tensors=graph_tensors)
+        super().__init__(outputs, inputs)
 
         # Create tensors that will be ran in predict method
         self._setup_inference()
 
+    def get_image_size(self):
+        _, h, w, _ = self._in_x.get_shape()
+        return w, h
+
     def _setup_inference(self):
-        _, H, W, _ = self._inputs[0].get_shape()
         # Collect tensors from every head.
         classification_logits = []
         human_presence_logits = []
         regressed_points = []
-        for head_name in self._heads:
-            head = self._heads[head_name]
-            head_tensors = head.get_tensor_dict()
-            classification_logits += [head_tensors[ClassRegHead.CLASS_LOGITS].get_data_tensor()]
-            human_presence_logits += [head_tensors[ClassRegHead.HUMANI_LOGITS].get_data_tensor()]
-            offsets = head_tensors[ClassRegHead.POINTS_OFFSETS]
-            regressed_points += [head.get_regressed_points_tensor(offsets, (H, W))]
+        for head in self._heads:
+            classification_logits += [head.get_point_indicators().get_data_tensor()]
+            human_presence_logits += [head.get_human_indicators().get_data_tensor()]
+            regressed_points += [head.get_coords().get_data_tensor()]
+
+        def flatten(x):
+            b, h, w, c = x.get_shape().as_list()
+            return tf.reshape(x, shape=[b, h * w, c])
+
+        classification_logits   = list(map(flatten, classification_logits))
+        human_presence_logits   = list(map(flatten, human_presence_logits))
+        regressed_points        = list(map(flatten, regressed_points))
 
         # Concatenate the collected tensors
         self._classification_logits = tf.concat(classification_logits, axis=1)
         self._human_presence_logits = tf.concat(human_presence_logits, axis=1)
+        regressed_points            = tf.concat(regressed_points, axis=1)
+
+        b, n, c = regressed_points.get_shape().as_list()
+        self._regressed_points = tf.reshape(regressed_points, shape=[b, n, c // 2, 2])
 
         # Used in predict
-        self._regressed_points = tf.concat(regressed_points, axis=1)
         self._classification_vals = tf.nn.softmax(self._classification_logits, axis=-1)
         self._human_presence_indicators = tf.nn.sigmoid(self._human_presence_logits)
 
@@ -100,4 +99,6 @@ class SSPModel(SSPInterface):
             feed_dict={self._input_data_tensors[0]: X}
         )
 
+    def get_heads(self):
+        return self._heads
 
