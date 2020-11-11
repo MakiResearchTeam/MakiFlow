@@ -19,8 +19,24 @@ from makiflow.core import MakiBuilder, MakiTrainer
 
 
 class VanillaTrainer(MakiTrainer):
+    @staticmethod
+    def coordinates_name(feature_map_size):
+        w, h = feature_map_size
+        return f'COORDINATES_W={w}_H={h}'
+
+    @staticmethod
+    def point_visibility_indicators_name(feature_map_size):
+        w, h = feature_map_size
+        return f'POINT_VISIBILITY_INDICATORS_W={w}_H={h}'
+
+    @staticmethod
+    def human_presence_indicators_name(feature_map_size):
+        w, h = feature_map_size
+        return f'HUMAN_PRESENCE_INDICATORS_W={w}_H={h}'
+
     def _setup_label_placeholders(self):
-        pass
+        raise NotImplementedError('This method is not implemented for the SSP trainer. You need to pass'
+                                  'in the necessary placeholders/Tensors yourself.')
 
     def _build_loss(self):
         pass

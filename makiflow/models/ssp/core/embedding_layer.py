@@ -1,5 +1,5 @@
 from makiflow.core import MakiLayer
-from makiflow.core.utils import d_msg
+from makiflow.core.debug_utils import d_msg
 import tensorflow as tf
 import numpy as np
 
@@ -25,7 +25,7 @@ class SkeletonEmbeddingLayer(MakiLayer):
         if not isinstance(embedding_dim, int):
             assert custom_embedding is not None, d_msg(
                 name, 'embedding_dim is not of the type int. In this case the custom_embedding is expected to be '
-                'provided, but the custom_embedding=None.'
+                      'provided, but the custom_embedding=None.'
             )
         else:
             assert embedding_dim > 0, d_msg(
@@ -43,22 +43,21 @@ class SkeletonEmbeddingLayer(MakiLayer):
             )
 
             if not isinstance(custom_embedding, list):
-                print(d_msg(name, f'custom_embedding is not a list. Received custom_embedding of '
-                f'type={type(custom_embedding)}.'))
-                print(d_msg(name, 'Iterating over the custom_embedding to convert it to a list.'))
-                list_embedding = []
-                for point in custom_embedding:
-                    list_point = []
-                    for coord in point:
-                        list_point.append(coord)
-                    list_embedding.append(list_point)
-                custom_embedding = list_embedding
-
+                print(d_msg(
+                    name, f'custom_embedding is not a list. Received custom_embedding of '
+                    f'type={type(custom_embedding)}.')
+                )
+                print(d_msg(
+                    name, 'Iterating over the custom_embedding to convert it to a list.')
+                )
+                custom_embedding = self.__embed2list(custom_embedding)
+        self._embedding_dim = embedding_dim
         self._custom_embedding = custom_embedding
         if custom_embedding is None:
-            custom_embedding = np.random.uniform(low=-1.0, high=1.0, size=[embedding_dim, 2])
+            print(d_msg(name, 'No custom embedding is provided. Creating a random one.'))
+            self._custom_embedding = np.random.uniform(low=-1.0, high=1.0, size=[embedding_dim, 2]).tolist()
 
-        embedding = custom_embedding
+        embedding = np.array(self._custom_embedding)
         with tf.name_scope(name):
             self._embedding = tf.Variable(embedding, dtype='float32', name='SkeletonEmbedding')
 
@@ -69,9 +68,23 @@ class SkeletonEmbeddingLayer(MakiLayer):
             named_params_dict={self._embedding.name: self._embedding}
         )
 
+    def __embed2list(self, custom_embedding):
+        list_embedding = []
+        for point in custom_embedding:
+            list_point = []
+            for coord in point:
+                list_point.append(coord)
+            list_embedding.append(list_point)
+        return list_embedding
+
     def forward(self, x, computation_mode=MakiLayer.INFERENCE_MODE):
         # Do not add the name_scope since in future it won't be used anyway
         _, h, w, c = x.get_shape().as_list()
+        assert c == self._embedding_dim * 2, d_msg(
+            self.get_name(),
+            'The depth of the input tensor must twice as large as the embedding dimensionality. '
+            f'Received input tensor channels={c}, embedding dimensionality*2={self._embedding_dim * 2}'
+        )
         offsets = x
 
         grid = SkeletonEmbeddingLayer.generate_grid_stacked((w, h), self._embedding)
@@ -131,7 +144,11 @@ class SkeletonEmbeddingLayer(MakiLayer):
     def to_dict(self):
         raise NotImplementedError()
 
+    def get_embedding(self):
+        return self._custom_embedding
 
+
+# For debug
 if __name__ == '__main__':
     # Generate points around a circle
     phi = np.linspace(0, 2 * np.pi, num=100)
@@ -140,6 +157,7 @@ if __name__ == '__main__':
     points = np.stack([x, y], axis=-1)
 
     from makiflow.layers import InputLayer
+
     # RUN A SANITY CHECK FIRST
     in_x = InputLayer(input_shape=[1, 3, 3, 100 * 2], name='offsets')
     # Never pass in a numpy array to the `custom_embedding` argument. Always use list.
@@ -159,6 +177,7 @@ if __name__ == '__main__':
 
     # Visualize the circles
     import matplotlib
+
     # For some reason matplotlib doesn't want to show the plot when it is called from PyCharm
     matplotlib.use('TkAgg')
     import matplotlib.pyplot as plt
@@ -168,6 +187,7 @@ if __name__ == '__main__':
     plt.show()
 
     from makiflow.core.debug_utils import DebugContext
+
     # Check if wrong `embedding_dim` was passed
     print('\nChecking embedding_dim asserts...........................................................................')
     with DebugContext('embedding_dim=None'):
@@ -183,3 +203,5 @@ if __name__ == '__main__':
     with DebugContext("custom_embedding's points are not 2-dimensional"):
         SkeletonEmbeddingLayer(embedding_dim=None, name='TestEmbedding', custom_embedding=[[1]])(in_x)
 
+    print('\nChecking randomizing the embedding. A message must be printed.')
+    SkeletonEmbeddingLayer(embedding_dim=1, name='TestEmbedding', custom_embedding=None)
