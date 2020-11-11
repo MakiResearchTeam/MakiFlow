@@ -19,20 +19,40 @@ from makiflow.core import MakiBuilder, MakiTrainer
 
 
 class VanillaTrainer(MakiTrainer):
-    @staticmethod
-    def coordinates_name(feature_map_size):
-        w, h = feature_map_size
-        return f'COORDINATES_W={w}_H={h}'
+    COORDINATES = 'COORDINATES'
+    POINT_VISIBILITY_INDICATORS = 'POINT_VISIBILITY_INDICATORS'
+    HUMAN_PRESENCE_INDICATORS = 'HUMAN_PRESENCE_INDICATORS'
 
     @staticmethod
-    def point_visibility_indicators_name(feature_map_size):
-        w, h = feature_map_size
-        return f'POINT_VISIBILITY_INDICATORS_W={w}_H={h}'
+    def encode(tensor_type, feature_map_size, bbox_config):
+        h, w = feature_map_size
+        h_scale, w_scale = bbox_config
+        return f'{tensor_type}_WH={h}/{w}_BC={w_scale}/{h_scale}'
 
     @staticmethod
-    def human_presence_indicators_name(feature_map_size):
-        w, h = feature_map_size
-        return f'HUMAN_PRESENCE_INDICATORS_W={w}_H={h}'
+    def coordinates_name(feature_map_size, bbox_config):
+        return VanillaTrainer.encode(VanillaTrainer.COORDINATES, feature_map_size, bbox_config)
+
+    @staticmethod
+    def point_visibility_indicators_name(feature_map_size, bbox_config):
+        return VanillaTrainer.encode(VanillaTrainer.COORDINATES, feature_map_size, bbox_config)
+
+    @staticmethod
+    def human_presence_indicators_name(feature_map_size, bbox_config):
+        return VanillaTrainer.encode(VanillaTrainer.COORDINATES, feature_map_size, bbox_config)
+
+    @staticmethod
+    def decode(tensor_name):
+        tensor_type, feature_map_size, bbox_config = tensor_name.split('_')
+
+        feature_map_size = feature_map_size.replace('WH=', '')
+        h, w = feature_map_size.split('/')
+        h, w = int(h), int(w)
+
+        feature_map_size = feature_map_size.replace('BC=', '')
+        w_scale, h_scale = feature_map_size.split('/')
+        w_scale, h_scale = float(w_scale), float(h_scale)
+        return tensor_type, (h, w), (w_scale, h_scale)
 
     def _setup_label_placeholders(self):
         raise NotImplementedError('This method is not implemented for the SSP trainer. You need to pass'
