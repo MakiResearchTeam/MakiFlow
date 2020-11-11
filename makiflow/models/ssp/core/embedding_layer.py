@@ -28,13 +28,14 @@ class SkeletonEmbeddingLayer(MakiLayer):
                       'provided, but the custom_embedding=None.'
             )
         else:
-            assert embedding_dim > 1, d_msg(
+            assert embedding_dim >= 2, d_msg(
                 name, f'embedding_dim must be at least 2. Received embedding_dim={embedding_dim}'
             )
 
         if custom_embedding is not None:
-            assert len(custom_embedding) > 0, d_msg(
-                name, f'custom_embedding is empty. Received custom_embedding with '
+            embedding_dim = len(custom_embedding)
+            assert len(custom_embedding) >= 2, d_msg(
+                name, f'Length of the custom_embedding must be at least 2. Received custom_embedding with '
                 f'len={len(custom_embedding)}'
             )
             assert len(custom_embedding[0]) == 2, d_msg(
@@ -209,5 +210,5 @@ if __name__ == '__main__':
     with DebugContext("custom_embedding's points are not 2-dimensional"):
         SkeletonEmbeddingLayer(embedding_dim=None, name='TestEmbedding', custom_embedding=[[1]])(in_x)
 
-    print('\nChecking randomizing the embedding. A message must be printed.')
-    SkeletonEmbeddingLayer(embedding_dim=1, name='TestEmbedding', custom_embedding=None)
+    with DebugContext('Checking randomizing the embedding. A message must be printed.'):
+        SkeletonEmbeddingLayer(embedding_dim=2, name='TestEmbedding', custom_embedding=None)
