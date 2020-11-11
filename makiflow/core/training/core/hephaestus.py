@@ -67,7 +67,7 @@ class Hephaestus(ABC):
         Initiates building the training graph. Has to be called before the training.
         """
         print('Compile the model...')
-        self._build_training_graph()
+        self.build_training_graph()
         self._is_compiled = True
         print('Model is compiled.')
 
@@ -139,7 +139,7 @@ class Hephaestus(ABC):
 
         return training_loss
 
-    def _build_training_graph(self):
+    def build_training_graph(self):
         # The algorithm recursively goes down the graph until it finds the input layer
         # and then passes its tensor through all the layers it has encountered so far.
 
