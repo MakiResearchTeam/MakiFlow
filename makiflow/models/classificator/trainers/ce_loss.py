@@ -35,3 +35,28 @@ class CETrainer(ClassificatorTrainer):
 
 
 TrainerBuilder.register_trainer(CETrainer)
+
+
+if __name__ == '__main__':
+    from makiflow.models.classificator import Classificator
+    from makiflow.layers import InputLayer
+    # SEGMENTATION CASE
+    print('SEGMENTATION CASE------------------------------------------------------------------------------------------')
+    x = InputLayer(input_shape=[32, 128, 128, 3], name='input')
+
+    model = Classificator(in_x=x, out_x=x)
+    trainer = CETrainer(model=model, train_inputs=[x])
+
+    print('LABELS TENSORS:', trainer.get_label_tensors())
+    trainer.compile()
+    print('LOSS TENSORS:', trainer.get_track_losses())
+
+    # VANILLA CLASSIFICATION CASE
+    print('VANILLA CLASSIFICATION CASE--------------------------------------------------------------------------------')
+    x = InputLayer(input_shape=[32, 3], name='input')
+    model = Classificator(in_x=x, out_x=x)
+    trainer = CETrainer(model=model, train_inputs=[x])
+
+    print('LABELS TENSORS:', trainer.get_label_tensors())
+    trainer.compile()
+    print('LOSS TENSORS:', trainer.get_track_losses())
