@@ -114,6 +114,7 @@ class Head:
         return self._bbox_configuration
 
 
+# For debug
 if __name__ == '__main__':
     from makiflow.layers import InputLayer
     batch_size = 1

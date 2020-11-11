@@ -28,8 +28,8 @@ class SkeletonEmbeddingLayer(MakiLayer):
                       'provided, but the custom_embedding=None.'
             )
         else:
-            assert embedding_dim > 0, d_msg(
-                name, f'embedding_dim must be positive. Received embedding_dim={embedding_dim}'
+            assert embedding_dim > 1, d_msg(
+                name, f'embedding_dim must be at least 2. Received embedding_dim={embedding_dim}'
             )
 
         if custom_embedding is not None:
@@ -56,6 +56,12 @@ class SkeletonEmbeddingLayer(MakiLayer):
         if custom_embedding is None:
             print(d_msg(name, 'No custom embedding is provided. Creating a random one.'))
             self._custom_embedding = np.random.uniform(low=-1.0, high=1.0, size=[embedding_dim, 2]).tolist()
+            # Artificially insert border points. This is required to have a consistent behaviour
+            # between different runs. The configuration of the default boxes is highly dependent
+            # on the result of the randomization. Therefore, we artificially restrict the
+            # resulting bounding box configuration to that of the default one - (1, 1).
+            self._custom_embedding[0] = [-1, -1]
+            self._custom_embedding[1] = [1, 1]
 
         embedding = np.array(self._custom_embedding)
         with tf.name_scope(name):
