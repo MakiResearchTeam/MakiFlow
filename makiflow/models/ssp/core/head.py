@@ -2,10 +2,11 @@ from makiflow.core import MakiTensor
 from makiflow.core.debug_utils import d_msg
 from .embedding_layer import SkeletonEmbeddingLayer
 from .utils import make_box
+from .head_interface import HeadInterface
 import numpy as np
 
 
-class Head:
+class Head(HeadInterface):
     def __init__(self, coords: MakiTensor, point_indicators: MakiTensor, human_indicators: MakiTensor):
         """
         An entity that encapsulates all the tensors necessary to make predictions on a particular grid.
@@ -105,7 +106,13 @@ class Head:
         # Default box has the following coordinates:
         # - top left point = [-1, -1]
         # - bottom right point = [1, 1]
-        self._bbox_configuration = (width / 2.0, height / 2.0)
+        self._bbox_configuration = [width / 2.0, height / 2.0]
+
+        coords_shape = self._coords.get_shape()
+        self._grid_size = coords_shape[1:-1]
+
+    def get_grid_size(self) -> list:
+        return self._grid_size
 
     def get_bbox(self):
         return self._embedding_bounding_box
@@ -122,6 +129,12 @@ class Head:
     def get_human_indicators(self):
         return self._human_indicators
 
+    def get_description(self):
+        description = self._context
+        description = description + f'/GridSize={self.get_grid_size()}'
+        description = description + f'/BboxConfig={self.get_bbox_configuration()}'
+        return description
+
 
 # For debug
 if __name__ == '__main__':
@@ -136,6 +149,7 @@ if __name__ == '__main__':
     head = Head(coords, point_indicators, human_indicators)
     print('Bbox configuration:', head.get_bbox_configuration())
     print('Bbox coordinates:', head.get_bbox())
+    print(head.get_description())
 
     from makiflow.core.debug_utils import DebugContext
 

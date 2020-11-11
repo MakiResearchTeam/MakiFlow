@@ -17,6 +17,5 @@
 
 from .ssp_interface import SSPInterface
 from .ssp_model import SSPModel
-from .class_reg_head import ClassRegHead
 from .embedding_layer import SkeletonEmbeddingLayer
 from .head import Head
