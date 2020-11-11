@@ -787,11 +787,12 @@ class ResizeLayer(MakiLayer):
             One of type resize images. ('bilinear', 'nearest_neighbor', 'area', 'bicubic')
         new_shape : list
             List the number of new shape tensor (Height and Width).
-            NOTICE! The parameter `scales` has a higher priority
+            NOTICE! The parameter `scales` has a higher priority,
+            You can set None value for this parameters, if will be used `scales`
         name : str
             Name of this layer.
         scales : list
-            List of int values.
+            List of int values [scale_for_h, scale_for_w].
             Example: input MakiTensor have shape [N1, H1, W1, C1], after this operation it would be [N1, H2, W2, C1],
             where H2 = H1 * scales[0], W2 = W2 * scales[1]
         """
