@@ -24,20 +24,20 @@ import tensorflow as tf
 
 class SSPTrainer(MakiTrainer, ABC):
     # Entity types
-    COORDINATES = 'COORDINATES'
-    POINT_VISIBILITY_INDICATORS = 'POINT_VISIBILITY_INDICATORS'
-    HUMAN_PRESENCE_INDICATORS = 'HUMAN_PRESENCE_INDICATORS'
+    COORDINATES = 'Coordinates'
+    POINT_VISIBILITY_INDICATORS = 'PointVisibilityIndicators'
+    HUMAN_PRESENCE_INDICATORS = 'HumanPresenceIndicators'
     HEAD = 'HEAD'
 
-    COORDS_LOSS = 'COORDS_LOSS'
-    POINT_INDICATORS_LOSS = 'POINT_INDICATORS_LOSS'
-    HUMAN_INDICATORS_LOSS = 'HUMAN_INDICATORS_LOSS'
+    COORDS_LOSS = 'CoordsLoss'
+    POINT_INDICATORS_LOSS = 'PointIndicatorsLoss'
+    HUMAN_INDICATORS_LOSS = 'HumanIndicatorsLoss'
 
     @staticmethod
     def encode(entity_type, feature_map_size, bbox_config):
         h, w = feature_map_size
         h_scale, w_scale = bbox_config
-        return f'{entity_type}_WH={h}/{w}_BC={w_scale}/{h_scale}'
+        return f'{entity_type}_WH{h}-{w}_BC{w_scale}-{h_scale}'
 
     @staticmethod
     def coordinates_name(feature_map_size, bbox_config):
@@ -45,17 +45,17 @@ class SSPTrainer(MakiTrainer, ABC):
 
     @staticmethod
     def point_visibility_indicators_name(feature_map_size, bbox_config):
-        return SSPTrainer.encode(SSPTrainer.COORDINATES, feature_map_size, bbox_config)
+        return SSPTrainer.encode(SSPTrainer.POINT_VISIBILITY_INDICATORS, feature_map_size, bbox_config)
 
     @staticmethod
     def human_presence_indicators_name(feature_map_size, bbox_config):
-        return SSPTrainer.encode(SSPTrainer.COORDINATES, feature_map_size, bbox_config)
+        return SSPTrainer.encode(SSPTrainer.HUMAN_PRESENCE_INDICATORS, feature_map_size, bbox_config)
 
     @staticmethod
     def decode(tensor_name):
         tensor_info = tensor_name.split('_')
         assert len(tensor_info) == 3, 'Unknown tensor_name structure. The following structure must ' \
-                                      'be used: tensortype_WH=h/w_BC=w_scale/h_scale. ' \
+                                      'be used: tensortype_WH=h-w_BC=w_scale-h_scale. ' \
                                       f'Received {tensor_name}'
 
         entity_type, feature_map_size, bbox_config = tensor_info
@@ -68,12 +68,12 @@ class SSPTrainer(MakiTrainer, ABC):
                                                     f'Allowed entity types: {allowed_entity_types}. ' \
                                                     f'Received: {entity_type}'
 
-        feature_map_size = feature_map_size.replace('WH=', '')
-        h, w = feature_map_size.split('/')
+        feature_map_size = feature_map_size.replace('WH', '')
+        h, w = feature_map_size.split('-')
         h, w = int(h), int(w)
 
-        feature_map_size = feature_map_size.replace('BC=', '')
-        w_scale, h_scale = feature_map_size.split('/')
+        bbox_config = bbox_config.replace('BC', '')
+        w_scale, h_scale = bbox_config.split('-')
         w_scale, h_scale = float(w_scale), float(h_scale)
         return entity_type, (h, w), (w_scale, h_scale)
 
@@ -106,10 +106,10 @@ class SSPTrainer(MakiTrainer, ABC):
                 'float32', shape=coords_shape, name=coords_name
             )
             label_placeholders[point_indicators_name] = tf.placeholder(
-                'int32', shape=point_indicators_shape, name=point_indicators_name
+                'float32', shape=point_indicators_shape, name=point_indicators_name
             )
             label_placeholders[human_indicators_name] = tf.placeholder(
-                'int32', shape=human_indicators_shape, name=human_indicators_name
+                'float32', shape=human_indicators_shape, name=human_indicators_name
             )
 
         return label_placeholders
@@ -138,6 +138,8 @@ class SSPTrainer(MakiTrainer, ABC):
             heads_collection = self._model_heads_collections.get(tuple(grid_size), [])
             heads_collection.append(head)
 
+            self._model_heads_collections[tuple(grid_size)] = heads_collection
+
     def _setup_head_labels(self):
         label_tensors = super().get_label_tensors()
 
@@ -153,8 +155,9 @@ class SSPTrainer(MakiTrainer, ABC):
             configuration = (*feature_map_size, *bbox_config)
             collection[configuration] = tensor
 
+        print(tensor_collections)
         self._head_labels = []
-        for configuration, coordinates in tensor_collections[SSPTrainer.COORDINATES]:
+        for configuration, coordinates in tensor_collections[SSPTrainer.COORDINATES].items():
             point_indicators = tensor_collections[SSPTrainer.POINT_VISIBILITY_INDICATORS].get(configuration)
             assert point_indicators is not None, f'coordinates tensor with configuration={configuration} does not ' \
                 f'have corresponding point_indicators with the same configuration.'
@@ -214,8 +217,8 @@ class SSPTrainer(MakiTrainer, ABC):
                 head.get_bbox_configuration()
             )
             super().track_loss(human_indicators_loss, loss_name)
-
-            losses += [coords_loss, point_indicators, human_indicators_loss]
+            print([coords_loss, point_indicators_loss, human_indicators_loss])
+            losses += [coords_loss, point_indicators_loss, human_indicators_loss]
 
         return tf.add_n(losses)
 

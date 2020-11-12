@@ -19,3 +19,4 @@ from .ssp_interface import SSPInterface
 from .ssp_model import SSPModel
 from .embedding_layer import SkeletonEmbeddingLayer
 from .head import Head
+from .ssp_trainer import SSPTrainer

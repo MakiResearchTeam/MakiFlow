@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from makiflow.layers import InputLayer
 import tensorflow as tf
 from .ssp_interface import SSPInterface
+from makiflow.core.debug_utils import d_msg
 
 
 class SSPModel(SSPInterface):
@@ -43,7 +44,6 @@ class SSPModel(SSPInterface):
         inputs = [in_x]
 
         outputs = []
-        self._heads = {}
         for head in heads:
             coords = head.get_coords()
             point_indicators = head.get_point_indicators()
@@ -64,25 +64,38 @@ class SSPModel(SSPInterface):
 
     def _setup_inference(self):
         # Collect tensors from every head.
-        classification_logits = []
-        human_presence_logits = []
+        point_indicators_logits = []
+        human_indicators_logits = []
         regressed_points = []
         for head in self._heads:
-            classification_logits += [head.get_point_indicators().get_data_tensor()]
-            human_presence_logits += [head.get_human_indicators().get_data_tensor()]
+            point_indicators_logits += [head.get_point_indicators().get_data_tensor()]
+            human_indicators_logits += [head.get_human_indicators().get_data_tensor()]
             regressed_points += [head.get_coords().get_data_tensor()]
 
         def flatten(x):
             b, h, w, c = x.get_shape().as_list()
             return tf.reshape(x, shape=[b, h * w, c])
 
-        classification_logits   = list(map(flatten, classification_logits))
-        human_presence_logits   = list(map(flatten, human_presence_logits))
+        point_indicators_logits   = list(map(flatten, point_indicators_logits))
+        human_indicators_logits   = list(map(flatten, human_indicators_logits))
         regressed_points        = list(map(flatten, regressed_points))
 
+        # If any of the lists is empty, it will be difficult to handle it using tf messages.
+        # Hence this check is here.
+        assert len(point_indicators_logits) != 0 and \
+            len(human_indicators_logits) != 0 and \
+            len(regressed_points) != 0, d_msg(
+            self._name,
+            'Length of the logits or regressed points is zero. '
+            f'len(point_indicators_logits)={len(point_indicators_logits)}, '
+            f'len(human_indicators_logits)={len(human_indicators_logits)}, '
+            f'len(regressed_points)={len(regressed_points)}. '
+            f'This is probably because the list of the heads is empty.'
+        )
+
         # Concatenate the collected tensors
-        self._classification_logits = tf.concat(classification_logits, axis=1)
-        self._human_presence_logits = tf.concat(human_presence_logits, axis=1)
+        self._classification_logits = tf.concat(point_indicators_logits, axis=1)
+        self._human_presence_logits = tf.concat(human_indicators_logits, axis=1)
         regressed_points            = tf.concat(regressed_points, axis=1)
 
         b, n, c = regressed_points.get_shape().as_list()
