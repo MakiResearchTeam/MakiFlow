@@ -282,7 +282,7 @@ class SSPTrainer(MakiTrainer, ABC):
         for i, (name, tensor) in enumerate(label_tensors.items()):
             label_feed_dict[tensor] = i
 
-        return label_tensors
+        return label_feed_dict
 
 
 
