@@ -279,7 +279,7 @@ class SSPTrainer(MakiTrainer, ABC):
         label_tensors = super().get_label_tensors()
 
         label_feed_dict = {}
-        for i, (name, tensor) in label_tensors.items():
+        for i, (name, tensor) in enumerate(label_tensors.items()):
             label_feed_dict[tensor] = i
 
         return label_tensors
