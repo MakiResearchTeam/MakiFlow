@@ -14,7 +14,7 @@ def make_box(keypoints: np.ndarray):
     ndarray of shape [4]
         [x_left, y_up, x_right, y_down]
     """
-    assert keypoints.shape[1] == 2, f'keypoints are not 2-dimensional. Received shape={keypoints.shape}'
+    assert keypoints.shape[1] < 4, f'keypoints are not 2-dimensional. Received shape={keypoints.shape}'
     assert keypoints.shape[0] > 1, f'There must be at least 2 keypoints, but received shape={keypoints.shape}'
 
     x = keypoints[:, 0]
