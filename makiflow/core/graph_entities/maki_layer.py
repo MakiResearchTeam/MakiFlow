@@ -219,7 +219,7 @@ class MakiLayer(MakiRestorable):
             self._children_dict[parent_tensor_name] = output_mt_names
 
     @abstractmethod
-    def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
+    def forward(self, x, computation_mode=INFERENCE_MODE):
         """
         Method that contains the logic of the transformation that the layer performs.
 
@@ -320,3 +320,4 @@ class MakiLayer(MakiRestorable):
             with `makitensor_name` name.
         """
         return self._children_dict[makitensor_name]
+

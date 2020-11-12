@@ -15,15 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.core import MakiBuilder, MakiTrainer
-
-
-class VanillaTrainer(MakiTrainer):
-    def _setup_label_placeholders(self):
-        pass
-
-    def _build_loss(self):
-        pass
-
-    def get_label_feed_dict_config(self):
-        pass
+from .ssp_interface import SSPInterface
+from .ssp_model import SSPModel
+from .embedding_layer import SkeletonEmbeddingLayer
+from .head import Head
+from .ssp_trainer import SSPTrainer
