@@ -20,6 +20,7 @@ from makiflow.core import MakiTrainer
 from .head_label import HeadLabel
 from .head import Head
 import tensorflow as tf
+import numpy as np
 
 
 class SSPTrainer(MakiTrainer, ABC):
@@ -179,6 +180,18 @@ class SSPTrainer(MakiTrainer, ABC):
             print(f'- nn head - {head.get_description()}')
             coords = head.get_coords()
             coords = super().get_traingraph_tensor(coords.get_name())
+            _, ch, cw, d = coords.get_shape().as_list()
+            # Transform the coords to the image plane.
+            input_image = super().get_train_inputs_list()[0]
+            _, h, w, _ = input_image.get_shape()
+            scale = np.array([w / 2, h / 2], dtype='float32')
+            flatten = lambda t: tf.reshape(t, shape=[-1, ch, cw, d])
+            unflatten = lambda t: tf.reshape(t, shape=[-1, ch, cw, d // 2, 2])
+
+            coords = unflatten(coords)
+            coords = coords * scale + scale
+            coords = flatten(coords)
+
             point_indicators = head.get_point_indicators()
             point_indicators = super().get_traingraph_tensor(point_indicators.get_name())
             human_indicators = head.get_human_indicators()

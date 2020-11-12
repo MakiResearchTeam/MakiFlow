@@ -139,8 +139,8 @@ if __name__ == '__main__':
 
     # Generate points around a circle
     phi = np.linspace(0, 2 * np.pi, num=100)
-    x = np.cos(phi) * 0.7 + [0]
-    y = np.sin(phi) * 0.7 + [0]
+    x = np.cos(phi) * 1.0 + [0]
+    y = np.sin(phi) * 1.0 + [0]
     points = np.stack([x, y], axis=-1)
 
     from makiflow.layers import InputLayer

@@ -84,6 +84,9 @@ class SkeletonEmbeddingLayer(MakiLayer):
             list_embedding.append(list_point)
         return list_embedding
 
+    def training_forward(self, x):
+        return self.forward(x, MakiLayer.TRAINING_MODE)
+
     def forward(self, x, computation_mode=MakiLayer.INFERENCE_MODE):
         # Do not add the name_scope since in future it won't be used anyway
         _, h, w, c = x.get_shape().as_list()
@@ -96,9 +99,23 @@ class SkeletonEmbeddingLayer(MakiLayer):
 
         grid = SkeletonEmbeddingLayer.generate_grid_stacked((w, h), self._embedding)
         with tf.name_scope('GridCorrection'):
-            corrected_grid = grid + offsets
+            # This scaling is required to make the offsets be
+            # approximately in the range [-1, 1]
+            scale = np.array([w, h], dtype='float32')
+            flatten = lambda t: tf.reshape(t, shape=[-1, h, w, self._embedding_dim * 2])
+            unflatten = lambda t: tf.reshape(t, shape=[-1, h, w, self._embedding_dim, 2])
 
-        return corrected_grid
+            grid = unflatten(grid)
+            upscaled_grid = grid * scale
+            upscaled_grid = flatten(upscaled_grid)
+
+            corrected_grid = upscaled_grid + offsets
+
+            corrected_grid = unflatten(corrected_grid)
+            downscaled_grid = corrected_grid / scale
+            downscaled_grid = flatten(downscaled_grid)
+
+        return downscaled_grid
 
     @staticmethod
     def generate_grid(size):
@@ -140,9 +157,6 @@ class SkeletonEmbeddingLayer(MakiLayer):
         skeleton_grid = stacked_grid + embedding
         skeleton_grid = tf.reshape(skeleton_grid, shape=[h, w, -1])
         return skeleton_grid
-
-    def training_forward(self, x):
-        return self.forward(x, MakiLayer.TRAINING_MODE)
 
     @staticmethod
     def build(params: dict):
