@@ -20,6 +20,7 @@ from makiflow.layers import InputLayer
 import tensorflow as tf
 from .ssp_interface import SSPInterface
 from makiflow.core.debug_utils import d_msg
+from .utils import decode_prediction
 
 
 class SSPModel(SSPInterface):
@@ -105,12 +106,21 @@ class SSPModel(SSPInterface):
         self._classification_vals = tf.nn.softmax(self._classification_logits, axis=-1)
         self._human_presence_indicators = tf.nn.sigmoid(self._human_presence_logits)
 
-    def predict(self, X):
+    def predict(self, X, min_conf=0.2, iou_th=0.5):
         assert (self._session is not None)
-        return self._session.run(
+        predictions = self._session.run(
             [self._regressed_points, self._classification_vals, self._human_presence_indicators],
-            feed_dict={self._input_data_tensors[0]: X}
+            feed_dict={self._in_x.get_data_tensor(): X}
         )
+        processed_preds = []
+        for coords, human_indicators, point_indicators in zip(predictions):
+            final_vectors = decode_prediction(
+                prediction=(coords, human_indicators, point_indicators),
+                eps=min_conf,
+                iou_th=iou_th
+            )
+            processed_preds.append(final_vectors)
+        return processed_preds
 
     def get_heads(self):
         return self._heads
