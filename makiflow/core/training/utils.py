@@ -20,13 +20,14 @@ EPOCH = 'Epoch:'
 
 
 def print_train_info(epoch, *args):
-    output = ''
+    print(EPOCH, epoch)
     for value_name, value in args:
+        output = ''
         value_name = value_name.lower() + ': '
         value_name = value_name.title()
-        output += value_name + '{:0.4f}'.format(value) + ' '
-
-    print(EPOCH, epoch, output)
+        output += value_name + '{:0.5f}'.format(value) + ' '
+        print(output)
+    print('\n')
 
 
 def moving_average(old_val, new_val, iteration):
