@@ -4,4 +4,4 @@ This is a machine learning open source library built on top of TensorFlow. It is
 Use the following command:
 
 ##### Installing *master*
-    - pip install --upgrade https://github.com/MakiResearchTeam/MakiFlow.git
+    - pip install --upgrade git+https://github.com/MakiResearchTeam/MakiFlow.git
