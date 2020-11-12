@@ -112,12 +112,15 @@ class SSPModel(SSPInterface):
         self._classification_vals = tf.nn.sigmoid(self._classification_logits)
         self._human_presence_indicators = tf.nn.sigmoid(self._human_presence_logits)
 
-    def predict(self, X, min_conf=0.2, iou_th=0.5):
+    def predict(self, X, min_conf=0.2, iou_th=0.5, raw_data=False):
         assert (self._session is not None)
         predictions = self._session.run(
             [self._regressed_points, self._classification_vals, self._human_presence_indicators],
             feed_dict={self._in_x.get_data_tensor(): X}
         )
+        if raw_data:
+            return predictions
+
         processed_preds = []
         for coords, human_indicators, point_indicators in zip(predictions):
             final_vectors = decode_prediction(
