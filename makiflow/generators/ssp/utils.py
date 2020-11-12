@@ -19,9 +19,17 @@ def make_box(keypoints: np.ndarray):
 
     x = keypoints[:, 0]
     y = keypoints[:, 1]
+
     if keypoints.shape[1] == 3:
         c = keypoints[:, 2]
         x, y = x[c != 0], y[c != 0]
+
+    if len(x) == 0:
+        # If the human is absent, all of its points marked as absent
+        return np.array([
+            0., 0.,
+            0., 0.
+        ])
 
     x_left = np.min(x)
     y_up = np.min(y)
