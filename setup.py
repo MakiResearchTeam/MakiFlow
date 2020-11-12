@@ -4,13 +4,13 @@ import setuptools
 setup(
     name='MakiFlow',
     packages=setuptools.find_packages(),
-    version='1.4.0',
+    version='1.4.1',
     description='Machine learning framework made by students of Samara National Research University.'
                 'It is made primarily to extend our knowledge and get an instrument that accelerates our studies.',
     long_description='...',
     author='Kilbas Igor, Mukhin Artem, Gribanov Danil',
     author_email='whitemarsstudios@gmail.com',
-    url='https://github.com/oKatanaaa/MakiFlow',
+    url='https://github.com/MakiResearchTeam/MakiFlow.git',
     include_package_data=True,  # This will include all files in MANIFEST.in in the package when installing.
     classifiers=[
         'Programming Language :: Python :: 3.7',
