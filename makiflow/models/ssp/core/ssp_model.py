@@ -21,6 +21,7 @@ import tensorflow as tf
 from .ssp_interface import SSPInterface
 from makiflow.core.debug_utils import d_msg
 from .utils import decode_prediction
+import numpy as np
 
 
 class SSPModel(SSPInterface):
@@ -77,15 +78,15 @@ class SSPModel(SSPInterface):
             b, h, w, c = x.get_shape().as_list()
             return tf.reshape(x, shape=[b, h * w, c])
 
-        point_indicators_logits   = list(map(flatten, point_indicators_logits))
-        human_indicators_logits   = list(map(flatten, human_indicators_logits))
-        regressed_points        = list(map(flatten, regressed_points))
+        point_indicators_logits = list(map(flatten, point_indicators_logits))
+        human_indicators_logits = list(map(flatten, human_indicators_logits))
+        regressed_points = list(map(flatten, regressed_points))
 
         # If any of the lists is empty, it will be difficult to handle it using tf messages.
         # Hence this check is here.
         assert len(point_indicators_logits) != 0 and \
-            len(human_indicators_logits) != 0 and \
-            len(regressed_points) != 0, d_msg(
+               len(human_indicators_logits) != 0 and \
+               len(regressed_points) != 0, d_msg(
             self._name,
             'Length of the logits or regressed points is zero. '
             f'len(point_indicators_logits)={len(point_indicators_logits)}, '
@@ -97,13 +98,18 @@ class SSPModel(SSPInterface):
         # Concatenate the collected tensors
         self._classification_logits = tf.concat(point_indicators_logits, axis=1)
         self._human_presence_logits = tf.concat(human_indicators_logits, axis=1)
-        regressed_points            = tf.concat(regressed_points, axis=1)
+        regressed_points = tf.concat(regressed_points, axis=1)
 
         b, n, c = regressed_points.get_shape().as_list()
-        self._regressed_points = tf.reshape(regressed_points, shape=[b, n, c // 2, 2])
-
+        w, h = self.get_image_size()
+        regressed_points = tf.reshape(regressed_points, shape=[b, n, c // 2, 2])
+        # Scale the grid: [-1, 1] -> [-w/2, w/2]
+        regressed_points = regressed_points * np.array([w / 2, h / 2], dtype='float32')
+        # Shift the grid: [-w/2, w/2] -> [0, w]
+        regressed_points = regressed_points + np.array([w / 2, h / 2], dtype='float32')
+        self._regressed_points = regressed_points
         # Used in predict
-        self._classification_vals = tf.nn.softmax(self._classification_logits, axis=-1)
+        self._classification_vals = tf.nn.sigmoid(self._classification_logits)
         self._human_presence_indicators = tf.nn.sigmoid(self._human_presence_logits)
 
     def predict(self, X, min_conf=0.2, iou_th=0.5):
@@ -120,8 +126,59 @@ class SSPModel(SSPInterface):
                 iou_th=iou_th
             )
             processed_preds.append(final_vectors)
+
         return processed_preds
 
     def get_heads(self):
         return self._heads
 
+
+# CHECK MODEL'S PREDICT
+if __name__ == '__main__':
+    from .embedding_layer import SkeletonEmbeddingLayer
+
+    # Generate points around a circle
+    phi = np.linspace(0, 2 * np.pi, num=100)
+    x = np.cos(phi) * 0.7 + [0]
+    y = np.sin(phi) * 0.7 + [0]
+    points = np.stack([x, y], axis=-1)
+
+    from makiflow.layers import InputLayer
+
+    # RUN A SANITY CHECK FIRST
+    in_x = InputLayer(input_shape=[1, 3, 3, 100 * 2], name='offsets')
+    # Never pass in a numpy array to the `custom_embedding` argument. Always use list.
+    coords = SkeletonEmbeddingLayer(embedding_dim=None, name='TestEmbedding', custom_embedding=points)(in_x)
+
+    print('Coords MakiTensor', coords)
+    print('Coords TfTensor', coords.get_data_tensor())
+
+    point_indicators = InputLayer(input_shape=[1, 3, 3, 100], name='point_indicators')
+    human_indicators = InputLayer(input_shape=[1, 3, 3, 1], name='human_indicators')
+
+    from .head import Head
+
+    head = Head(coords, point_indicators, human_indicators)
+    model = SSPModel(heads=[head], in_x=in_x)
+
+    sess = tf.Session()
+    model.set_session(sess)
+    coords, _, _ = model._session.run(
+        [model._regressed_points, model._classification_vals, model._human_presence_indicators],
+        feed_dict={
+            model._in_x.get_data_tensor(): np.zeros(shape=[1, 3, 3, 200], dtype='float32'),
+            point_indicators.get_data_tensor(): np.ones(shape=[1, 3, 3, 100], dtype='float32'),
+            human_indicators.get_data_tensor(): np.ones(shape=[1, 3, 3, 1], dtype='float32')
+        }
+    )
+
+    # Visualize the circles
+    import matplotlib
+
+    # For some reason matplotlib doesn't want to show the plot when it is called from PyCharm
+    matplotlib.use('TkAgg')
+    import matplotlib.pyplot as plt
+
+    coords = coords.reshape(-1, 2)
+    plt.scatter(coords[:, 0], coords[:, 1])
+    plt.show()
