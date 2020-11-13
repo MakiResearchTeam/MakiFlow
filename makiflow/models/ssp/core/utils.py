@@ -39,7 +39,7 @@ def aggregate_data(prediction):
     levels = []
     human_indicators = []
     point_indicators = []
-    for level_size, (level, human_indicator, point_indicator) in prediction.items():
+    for level, human_indicator, point_indicator in prediction:
         levels += [level]
         human_indicators += [human_indicator]
         point_indicators += [point_indicator]
@@ -50,7 +50,8 @@ def aggregate_data(prediction):
 
 
 def decode_prediction(prediction, eps=0.1, iou_th=0.5, debug=False):
-    coords, human_indicators, point_indicators = aggregate_data(prediction)
+    coords, human_indicators, point_indicators = prediction
+    coords, human_indicators, point_indicators = coords[0], human_indicators[0].reshape(-1), point_indicators[0]
     if debug:
         print('coords shape:', coords.shape)
         print('human_indicators shape:', human_indicators.shape)
