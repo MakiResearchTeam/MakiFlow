@@ -96,8 +96,8 @@ class SSPModel(SSPInterface):
         )
 
         # Concatenate the collected tensors
-        self._classification_logits = tf.concat(point_indicators_logits, axis=1)
-        self._human_presence_logits = tf.concat(human_indicators_logits, axis=1)
+        self._point_indicators_logits = tf.concat(point_indicators_logits, axis=1)
+        self._human_indicators_logits = tf.concat(human_indicators_logits, axis=1)
         regressed_points = tf.concat(regressed_points, axis=1)
 
         b, n, c = regressed_points.get_shape().as_list()
@@ -109,20 +109,20 @@ class SSPModel(SSPInterface):
         regressed_points = regressed_points + np.array([w / 2, h / 2], dtype='float32')
         self._regressed_points = regressed_points
         # Used in predict
-        self._classification_vals = tf.nn.sigmoid(self._classification_logits)
-        self._human_presence_indicators = tf.nn.sigmoid(self._human_presence_logits)
+        self._point_indicators = tf.nn.sigmoid(self._point_indicators_logits)
+        self._human_indicators = tf.nn.sigmoid(self._human_indicators_logits)
 
     def predict(self, X, min_conf=0.2, iou_th=0.5, raw_data=False):
         assert (self._session is not None)
         predictions = self._session.run(
-            [self._regressed_points, self._classification_vals, self._human_presence_indicators],
+            [self._regressed_points, self._point_indicators, self._human_indicators],
             feed_dict={self._in_x.get_data_tensor(): X}
         )
         if raw_data:
             return predictions
 
         processed_preds = []
-        for coords, human_indicators, point_indicators in zip(predictions):
+        for coords, human_indicators, point_indicators in zip(*predictions):
             final_vectors = decode_prediction(
                 prediction=(coords, human_indicators, point_indicators),
                 eps=min_conf,
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     sess = tf.Session()
     model.set_session(sess)
     coords, _, _ = model._session.run(
-        [model._regressed_points, model._classification_vals, model._human_presence_indicators],
+        [model._regressed_points, model._point_indicators, model._human_indicators],
         feed_dict={
             model._in_x.get_data_tensor(): np.zeros(shape=[1, 3, 3, 200], dtype='float32'),
             point_indicators.get_data_tensor(): np.ones(shape=[1, 3, 3, 100], dtype='float32'),
