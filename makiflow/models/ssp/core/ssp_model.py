@@ -122,9 +122,9 @@ class SSPModel(SSPInterface):
             return predictions
 
         processed_preds = []
-        for coords, human_indicators, point_indicators in zip(*predictions):
+        for coords, point_indicators, human_indicators in zip(*predictions):
             final_vectors = decode_prediction(
-                prediction=(coords, human_indicators, point_indicators),
+                prediction=[coords, human_indicators, point_indicators],
                 eps=min_conf,
                 iou_th=iou_th
             )
