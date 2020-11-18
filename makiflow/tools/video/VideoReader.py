@@ -13,6 +13,7 @@ class VideoReader:
         """
         self._path = video_path
         self._video = None
+        self._last_frame = None
         self.reset()
 
     def reset(self):
@@ -27,6 +28,8 @@ class VideoReader:
             self._video.release()
 
         self._video = cv2.VideoCapture(self._path)
+        assert self._video.isOpened(), f'Could not open video with path={self._path}'
+        self._last_frame = None
 
     def get_length(self):
         """
@@ -83,21 +86,35 @@ class VideoReader:
             transform = lambda x: x
 
         frames = []
-        for _ in range(n):
+        # Transform and add to the list the last frame if it is present
+        if self._last_frame is not None:
+            frame = transform(self._last_frame)
+            frames.append(frame)
+            self._last_frame = None
+
+        for _ in range(n - len(frames)):
             ret, frame = self._video.read()
             if not ret:
+                print('Ran out of frames.')
                 break
 
             frames.append(transform(frame))
 
         assert len(frames) != 0, 'There are no frames left. Please, reset the video reader. (video is opened, for devs)'
+
         # Pad lacking frames
         if len(frames) != n:
             k = len(frames)
             to_add = n - k
             frames = frames + [frames[-1]] * to_add
+        # Sanity check
+        assert len(frames) == n, f'Number of frames={len(frames)} is not equal to the requested amount={n}'
 
-        return frames, self._video.isOpened()
+        # This is used to check whether there are frames left.
+        ret, frame = self._video.read()
+        self._last_frame = frame
+
+        return frames, ret
 
     def get_iterator(self, batch_size, transform=None):
         """
@@ -115,10 +132,10 @@ class VideoReader:
         python iterator
         """
 
-        frame_batch, has_frames = self.read_frames(batch_size)
+        frame_batch, has_frames = self.read_frames(batch_size, transform=transform)
         while has_frames:
             yield frame_batch
-            frame_batch, has_frames = self.read_frames(batch_size)
+            frame_batch, has_frames = self.read_frames(batch_size, transform=transform)
 
         raise StopIteration('The video is read. Please, reset the video reader.')
 
@@ -128,8 +145,11 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('-v', '--video', help='Path the video.')
-    parser.add_argument('-b', '--batch_size', help='Which batch_size to test.', type=int)
+    parser.add_argument('-b', '--batch_size', help='Which batch_size to test.', type=int, default=1)
     args = parser.parse_args()
+
+    print('Path:', args.video)
+    print('Batch size:', args.batch_size)
 
     video_reader = VideoReader(args.video)
     print('FPS:', video_reader.get_fps())
@@ -138,7 +158,7 @@ if __name__ == '__main__':
 
     i = 0
     for frame_batch in video_reader.get_iterator(args.batch_size):
-        assert len(frame_batch) == args.batch_size
+        assert len(frame_batch) == args.batch_size, f'Expected batch_size={args.batch_size}, received {len(frame_batch)}'
         i += 1
 
     print('Number of iterations before reset:', i)
@@ -148,7 +168,16 @@ if __name__ == '__main__':
     i = 0
     for frame_batch in video_reader.get_iterator(args.batch_size, lambda x: x[:100, :100]):
         assert len(frame_batch) == args.batch_size
-        assert frame_batch[0].shape[:2] == (100, 100)
+        assert frame_batch[0].shape[:2] == (100, 100), f'Expected shape {(100, 100)}, got {frame_batch[0].shape[:2]}, iteration={i}'
         i += 1
 
     print('Number of iterations after reset:', i)
+    from makiflow.core.debug_utils import DebugContext
+
+    with DebugContext('Check pure frame reading.'):
+        video_reader.reset()
+        frames, ret = video_reader.read_frames(args.batch_size)
+        while ret:
+            frames, ret = video_reader.read_frames(args.batch_size)
+        print('Finished reading.')
+        frames, ret = video_reader.read_frames(args.batch_size)
