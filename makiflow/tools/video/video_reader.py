@@ -24,9 +24,6 @@ class VideoReader:
         -------
 
         """
-        if self._video is not None:
-            self._video.release()
-
         self._video = cv2.VideoCapture(self._path)
         assert self._video.isOpened(), f'Could not open video with path={self._path}'
         self._last_frame = None
@@ -65,6 +62,8 @@ class VideoReader:
         Reads a batch of frames and returns them packed in list.
         If there are not enough enough frames for the batch,
         it will pad the missing frames with the last one and also return False in the flag.
+        This method guaranties that the internal video reader will be released as soon as all
+        frames are read.
 
         Parameters
         ----------
@@ -96,6 +95,7 @@ class VideoReader:
             ret, frame = self._video.read()
             if not ret:
                 print('Ran out of frames.')
+                self._video.release()
                 break
 
             frames.append(transform(frame))
@@ -107,14 +107,16 @@ class VideoReader:
             k = len(frames)
             to_add = n - k
             frames = frames + [frames[-1]] * to_add
+
         # Sanity check
         assert len(frames) == n, f'Number of frames={len(frames)} is not equal to the requested amount={n}'
 
         # This is used to check whether there are frames left.
-        ret, frame = self._video.read()
-        self._last_frame = frame
+        ret, self._last_frame = self._video.read()
+        if not ret:
+            self._video.release()
 
-        return frames, ret
+        return frames, self._video.isOpened()
 
     def get_iterator(self, batch_size, transform=None):
         """
@@ -136,7 +138,7 @@ class VideoReader:
         while has_frames:
             yield frame_batch
             frame_batch, has_frames = self.read_frames(batch_size, transform=transform)
-
+        yield frame_batch
         raise StopIteration('The video is read. Please, reset the video reader.')
 
 
