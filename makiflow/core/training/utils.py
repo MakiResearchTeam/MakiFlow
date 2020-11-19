@@ -91,10 +91,12 @@ class IteratorCloser:
         if self._tqdm_iterator is not None:
             self._tqdm_iterator.close()
 
-        if exc_type is KeyboardInterrupt:
+        if exc_type:
             print(f'Exception type: {exc_type}')
             print(f'Exception values: {exc_val}')
-            # An exception is not raised if True is returned
+            print(f'Exception tracer: {exc_tb}')
+
+        if exc_type is KeyboardInterrupt:
             return True
 
         # Re-raise exception
