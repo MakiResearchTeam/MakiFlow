@@ -57,6 +57,21 @@ class VideoReader:
         """
         return self._video.get(cv2.CAP_PROP_FPS)
 
+    def is_opened(self):
+        """
+        Returns
+        -------
+        bool
+            True if the video file is opened. False otherwise.
+        """
+        return self._video.isOpened()
+
+    def close(self):
+        """
+        Closes the video file.
+        """
+        self._video.release()
+
     def read_frames(self, n, transform=None) -> (list, bool):
         """
         Reads a batch of frames and returns them packed in list.
@@ -139,7 +154,6 @@ class VideoReader:
             yield frame_batch
             frame_batch, has_frames = self.read_frames(batch_size, transform=transform)
         yield frame_batch
-        raise StopIteration('The video is read. Please, reset the video reader.')
 
 
 if __name__ == '__main__':
@@ -181,5 +195,5 @@ if __name__ == '__main__':
         frames, ret = video_reader.read_frames(args.batch_size)
         while ret:
             frames, ret = video_reader.read_frames(args.batch_size)
-        print('Finished reading.')
+        print('Finished reading. Trying to read next frame (there must be exception raised)...')
         frames, ret = video_reader.read_frames(args.batch_size)
