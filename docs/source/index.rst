@@ -1,16 +1,20 @@
+.. MakiFlow documentation master file, created by
+   sphinx-quickstart on Sun Nov 22 18:14:42 2020.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
 Welcome to MakiFlow's documentation!
 ====================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: Contents:
 
-   license
-   tutorials
-   development/models/models
 
-.. toctree::
-   :caption API
-   :maxdepth: 3
 
-   api/layers/layers
+Indices and tables
+==================
 
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
