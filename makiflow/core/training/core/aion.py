@@ -18,6 +18,7 @@
 from .hephaestus import Hephaestus
 
 
+# May be renamed to Serializer...
 class Aion(Hephaestus):
     """
     Aion is the of eternity. Serializing the trainer does not allow it to vanish completely,

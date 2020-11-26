@@ -1,5 +1,5 @@
 from makiflow.core import MakiTensor
-from makiflow.core.debug_utils import d_msg
+from makiflow.debug.utils import d_msg
 from .embedding_layer import SkeletonEmbeddingLayer
 from .utils import make_box
 from .head_interface import HeadInterface
@@ -151,7 +151,7 @@ if __name__ == '__main__':
     print('Bbox coordinates:', head.get_bbox())
     print(head.get_description())
 
-    from makiflow.core.debug_utils import DebugContext
+    from makiflow.debug.debug_context import DebugContext
 
     with DebugContext('Spatial shape checking.'):
         offsets = InputLayer(input_shape=[batch_size, 2, 3, n_points * 2], name='offsets')

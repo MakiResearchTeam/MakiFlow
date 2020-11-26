@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from makiflow.core.debug_utils import d_msg
+from makiflow.debug.utils import d_msg
 from makiflow.models.ssp.core.head_interface import HeadInterface
 
 
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     human_indicators = tf.placeholder('float32', shape=[1, 128, 128, 1])
     HeadLabel(coords, point_indicators, human_indicators, (128, 128, 1, .5))
 
-    from makiflow.core.debug_utils import DebugContext
+    from makiflow.debug.debug_context import DebugContext
 
     with DebugContext('Checking spatial shape.'):
         coords = tf.placeholder('float32', shape=[1, 129, 128, 20])

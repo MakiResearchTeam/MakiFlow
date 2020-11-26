@@ -1,5 +1,5 @@
 from makiflow.core import MakiLayer
-from makiflow.core.debug_utils import d_msg
+from makiflow.debug.utils import d_msg
 import tensorflow as tf
 import numpy as np
 
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     plt.scatter(coords[:, 0], coords[:, 1])
     plt.show()
 
-    from makiflow.core.debug_utils import DebugContext
+    from makiflow.debug.debug_context import DebugContext
 
     # Check if wrong `embedding_dim` was passed
     print('\nChecking embedding_dim asserts...........................................................................')
