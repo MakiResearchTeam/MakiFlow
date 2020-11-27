@@ -20,6 +20,11 @@ class Distillator(ClassDecorator, ABC):
         self._layer_pairs = layer_pairs
         self._teacher_train_graph = None
         self._track_layer_losses = False
+        self._init()
+
+    def _init(self):
+        # Used by the subclasses to initialize necessary variables
+        pass
 
     def _call_init(self, obj):
         self._teacher_train_graph = Hephaestus(self._teacher, train_inputs=obj.get_train_inputs_list())
