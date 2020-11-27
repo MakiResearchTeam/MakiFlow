@@ -33,6 +33,7 @@ class Distillator(ClassDecorator, ABC):
     DISTILLATION_LOSS = 'DISTILLATION_LOSS'
 
     LOSS_SCALE = 'scale'
+    TRACK_LAYER_LOSSES = 'track_losses'
 
     def __init__(self, teacher: MakiModel, layer_pairs):
         """
@@ -72,6 +73,10 @@ class Distillator(ClassDecorator, ABC):
         loss_scale = params.get(Distillator.LOSS_SCALE)
         if loss_scale is not None:
             self.set_loss_scale(loss_scale)
+
+        track_losses = params.get(Distillator.TRACK_LAYER_LOSSES)
+        if track_losses is not None:
+            self.track_layer_losses(track_losses)
 
     def _init(self):
         # Used by the subclasses to initialize necessary variables
