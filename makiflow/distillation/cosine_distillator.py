@@ -29,11 +29,10 @@ class CosineDistillator(Distillator):
         with ExceptionScope('Normalization of the teacher tensor'):
             teacher_tensor = tf.nn.l2_normalize(teacher_tensor, axis=self._axis)
 
-        cosine_similarity = tf.reduce_sum(student_tensor * teacher_tensor, axis=self._axis)
+        cosine_similarity = tf.reduce_sum(student_tensor * teacher_tensor)
         # We should subtract the scalar_product from ones. However, it does not affect the gradient,
-        # therefore, we may omit to save computation time and memory
-        cosine_distance_ish = -cosine_similarity
-        return tf.reduce_mean(cosine_distance_ish)
+        # therefore, we may omit it to save computation time and memory.
+        return -cosine_similarity
 
 
 # For debug
