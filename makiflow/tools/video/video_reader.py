@@ -188,7 +188,7 @@ if __name__ == '__main__':
         i += 1
 
     print('Number of iterations after reset:', i)
-    from makiflow.debug.debug_context import DebugContext
+    from makiflow.core.debug import DebugContext
 
     with DebugContext('Check pure frame reading.'):
         video_reader.reset()

@@ -15,4 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .distillator import Distillator
+# debug_message
+def d_msg(context, msg_content):
+    """
+    A simple utility that adds the context to the message string.
+
+    Parameters
+    ----------
+    context : str
+        A string to be appended.
+    msg_content: str
+        The content of the message.
+    Returns
+    -------
+        Modified message.
+    """
+    return f'{context} / Message = {msg_content}'
+
+
+

@@ -1,11 +1,28 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 from makiflow.core.training.core.hephaestus import Hephaestus
 # It is for the teacher network.
 # Hephaestus is required since its a great tool that provides API for interacting with the training graph.
 # The functionality of the full trainer (that includes all the API of Hephaestus) is redundant and may even harm.
 from abc import ABC, abstractmethod
-from makiflow.debug import ExceptionScope
+from makiflow.core.debug import ExceptionScope
 import tensorflow as tf
-from .class_decorator import ClassDecorator, overloaded
+from makiflow.core.dev import ClassDecorator, overloaded
 from makiflow.core import MakiModel, MakiTrainer
 
 
@@ -15,6 +32,17 @@ class Distillator(ClassDecorator, ABC):
     DISTILLATION_LOSS = 'DISTILLATION_LOSS'
 
     def __init__(self, teacher: MakiModel, layer_pairs):
+        """
+        A decorator that adds distillation functionality to the usual MakiTrainer.
+
+        Parameters
+        ----------
+        teacher : MakiModel
+            The teacher model that will be distilled into the student.
+        layer_pairs : list
+            Contains tuples (student_layer_name, teacher_layer_name). The teacher's layer named
+            `teacher_layer_name` will be distilled into the student's layer named `student_layer_name`.
+        """
         super().__init__()
         self._teacher = teacher
         self._layer_pairs = layer_pairs

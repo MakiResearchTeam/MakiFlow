@@ -15,4 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .distillator import Distillator
+"""
+This package contains tools useful for development of new classes, methods, etc.
+This is not necessary related to machine learning and, therefore, can be used
+in a any context.
+"""
+
+from .class_decorator import ClassDecorator, DECORATOR_DEBUG, overloaded
