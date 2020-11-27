@@ -6,7 +6,7 @@ from makiflow.debug.exception_scope import ExceptionScope
 class CosineDistillator(Distillator):
     def _init(self):
         super()._init()
-        self._axis = []
+        self._axis = [1, 2, 3]
 
     def set_axis(self, axis):
         """
@@ -29,9 +29,11 @@ class CosineDistillator(Distillator):
         with ExceptionScope('Normalization of the teacher tensor'):
             teacher_tensor = tf.nn.l2_normalize(teacher_tensor, axis=self._axis)
 
-        scalar_product = tf.reduce_sum(student_tensor * teacher_tensor, axis=self._axis)
-        cosine_distance = tf.ones_like(scalar_product) - scalar_product
-        return tf.reduce_mean(cosine_distance)
+        cosine_similarity = tf.reduce_sum(student_tensor * teacher_tensor, axis=self._axis)
+        # We should subtract the scalar_product from ones. However, it does not affect the gradient,
+        # therefore, we may omit to save computation time and memory
+        cosine_distance_ish = -cosine_similarity
+        return tf.reduce_mean(cosine_distance_ish)
 
 
 # For debug

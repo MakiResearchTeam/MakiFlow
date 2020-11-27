@@ -62,6 +62,8 @@ class Distillator(ClassDecorator, ABC):
 
     @overloaded
     def track_loss(self, loss_tensor, loss_name):
+        # This method might not have been overloaded, there is no necessity to do so.
+        # However, it is since the code become a bit more transparent.
         self.get_student_trainer().track_loss(loss_tensor=loss_tensor, loss_name=loss_name)
 
     @overloaded
