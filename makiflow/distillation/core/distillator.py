@@ -84,6 +84,10 @@ class Distillator(ClassDecorator, ABC):
 
     def _call_init(self, obj):
         self._teacher_train_graph = Hephaestus(self._teacher, train_inputs=obj.get_train_inputs_list())
+        # { layer_name: layer }
+        layers = self._teacher.get_layers()
+        layers_trainable = [(layer_name, False) for layer_name in layers.keys()]
+        self._teacher_train_graph.set_layers_trainable(layers_trainable)
 
     # noinspection PyAttributeOutsideInit
     def track_layer_losses(self, track=True):
