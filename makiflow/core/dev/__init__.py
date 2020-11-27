@@ -15,30 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from abc import ABC, abstractmethod
+"""
+This package contains tools useful for development of new classes, methods, etc.
+This is not necessary related to machine learning and, therefore, can be used
+in a any context.
+"""
 
-
-class HeadInterface(ABC):
-    @abstractmethod
-    def get_bbox_configuration(self) -> list:
-        pass
-
-    @abstractmethod
-    def get_coords(self):
-        pass
-
-    @abstractmethod
-    def get_point_indicators(self):
-        pass
-
-    @abstractmethod
-    def get_human_indicators(self):
-        pass
-
-    @abstractmethod
-    def get_grid_size(self) -> list:
-        pass
-
-    @abstractmethod
-    def get_description(self) -> str:
-        pass
+from .class_decorator import ClassDecorator, DECORATOR_DEBUG, overloaded

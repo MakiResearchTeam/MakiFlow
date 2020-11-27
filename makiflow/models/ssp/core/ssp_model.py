@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from makiflow.layers import InputLayer
 import tensorflow as tf
 from .ssp_interface import SSPInterface
-from makiflow.core.debug_utils import d_msg
+from makiflow.core.debug import d_msg
 from .utils import decode_prediction
 import numpy as np
 

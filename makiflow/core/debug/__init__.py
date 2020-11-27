@@ -15,30 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from abc import ABC, abstractmethod
+from .debug_context import DebugContext, d_msg
+from .exception_scope import ExceptionScope
+from .model_builders import classificator
 
-
-class HeadInterface(ABC):
-    @abstractmethod
-    def get_bbox_configuration(self) -> list:
-        pass
-
-    @abstractmethod
-    def get_coords(self):
-        pass
-
-    @abstractmethod
-    def get_point_indicators(self):
-        pass
-
-    @abstractmethod
-    def get_human_indicators(self):
-        pass
-
-    @abstractmethod
-    def get_grid_size(self) -> list:
-        pass
-
-    @abstractmethod
-    def get_description(self) -> str:
-        pass

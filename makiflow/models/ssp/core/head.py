@@ -1,5 +1,22 @@
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
+#
+# This file is part of MakiFlow.
+#
+# MakiFlow is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MakiFlow is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+
 from makiflow.core import MakiTensor
-from makiflow.core.debug_utils import d_msg
+from makiflow.core.debug import d_msg
 from .embedding_layer import SkeletonEmbeddingLayer
 from .utils import make_box
 from .head_interface import HeadInterface
@@ -151,7 +168,7 @@ if __name__ == '__main__':
     print('Bbox coordinates:', head.get_bbox())
     print(head.get_description())
 
-    from makiflow.core.debug_utils import DebugContext
+    from makiflow.core.debug import DebugContext
 
     with DebugContext('Spatial shape checking.'):
         offsets = InputLayer(input_shape=[batch_size, 2, 3, n_points * 2], name='offsets')

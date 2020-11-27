@@ -53,4 +53,3 @@ def to_makitensor(tf_tensor, name, parent_layer=None, parent_tensor_names=None, 
     )
 
 
-

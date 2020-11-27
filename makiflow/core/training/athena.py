@@ -82,9 +82,9 @@ class Athena(TrainingCore):
 
     def compile(self):
         """
-        Builds the training graph and the training loss.
+        Compiles the training graph and the training loss.
         """
-        super().compile()
+        super().compile_training_graph()
         self.build_loss()
 
     def build_loss(self):

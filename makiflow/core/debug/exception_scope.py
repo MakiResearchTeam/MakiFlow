@@ -15,36 +15,28 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .hephaestus import Hephaestus
 
-
-# May be renamed to Serializer...
-class Aion(Hephaestus):
-    """
-    Aion is the of eternity. Serializing the trainer does not allow it to vanish completely,
-    therefore, making it eternal.
-    """
-    TYPE = 'type'
-    PARAMS = 'params'
-
-    def to_dict(self):
-        assert self.TYPE != Aion.TYPE, 'The trainer did not specified its type via static TYPE variable.'
-        return {
-            Aion.TYPE: self.TYPE,
-            Aion.PARAMS: {}
-        }
-
-    def set_params(self, params):
+class ExceptionScope:
+    def __init__(self, scope_name):
         """
-        This method must be overloaded if the trainer uses some additional
-        parameters.
+        Context manager used to mark the context in which an exception occurred.
 
         Parameters
         ----------
-        params : dict
-            Dictionary of parameters for the trainer.
+        scope_name : str
+            A prefix that will be prepended to the message of the raised exception.
         """
-        pass
+        self._scope = scope_name
 
+    def __enter__(self):
+        return self
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            modified_exc_val = f'{self._scope} / {exc_val}'
+            exc = exc_type(modified_exc_val)
+            exc.with_traceback(exc_tb)
+            raise exc
 
+        # An exception is not raised if True is returned
+        return True
