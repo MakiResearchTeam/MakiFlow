@@ -42,6 +42,6 @@ class TrainerBuilder:
             train_inputs=train_inputs,
             label_tensors=label_tensors
         )
-        trainer_object.setup_params(params)
+        trainer_object.set_params(params)
         return trainer_object
 
