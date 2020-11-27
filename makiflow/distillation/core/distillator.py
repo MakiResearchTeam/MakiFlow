@@ -71,7 +71,7 @@ class Distillator(ClassDecorator, ABC):
 
         assert distillation_loss is not None, '_build_loss method returned None, but must return the loss scalar.'
         self.get_student_trainer().add_loss(distillation_loss)
-        self.get_student_trainer().track_loss(self._training_loss, Distillator.DISTILLATION_LOSS)
+        self.get_student_trainer().track_loss(distillation_loss, Distillator.DISTILLATION_LOSS)
 
         with ExceptionScope(Distillator.STUDENT + ' loss construction'):
             self.get_student_trainer().build_loss()
