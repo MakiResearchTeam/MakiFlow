@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.core.debug import d_msg
-
 
 class DebugContext:
     def __init__(self, msg=None):
@@ -49,3 +47,20 @@ class DebugContext:
         print()
         # An exception is not raised if True is returned
         return True
+
+
+def d_msg(context, msg_content):
+    """
+    A simple utility that adds the context to the message string.
+
+    Parameters
+    ----------
+    context : str
+        A string to be appended.
+    msg_content: str
+        The content of the message.
+    Returns
+    -------
+        Modified message.
+    """
+    return f'{context} / Message = {msg_content}'

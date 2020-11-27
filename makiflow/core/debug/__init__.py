@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .debug_context import DebugContext
+from .debug_context import DebugContext, d_msg
 from .exception_scope import ExceptionScope
-from .utils import d_msg
 from .model_builders import classificator
 
