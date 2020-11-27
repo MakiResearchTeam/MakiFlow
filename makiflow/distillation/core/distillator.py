@@ -20,7 +20,21 @@ class Distillator(ClassDecorator, ABC):
         self._layer_pairs = layer_pairs
         self._teacher_train_graph = None
         self._track_layer_losses = False
+        self._loss_scale = 1.0
         self._init()
+
+    def set_loss_scale(self, scale):
+        """
+        The distillation loss will then be scaled by the `scale`.
+        However, the unscaled loss value will be tracked. This is useful for
+        making fair comparisons.
+
+        Parameters
+        ----------
+        scale : float
+        """
+        assert scale > 0.0, 'scale must be positive.'
+        self._loss_scale = scale
 
     def _init(self):
         # Used by the subclasses to initialize necessary variables
@@ -72,7 +86,7 @@ class Distillator(ClassDecorator, ABC):
             distillation_loss = self._build_loss()
 
         assert distillation_loss is not None, '_build_loss method returned None, but must return the loss scalar.'
-        self.get_student_trainer().add_loss(distillation_loss)
+        self.get_student_trainer().add_loss(distillation_loss * self._loss_scale)
         self.get_student_trainer().track_loss(distillation_loss, Distillator.DISTILLATION_LOSS)
 
         with ExceptionScope(Distillator.STUDENT + ' loss construction'):
