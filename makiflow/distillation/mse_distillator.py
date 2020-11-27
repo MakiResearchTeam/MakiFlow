@@ -15,10 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .core import Distillator
+from .core import Distillator, register_distillator
 import tensorflow as tf
 
 
+@register_distillator
 class MSEDistillator(Distillator):
     def _build_distill_loss(self, student_tensor, teacher_tensor):
         return tf.nn.l2_loss(student_tensor - teacher_tensor)

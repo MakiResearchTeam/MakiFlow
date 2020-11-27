@@ -24,12 +24,15 @@ from makiflow.core.debug import ExceptionScope
 import tensorflow as tf
 from makiflow.core.dev import ClassDecorator, overloaded
 from makiflow.core import MakiModel, MakiTrainer
+from .builder import build_method
 
 
 class Distillator(ClassDecorator, ABC):
     STUDENT = 'STUDENT MODEL'
     TEACHER = 'TEACHER MODEL'
     DISTILLATION_LOSS = 'DISTILLATION_LOSS'
+
+    LOSS_SCALE = 'scale'
 
     def __init__(self, teacher: MakiModel, layer_pairs):
         """
@@ -63,6 +66,12 @@ class Distillator(ClassDecorator, ABC):
         """
         assert scale > 0.0, 'scale must be positive.'
         self._loss_scale = scale
+
+    @build_method
+    def set_params(self, params):
+        loss_scale = params.get(Distillator.LOSS_SCALE)
+        if loss_scale is not None:
+            self.set_loss_scale(loss_scale)
 
     def _init(self):
         # Used by the subclasses to initialize necessary variables

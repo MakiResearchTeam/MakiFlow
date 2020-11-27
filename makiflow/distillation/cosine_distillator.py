@@ -15,12 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .core import Distillator
+from .core import Distillator, register_distillator, build_method
 import tensorflow as tf
 from makiflow.core.debug import ExceptionScope
 
 
+@register_distillator
 class CosineDistillator(Distillator):
+    AXIS = 'axis'
+
     def _init(self):
         super()._init()
         self._axis = [1, 2, 3]
@@ -39,6 +42,14 @@ class CosineDistillator(Distillator):
             The axis in which the cosine distance is being measured.
         """
         self._axis = axis
+
+    @build_method
+    def set_params(self, params):
+        super().set_params(params)
+
+        axis = params.get(CosineDistillator.AXIS)
+        if axis is not None:
+            self.set_axis(axis)
 
     def _build_distill_loss(self, student_tensor, teacher_tensor):
         with ExceptionScope('Normalization of the student tensor'):
@@ -111,8 +122,58 @@ def test_exception_scope():
     distillator.compile()
 
 
+def tes_building():
+    config = {
+        'type': 'CosineDistillator',
+        'params': {
+            'scale': 2.0,
+            'axis': [1, 2, 3],
+            'layer_pairs': [
+                ['conv1', 'conv1'],
+                ['conv3', 'conv3']
+            ]
+        }
+    }
+    from makiflow.core.debug import classificator
+    BATCH_SIZE = 32
+    student, train_in_x = classificator(train_batch_size=BATCH_SIZE, n_classes=2)
+    teacher = classificator(n_classes=2)
+    sess = tf.Session()
+    student.set_session(sess)
+    teacher.set_session(sess)
+
+    print('Setting up the distillator.')
+    from .core import DistillatorBuilder
+    distillator = DistillatorBuilder.distillator_from_dict(teacher, config)
+    print(distillator)
+    print('Compiling.')
+    from makiflow.models.classificator import CETrainer
+    trainer = CETrainer(student, train_inputs=[train_in_x])
+    trainer = distillator(trainer)
+    trainer.compile()
+
+    print('Test training...')
+    import numpy as np
+
+    def test_generator():
+        image = np.random.randn(BATCH_SIZE, 32, 32, 3)
+        label = [1] * 32
+        while True:
+            yield (image,), (label,)
+
+    gen = test_generator()
+    trainer.fit_generator(
+        generator=gen,
+        optimizer=tf.train.AdamOptimizer(),
+        epochs=5,
+        iter=10,
+    )
+
+
 if __name__ == '__main__':
     print('TEST TRAINING.')
-    test_training()
+    # test_training()
     print('TEST EXCEPTION SCOPE')
     # test_exception_scope()
+    print('TEST BUILDING')
+    tes_building()
