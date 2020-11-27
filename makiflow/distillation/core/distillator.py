@@ -18,8 +18,11 @@ class Distillator(ClassDecorator, ABC):
         super().__init__()
         self._teacher = teacher
         self._layer_pairs = layer_pairs
-        self._teacher_train_graph = Hephaestus(self._teacher, train_inputs=super().get_train_inputs_list())
+        self._teacher_train_graph = None
         self._track_layer_losses = False
+
+    def _call_init(self, obj):
+        self._teacher_train_graph = Hephaestus(self._teacher, train_inputs=obj.get_train_inputs_list())
 
     # noinspection PyAttributeOutsideInit
     def track_layer_losses(self, track=True):
@@ -60,9 +63,11 @@ class Distillator(ClassDecorator, ABC):
     def build_loss(self):
         with ExceptionScope(Distillator.DISTILLATION_LOSS + ' construction'):
             distillation_loss = self._build_loss()
+
         assert distillation_loss is not None, '_build_loss method returned None, but must return the loss scalar.'
         self.get_student_trainer().add_loss(distillation_loss)
         self.get_student_trainer().track_loss(self._training_loss, Distillator.DISTILLATION_LOSS)
+
         with ExceptionScope(Distillator.STUDENT + ' loss construction'):
             self.get_student_trainer().build_loss()
 

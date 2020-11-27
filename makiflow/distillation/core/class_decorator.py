@@ -37,10 +37,17 @@ class ClassDecorator:
 
     def __call__(self, obj):
         self._obj = obj
+        self._call_init(obj)
         return self
 
     def get_obj(self):
         return self._obj
+
+    def _call_init(self, obj):
+        """
+        Called right after the __call__ method has been called.
+        """
+        pass
 
 
 if __name__ == '__main__':
