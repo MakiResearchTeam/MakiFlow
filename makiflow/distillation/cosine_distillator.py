@@ -29,7 +29,9 @@ class CosineDistillator(Distillator):
         with ExceptionScope('Normalization of the teacher tensor'):
             teacher_tensor = tf.nn.l2_normalize(teacher_tensor, axis=self._axis)
 
-        return tf.reduce_mean(student_tensor * teacher_tensor)
+        scalar_product = tf.reduce_sum(student_tensor * teacher_tensor, axis=self._axis)
+        cosine_distance = tf.ones_like(scalar_product) - scalar_product
+        return tf.reduce_mean(cosine_distance)
 
 
 # For debug
@@ -93,6 +95,6 @@ def test_exception_scope():
 
 if __name__ == '__main__':
     print('TEST TRAINING.')
-    # test_training()
+    test_training()
     print('TEST EXCEPTION SCOPE')
-    test_exception_scope()
+    # test_exception_scope()

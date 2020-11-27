@@ -1,4 +1,3 @@
-from makiflow.core import MakiTrainer
 from makiflow.core.training.core.hephaestus import Hephaestus
 # It is for the teacher network.
 # Hephaestus is required since its a great tool that provides API for interacting with the training graph.
@@ -6,29 +5,21 @@ from makiflow.core.training.core.hephaestus import Hephaestus
 from abc import ABC, abstractmethod
 from makiflow.debug import ExceptionScope
 import tensorflow as tf
+from .class_decorator import ClassDecorator, overloaded
+from makiflow.core import MakiModel, MakiTrainer
 
 
-class Distillator(MakiTrainer, ABC):
+class Distillator(ClassDecorator, ABC):
     STUDENT = 'STUDENT MODEL'
     TEACHER = 'TEACHER MODEL'
+    DISTILLATION_LOSS = 'DISTILLATION_LOSS'
 
-    def _setup_label_placeholders(self):
-        return {}
-
-    def get_label_feed_dict_config(self):
-        return {}
-
-    def _init(self):
-        super()._init()
-        self._teacher = None
-        self._layer_pairs = None
-        self._teacher_train_graph = None
-        self._track_layer_losses = False
-
-    # noinspection PyAttributeOutsideInit
-    def set_teacher(self, teacher):
+    def __init__(self, teacher: MakiModel, layer_pairs):
+        super().__init__()
         self._teacher = teacher
+        self._layer_pairs = layer_pairs
         self._teacher_train_graph = Hephaestus(self._teacher, train_inputs=super().get_train_inputs_list())
+        self._track_layer_losses = False
 
     # noinspection PyAttributeOutsideInit
     def track_layer_losses(self, track=True):
@@ -42,54 +33,55 @@ class Distillator(MakiTrainer, ABC):
         """
         self._track_layer_losses = track
 
-    # noinspection PyAttributeOutsideInit
-    def set_layer_pairs(self, layer_pairs):
-        """
-        Sets pairs (student_layer_name, teacher_layer_name). Later the teacher's layers will
-        be distilled into the student's layers accordingly.
-
-        Notes
-        -----
-        Actually, the loss is created using MakiTensors with such names. It just was made this way, that
-        most of the layers outputs inherit parent layer's name, so we may say `set_layer_pairs` instead of
-        `set_makitensor_pairs` for simplicity and abstraction. In case a layer outputs more than one MakiTensor
-        (which is the case for RNN layers), the user should pass in its MakiTensor names, the layer's name
-        won't work.
-
-        Parameters
-        ----------
-        layer_pairs : list
-            Container tuples (student_layer_name, teacher_layer_name).
-        """
-        self._layer_pairs = layer_pairs
-
     def compile_training_graph(self):
         with ExceptionScope(f'{Distillator.STUDENT} Graph compilation'):
-            super().compile_training_graph()
+            self.get_student_trainer().compile_training_graph()
 
         with ExceptionScope(f'{Distillator.TEACHER} Graph compilation'):
             self._teacher_train_graph.compile_training_graph()
 
+    @overloaded
     def _build_loss(self):
         losses = []
         for (stud_tensor, stud_name), (teach_tensor, teach_name) in self.get_layer_output_pairs():
             loss = self._build_distill_loss(stud_tensor, teach_tensor)
             if self._track_layer_losses:
-                super().track_loss(loss_tensor=loss, loss_name=Distillator.layer_loss_name(stud_name, teach_name))
+                self.track_loss(loss_tensor=loss, loss_name=Distillator.layer_loss_name(stud_name, teach_name))
 
             losses.append(loss)
 
         return tf.add_n(losses)
+
+    @overloaded
+    def track_loss(self, loss_tensor, loss_name):
+        self.get_student_trainer().track_loss(loss_tensor=loss_tensor, loss_name=loss_name)
+
+    @overloaded
+    def build_loss(self):
+        with ExceptionScope(Distillator.DISTILLATION_LOSS + ' construction'):
+            distillation_loss = self._build_loss()
+        assert distillation_loss is not None, '_build_loss method returned None, but must return the loss scalar.'
+        self.get_student_trainer().add_loss(distillation_loss)
+        self.get_student_trainer().track_loss(self._training_loss, Distillator.DISTILLATION_LOSS)
+        with ExceptionScope(Distillator.STUDENT + ' loss construction'):
+            self.get_student_trainer().build_loss()
+
+    @overloaded
+    def compile(self):
+        self.compile_training_graph()
+        self.build_loss()
 
     def get_layer_output_pairs(self):
         assert self._teacher is not None, 'The teacher model is not set.'
         assert self._layer_pairs is not None, 'The layer pairs are not set.'
         assert self._teacher_train_graph.is_compiled(), 'The training graph is not compiled.'
 
+        student_trainer = self.get_student_trainer()
+
         output_tensor_pairs = []
         for student_layer_name, teacher_layer_name in self._layer_pairs:
             with ExceptionScope(Distillator.STUDENT):
-                student_tensor = super().get_traingraph_tensor(student_layer_name)
+                student_tensor = student_trainer.get_traingraph_tensor(student_layer_name)
                 student_tuple = (student_tensor, student_layer_name)
             with ExceptionScope(Distillator.TEACHER):
                 teacher_tensor = self._teacher_train_graph.get_traingraph_tensor(teacher_layer_name)
@@ -99,6 +91,9 @@ class Distillator(MakiTrainer, ABC):
 
         return output_tensor_pairs
 
+    def get_student_trainer(self) -> MakiTrainer:
+        return super().get_obj()
+
     @abstractmethod
     def _build_distill_loss(self, student_tensor, teacher_tensor):
         pass
@@ -106,5 +101,3 @@ class Distillator(MakiTrainer, ABC):
     @staticmethod
     def layer_loss_name(student_layer_name, teacher_layer_name):
         return f'Layer loss: {student_layer_name} / {teacher_layer_name}'
-
-
