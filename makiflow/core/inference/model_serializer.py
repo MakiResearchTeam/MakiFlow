@@ -142,7 +142,7 @@ class ModelSerializer(MakiCore):
             graph = session.graph
             with graph.as_default():
                 # Collect model parameters' names
-                var_names = [x.op.name for _, x in super()._named_dict_params.items()]
+                var_names = [x.op.name for _, x in self._named_dict_params.items()]
                 graph_def = graph.as_graph_def()
 
                 # Create the frozen graph entity
