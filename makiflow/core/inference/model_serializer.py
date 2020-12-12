@@ -17,7 +17,7 @@
 
 from .maki_core import MakiCore
 from ..graph_entities import MakiTensor
-from ..debug import DebugContext
+from makiflow.core.debug import DebugContext
 import tensorflow as tf
 from abc import abstractmethod, ABC
 import json
