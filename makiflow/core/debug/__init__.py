@@ -17,5 +17,4 @@
 
 from .debug_context import DebugContext, d_msg
 from .exception_scope import ExceptionScope
-from .model_builders import classificator
 
