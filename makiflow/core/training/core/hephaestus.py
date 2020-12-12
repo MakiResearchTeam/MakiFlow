@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from makiflow.core.graph_entities import MakiTensor, MakiRestorable
-from makiflow.core.inference.maki_model import MakiCore
+from makiflow.core.inference.maki_core import MakiCore
 
 
 # May be renamed to TrainGraphCompiler which actually makes more sense. But not now...

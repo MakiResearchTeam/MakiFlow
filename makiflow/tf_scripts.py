@@ -130,3 +130,44 @@ def load_frozen_graph(protobuf_name):
 
     tensors_ops = tf.import_graph_def(graph_def, name='')
     return tf.get_default_graph(), tensors_ops
+
+
+def freeze_graph(session, output_tensors=None, output_names=None):
+    """
+    Creates a frozen instance of the model's computational graph.
+
+    Parameters
+    ----------
+    session : tf.Session
+        Session that contains the graph to be frozen.
+    output_tensors : list
+        List of MakiTensors or tf.Tensors that resemble the output tensors of interest.
+    output_names : list
+        List of name of the output the output tensors of interest.
+    Returns
+    -------
+    GraphDef
+        Frozen graph definition.
+    """
+    t_name = lambda x: x.split(':')[0]
+
+    if output_tensors is not None:
+        output_names = [t_name(x.name) for x in output_tensors]
+
+    assert output_names is not None, 'No output tensors or tensor names were provided.'
+
+    graph = session.graph
+    with graph.as_default():
+        # Collect model parameters' names
+        var_names = [var.op.name for var in tf.global_variables()]
+        graph_def = graph.as_graph_def()
+
+        # Create the frozen graph entity
+        frozen_graph = tf.graph_util.convert_variables_to_constants(
+            sess=session,
+            input_graph_def=graph_def,
+            output_node_names=output_names,
+            variable_names_whitelist=var_names
+        )
+
+    return frozen_graph

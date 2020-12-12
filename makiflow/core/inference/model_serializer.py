@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .maki_model import MakiCore
+from .maki_core import MakiCore
+from ..graph_entities import MakiTensor
+from ..debug import DebugContext
 import tensorflow as tf
 from abc import abstractmethod, ABC
 import json
@@ -26,6 +28,7 @@ class ModelSerializer(MakiCore):
         """
         This function uses default TensorFlow's way for restoring models - checkpoint files.
         Example: '/home/student401/my_model/model.ckpt'
+
         Parameters
         ----------
             path : str
@@ -102,6 +105,55 @@ class ModelSerializer(MakiCore):
         tf.train.write_graph(frozen_graph, path_to_save,
                              file_name, as_text=False
                              )
+
+    def freeze_graph(self, output_tensors: list = None):
+        """
+        Creates a frozen instance of the model's computational graph.
+
+        Parameters
+        ----------
+        output_tensors : list
+            List of MakiTensors or tf.Tensors that resemble the output tensors of interest.
+
+        Returns
+        -------
+        GraphDef
+            Frozen graph definition.
+        """
+        with DebugContext('MakiModel.freeze_graph'):
+            assert super().get_session() is not None, 'The model must be initialized with a session.'
+
+            t_name = lambda x: x.split(':')[0]
+
+            if output_tensors is None:
+                print('Output tensors are not provided. Using standard ones:')
+                print(super().get_outputs())
+                print("Use `get_outputs` in order to obtain the output tensors and their names.")
+                output_tensors = super().get_outputs()
+
+            # output_tensors contains MakiTensors
+            if isinstance(output_tensors[0], MakiTensor):
+                output_names = [t_name(x.get_data_tensor().name) for x in output_tensors]
+            # output_tensors contains tf.Tensors
+            else:
+                output_names = [t_name(x.name) for x in output_tensors]
+
+            session = super().get_session()
+            graph = session.graph
+            with graph.as_default():
+                # Collect model parameters' names
+                var_names = [x.op.name for _, x in super()._named_dict_params.items()]
+                graph_def = graph.as_graph_def()
+
+                # Create the frozen graph entity
+                frozen_graph = tf.graph_util.convert_variables_to_constants(
+                    sess=session,
+                    input_graph_def=graph_def,
+                    output_node_names=output_names,
+                    variable_names_whitelist=var_names
+                )
+
+            return frozen_graph
 
     def save_architecture(self, path):
         """
