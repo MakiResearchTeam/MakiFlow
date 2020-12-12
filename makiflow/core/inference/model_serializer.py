@@ -17,7 +17,7 @@
 
 from .maki_core import MakiCore
 from ..graph_entities import MakiTensor
-from makiflow.core.debug import DebugContext
+from makiflow.core.debug import ExceptionScope
 import tensorflow as tf
 from abc import abstractmethod, ABC
 import json
@@ -120,7 +120,7 @@ class ModelSerializer(MakiCore):
         GraphDef
             Frozen graph definition.
         """
-        with DebugContext('MakiModel.freeze_graph'):
+        with ExceptionScope('MakiModel.freeze_graph'):
             assert super().get_session() is not None, 'The model must be initialized with a session.'
 
             t_name = lambda x: x.split(':')[0]
