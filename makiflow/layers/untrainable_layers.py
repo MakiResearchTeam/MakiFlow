@@ -113,22 +113,28 @@ class ReshapeLayer(MakiLayer):
             with tf.name_scope(self.get_name()):
                 if self.ignore_batch:
                     origin_shape = X.get_shape().as_list()
+                    dynamic_shape = tf.shape(X)
                     new_shape = copy.deepcopy(self.new_shape)
 
                     size_iter = min(len(origin_shape), len(self.new_shape))
                     for i in range(size_iter):
-                        if self.new_shape[i] is None:
+                        if origin_shape[i] is None:
+                            new_shape[i] = dynamic_shape[i]
+                        elif self.new_shape[i] is None:
                             new_shape[i] = origin_shape[i]
 
                     return tf.reshape(tensor=X, shape=new_shape, name=self._name)
                 else:
                     bs = X.get_shape().as_list()[0]
                     origin_shape = X.get_shape().as_list()[1:]
+                    dynamic_shape = tf.shape(X)[1:]
                     new_shape = copy.deepcopy(self.new_shape)
 
                     size_iter = min(len(origin_shape), len(self.new_shape))
                     for i in range(size_iter):
-                        if self.new_shape[i] is None:
+                        if origin_shape[i] is None:
+                            new_shape[i] = dynamic_shape[i]
+                        elif self.new_shape[i] is None:
                             new_shape[i] = origin_shape[i]
 
                     return tf.reshape(tensor=X, shape=[bs, *new_shape], name=self._name)

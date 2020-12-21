@@ -24,7 +24,7 @@ from makiflow.layers.rnn_layers import RNNLayerAddress
 
 from makiflow.core.graph_entities.maki_layer import MakiRestorable
 from makiflow.core.graph_entities.maki_tensor import MakiTensor
-from makiflow.core.inference.maki_model import MakiCore
+from makiflow.core.inference.maki_core import MakiCore
 
 from makiflow.models.ssd.detector_classifier import DetectorClassifier, DCParams
 from makiflow.models import SSDModel

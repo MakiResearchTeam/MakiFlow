@@ -20,13 +20,14 @@ EPOCH = 'Epoch:'
 
 
 def print_train_info(epoch, *args):
-    output = ''
+    print(EPOCH, epoch)
     for value_name, value in args:
+        output = ''
         value_name = value_name.lower() + ': '
         value_name = value_name.title()
-        output += value_name + '{:0.4f}'.format(value) + ' '
-
-    print(EPOCH, epoch, output)
+        output += value_name + '{:0.5f}'.format(value) + ' '
+        print(output)
+    print('\n')
 
 
 def moving_average(old_val, new_val, iteration):
@@ -91,10 +92,12 @@ class IteratorCloser:
         if self._tqdm_iterator is not None:
             self._tqdm_iterator.close()
 
-        if exc_type is KeyboardInterrupt:
+        if exc_type:
             print(f'Exception type: {exc_type}')
             print(f'Exception values: {exc_val}')
-            # An exception is not raised if True is returned
+            print(f'Exception tracer: {exc_tb}')
+
+        if exc_type is KeyboardInterrupt:
             return True
 
         # Re-raise exception

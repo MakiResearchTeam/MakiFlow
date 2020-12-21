@@ -15,13 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from abc import ABC, abstractmethod
-
 from makiflow.core.graph_entities import MakiTensor, MakiRestorable
-from makiflow.core.inference.maki_model import MakiCore
+from makiflow.core.inference.maki_core import MakiCore
 
 
-class Hephaestus(ABC):
+# May be renamed to TrainGraphCompiler which actually makes more sense. But not now...
+class Hephaestus:
     # This entity is responsible for building the training graph and
     # the final loss
     def __init__(self, model: MakiCore, train_inputs: list):
@@ -67,7 +66,7 @@ class Hephaestus(ABC):
         Initiates building the training graph. Has to be called before the training.
         """
         print('Compile the model...')
-        self._build_training_graph()
+        self.compile_training_graph()
         self._is_compiled = True
         print('Model is compiled.')
 
@@ -139,7 +138,7 @@ class Hephaestus(ABC):
 
         return training_loss
 
-    def _build_training_graph(self):
+    def compile_training_graph(self):
         # The algorithm recursively goes down the graph until it finds the input layer
         # and then passes its tensor through all the layers it has encountered so far.
 
@@ -227,6 +226,8 @@ class Hephaestus(ABC):
             # It is done internally in the method. All the necessary tensors can be accessed
             # via the `get_traingraph_tensor` method.
             create_tensor(output)
+
+        self._is_compiled = True
 
     def get_traingraph_tensor(self, tensor_name):
         """

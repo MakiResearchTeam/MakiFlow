@@ -46,15 +46,17 @@ class ClassificatorTrainer(MakiTrainer, ABC):
         assert self._num_classes
 
     def _setup_label_placeholders(self):
+        logits = super().get_model().get_logits()
+        logits_shape = logits.get_shape()
         return {
             ClassificatorTrainer.LABELS: tf.placeholder(
                 dtype=tf.int32,
-                shape=[super().get_batch_size()],
+                shape=[super().get_batch_size(), *logits_shape[1:-1]],
                 name=ClassificatorTrainer.LABELS
             ),
             ClassificatorTrainer.WEIGHT_MAP: tf.placeholder(
                 dtype=tf.float32,
-                shape=[super().get_batch_size()],
+                shape=[super().get_batch_size(), *logits_shape[1:-1]],
                 name=ClassificatorTrainer.LABELS
             )
         }
@@ -63,3 +65,4 @@ class ClassificatorTrainer(MakiTrainer, ABC):
         return {
             self._labels: 0
         }
+

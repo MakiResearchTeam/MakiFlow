@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from .tensorboard import TensorBoard
-from makiflow.core.inference.maki_model import MakiCore
+from makiflow.core.inference.maki_core import MakiCore
 import tensorflow as tf
 
 
