@@ -40,3 +40,25 @@ class ExceptionScope:
 
         # An exception is not raised if True is returned
         return True
+
+
+def exception_scope(scope=None):
+    """
+    Creates an exception scope for a particular method.
+    Parameters
+    ----------
+    scope : str, optional
+        Name of the scope. Can be None, in this case name of the method is considered to be the scope name.
+    """
+
+    def get_context_name(scope, method):
+        if scope is None:
+            return method.__name__
+
+    def decorator(method):
+        def wrapper(*args, **kwargs):
+            with ExceptionScope(get_context_name(scope, method)):
+                return method(*args, **kwargs)
+
+        return wrapper
+    return decorator

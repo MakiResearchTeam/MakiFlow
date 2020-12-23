@@ -114,24 +114,6 @@ class MakiLayer(MakiRestorable):
         # Dictionary of pairs { parent MakiTensor name : list child MakiTensor name }
         self._children_dict = {}
 
-    def __check_output(self, output):
-        if output is None:
-            raise Exception(MakiLayer.__EXC_OUTPUT_NONE)
-
-        if output is list and len(output) != len(self._outputs_names):
-            message = MakiLayer.__EXC_OUTPUT_NAMES_NOT_ALIGNED.format(
-                len(output), len(self._outputs_names)
-            )
-
-            message = message + '\nOutput tensors are:\n'
-            for t in output:
-                message += f'{t}\n'
-
-            message = message + 'Output names are:\n'
-            for name in self._outputs_names:
-                message = message + name + '\n'
-            raise Exception(message)
-
     def __call__(self, x):
         """
         Unpacks datatensor(s) (tf.Tensor) from the given MakiTensor(s) `x`, performs layer's transformation and
@@ -169,9 +151,11 @@ class MakiLayer(MakiRestorable):
         output = self.forward(data_tensors)
 
         self.__check_output(output)
-
+        assert not isinstance(output, list), f'The return value of the forward method of class ' \
+            f'{self.__class__.__name__}' \
+            f' must be either a tf.Tensor or a tuple, but received {type(output)}.'
         # Output MakiTensors
-        if isinstance(output, list):
+        if isinstance(output, tuple):
             # OUTPUT CONTAINS SEVERAL TENSORS
             output_mt = []
             for i, t, name in enumerate(zip(output, self._outputs_names)):
@@ -201,6 +185,24 @@ class MakiLayer(MakiRestorable):
         self._n_calls += 1
         self._update_children(parent_tensor_names, output_mt)
         return output_mt
+
+    def __check_output(self, output):
+        if output is None:
+            raise Exception(MakiLayer.__EXC_OUTPUT_NONE)
+
+        if isinstance(output, tuple) and len(output) != len(self._outputs_names):
+            message = MakiLayer.__EXC_OUTPUT_NAMES_NOT_ALIGNED.format(
+                len(output), len(self._outputs_names)
+            )
+
+            message = message + '\nOutput tensors are:\n'
+            for t in output:
+                message += f'{t}\n'
+
+            message = message + 'Output names are:\n'
+            for name in self._outputs_names:
+                message = message + name + '\n'
+            raise Exception(message)
 
     def _output_tensor_name(self, name):
         if self._n_calls != 0:
