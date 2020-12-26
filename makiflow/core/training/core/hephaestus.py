@@ -205,7 +205,7 @@ class Hephaestus:
 
             # Check if the layer outputs several tensors.
             # If not, put the returned tensor into a list.
-            if not isinstance(X, list):
+            if not isinstance(X, tuple):
                 X = [X]
 
             # Get names of the MakiTensors that were created
