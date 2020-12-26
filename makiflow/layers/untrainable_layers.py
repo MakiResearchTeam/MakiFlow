@@ -965,10 +965,16 @@ class ChannelSplitLayer(MakiLayer):
         self._axis = axis
         self._num = num
 
+        if isinstance(num_or_size_splits, list) or isinstance(num_or_size_splits, tuple):
+            num_outputs = len(num_or_size_splits)
+        else:
+            num_outputs = num_or_size_splits
+
         super().__init__(
             name, params=[],
             regularize_params=[],
-            named_params_dict={}
+            named_params_dict={},
+            outputs_names=[name + f'_{i}' for i in range(num_outputs)]
         )
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
