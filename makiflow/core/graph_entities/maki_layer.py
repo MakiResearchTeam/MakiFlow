@@ -72,8 +72,9 @@ class MakiLayer(MakiRestorable):
     TRAINING_MODE = 'TrainingGraph'
     INFERENCE_MODE = 'InferenceGraph'
 
-    __EXC_OUTPUT_NAMES_NOT_ALIGNED = 'Number of the output tensors and the given outputs names is not aligned.' + \
-                                     'Given names {0}, got output tensors {1}.'
+    __EXC_OUTPUT_NAMES_NOT_ALIGNED = 'Number of the output tensors and given outputs names is not aligned.' + \
+                                     'Given output names {0}, got output tensors {1}. Make sure you provided names for the output' + \
+                                     ' tensors in the MakiLayer constructor (see the `outputs_names` parameter).'
     __EXC_OUTPUT_NONE = 'Output of the layer is None. Check whether the `_forward` method works correctly.'
 
     def __init__(self, name: str, params: list, regularize_params: list, named_params_dict: dict,
@@ -192,7 +193,7 @@ class MakiLayer(MakiRestorable):
 
         if isinstance(output, tuple) and len(output) != len(self._outputs_names):
             message = MakiLayer.__EXC_OUTPUT_NAMES_NOT_ALIGNED.format(
-                len(output), len(self._outputs_names)
+                len(self._outputs_names), len(output)
             )
 
             message = message + '\nOutput tensors are:\n'
