@@ -1045,7 +1045,8 @@ class ChannelShuffleLayer(MakiLayer):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
 
-                c = X.get_shape()[-1]
+                original_shape = X.get_shape()
+                c = original_shape[-1]
                 if c % self._num_groups != 0:
                     raise ValueError("Number of channels must be divided by num_group. "
                                      f"num_groups: {self._num_groups} and num of channels: {c}"
@@ -1056,6 +1057,9 @@ class ChannelShuffleLayer(MakiLayer):
                 X = tf.reshape(X, shape=[n, h, w, self._num_groups, c // self._num_groups])
                 X = tf.transpose(X, perm=[0, 1, 2, 4, 3])
                 X = tf.reshape(X, shape=[n, h, w, c])
+                # If input shape have None values (for example H and W dimension)
+                # We must set older shape, otherwise it will consist of None values
+                X.set_shape(original_shape)
 
                 return X
 
