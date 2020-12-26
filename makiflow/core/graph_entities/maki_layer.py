@@ -159,7 +159,7 @@ class MakiLayer(MakiRestorable):
         if isinstance(output, tuple):
             # OUTPUT CONTAINS SEVERAL TENSORS
             output_mt = []
-            for i, t, name in enumerate(zip(output, self._outputs_names)):
+            for i, (t, name) in enumerate(zip(output, self._outputs_names)):
                 makitensor_name = self.get_name() + '/' + name
                 makitensor_name = self._output_tensor_name(makitensor_name)
                 output_mt += [
