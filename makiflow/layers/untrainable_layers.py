@@ -1045,7 +1045,8 @@ class ChannelShuffleLayer(MakiLayer):
                                      f"num_groups: {self._num_groups} and num of channels: {c}"
                     )
 
-                n, h, w, c = tf.shape(X)
+                shape = tf.shape(X)
+                n, h, w, c = shape[0], shape[1], shape[2], shape[3]
                 X = tf.reshape(X, shape=[n, h, w, self._num_groups, c // self._num_groups])
                 X = tf.transpose(X, perm=[0, 1, 2, 4, 3])
                 X = tf.reshape(X, shape=[n, h, w, c])
