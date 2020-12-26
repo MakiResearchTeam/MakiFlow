@@ -152,9 +152,6 @@ class MakiLayer(MakiRestorable):
         output = self.forward(data_tensors)
 
         self.__check_output(output)
-        assert not isinstance(output, tuple), f'The return value of the forward method of class ' \
-            f'{self.__class__.__name__}' \
-            f' must be either a tf.Tensor or a tuple, but received {type(output)}.'
         # Output MakiTensors
         if isinstance(output, tuple):
             # OUTPUT CONTAINS SEVERAL TENSORS
