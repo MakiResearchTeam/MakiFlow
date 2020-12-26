@@ -26,6 +26,7 @@ from .untrainable_layers import MaxPoolLayer, AvgPoolLayer, GlobalAvgPoolLayer, 
 from .untrainable_layers import FlattenLayer, DropoutLayer, ActivationLayer, MulByAlphaLayer
 from .untrainable_layers import ZeroPaddingLayer, ConcatLayer, SumLayer
 from .untrainable_layers import InputLayer, ReshapeLayer, ResizeLayer, L2NormalizationLayer
+from .untrainable_layers import ChannelShuffleLayer, ChannelSplitLayer
 
 from .rnn_layers import CellType, GRULayer, LSTMLayer, EmbeddingLayer, RNNBlock
 

@@ -937,6 +937,151 @@ class L2NormalizationLayer(MakiLayer):
         }
 
 
+class ChannelSplitLayer(MakiLayer):
+    TYPE = 'ChannelSplitLayer'
+    NUM_OR_SIZE_SPLITS = 'num_or_size_splits'
+    AXIS = 'axis'
+    NUM = 'num'
+
+    def __init__(self, num_or_size_splits, axis, name, num=None):
+        """
+        Splits a maki tensor value into a list of sub tensors.
+
+        Parameters
+        ----------
+        num_or_size_splits : int or list
+            Either an integer indicating the number of splits along axis or a 1-D integer MakiTensor
+            or Python list containing the sizes of each output tensor along axis.
+            If a scalar, then it must evenly divide value.shape[axis];
+            otherwise the sum of sizes along the split axis must match that of the value.
+        axis : int
+            The dimension along which to split.
+        name : str
+            Name of this layer.
+        num : int
+            Optional, used to specify the number of outputs when it cannot be inferred from the shape of size_splits.
+        """
+        self._num_or_size_splits = num_or_size_splits
+        self._axis = axis
+        self._num = num
+
+        if isinstance(num_or_size_splits, list) or isinstance(num_or_size_splits, tuple):
+            num_outputs = len(num_or_size_splits)
+        else:
+            num_outputs = num_or_size_splits
+
+        super().__init__(
+            name, params=[],
+            regularize_params=[],
+            named_params_dict={},
+            outputs_names=[name + f'_{i}' for i in range(num_outputs)]
+        )
+
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+                return tuple(tf.split(
+                    X,
+                    num_or_size_splits=self._num_or_size_splits,
+                    axis=self._axis,
+                    num=self._num
+                ))
+
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        num_or_size_splits = params[ChannelSplitLayer.NUM_OR_SIZE_SPLITS]
+        axis = params[ChannelSplitLayer.AXIS]
+        num = params[ChannelSplitLayer.NUM]
+
+        return ChannelSplitLayer(
+            num_or_size_splits=num_or_size_splits,
+            axis=axis,
+            name=name,
+            num=num
+        )
+
+    def to_dict(self):
+        return {
+            MakiRestorable.FIELD_TYPE: ChannelSplitLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+                ChannelSplitLayer.NUM_OR_SIZE_SPLITS: self._num_or_size_splits,
+                ChannelSplitLayer.AXIS: self._axis,
+                ChannelSplitLayer.NUM: self._num
+            }
+        }
+
+
+class ChannelShuffleLayer(MakiLayer):
+    TYPE = 'ChannelShuffleLayer'
+    NUM_GROUPS = 'num_groups'
+
+    def __init__(self, num_groups, name):
+        """
+        Shuffle channels of tensor, according to ShuffleNet paper
+        For more information see: https://arxiv.org/abs/1707.01083
+
+        Parameters
+        ----------
+        num_groups : int
+
+        name : str
+            Name of this layer.
+
+        """
+        self._num_groups = num_groups
+
+        super().__init__(
+            name, params=[],
+            regularize_params=[],
+            named_params_dict={}
+        )
+
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        with tf.name_scope(computation_mode):
+            with tf.name_scope(self.get_name()):
+
+                c = X.get_shape()[-1]
+                if c % self._num_groups != 0:
+                    raise ValueError("Number of channels must be divided by num_group. "
+                                     f"num_groups: {self._num_groups} and num of channels: {c}"
+                    )
+
+                shape = tf.shape(X)
+                n, h, w, c = shape[0], shape[1], shape[2], shape[3]
+                X = tf.reshape(X, shape=[n, h, w, self._num_groups, c // self._num_groups])
+                X = tf.transpose(X, perm=[0, 1, 2, 4, 3])
+                X = tf.reshape(X, shape=[n, h, w, c])
+
+                return X
+
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        num_groups = params[ChannelShuffleLayer.NUM_GROUPS]
+
+        return ChannelShuffleLayer(
+            num_groups=num_groups,
+            name=name,
+        )
+
+    def to_dict(self):
+        return {
+            MakiRestorable.FIELD_TYPE: ChannelShuffleLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+                ChannelShuffleLayer.NUM_GROUPS: self._num_groups,
+            }
+        }
+
+
 class UnTrainableLayerAddress:
     ADDRESS_TO_CLASSES = {
         InputLayer.TYPE: InputLayer,
@@ -957,6 +1102,9 @@ class UnTrainableLayerAddress:
         DropoutLayer.TYPE: DropoutLayer,
         ResizeLayer.TYPE: ResizeLayer,
         L2NormalizationLayer.TYPE: L2NormalizationLayer,
+
+        ChannelSplitLayer.TYPE: ChannelSplitLayer,
+        ChannelShuffleLayer.TYPE: ChannelShuffleLayer,
     }
 
 
