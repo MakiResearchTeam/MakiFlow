@@ -20,13 +20,11 @@ from __future__ import absolute_import
 import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
-from makiflow.models.classificator.utils import error_rate, sparse_cross_entropy
-from copy import copy
-import json
-from makiflow.core import MakiTensor, MakiModel, MakiBuilder
+from makiflow.models.classificator.utils import error_rate
+from makiflow.core import MakiTensor, MakiBuilder
 from makiflow.layers import InputLayer
 from makiflow.models.classificator.core.classificator_interface import ClassificatorInterface
-
+from makiflow.generators import data_iterator
 EPSILON = np.float32(1e-37)
 
 
@@ -93,44 +91,45 @@ class Classificator(ClassificatorInterface):
     def evaluate(self, Xtest, Ytest):
         """
         Evaluates the model.
+
         Parameters
         ----------
-        Xtest : ndarray
-        Ytest : ndarray
+        Xtest : ndarray of shape [n, ...]
+            The input data.
+        Ytest : ndarray of shape [n]
+            The labels.
 
         Returns
         -------
-
+        float
+            Error rate.
         """
-        Xtest = Xtest.astype(np.float32)
-        n_batches = Xtest.shape[0] // self._batch_sz
-
-        test_cost = 0
-        predictions = np.zeros(len(Xtest))
-        for k in tqdm(range(n_batches)):
-            Xtestbatch = Xtest[k * self._batch_sz:(k + 1) * self._batch_sz]
-            Ytestbatch = Ytest[k * self._batch_sz:(k + 1) * self._batch_sz]
-            Yish_test_done = self._session.run(self._softmax_out, feed_dict={self._input: Xtestbatch}) + EPSILON
-            test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
-            predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=-1)
-
+        process = lambda x: np.argmax(x + EPSILON, axis=-1)
+        predictions = [process(x) for x in self.predict(Xtest)]
+        predictions = np.concatenate(predictions, axis=0)
         error_r = error_rate(predictions, Ytest)
-        test_cost = test_cost / (len(Xtest) // self._batch_sz)
-        return error_r, test_cost
+        return error_r
 
     def predict(self, Xtest, use_softmax=True):
-        if use_softmax:
-            out = self._softmax_out
-        else:
-            out = self._logits
-        n_batches = len(Xtest) // self._batch_sz
+        """
+        Performs prediction on the given data.
 
+        Parameters
+        ----------
+        Xtest : arraylike of shape [n, ...]
+            The input data.
+        use_softmax : bool
+            Whether to use softmax or not.
+
+        Returns
+        -------
+        arraylike
+            Predictions.
+        """
+        out = self._softmax_out if use_softmax else self._logits
+        batch_size = self._batch_sz if self._batch_sz is not None else 1
         predictions = []
-        for i in tqdm(range(n_batches)):
-            Xbatch = Xtest[i * self._batch_sz:(i + 1) * self._batch_sz]
+        for Xbatch in tqdm(data_iterator(Xtest, batch_size=batch_size)):
             predictions += [self._session.run(out, feed_dict={self._input: Xbatch})]
-        if len(predictions) > 1:
-            return np.stack(predictions, axis=0)
-        else:
-            return predictions[0]
+        return predictions
 
