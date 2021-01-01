@@ -91,6 +91,17 @@ class Classificator(ClassificatorInterface):
         }
 
     def evaluate(self, Xtest, Ytest):
+        """
+        Evaluates the model.
+        Parameters
+        ----------
+        Xtest : ndarray
+        Ytest : ndarray
+
+        Returns
+        -------
+
+        """
         Xtest = Xtest.astype(np.float32)
         n_batches = Xtest.shape[0] // self._batch_sz
 
