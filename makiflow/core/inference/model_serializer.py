@@ -19,11 +19,14 @@ from .maki_core import MakiCore
 from ..graph_entities import MakiTensor
 from makiflow.core.debug import ExceptionScope
 import tensorflow as tf
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 import json
 
 
 class ModelSerializer(MakiCore):
+    MODEL_INFO = 'model_info'
+    GRAPH_INFO = 'graph_info'
+
     def load_weights(self, path, layer_names=None):
         """
         This function uses default TensorFlow's way for restoring models - checkpoint files.
@@ -126,7 +129,7 @@ class ModelSerializer(MakiCore):
             t_name = lambda x: x.split(':')[0]
 
             if output_tensors is None:
-                print('Output tensors are not provided. Using standard ones:')
+                print('Output tensors are not provided. Using the standard ones:')
                 print(super().get_outputs())
                 print("Use `get_outputs` in order to obtain the output tensors and their names.")
                 output_tensors = super().get_outputs()
@@ -190,3 +193,30 @@ class ModelSerializer(MakiCore):
             tensor = self._graph_tensors[tensor_name]
             tensor_dicts += [tensor.to_dict()]
         return tensor_dicts
+
+    @staticmethod
+    @abstractmethod
+    def from_json(path: str, input_tensor: MakiTensor = None):
+        pass
+
+    @staticmethod
+    def load_architecture(path):
+        """
+        Opens json file at the given path and returns its contents.
+
+        Parameters
+        ----------
+        path : str
+            Path to the json to read.
+
+        Returns
+        -------
+        dict
+            The contents of the json.
+        """
+        with open(path) as file:
+            data = json.load(file)
+
+        model_info = data[ModelSerializer.MODEL_INFO]
+        graph_info = data[ModelSerializer.GRAPH_INFO]
+        return model_info, graph_info

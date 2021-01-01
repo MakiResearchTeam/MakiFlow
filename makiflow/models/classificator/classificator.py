@@ -36,23 +36,44 @@ class Classificator(ClassificatorInterface):
     NAME = 'name'
 
     @staticmethod
-    def from_json(path_to_model):
+    def from_json(path: str, input_tensor: MakiTensor = None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
-        json_file = open(path_to_model)
-        json_value = json_file.read()
-        json_info = json.loads(json_value)
+        model_info, graph_info = super().load_architecture(path)
 
-        output_tensor_name = json_info[MakiModel.MODEL_INFO][Classificator.OUTPUT]
-        input_tensor_name = json_info[MakiModel.MODEL_INFO][Classificator.INPUT]
-        model_name = json_info[MakiModel.MODEL_INFO][Classificator.NAME]
-
-        graph_info = json_info[MakiModel.GRAPH_INFO]
+        output_tensor_name = model_info[Classificator.OUTPUT]
+        input_tensor_name = model_info[Classificator.INPUT]
+        model_name = model_info[Classificator.NAME]
 
         inputs_outputs = MakiBuilder.restore_graph([output_tensor_name], graph_info)
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
         return Classificator(in_x=in_x, out_x=out_x, name=model_name)
+
+    def __init__(self, in_x: InputLayer, out_x: MakiTensor, name='MakiClassificator'):
+        """
+        A classifier model.
+
+        Parameters
+        ----------
+        in_x : MakiTensor
+            Input layer.
+        out_x : MakiTensor
+            Output layer (logits(.
+        name : str
+            Name of the model.
+        """
+        self._input = in_x
+        self._output = out_x
+        super().__init__([out_x], [in_x])
+        self.name = str(name)
+        self._init_inference()
+
+    def _init_inference(self):
+        self._batch_sz = self._input.get_shape()[0]
+        self._input = self._input.get_data_tensor()
+        self._logits = self._output.get_data_tensor()
+        self._softmax_out = tf.nn.softmax(self._logits)
 
     def get_logits(self):
         return self._output
@@ -62,28 +83,10 @@ class Classificator(ClassificatorInterface):
             self._input: 0
         }
 
-    def __init__(self, in_x: InputLayer, out_x: MakiTensor, name='MakiClassificator'):
-        self._input = in_x
-        self._output = out_x
-        graph_tensors = copy(out_x.get_previous_tensors())
-        # Add output tensor to `graph_tensors` since it doesn't have it.
-        # It is assumed that graph_tensors contains ALL THE TENSORS graph consists of.
-        graph_tensors.update(out_x.get_self_pair())
-        outputs = [out_x]
-        inputs = [in_x]
-        super().__init__(outputs, inputs)
-        self.name = str(name)
-        self._batch_sz = in_x.get_shape()[0]
-        self._images = in_x.get_data_tensor()
-        self._inference_out = out_x.get_data_tensor()
-        self._softmax_out = tf.nn.softmax(self._inference_out)
-
     def _get_model_info(self):
-        input_mt = self._inputs[0]
-        output_mt = self._outputs[0]
         return {
-            Classificator.INPUT: input_mt.get_name(),
-            Classificator.OUTPUT: output_mt.get_name(),
+            Classificator.INPUT: self._input.get_name(),
+            Classificator.OUTPUT: self._output.get_name(),
             Classificator.NAME: self.name
         }
 
@@ -96,7 +99,7 @@ class Classificator(ClassificatorInterface):
         for k in tqdm(range(n_batches)):
             Xtestbatch = Xtest[k * self._batch_sz:(k + 1) * self._batch_sz]
             Ytestbatch = Ytest[k * self._batch_sz:(k + 1) * self._batch_sz]
-            Yish_test_done = self._session.run(self._softmax_out, feed_dict={self._images: Xtestbatch}) + EPSILON
+            Yish_test_done = self._session.run(self._softmax_out, feed_dict={self._input: Xtestbatch}) + EPSILON
             test_cost += sparse_cross_entropy(Yish_test_done, Ytestbatch)
             predictions[k * self._batch_sz:(k + 1) * self._batch_sz] = np.argmax(Yish_test_done, axis=-1)
 
@@ -108,13 +111,13 @@ class Classificator(ClassificatorInterface):
         if use_softmax:
             out = self._softmax_out
         else:
-            out = self._inference_out
+            out = self._logits
         n_batches = len(Xtest) // self._batch_sz
 
         predictions = []
         for i in tqdm(range(n_batches)):
             Xbatch = Xtest[i * self._batch_sz:(i + 1) * self._batch_sz]
-            predictions += [self._session.run(out, feed_dict={self._images: Xbatch})]
+            predictions += [self._session.run(out, feed_dict={self._input: Xbatch})]
         if len(predictions) > 1:
             return np.stack(predictions, axis=0)
         else:

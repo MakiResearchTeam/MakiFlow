@@ -27,9 +27,6 @@ class MakiCore(ABC):
     # encapsulates all the graph info;
     # encapsulates session.
 
-    MODEL_INFO = 'model_info'
-    GRAPH_INFO = 'graph_info'
-
     def __init__(self, outputs: list, inputs: list, graph_tensors: dict = None):
         """
         Provides basic functionality for all the models.
