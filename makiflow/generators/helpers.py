@@ -31,16 +31,14 @@ def data_iterator(*args, batch_size=1):
         for arr in args:
             batches.append(arr[i*batch_size: (i+1)*batch_size])
 
-        yield tuple(batches)
+        yield tuple(batches) if len(batches) > 1 else batches[0]
 
     if iterations * batch_size != len(args[0]):
         i = iterations
         to_add = batch_size - len(args[0]) % batch_size
-        print('toadd', to_add)
         batches = []
         for arr in args:
             batch = arr[i * batch_size:]
-            print(len(batch))
 
             if isinstance(batch, list):
                 updated = batch + to_add * batch[-1:]
@@ -51,7 +49,7 @@ def data_iterator(*args, batch_size=1):
 
             batches.append(updated)
 
-        yield tuple(batches)
+        yield tuple(batches) if len(batches) > 1 else batches[0]
 
 
 if __name__ == '__main__':
