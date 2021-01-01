@@ -72,7 +72,8 @@ if __name__ == '__main__':
     print('Predicting...')
     answer = model.predict(np.random.randn(1, 32, 32, 3))
     print(f'answer[0]={answer[0]}')
-
+    error_rate = model.evaluate(np.random.randn(1, 32, 32, 3), [1])
+    print('error_rate', error_rate)
     print('Building model + training layer...')
     model, train_in_x = classificator(train_batch_size=32)
     print('Built model:', model)

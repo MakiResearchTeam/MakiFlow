@@ -31,19 +31,21 @@ class DebugContext:
 
     def __enter__(self):
         if self._msg is not None:
+            print('/------------------------------------------START-------------------------------------------/')
             print(self._msg)
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is not None:
+            print('|                                           ERROR                                          |')
             print(f'Exception type: {exc_type}')
             print(f'Exception values: {exc_val}')
         else:
-            print(d_msg(
-                'DebugContext', 'No exception is thrown.'
-            ))
+            print('|                                           OKAY                                           |')
+
         # add some space
+        print('/-------------------------------------------END--------------------------------------------/')
         print()
         # An exception is not raised if True is returned
         return True
