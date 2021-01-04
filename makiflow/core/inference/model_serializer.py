@@ -170,8 +170,8 @@ class ModelSerializer(MakiCore):
         model_info = self._get_model_info()
         graph_info = self._get_graph_info()
         model_dict = {
-            MakiCore.MODEL_INFO: model_info,
-            MakiCore.GRAPH_INFO: graph_info
+            ModelSerializer.MODEL_INFO: model_info,
+            ModelSerializer.GRAPH_INFO: graph_info
         }
 
         model_json = json.dumps(model_dict, indent=1)
