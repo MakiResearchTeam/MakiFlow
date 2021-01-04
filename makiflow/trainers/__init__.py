@@ -18,7 +18,6 @@
 from __future__ import absolute_import
 
 from .nn_render import RenderTrainer
-from .segmentation import SegmentatorTrainer
 from .utils import LearningRateBuilder, OptimizerBuilder
 
 del absolute_import
