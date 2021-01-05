@@ -17,15 +17,16 @@
 
 import tensorflow as tf
 from makiflow.core import MakiLayer, MakiRestorable
-from .untrainable_layers import ReshapeLayer
+from .untrainable_layers import FlattenLayer
 from .trainable_layers import ConvLayer
+from .dev import ReshapeLikeLayer
 
 
 def positional_encoding_v2(wh, dim, max_power=15):
     x_en = []
     y_en = []
-    x_range = tf.range(start=0, limit=wh[0], dtype='float32') / float(wh[0])
-    y_range = tf.range(start=0, limit=wh[1], dtype='float32') / float(wh[1])
+    x_range = tf.range(start=0, limit=tf.cast(wh[0], 'float32'), dtype='float32') / tf.cast(wh[0], 'float32')
+    y_range = tf.range(start=0, limit=tf.cast(wh[1], 'float32'), dtype='float32') / tf.cast(wh[1], 'float32')
     x, y = tf.meshgrid(x_range, y_range)
     for i in range(dim // 4):
         scale = tf.math.pow(2., max_power *(i / dim))
@@ -37,19 +38,24 @@ def positional_encoding_v2(wh, dim, max_power=15):
 
 
 class PositionalEncodingLayer(MakiLayer):
+    DEPTH = 'depth'
+
     @staticmethod
     def build(params: dict):
-        # TODO
-        pass
+        name = params[MakiRestorable.NAME]
+        depth = params[PositionalEncodingLayer.DEPTH]
+        return PositionalEncodingLayer(name=name, depth=depth)
 
-    def __init__(self, name='PositionalEncodingLayer'):
+    def __init__(self, depth, name='PositionalEncodingLayer'):
+        self._depth = depth
         super().__init__(name, [], [], {})
 
     def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
-                _, h, w, d = x.get_shape().as_list()
-                pe = tf.expand_dims(positional_encoding_v2((h, w), d), axis=0)
+                shape = tf.shape(x)
+                h, w = shape[1], shape[2]
+                pe = tf.expand_dims(positional_encoding_v2((h, w), self._depth), axis=0)
                 x = x + pe
                 return x
 
@@ -57,7 +63,13 @@ class PositionalEncodingLayer(MakiLayer):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     def to_dict(self):
-        return {}
+        return {
+            MakiRestorable.TYPE: self.__class__.__name__,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+                PositionalEncodingLayer.DEPTH: self._depth
+            }
+        }
 
 
 class AttentionLayer(MakiLayer):
@@ -108,7 +120,7 @@ class AttentionLayer(MakiLayer):
             with tf.name_scope(self.get_name()):
                 keys, queries, values = x
                 # key and queries are assumed to have the same dimensionality
-                dim = float(int(keys.get_shape()[-1]))
+                dim = tf.cast(tf.shape(keys)[-1], 'float32')
                 queries = tf.transpose(queries, perm=[0, 2, 1])
                 keys = tf.nn.l2_normalize(keys, axis=-1)
                 queries = tf.nn.l2_normalize(queries, axis=-1)
@@ -134,10 +146,15 @@ class AttentionLayer(MakiLayer):
 
 
 class SpatialAttentionLayer(MakiLayer):
+    IN_F = 'in_f'
+    KQ_DIM = 'kq_dim'
+
     @staticmethod
     def build(params: dict):
-        # TODO
-        pass
+        name = params[MakiRestorable.NAME]
+        in_f = params[SpatialAttentionLayer.IN_F]
+        kq_dim = params.get(SpatialAttentionLayer.KQ_DIM, 64)
+        return SpatialAttentionLayer(name=name, in_f=in_f, kq_dim=kq_dim)
 
     def __init__(self, name, in_f, kq_dim=64):
         """
@@ -153,7 +170,7 @@ class SpatialAttentionLayer(MakiLayer):
         """
         self._kq_dim = kq_dim
         self._in_f = in_f
-        self._positional_encoding = PositionalEncodingLayer(name='enc' + name)
+        self._positional_encoding = PositionalEncodingLayer(depth=kq_dim, name='enc' + name)
         self._queries_projection = ConvLayer(
             kw=1,
             kh=1,
@@ -171,6 +188,9 @@ class SpatialAttentionLayer(MakiLayer):
             name='keys_projection' + name,
             activation=None
         )
+
+        self._to_grid = ReshapeLikeLayer('reshape' + name)
+        self._flatten = FlattenLayer('flatten' + name, keep_depth=True)
 
         self._attention_head = AttentionLayer(name='attention' + name)
         super().__init__(name, [], [], {})
@@ -202,23 +222,12 @@ class SpatialAttentionLayer(MakiLayer):
         queries = self._positional_encoding(queries)
 
         # Flatten the feature maps.
-        b, h, w, c = x.get_shape()
-        self._flatten_kq = ReshapeLayer(
-            new_shape=[b, h * w, self._kq_dim], name=self.get_name() + '/FlattenKQ'
-        )
-        keys = self._flatten_kq(keys)
-        queries = self._flatten_kq(queries)
-
-        self._flatten_x = ReshapeLayer(
-            new_shape=[b, h * w, c], name=self.get_name() + '/FlattenV'
-        )
-        values = self._flatten_x(x)
+        keys = self._flatten(keys)
+        queries = self._flatten(queries)
+        values = self._flatten(x)
 
         output = self._attention_head([keys, queries, values])
-        self._to_grid = ReshapeLayer(
-            new_shape=[b, h, w, c], name=self.get_name() + '/ToGrid'
-        )
-        output = self._to_grid(output)
+        output = self._to_grid([output, x])
         return super().__call__([x, output])
 
     def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
@@ -230,4 +239,17 @@ class SpatialAttentionLayer(MakiLayer):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     def to_dict(self):
-        return {}
+        return {
+            MakiRestorable.FIELD_TYPE: self.__class__.__name__,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+                self.IN_F: self._in_f,
+                self.KQ_DIM: self._kq_dim
+            }
+        }
+
+
+if __name__ == '__main__':
+    from makiflow.layers import InputLayer
+    x = InputLayer(input_shape=[None, 24, 32, 64], name='name')
+    x = SpatialAttentionLayer(in_f=64, name='attention')(x)

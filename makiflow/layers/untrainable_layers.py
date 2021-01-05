@@ -657,8 +657,9 @@ class ActivationLayer(MakiLayer):
 
 class FlattenLayer(MakiLayer):
     TYPE = 'FlattenLayer'
+    KEEP_DEPTH = 'keep_depth'
 
-    def __init__(self, name):
+    def __init__(self, name, keep_depth=False):
         """
         Flattens the input.
         Example: if input is [B1, H1, W1, C1], after this operation it would be [B1, C2], where C2 = H1 * W1 * C1
@@ -667,7 +668,10 @@ class FlattenLayer(MakiLayer):
         ----------
         name : str
             Name of this layer.
+        keep_depth : bool
+            If set to True, the input tensor will be reshaped as: [bs, ..., depth] -> [bs, -1, depth]
         """
+        self._keep_depth = keep_depth
         super().__init__(name, params=[],
                          regularize_params=[],
                          named_params_dict={}
@@ -676,6 +680,11 @@ class FlattenLayer(MakiLayer):
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
+                if self._keep_depth:
+                    shape = tf.shape(X)
+                    bs = shape[0]
+                    depth = shape[-1]
+                    return tf.reshape(X, shape=[bs, -1, depth])
                 return tf.contrib.layers.flatten(X)
 
     def training_forward(self, X):
@@ -684,14 +693,15 @@ class FlattenLayer(MakiLayer):
     @staticmethod
     def build(params: dict):
         name = params[MakiRestorable.NAME]
-
-        return FlattenLayer(name=name)
+        keep_depth = params.get(FlattenLayer.KEEP_DEPTH, False)
+        return FlattenLayer(name=name, keep_depth=keep_depth)
 
     def to_dict(self):
         return {
             MakiRestorable.FIELD_TYPE: FlattenLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name()
+                MakiRestorable.NAME: self.get_name(),
+                FlattenLayer.KEEP_DEPTH: self._keep_depth
             }
         }
 
