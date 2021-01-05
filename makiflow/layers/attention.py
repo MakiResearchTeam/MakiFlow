@@ -55,7 +55,7 @@ class PositionalEncodingLayer(MakiLayer):
             with tf.name_scope(self.get_name()):
                 shape = tf.shape(x)
                 h, w = shape[1], shape[2]
-                pe = tf.expand_dims(positional_encoding_v2((h, w), self._depth), axis=0)
+                pe = tf.expand_dims(positional_encoding_v2((w, h), self._depth), axis=0)
                 x = x + pe
                 return x
 
@@ -251,5 +251,6 @@ class SpatialAttentionLayer(MakiLayer):
 
 if __name__ == '__main__':
     from makiflow.layers import InputLayer
-    x = InputLayer(input_shape=[None, 24, 32, 64], name='name')
+    x = InputLayer(input_shape=[None, 32, 12, 64], name='name')
     x = SpatialAttentionLayer(in_f=64, name='attention')(x)
+    print(x)
