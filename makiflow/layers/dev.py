@@ -72,7 +72,7 @@ class IndexLayer(MakiLayer):
 class ReshapeLikeLayer(MakiLayer):
     @staticmethod
     def build(params: dict):
-        pass
+        return ReshapeLikeLayer(params[MakiRestorable.NAME])
 
     def __init__(self, name):
         super().__init__(name, [], [], {})
