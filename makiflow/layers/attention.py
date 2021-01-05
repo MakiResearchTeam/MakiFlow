@@ -19,6 +19,7 @@ import tensorflow as tf
 from makiflow.core import MakiLayer, MakiRestorable
 from .untrainable_layers import ReshapeLayer
 from .trainable_layers import ConvLayer
+from .dev import IndexLayer, ShapeLayer
 
 
 def positional_encoding_v2(wh, dim, max_power=15):
@@ -171,6 +172,9 @@ class SpatialAttentionLayer(MakiLayer):
             name='keys_projection' + name,
             activation=None
         )
+
+        self._shape = ShapeLayer(name + '/shape')
+
 
         self._attention_head = AttentionLayer(name='attention' + name)
         super().__init__(name, [], [], {})
