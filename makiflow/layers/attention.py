@@ -261,3 +261,4 @@ if __name__ == '__main__':
     x = InputLayer(input_shape=[None, 32, 12, 64], name='name')
     x = SpatialAttentionLayer(in_f=64, name='attention')(x)
     print(x)
+    print(x.get_parent_layer())
