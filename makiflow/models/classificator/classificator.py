@@ -106,7 +106,7 @@ class Classificator(ClassificatorInterface):
         """
         process = lambda x: np.argmax(x + EPSILON, axis=-1)
         predictions = [process(x) for x in self.predict(Xtest)]
-        predictions = np.concatenate(predictions, axis=0)
+        predictions = np.concatenate(predictions, axis=0)[:len(Ytest)]
         error_r = error_rate(predictions, Ytest)
         return error_r
 
