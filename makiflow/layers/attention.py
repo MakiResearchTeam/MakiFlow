@@ -25,8 +25,8 @@ from .dev import ReshapeLikeLayer
 def positional_encoding_v2(wh, dim, max_power=15):
     x_en = []
     y_en = []
-    x_range = tf.range(start=0, limit=wh[0], dtype='float32') / float(wh[0])
-    y_range = tf.range(start=0, limit=wh[1], dtype='float32') / float(wh[1])
+    x_range = tf.range(start=0, limit=tf.cast(wh[0], 'float32'), dtype='float32') / tf.cast(wh[0], 'float32')
+    y_range = tf.range(start=0, limit=tf.cast(wh[1], 'float32'), dtype='float32') / tf.cast(wh[1], 'float32')
     x, y = tf.meshgrid(x_range, y_range)
     for i in range(dim // 4):
         scale = tf.math.pow(2., max_power *(i / dim))
@@ -38,19 +38,24 @@ def positional_encoding_v2(wh, dim, max_power=15):
 
 
 class PositionalEncodingLayer(MakiLayer):
+    DEPTH = 'depth'
+
     @staticmethod
     def build(params: dict):
-        return PositionalEncodingLayer(name=params[MakiRestorable.NAME])
+        name = params[MakiRestorable.NAME]
+        depth = params[PositionalEncodingLayer.DEPTH]
+        return PositionalEncodingLayer(name=name, depth=depth)
 
-    def __init__(self, name='PositionalEncodingLayer'):
+    def __init__(self, depth, name='PositionalEncodingLayer'):
+        self._depth = depth
         super().__init__(name, [], [], {})
 
     def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
                 shape = tf.shape(x)
-                h, w, d = shape[1], shape[2], shape[3]
-                pe = tf.expand_dims(positional_encoding_v2((h, w), d), axis=0)
+                h, w = shape[1], shape[2]
+                pe = tf.expand_dims(positional_encoding_v2((h, w), self._depth), axis=0)
                 x = x + pe
                 return x
 
@@ -61,7 +66,8 @@ class PositionalEncodingLayer(MakiLayer):
         return {
             MakiRestorable.TYPE: self.__class__.__name__,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name()
+                MakiRestorable.NAME: self.get_name(),
+                PositionalEncodingLayer.DEPTH: self._depth
             }
         }
 
@@ -114,7 +120,7 @@ class AttentionLayer(MakiLayer):
             with tf.name_scope(self.get_name()):
                 keys, queries, values = x
                 # key and queries are assumed to have the same dimensionality
-                dim = float(int(keys.get_shape()[-1]))
+                dim = tf.cast(tf.shape(keys)[-1], 'float32')
                 queries = tf.transpose(queries, perm=[0, 2, 1])
                 keys = tf.nn.l2_normalize(keys, axis=-1)
                 queries = tf.nn.l2_normalize(queries, axis=-1)
@@ -164,7 +170,7 @@ class SpatialAttentionLayer(MakiLayer):
         """
         self._kq_dim = kq_dim
         self._in_f = in_f
-        self._positional_encoding = PositionalEncodingLayer(name='enc' + name)
+        self._positional_encoding = PositionalEncodingLayer(depth=kq_dim, name='enc' + name)
         self._queries_projection = ConvLayer(
             kw=1,
             kh=1,
@@ -241,3 +247,9 @@ class SpatialAttentionLayer(MakiLayer):
                 self.KQ_DIM: self._kq_dim
             }
         }
+
+
+if __name__ == '__main__':
+    from makiflow.layers import InputLayer
+    x = InputLayer(input_shape=[None, 24, 32, 64], name='name')
+    x = SpatialAttentionLayer(in_f=64, name='attention')(x)
