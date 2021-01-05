@@ -27,7 +27,6 @@ def positional_encoding_v2(wh, dim, max_power=15):
     x_range = tf.range(start=0, limit=wh[0], dtype='float32') / float(wh[0])
     y_range = tf.range(start=0, limit=wh[1], dtype='float32') / float(wh[1])
     x, y = tf.meshgrid(x_range, y_range)
-    den = max(wh)
     for i in range(dim // 4):
         scale = tf.math.pow(2., max_power *(i / dim))
         x_en += [tf.sin(x * scale)]

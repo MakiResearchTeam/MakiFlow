@@ -68,10 +68,10 @@ class Classificator(ClassificatorInterface):
         self._init_inference()
 
     def _init_inference(self):
-        self._batch_sz = self._input.get_shape()[0]
-        self._input = self._input.get_data_tensor()
-        self._logits = self._output.get_data_tensor()
-        self._softmax_out = tf.nn.softmax(self._logits)
+        self._batch_sz = self._tf_input.get_shape()[0]
+        self._tf_input = self._tf_input.get_data_tensor()
+        self._tf_logits = self._output.get_data_tensor()
+        self._softmax_out = tf.nn.softmax(self._tf_logits)
 
     def get_logits(self):
         return self._output
@@ -126,10 +126,10 @@ class Classificator(ClassificatorInterface):
         arraylike
             Predictions.
         """
-        out = self._softmax_out if use_softmax else self._logits
+        out = self._softmax_out if use_softmax else self._tf_logits
         batch_size = self._batch_sz if self._batch_sz is not None else 1
         predictions = []
         for Xbatch in tqdm(data_iterator(Xtest, batch_size=batch_size)):
-            predictions += [self._session.run(out, feed_dict={self._input: Xbatch})]
+            predictions += [self._session.run(out, feed_dict={self._tf_input: Xbatch})]
         return predictions
 

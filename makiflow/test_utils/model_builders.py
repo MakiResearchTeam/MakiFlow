@@ -78,3 +78,4 @@ if __name__ == '__main__':
     model, train_in_x = classificator(train_batch_size=32)
     print('Built model:', model)
     print('Training input layer', train_in_x)
+    print(model.get_feed_dict_config())
