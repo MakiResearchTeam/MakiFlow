@@ -34,4 +34,6 @@ from .neural_texture import LaplacianPyramidTextureLayer, SingleTextureLayer
 
 from .attention import PositionalEncodingLayer, AttentionLayer, SpatialAttentionLayer
 
+from .spectral import FourierConvLayer
+
 del absolute_import

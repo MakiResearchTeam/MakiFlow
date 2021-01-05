@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
-from makiflow.core import MakiLayer
+from makiflow.core import MakiLayer, MakiBuilder
 from .utils import InitConvKernel
 from .activation_converter import ActivationConverter
 import tensorflow as tf
@@ -86,9 +86,8 @@ class FourierConvLayer(MakiLayer):
 
         self.name_conv = self.NAME_CONV_W.format(kw, kh, in_f, out_f, name)
         self.W = tf.Variable(W.astype(np.float32), name=self.name_conv)
-        self.alpha = tf.Variable(1.0)
-        params = [self.W, self.alpha]
-        named_params_dict = {self.name_conv: self.W, f'asd{name}': self.alpha}
+        params = [self.W]
+        named_params_dict = {self.name_conv: self.W}
         regularize_params = [self.W]
         if use_bias:
             self.name_bias = self.NAME_BIAS.format(kw, kh, in_f, out_f, name)
@@ -160,3 +159,5 @@ class FourierConvLayer(MakiLayer):
 
         }
 
+
+MakiBuilder.register_layers({FourierConvLayer.TYPE, FourierConvLayer})
