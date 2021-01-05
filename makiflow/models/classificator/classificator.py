@@ -68,8 +68,8 @@ class Classificator(ClassificatorInterface):
         self._init_inference()
 
     def _init_inference(self):
-        self._batch_sz = self._tf_input.get_shape()[0]
-        self._tf_input = self._tf_input.get_data_tensor()
+        self._batch_sz = self._input.get_shape()[0]
+        self._tf_input = self._input.get_data_tensor()
         self._tf_logits = self._output.get_data_tensor()
         self._softmax_out = tf.nn.softmax(self._tf_logits)
 
