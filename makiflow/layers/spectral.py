@@ -160,4 +160,4 @@ class FourierConvLayer(MakiLayer):
         }
 
 
-MakiBuilder.register_layers({FourierConvLayer.TYPE, FourierConvLayer})
+MakiBuilder.register_layers({FourierConvLayer.TYPE: FourierConvLayer})
