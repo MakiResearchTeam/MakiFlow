@@ -17,9 +17,9 @@
 
 import tensorflow as tf
 from makiflow.core import MakiLayer, MakiRestorable
-from .untrainable_layers import ReshapeLayer
+from .untrainable_layers import FlattenLayer
 from .trainable_layers import ConvLayer
-from .dev import IndexLayer, ShapeLayer
+from .dev import ReshapeLikeLayer
 
 
 def positional_encoding_v2(wh, dim, max_power=15):
@@ -40,8 +40,7 @@ def positional_encoding_v2(wh, dim, max_power=15):
 class PositionalEncodingLayer(MakiLayer):
     @staticmethod
     def build(params: dict):
-        # TODO
-        pass
+        return PositionalEncodingLayer(name=params[MakiRestorable.NAME])
 
     def __init__(self, name='PositionalEncodingLayer'):
         super().__init__(name, [], [], {})
@@ -49,7 +48,8 @@ class PositionalEncodingLayer(MakiLayer):
     def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
             with tf.name_scope(self.get_name()):
-                _, h, w, d = x.get_shape().as_list()
+                shape = tf.shape(x)
+                h, w, d = shape[1], shape[2], shape[3]
                 pe = tf.expand_dims(positional_encoding_v2((h, w), d), axis=0)
                 x = x + pe
                 return x
@@ -58,7 +58,12 @@ class PositionalEncodingLayer(MakiLayer):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     def to_dict(self):
-        return {}
+        return {
+            MakiRestorable.TYPE: self.__class__.__name__,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name()
+            }
+        }
 
 
 class AttentionLayer(MakiLayer):
@@ -135,10 +140,15 @@ class AttentionLayer(MakiLayer):
 
 
 class SpatialAttentionLayer(MakiLayer):
+    IN_F = 'in_f'
+    KQ_DIM = 'kq_dim'
+
     @staticmethod
     def build(params: dict):
-        # TODO
-        pass
+        name = params[MakiRestorable.NAME]
+        in_f = params[SpatialAttentionLayer.IN_F]
+        kq_dim = params.get(SpatialAttentionLayer.KQ_DIM, 64)
+        return SpatialAttentionLayer(name=name, in_f=in_f, kq_dim=kq_dim)
 
     def __init__(self, name, in_f, kq_dim=64):
         """
@@ -173,8 +183,8 @@ class SpatialAttentionLayer(MakiLayer):
             activation=None
         )
 
-        self._shape = ShapeLayer(name + '/shape')
-
+        self._to_grid = ReshapeLikeLayer('reshape' + name)
+        self._flatten = FlattenLayer('flatten' + name, keep_depth=True)
 
         self._attention_head = AttentionLayer(name='attention' + name)
         super().__init__(name, [], [], {})
@@ -206,23 +216,12 @@ class SpatialAttentionLayer(MakiLayer):
         queries = self._positional_encoding(queries)
 
         # Flatten the feature maps.
-        b, h, w, c = x.get_shape()
-        self._flatten_kq = ReshapeLayer(
-            new_shape=[b, h * w, self._kq_dim], name=self.get_name() + '/FlattenKQ'
-        )
-        keys = self._flatten_kq(keys)
-        queries = self._flatten_kq(queries)
-
-        self._flatten_x = ReshapeLayer(
-            new_shape=[b, h * w, c], name=self.get_name() + '/FlattenV'
-        )
-        values = self._flatten_x(x)
+        keys = self._flatten(keys)
+        queries = self._flatten(queries)
+        values = self._flatten(x)
 
         output = self._attention_head([keys, queries, values])
-        self._to_grid = ReshapeLayer(
-            new_shape=[b, h, w, c], name=self.get_name() + '/ToGrid'
-        )
-        output = self._to_grid(output)
+        output = self._to_grid([output, x])
         return super().__call__([x, output])
 
     def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
@@ -234,4 +233,11 @@ class SpatialAttentionLayer(MakiLayer):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
     def to_dict(self):
-        return {}
+        return {
+            MakiRestorable.FIELD_TYPE: self.__class__.__name__,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+                self.IN_F: self._in_f,
+                self.KQ_DIM: self._kq_dim
+            }
+        }

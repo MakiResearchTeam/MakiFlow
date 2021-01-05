@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.core import MakiLayer
+from makiflow.core import MakiLayer, MakiRestorable
 import tensorflow as tf
 
 
@@ -34,10 +34,17 @@ class ShapeLayer(MakiLayer):
         return self.forward(x, MakiLayer.TRAINING_MODE)
 
     def to_dict(self):
-        pass
+        return {
+            MakiRestorable.FIELD_TYPE: self.__class__.__name__,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+            }
+        }
 
 
 class IndexLayer(MakiLayer):
+    KEY = 'key'
+
     @staticmethod
     def build(params: dict):
         pass
@@ -53,4 +60,35 @@ class IndexLayer(MakiLayer):
         return self.forward(x, MakiLayer.TRAINING_MODE)
 
     def to_dict(self):
+        return {
+            MakiRestorable.FIELD_TYPE: self.__class__.__name__,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+                IndexLayer.KEY: self._key
+            }
+        }
+
+
+class ReshapeLikeLayer(MakiLayer):
+    @staticmethod
+    def build(params: dict):
         pass
+
+    def __init__(self, name):
+        super().__init__(name, [], [], {})
+
+    def forward(self, x, computation_mode=MakiLayer.INFERENCE_MODE):
+        x, reference = x
+        shape = tf.shape(reference)
+        return tf.reshape(x, shape)
+
+    def training_forward(self, x):
+        return self.forward(x, MakiLayer.TRAINING_MODE)
+
+    def to_dict(self):
+        return {
+            MakiRestorable.FIELD_TYPE: self.__class__.__name__,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+            }
+        }
