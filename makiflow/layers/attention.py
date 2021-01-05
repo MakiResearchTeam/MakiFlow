@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from makiflow.core import MakiLayer, MakiRestorable
+from makiflow.core import MakiLayer, MakiRestorable, MakiBuilder
 from .untrainable_layers import FlattenLayer
 from .trainable_layers import ConvLayer
 from .dev import ReshapeLikeLayer
@@ -247,6 +247,13 @@ class SpatialAttentionLayer(MakiLayer):
                 self.KQ_DIM: self._kq_dim
             }
         }
+
+
+MakiBuilder.register_layers({
+    PositionalEncodingLayer.__name__: PositionalEncodingLayer,
+    AttentionLayer.__name__: AttentionLayer,
+    SpatialAttentionLayer.__name__: SpatialAttentionLayer
+})
 
 
 if __name__ == '__main__':
