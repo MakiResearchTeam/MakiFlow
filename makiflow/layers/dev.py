@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.core import MakiLayer, MakiRestorable
+from makiflow.core import MakiLayer, MakiRestorable, MakiBuilder
 import tensorflow as tf
 
 
@@ -92,3 +92,10 @@ class ReshapeLikeLayer(MakiLayer):
                 MakiRestorable.NAME: self.get_name(),
             }
         }
+
+
+MakiBuilder.register_layers({
+    ShapeLayer.__name__: ShapeLayer,
+    ReshapeLikeLayer.__name__: ReshapeLikeLayer,
+    IndexLayer.__name__: IndexLayer
+})
