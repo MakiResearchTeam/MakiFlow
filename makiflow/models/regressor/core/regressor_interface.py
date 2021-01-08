@@ -25,6 +25,7 @@ class RegressorInterface(MakiModel, ABC):
     def get_logits(self):
         """
         Used by the trainer.
+
         Returns
         -------
         MakiTensor

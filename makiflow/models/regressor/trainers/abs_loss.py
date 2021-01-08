@@ -20,10 +20,10 @@ from ..core import RegressorTrainer
 from makiflow.core import TrainerBuilder, Loss
 
 
-class AbsCETrainer(RegressorTrainer):
+class AbsTrainer(RegressorTrainer):
     TYPE = 'AbsCETrainer'
 
-    ABS_CE_LOSS = 'ABS_CE_LOSS'
+    ABS_LOSS = 'ABS_LOSS'
 
     def _build_loss(self):
         abs_loss = Loss.abs_loss(super().get_labels(), super().get_logits(), raw_tensor=True)
@@ -34,8 +34,8 @@ class AbsCETrainer(RegressorTrainer):
         else:
             final_loss = tf.reduce_mean(abs_loss)
 
-        super().track_loss(final_loss, AbsCETrainer.ABS_CE_LOSS)
+        super().track_loss(final_loss, AbsTrainer.ABS_LOSS)
         return final_loss
 
 
-TrainerBuilder.register_trainer(AbsCETrainer)
+TrainerBuilder.register_trainer(AbsTrainer)

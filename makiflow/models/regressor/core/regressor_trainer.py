@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.core import MakiTrainer, MakiModel
+from makiflow.core import MakiTrainer
 import tensorflow as tf
 from abc import ABC
 
@@ -24,31 +24,19 @@ class RegressorTrainer(MakiTrainer, ABC):
     WEIGHT_MAP = 'WEIGHT_MAP'
     LABELS = 'LABELS'
 
-    def __init__(self, model: MakiModel, train_inputs: list, label_tensors: dict = None, use_weight_mask=False):
-        """
-        Provides basic tools for the training setup. Builds final loss tensor and the training graph.
-
-        Parameters
-        ----------
-        model : MakiModel
-            The model's object.
-        train_inputs : list
-            List of the input training MakiTensors. Their names must be the same as their inference counterparts!
-        label_tensors : dict
-            Contains pairs (tensor_name, tf.Tensor), where tf.Tensor contains the required training data.
-        use_weight_mask : bool
-            If true, then weight mask will be used in training
-
-        """
-        self._use_weight_mask = use_weight_mask
-        super().__init__(model=model, train_inputs=train_inputs, label_tensors=label_tensors)
-
     def _init(self):
         super()._init()
+        self._use_weight_mask = False
         logits_makitensor = super().get_model().get_logits()
         self._logits_name = logits_makitensor.get_name()
         self._labels = super().get_label_tensors()[RegressorTrainer.LABELS]
         self._weight_map = super().get_label_tensors()[RegressorTrainer.WEIGHT_MAP]
+
+    def use_weight_mask(self):
+        """
+        If called, weight mask will be used during loss computation.
+        """
+        self._use_weight_mask = True
 
     def get_labels(self):
         return self._labels
