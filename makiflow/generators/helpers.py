@@ -1,9 +1,17 @@
 import numpy as np
 
 
+def assert_array_lens(arrs):
+    for i, arr1 in enumerate(arrs):
+        for j, arr2 in enumerate(arrs):
+            assert len(arr1) == len(arr2), f'All arrays must have the same length, but array {i} and array {j} ' \
+                f'have lengths of {len(arr1)} and {len(arr2)} respectively.'
+
+
 def data_iterator(*args, batch_size=1):
     """
     Iterates over the array yielding batches of the given size.
+    Once array is finished, the iterator is closed.
 
     Parameters
     ----------
@@ -19,10 +27,7 @@ def data_iterator(*args, batch_size=1):
     assert isinstance(batch_size, int), 'Batch size must be an integer.'
     assert batch_size > 0, 'Batch size must be positive.'
     # Check whether all arrays have the same length
-    for i, arr1 in enumerate(args):
-        for j, arr2 in enumerate(args):
-            assert len(arr1) == len(arr2), f'All arrays must have the same length, but array {i} and array {j} ' \
-                f'have lengths of {len(arr1)} and {len(arr2)} respectively.'
+    assert_array_lens(args)
 
     iterations = len(args[0]) // batch_size
     for i in range(iterations):
