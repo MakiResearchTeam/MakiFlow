@@ -129,6 +129,6 @@ class Regressor(RegressorInterface):
         assert len(Xtest) == len(Ytest), 'Number of labels must be equal to the number of data points,' \
                                          f'but received ndata={len(Xtest)} and nlabels={len(Ytest)}'
         preds = self.predict(Xtest)
-        loss = np.mean(abs(preds - Ytest))
+        loss = np.mean(np.abs(preds - Ytest))
         return loss
 
