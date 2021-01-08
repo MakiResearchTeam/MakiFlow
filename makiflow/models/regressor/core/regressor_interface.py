@@ -15,5 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .regressor_interface import RegressorInterface
-from .regressor_trainer import RegressorTrainer
+from makiflow.core import MakiModel
+from abc import abstractmethod, ABC
+
+
+class RegressorInterface(MakiModel, ABC):
+
+    @abstractmethod
+    def get_logits(self):
+        """
+        Used by the trainer.
+        Returns
+        -------
+        MakiTensor
+            The logits of the regressor.
+        """
+        pass
