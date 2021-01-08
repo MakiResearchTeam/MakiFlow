@@ -14,6 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+import copy
 
-from .regressorbasic import RegressorBasic
+import matplotlib.pyplot as plt
+import numpy as np
 
+
+plt.switch_backend('agg')
+# For loading dendrite images

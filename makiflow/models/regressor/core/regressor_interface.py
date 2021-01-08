@@ -15,17 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .training_modules import AbsTrainingModule, MseTrainingModule
+from makiflow.core import MakiModel
+from abc import abstractmethod, ABC
 
 
-class Regressor(
-    AbsTrainingModule,
-    MseTrainingModule,
-):
+class RegressorInterface(MakiModel, ABC):
 
-    @staticmethod
-    def from_json(path_to_model):
-        # TODO
+    @abstractmethod
+    def get_logits(self):
+        """
+        Used by the trainer.
+
+        Returns
+        -------
+        MakiTensor
+            The logits of the regressor.
+        """
         pass
-
-    pass

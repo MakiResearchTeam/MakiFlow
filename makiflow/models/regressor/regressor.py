@@ -23,12 +23,12 @@ from tqdm import tqdm
 from makiflow.models.classificator.utils import error_rate
 from makiflow.core import MakiTensor, MakiBuilder
 from makiflow.layers import InputLayer
-from makiflow.models.classificator.core.classificator_interface import ClassificatorInterface
+from makiflow.models.regressor.core import RegressorInterface
 from makiflow.generators import data_iterator
 EPSILON = np.float32(1e-37)
 
 
-class Classificator(ClassificatorInterface):
+class Regressor(RegressorInterface):
     INPUT = 'in_x'
     OUTPUT = 'out_x'
     NAME = 'name'
@@ -38,15 +38,15 @@ class Classificator(ClassificatorInterface):
         """Creates and returns ConvModel from json.json file contains its architecture"""
         model_info, graph_info = super().load_architecture(path)
 
-        output_tensor_name = model_info[Classificator.OUTPUT]
-        input_tensor_name = model_info[Classificator.INPUT]
-        model_name = model_info[Classificator.NAME]
+        output_tensor_name = model_info[Regressor.OUTPUT]
+        input_tensor_name = model_info[Regressor.INPUT]
+        model_name = model_info[Regressor.NAME]
 
         inputs_outputs = MakiBuilder.restore_graph([output_tensor_name], graph_info)
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
-        return Classificator(in_x=in_x, out_x=out_x, name=model_name)
+        return Regressor(in_x=in_x, out_x=out_x, name=model_name)
 
     def __init__(self, in_x: InputLayer, out_x: MakiTensor, name='MakiClassificator'):
         """
@@ -71,7 +71,6 @@ class Classificator(ClassificatorInterface):
         self._batch_sz = self._input.get_shape()[0]
         self._tf_input = self._input.get_data_tensor()
         self._tf_logits = self._output.get_data_tensor()
-        self._softmax_out = tf.nn.softmax(self._tf_logits)
 
     def get_logits(self):
         return self._output
@@ -83,34 +82,12 @@ class Classificator(ClassificatorInterface):
 
     def _get_model_info(self):
         return {
-            Classificator.INPUT: self._input.get_name(),
-            Classificator.OUTPUT: self._output.get_name(),
-            Classificator.NAME: self.name
+            Regressor.INPUT: self._input.get_name(),
+            Regressor.OUTPUT: self._output.get_name(),
+            Regressor.NAME: self.name
         }
 
-    def evaluate(self, Xtest, Ytest):
-        """
-        Evaluates the model.
-
-        Parameters
-        ----------
-        Xtest : ndarray of shape [n, ...]
-            The input data.
-        Ytest : ndarray of shape [n]
-            The labels.
-
-        Returns
-        -------
-        float
-            Error rate.
-        """
-        process = lambda x: np.argmax(x + EPSILON, axis=-1)
-        predictions = [process(x) for x in self.predict(Xtest)]
-        predictions = np.concatenate(predictions, axis=0)[:len(Ytest)]
-        error_r = error_rate(predictions, Ytest)
-        return error_r
-
-    def predict(self, Xtest, use_softmax=True):
+    def predict(self, Xtest):
         """
         Performs prediction on the given data.
 
@@ -118,19 +95,40 @@ class Classificator(ClassificatorInterface):
         ----------
         Xtest : arraylike of shape [n, ...]
             The input data.
-        use_softmax : bool
-            Whether to use softmax or not.
 
         Returns
         -------
         arraylike
             Predictions.
+
         """
-        out = self._softmax_out if use_softmax else self._tf_logits
+        out = self._tf_logits
         batch_size = self._batch_sz if self._batch_sz is not None else 1
         predictions = []
         for Xbatch in tqdm(data_iterator(Xtest, batch_size=batch_size)):
             predictions += [self._session.run(out, feed_dict={self._tf_input: Xbatch})]
         predictions = np.concatenate(predictions, axis=0)
         return predictions[len(Xtest)]
+
+    def evaluate(self, Xtest, Ytest):
+        """
+        Computes mean absolute error between predictions and labels.
+
+        Parameters
+        ----------
+        Xtest : ndarray
+            Test input data.
+        Ytest : ndarray
+            Test labels.
+
+        Returns
+        -------
+        float
+            Mean absolute error.
+        """
+        assert len(Xtest) == len(Ytest), 'Number of labels must be equal to the number of data points,' \
+                                         f'but received ndata={len(Xtest)} and nlabels={len(Ytest)}'
+        preds = self.predict(Xtest)
+        loss = np.mean(abs(preds - Ytest))
+        return loss
 
