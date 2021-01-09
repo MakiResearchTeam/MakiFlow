@@ -65,4 +65,3 @@ class ClassificatorTrainer(MakiTrainer, ABC):
         return {
             self._labels: 0
         }
-
