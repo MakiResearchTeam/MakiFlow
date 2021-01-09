@@ -1,5 +1,4 @@
 from sklearn.utils import shuffle
-from copy import copy
 from .helpers import assert_array_lens
 from makiflow.core.debug import ExceptionScope
 
@@ -60,4 +59,6 @@ def cycle_generator(train_data, label_data, batch_size, shuffle_data=True):
             if shuffle_data:
                 n_train_arrs = len(train_data)
                 data = shuffle(*(train_data + label_data))
+                if not isinstance(data, list):
+                    data = [data]
                 train_data, label_data = data[:n_train_arrs], data[n_train_arrs:]
