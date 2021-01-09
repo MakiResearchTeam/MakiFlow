@@ -132,5 +132,5 @@ class Classificator(ClassificatorInterface):
         for Xbatch in tqdm(data_iterator(Xtest, batch_size=batch_size)):
             predictions += [self._session.run(out, feed_dict={self._tf_input: Xbatch})]
         predictions = np.concatenate(predictions, axis=0)
-        return predictions[len(Xtest)]
+        return predictions[:len(Xtest)]
 
