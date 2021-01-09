@@ -17,7 +17,7 @@ def cycle_generator(train_data, label_data, batch_size, shuffle_data=True):
         Contains training label data.
     batch_size : int
         The size of the batch.
-    shuffle : bool
+    shuffle_data : bool
         Whether to shuffle the data.
 
     Returns
@@ -33,7 +33,9 @@ def cycle_generator(train_data, label_data, batch_size, shuffle_data=True):
     with ExceptionScope('Label Data Check'):
         assert_array_lens(label_data)
 
-    assert len(train_data[0]) == len(label_data[0]), ''
+    if len(label_data) != 0:
+        assert len(train_data[0]) == len(label_data[0]), ''
+
     n_batches = len(train_data[0]) // batch_size
 
     counter = 0
