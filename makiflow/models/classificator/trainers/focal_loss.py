@@ -40,6 +40,7 @@ class FocalTrainer(ClassificatorTrainer):
     def _init(self):
         super()._init()
         self._focal_gamma = 2.0
+        self._normalize_by_positives = False
 
     def set_gamma(self, gamma):
         """
@@ -53,15 +54,23 @@ class FocalTrainer(ClassificatorTrainer):
         # noinspection PyAttributeOutsideInit
         self._focal_gamma = gamma
 
+    def normalize_by_positives(self):
+        """
+        Enables loss normalization by the number of positive samples in the batch.
+        """
+        self._normalize_by_positives = True
+
     def _build_loss(self):
         logits = super().get_logits()
         labels = super().get_labels()
         num_classes = super().get_num_classes()
 
-        positives = tf.not_equal(labels, 0)  # [BATCH_SIZE, ...]
-        positives_dim_n = len(positives.get_shape())
-        axis = list(range(1, positives_dim_n))
-        num_positives = tf.reduce_sum(positives, axis=axis)  # [BATCH_SIZE, N_POSITIVES]
+        num_positives = None
+        if self._normalize_by_positives:
+            positives = tf.cast(tf.not_equal(labels, 0), tf.float32)  # [BATCH_SIZE, ...]
+            positives_dim_n = len(positives.get_shape())
+            axis = list(range(1, positives_dim_n))
+            num_positives = tf.reduce_sum(positives, axis=axis)  # [BATCH_SIZE, N_POSITIVES]
 
         focal_loss = Loss.focal_loss(
             logits=logits,
