@@ -20,10 +20,9 @@ from __future__ import absolute_import
 import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
-from makiflow.models.classificator.utils import error_rate
-from makiflow.core import MakiTensor, MakiBuilder
+from makiflow.core import MakiTensor, MakiBuilder, MakiModel
 from makiflow.layers import InputLayer
-from makiflow.models.regressor.core import RegressorInterface
+from .core import RegressorInterface
 from makiflow.generators import data_iterator
 EPSILON = np.float32(1e-37)
 
@@ -36,7 +35,7 @@ class Regressor(RegressorInterface):
     @staticmethod
     def from_json(path: str, input_tensor: MakiTensor = None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
-        model_info, graph_info = super().load_architecture(path)
+        model_info, graph_info = MakiModel.load_architecture(path)
 
         output_tensor_name = model_info[Regressor.OUTPUT]
         input_tensor_name = model_info[Regressor.INPUT]
