@@ -50,9 +50,11 @@ class RegressorTrainer(MakiTrainer, ABC):
 
     def _build_loss(self):
         losses = []
-        for (label_name, label), prediction in zip(self.get_labels().items(), self.get_logits()):
+        for name in self._logits_names:
+            prediction = super().get_traingraph_tensor(name)
+            label = self.get_labels()[name]
             losses.append(self._build_local_loss(prediction, label))
-            super().track_loss(losses[-1], label_name)
+            super().track_loss(losses[-1], name)
         return tf.add_n([0, *losses], name='total_loss')
 
     def _setup_label_placeholders(self):
