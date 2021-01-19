@@ -21,20 +21,13 @@ from makiflow.core import TrainerBuilder, Loss
 
 
 class AbsTrainer(RegressorTrainer):
-    TYPE = 'AbsCETrainer'
+    TYPE = 'AbsTrainer'
 
     ABS_LOSS = 'ABS_LOSS'
 
-    def _build_loss(self):
-        abs_loss = Loss.abs_loss(super().get_labels(), super().get_logits(), raw_tensor=True)
-
-        if self._use_weight_mask:
-            weights = super().get_weight_map()
-            final_loss = tf.reduce_mean(abs_loss * weights)
-        else:
-            final_loss = tf.reduce_mean(abs_loss)
-
-        super().track_loss(final_loss, AbsTrainer.ABS_LOSS)
+    def _build_local_loss(self, prediction, label):
+        abs_loss = Loss.abs_loss(label, prediction, raw_tensor=True)
+        final_loss = tf.reduce_mean(abs_loss)
         return final_loss
 
 

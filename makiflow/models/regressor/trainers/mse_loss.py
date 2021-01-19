@@ -21,20 +21,13 @@ from makiflow.core import TrainerBuilder, Loss
 
 
 class MseTrainer(RegressorTrainer):
-    TYPE = 'MseCETrainer'
+    TYPE = 'MseTrainer'
 
     MSE_LOSS = 'MSE_LOSS'
 
-    def _build_loss(self):
-        mse_loss = Loss.mse_loss(super().get_labels(), super().get_logits(), raw_tensor=True)
-
-        if self._use_weight_mask:
-            weights = super().get_weight_map()
-            final_loss = tf.reduce_mean(mse_loss * weights)
-        else:
-            final_loss = tf.reduce_mean(mse_loss)
-
-        super().track_loss(final_loss, MseTrainer.MSE_LOSS)
+    def _build_local_loss(self, prediction, label):
+        mse_loss = Loss.mse_loss(label, prediction, raw_tensor=True)
+        final_loss = tf.reduce_mean(mse_loss)
         return final_loss
 
 

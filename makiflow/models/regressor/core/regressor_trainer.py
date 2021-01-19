@@ -17,7 +17,7 @@
 
 from makiflow.core import MakiTrainer
 import tensorflow as tf
-from abc import ABC
+from abc import ABC, abstractmethod
 
 
 class RegressorTrainer(MakiTrainer, ABC):
@@ -28,47 +28,47 @@ class RegressorTrainer(MakiTrainer, ABC):
         super()._init()
         self._use_weight_mask = False
         logits_makitensor = super().get_model().get_logits()
-        self._logits_name = logits_makitensor.get_name()
-        self._labels = super().get_label_tensors()[RegressorTrainer.LABELS]
-        self._weight_map = super().get_label_tensors()[RegressorTrainer.WEIGHT_MAP]
+        self._logits_names = [l.get_name() for l in logits_makitensor]
+        self._labels = super().get_label_tensors()
 
-    def use_weight_mask(self):
-        """
-        If called, weight mask will be used during loss computation.
-        """
-        self._use_weight_mask = True
+    # noinspection PyAttributeOutsideInit
+    def set_loss_sources(self, source_names):
+        self._logits_names = source_names
 
     def get_labels(self):
         return self._labels
 
-    def get_weight_map(self):
-        return self._weight_map
-
     def get_logits(self):
-        return super().get_traingraph_tensor(self._logits_name)
+        logits = []
+        for name in self._logits_names:
+            logits.append(super().get_traingraph_tensor(name))
+        return logits
+
+    @abstractmethod
+    def _build_local_loss(self, prediction, label):
+        pass
+
+    def _build_loss(self):
+        losses = []
+        for (label_name, label), prediction in zip(self.get_labels().items(), self.get_logits()):
+            losses.append(self._build_local_loss(prediction, label))
+            super().track_loss(losses[-1], label_name)
+        return tf.add_n([0, *losses], name='total_loss')
 
     def _setup_label_placeholders(self):
         logits = super().get_model().get_logits()
-        logits_shape = logits.get_shape()
-        return {
-            RegressorTrainer.LABELS: tf.placeholder(
-                dtype=tf.float32,
-                shape=[super().get_batch_size(), *logits_shape[1:]],
-                name=RegressorTrainer.LABELS
-            ),
-            RegressorTrainer.WEIGHT_MAP: tf.placeholder(
-                dtype=tf.float32,
-                shape=[super().get_batch_size(), *logits_shape[1:]],
-                name=RegressorTrainer.WEIGHT_MAP
+        batch_size = super().get_batch_size()
+        label_tensors = {}
+        for l in logits:
+            label_tensors[l.get_name()] = tf.placeholder(
+                dtype='float32', shape=[batch_size, *l.get_shape()[1:]], name=f'label_{l.get_name()}'
             )
-        }
+        return label_tensors
 
     def get_label_feed_dict_config(self):
-        final_dict = {
-            self._labels: 0
-        }
-        if self._use_weight_mask:
-            final_dict[self._weight_map] = 1
-
-        return final_dict
+        labels = super().get_label_tensors()
+        label_feed_dict_config = {}
+        for i, t in enumerate(labels):
+            label_feed_dict_config[t] = i
+        return label_feed_dict_config
 
