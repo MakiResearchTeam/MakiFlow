@@ -70,7 +70,7 @@ class RegressorTrainer(MakiTrainer, ABC):
     def get_label_feed_dict_config(self):
         labels = super().get_label_tensors()
         label_feed_dict_config = {}
-        for i, t in enumerate(labels):
+        for i, t in enumerate(labels.values()):
             label_feed_dict_config[t] = i
         return label_feed_dict_config
 
