@@ -1894,6 +1894,9 @@ class DummyEmbeddingLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         mat, one_hot = X
+        bool_one_hot = one_hot > 1e-3
+        bool_one_hot = tf.math.logical_not(bool_one_hot)
+        one_hot = tf.cast(bool_one_hot, 'float32')
         # one_hot - [bs, n_repeat]
         # mat - [bs, n_repeat, dim]
         one_hot = tf.expand_dims(one_hot, axis=-1)
