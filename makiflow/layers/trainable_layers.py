@@ -1881,7 +1881,7 @@ class DummyEmbeddingLayer(MakiLayer):
         self._dim = dim
         self._n_repeat = n_repeat
 
-        embed = np.random.randn(dim).astype('float32')
+        embed = np.zeros(shape=[dim], dtype='float32')
         self._embed = tf.Variable(embed, name=f'{name}_embedding')
         embed_mat = tf.stack([self._embed]*n_repeat, axis=0)
         # [1, n_repeat, dim]
