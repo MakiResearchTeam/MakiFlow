@@ -1862,6 +1862,65 @@ class WeightStandConvLayer(MakiLayer):
         }
 
 
+class DummyEmbeddingLayer(MakiLayer):
+    TYPE = 'DummyEmbeddingLayer'
+    DIM = 'dim'
+    N_REPEAT = 'n_repeat'
+
+    def __init__(self, dim, n_repeat, name):
+        """
+        ScaleLayer is used to multiply input MakiTensor on `init_value`, which is trainable variable.
+
+        Parameters
+        ----------
+        init_value : int
+            The initial value which need to multiply by input.
+        name : str
+            Name of this layer.
+        """
+        self._dim = dim
+        self._n_repeat = n_repeat
+
+        embed = np.random.randn(dim).astype('float32')
+        self._embed = tf.Variable(embed, name=f'{name}_embedding')
+        embed_mat = tf.stack([self._embed]*n_repeat, axis=0)
+        # [1, n_repeat, dim]
+        self._embed_mat = tf.expand_dims(embed_mat, axis=0)
+
+        super().__init__(name, params=[self._embed],
+                         regularize_params=[self._embed],
+                         named_params_dict={f'{name}_embedding': self._embed}
+        )
+
+    def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
+        mat, one_hot = X
+        # one_hot - [bs, n_repeat]
+        # mat - [bs, n_repeat, dim]
+        one_hot = tf.expand_dims(one_hot, axis=-1)
+        embed_mat = one_hot * self._embed_mat
+        return mat + embed_mat
+
+    def training_forward(self, X):
+        return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
+
+    @staticmethod
+    def build(params: dict):
+        name = params[MakiRestorable.NAME]
+        dim = params[DummyEmbeddingLayer.DIM]
+        n_repeat = params[DummyEmbeddingLayer.N_REPEAT]
+        return DummyEmbeddingLayer(dim=dim, n_repeat=n_repeat, name=name)
+
+    def to_dict(self):
+        return {
+            MakiRestorable.FIELD_TYPE: DummyEmbeddingLayer.TYPE,
+            MakiRestorable.PARAMS: {
+                MakiRestorable.NAME: self.get_name(),
+                DummyEmbeddingLayer.DIM: self._dim,
+                DummyEmbeddingLayer.N_REPEAT: self._n_repeat
+            }
+        }
+
+
 class TrainableLayerAddress:
 
     ADDRESS_TO_CLASSES = {

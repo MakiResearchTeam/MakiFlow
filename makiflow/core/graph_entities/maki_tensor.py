@@ -128,3 +128,14 @@ class MakiTensor:
             MakiTensor.PARENT_LAYER_INFO: parent_layer_dict
         }
 
+    def eval(self, feed_dict: dict, sess):
+        tf_feed_dict = {}
+        for makitensor, datatensor in feed_dict.items():
+            tf_feed_dict[makitensor.get_data_tensor()] = datatensor
+
+        run_tensor = self.get_data_tensor()
+        return sess.run(
+            run_tensor,
+            feed_dict=tf_feed_dict
+        )
+
