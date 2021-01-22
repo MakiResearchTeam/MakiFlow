@@ -1943,6 +1943,7 @@ class TrainableLayerAddress:
         InstanceNormLayer.TYPE: InstanceNormLayer,
 
         ScaleLayer.TYPE: ScaleLayer,
+        DummyEmbeddingLayer.TYPE: DummyEmbeddingLayer
     }
 
 
