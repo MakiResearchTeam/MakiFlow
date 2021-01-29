@@ -57,7 +57,7 @@ class ClassificatorTrainer(MakiTrainer, ABC):
             ClassificatorTrainer.WEIGHT_MAP: tf.placeholder(
                 dtype=tf.float32,
                 shape=[super().get_batch_size(), *logits_shape[1:-1]],
-                name=ClassificatorTrainer.LABELS
+                name=ClassificatorTrainer.WEIGHT_MAP
             )
         }
 
