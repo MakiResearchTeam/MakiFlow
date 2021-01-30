@@ -12,7 +12,7 @@ from ...dev import ClassDecorator
 # Therefore, decorator pattern is used to overcome this issue.
 
 # noinspection PyShadowingNames
-class MutableLoss(ClassDecorator, LossInterface, ABC):
+class MutableLoss(ClassDecorator, ABC):
     def __mul__(self, other):
         if isinstance(other, int) or isinstance(other, float):
             loss2 = ConstantLoss(other)
@@ -63,26 +63,31 @@ class Loss(LossInterface, ABC):
         return decorator(loss)
 
     def __init__(self, tensor_names, label_tensors: dict):
+        assert len(tensor_names) != 0
+        self._id = Loss.__instance_id
         self._tensor_names = tensor_names
-        # This guaranties that label tensor names won't overlap during
-        # tensor gathering inside the trainer.
-        modified_label_tensors = OrderedDict()
-        for tensor_name, tensor in label_tensors.items():
-            tensor_name = f'{Loss.__instance_id}_{tensor_name}'
-            modified_label_tensors[tensor_name] = tensor
-        self._label_tensors = modified_label_tensors
+        self._label_tensors = label_tensors
 
     def build(self, tensor_provider: TensorProvider):
         loss = 0.0
         with ExceptionScope(self.__class__.__name__):
             for tensor_name in self._tensor_names:
                 tensor = tensor_provider.get_traingraph_tensor(tensor_name)
-                loss += self.build_loss(tensor, self._label_tensors)
+                loss = loss + self.build_loss(tensor, self._label_tensors)
         return loss
 
     @abstractmethod
     def build_loss(self, prediction, label_tensors):
         pass
+
+    def get_label_tensors(self) -> OrderedDict:
+        # This guaranties that label tensor names won't overlap during
+        # tensor gathering inside the trainer.
+        modified_label_tensors = OrderedDict()
+        for tensor_name, tensor in self._label_tensors.items():
+            tensor_name = f'{self._id}_{tensor_name}'
+            modified_label_tensors[tensor_name] = tensor
+        return modified_label_tensors
 
 
 if __name__ == '__main__':
