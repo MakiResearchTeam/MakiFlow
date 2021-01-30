@@ -17,3 +17,14 @@
 
 from .model_serializer import ModelSerializer as MakiModel
 from .maki_builder import MakiBuilder
+from .model import Model
+
+"""
+Model consists of several layers of abstraction:
+
+^-------Model-------^
+|||||||||||||||||||||
+|--ModelSerializer--|
+|||||||||||||||||||||
+|-----MakiCore------|
+"""
