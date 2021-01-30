@@ -21,6 +21,7 @@ from .tensorboard import TensorBoard
 from .loss_builder import Loss
 from .trainer_builder import TrainerBuilder
 from abc import ABC
+from .loss import Loss
 
 
 class MakiTrainer(ModelFitter, ABC):

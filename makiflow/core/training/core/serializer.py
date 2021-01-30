@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .traingraphcompiler import TrainGraphCompiler
+from .train_graph_compiler import TrainGraphCompiler
 
 
 class Serializer(TrainGraphCompiler):
