@@ -17,8 +17,8 @@ class MutableLoss(ClassDecorator, ABC):
         if isinstance(other, int) or isinstance(other, float):
             loss2 = ConstantLoss(other)
             return self(MulOp(self.get_obj(), loss2))
-        elif isinstance(other, LossInterface):
-            return self(MulOp(self.get_obj(), other))
+        elif isinstance(other, MutableLoss):
+            return self(MulOp(self.get_obj(), other.get_obj()))
         else:
             raise ValueError(f'Expected type LossInterface, but received {type(other)}')
 
@@ -26,8 +26,8 @@ class MutableLoss(ClassDecorator, ABC):
         if isinstance(other, int) or isinstance(other, float):
             loss2 = ConstantLoss(other)
             return self(AddOp(self.get_obj(), loss2))
-        elif isinstance(other, LossInterface):
-            return self(AddOp(self.get_obj(), other))
+        elif isinstance(other, MutableLoss):
+            return self(AddOp(self.get_obj(), other.get_obj()))
         else:
             raise ValueError(f'Expected type LossInterface, but received {type(other)}')
 
@@ -35,8 +35,17 @@ class MutableLoss(ClassDecorator, ABC):
         if isinstance(other, int) or isinstance(other, float):
             loss2 = ConstantLoss(other)
             return self(DivOp(self.get_obj(), loss2))
-        elif isinstance(other, LossInterface):
-            return self(DivOp(self.get_obj(), other))
+        elif isinstance(other, MutableLoss):
+            return self(DivOp(self.get_obj(), other.get_obj()))
+        else:
+            raise ValueError(f'Expected type LossInterface, but received {type(other)}')
+
+    def __truediv__(self, other):
+        if isinstance(other, int) or isinstance(other, float):
+            loss2 = ConstantLoss(other)
+            return self(DivOp(self.get_obj(), loss2))
+        elif isinstance(other, MutableLoss):
+            return self(DivOp(self.get_obj(), other.get_obj()))
         else:
             raise ValueError(f'Expected type LossInterface, but received {type(other)}')
 
