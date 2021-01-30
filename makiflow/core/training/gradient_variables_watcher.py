@@ -20,7 +20,7 @@ from makiflow.core.inference.maki_core import MakiCore
 import tensorflow as tf
 
 
-class Hermes(TensorBoard):
+class GradientVariablesWatcher(TensorBoard):
     def __init__(self, model: MakiCore):
         super().__init__()
         self._model = model

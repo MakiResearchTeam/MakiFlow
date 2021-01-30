@@ -15,18 +15,51 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .athena import Athena
-from .hermes import Hermes
+from .model_fitter import ModelFitter
+from .gradient_variables_watcher import GradientVariablesWatcher
 from .tensorboard import TensorBoard
 from .loss_builder import Loss
 from .trainer_builder import TrainerBuilder
 from abc import ABC
 
 
-class MakiTrainer(Athena, ABC):
+class MakiTrainer(ModelFitter, ABC):
     pass
 
 
-del Athena
+del ModelFitter
 del ABC
 
+
+"""
+MakiTrainer consists of several layers of abstraction:
+
+^------------------------------------MakiTrainer-----------------------------------^
+| Dummy wrapper.                                                                   |
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+|------------------------------------ModelFitter-----------------------------------|
+| Contains fit loops and API for loss tracking.                                    |
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+^-----------------------------------TrainingCore-----------------------------------^
+| Dummy wrapper.                                                                   |
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+|------------------------------L2RegularizationModule------------------------------|
+| Contains API for adding L2 regularization to the loss.                           |
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+^------------------------------L1RegularizationModule------------------------------^
+| Contains API for adding L1 regularization to the loss.                           |
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+|------------------------------------Serializer------------------------------------|
+| Contains API for serializing the model: useful tools, architecture saving,       |
+| weights saving.                                                                  |
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+^--------------------------------TrainGraphCompiler--------------------------------^
+| Compiles training graph and provides and API to access it.                       |
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+"""

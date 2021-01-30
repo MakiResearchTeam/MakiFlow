@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .core.aion import Aion
+from .core.serializer import Serializer
 
 
 class TrainerBuilder:
-    TYPE = Aion.TYPE
-    PARAMS = Aion.PARAMS
+    TYPE = Serializer.TYPE
+    PARAMS = Serializer.PARAMS
 
     # Contains pairs
     TRAINERS = {}

@@ -16,11 +16,11 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from .aion import Aion
+from .serializer import Serializer
 from abc import ABC
 
 
-class L1(Aion, ABC):
+class L1RegularizationModule(Serializer, ABC):
     # L1 REGULARIZATION
     def _init(self):
         super()._init()

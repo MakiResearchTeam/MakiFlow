@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.core.training.core.hephaestus import Hephaestus
+from makiflow.core.training.core.traingraphcompiler import TrainGraphCompiler
 # It is for the teacher network.
 # Hephaestus is required since its a great tool that provides API for interacting with the training graph.
 # The functionality of the full trainer (that includes all the API of Hephaestus) is redundant and may even harm.
@@ -83,7 +83,7 @@ class Distillator(ClassDecorator, ABC):
         pass
 
     def _call_init(self, obj):
-        self._teacher_train_graph = Hephaestus(self._teacher, train_inputs=obj.get_train_inputs_list())
+        self._teacher_train_graph = TrainGraphCompiler(self._teacher, train_inputs=obj.get_train_inputs_list())
         # { layer_name: layer }
         layers = self._teacher.get_layers()
         layers_trainable = [(layer_name, False) for layer_name in layers.keys()]

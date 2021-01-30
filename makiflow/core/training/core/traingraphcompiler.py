@@ -19,8 +19,7 @@ from makiflow.core.graph_entities import MakiTensor, MakiRestorable
 from makiflow.core.inference.maki_core import MakiCore
 
 
-# May be renamed to TrainGraphCompiler which actually makes more sense. But not now...
-class Hephaestus:
+class TrainGraphCompiler:
     # This entity is responsible for building the training graph and
     # the final loss
     def __init__(self, model: MakiCore, train_inputs: list):

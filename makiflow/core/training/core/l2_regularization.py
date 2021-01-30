@@ -16,12 +16,12 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from .l1_regularization import L1
+from .l1_regularization import L1RegularizationModule
 from abc import ABC
 
 
 # noinspection PyTypeChecker
-class L2(L1, ABC):
+class L2RegularizationModule(L1RegularizationModule, ABC):
     def _init(self):
         super()._init()
         # Setup L2 regularization

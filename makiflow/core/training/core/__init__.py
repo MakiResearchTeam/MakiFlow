@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .l2_regularization import L2
+from .l2_regularization import L2RegularizationModule
 from abc import ABC
 
 
-class TrainingCore(L2, ABC):
+class TrainingCore(L2RegularizationModule, ABC):
     pass

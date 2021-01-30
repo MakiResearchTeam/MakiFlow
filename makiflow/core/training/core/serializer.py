@@ -15,23 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .hephaestus import Hephaestus
+from .traingraphcompiler import TrainGraphCompiler
 
 
-# May be renamed to Serializer...
-class Aion(Hephaestus):
-    """
-    Aion is the of eternity. Serializing the trainer does not allow it to vanish completely,
-    therefore, making it eternal.
-    """
+class Serializer(TrainGraphCompiler):
     TYPE = 'type'
     PARAMS = 'params'
 
     def to_dict(self):
-        assert self.TYPE != Aion.TYPE, 'The trainer did not specified its type via static TYPE variable.'
+        assert self.TYPE != Serializer.TYPE, 'The trainer did not specified its type via static TYPE variable.'
         return {
-            Aion.TYPE: self.TYPE,
-            Aion.PARAMS: {}
+            Serializer.TYPE: self.TYPE,
+            Serializer.PARAMS: {}
         }
 
     def set_params(self, params):

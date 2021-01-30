@@ -21,14 +21,13 @@ from .utils import new_optimizer_used, loss_is_built
 from .core import TrainingCore
 from tqdm import tqdm
 from abc import abstractmethod
-from .hermes import Hermes
+from .gradient_variables_watcher import GradientVariablesWatcher
 from makiflow.core.training.utils import pack_data, IteratorCloser
 from ..inference import MakiModel
 
 
-class Athena(TrainingCore):
-    # Athena is the goddess of wisdom and intelligence.
-    # This entity is responsible for training the model.
+class ModelFitter(TrainingCore):
+    # Contains fit loops
     TRAINING_LOSS = 'TRAINING_LOSS'
 
     def __init__(self, model: MakiModel, train_inputs: list, label_tensors: dict = None):
@@ -50,7 +49,7 @@ class Athena(TrainingCore):
         super().__init__(model, train_inputs)
         self._track_losses = {}
         self._training_loss = None
-        self._hermes = Hermes(model)
+        self._hermes = GradientVariablesWatcher(model)
         self._optimizer = None
         self._grads_and_vars = None
 
@@ -95,7 +94,7 @@ class Athena(TrainingCore):
         loss = self._build_loss()
         assert loss is not None, '_build_loss method returned None, but must return the loss scalar.'
         self._training_loss = super()._build_final_loss(loss)
-        self.track_loss(self._training_loss, Athena.TRAINING_LOSS)
+        self.track_loss(self._training_loss, ModelFitter.TRAINING_LOSS)
         loss_is_built()
 
     @abstractmethod
