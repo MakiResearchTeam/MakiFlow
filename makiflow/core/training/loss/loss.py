@@ -53,15 +53,24 @@ class ConstantLoss(LossInterface):
 
 
 class Loss(LossInterface, ABC):
+    __instance_id = 0
+
     def __new__(cls, *args, **kwargs):
         loss = object.__new__(cls)
         loss.__init__(*args, **kwargs)
         decorator = MutableLoss()
+        Loss.__instance_id += 1
         return decorator(loss)
 
     def __init__(self, tensor_names, label_tensors: dict):
         self._tensor_names = tensor_names
-        self._label_tensors = OrderedDict(label_tensors)
+        # This guaranties that label tensor names won't overlap during
+        # tensor gathering inside the trainer.
+        modified_label_tensors = OrderedDict()
+        for tensor_name, tensor in label_tensors.items():
+            tensor_name = f'{Loss.__instance_id}_{tensor_name}'
+            modified_label_tensors[tensor_name] = tensor
+        self._label_tensors = modified_label_tensors
 
     def build(self, tensor_provider: TensorProvider):
         loss = 0.0
