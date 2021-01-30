@@ -104,9 +104,9 @@ class Classificator(ClassificatorInterface):
         float
             Error rate.
         """
-        process = lambda x: np.argmax(x + EPSILON, axis=-1)
+        process = lambda x: np.asarray(np.argmax(x, axis=-1))
         predictions = [process(x) for x in self.predict(Xtest)]
-        predictions = np.concatenate(predictions, axis=0)[:len(Ytest)]
+        predictions = np.stack(predictions, axis=0)[:len(Ytest)]
         error_r = error_rate(predictions, Ytest)
         return error_r
 
