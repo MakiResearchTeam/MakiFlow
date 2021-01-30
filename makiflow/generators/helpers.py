@@ -8,7 +8,7 @@ def assert_array_lens(arrs):
                 f'have lengths of {len(arr1)} and {len(arr2)} respectively.'
 
 
-def data_iterator(*args, batch_size=1):
+def data_iterator(*args, batch_size=1, force_tuple=True):
     """
     Iterates over the array yielding batches of the given size.
     Once array is finished, the iterator is closed.
@@ -19,7 +19,9 @@ def data_iterator(*args, batch_size=1):
         An array to iterate over.
     batch_size : int
         The batch size.
-
+    force_tuple : bool
+        If set to False and batch_size=1, then the generator yields only batched array elements.
+        Otherwise the batches are always packed into tuples.
     Returns
     -------
     iterator
@@ -36,7 +38,7 @@ def data_iterator(*args, batch_size=1):
         for arr in args:
             batches.append(arr[i*batch_size: (i+1)*batch_size])
 
-        yield tuple(batches) if len(batches) > 1 else batches[0]
+        yield tuple(batches) if len(batches) > 1 or force_tuple else batches[0]
 
     if iterations * batch_size != len(args[0]):
         i = iterations
@@ -54,7 +56,7 @@ def data_iterator(*args, batch_size=1):
 
             batches.append(updated)
 
-        yield tuple(batches) if len(batches) > 1 else batches[0]
+        yield tuple(batches) if len(batches) > 1 or force_tuple else batches[0]
 
 
 if __name__ == '__main__':
@@ -78,3 +80,8 @@ if __name__ == '__main__':
         a, b = np.ones(4), np.ones(4) * 2
         for one, two in data_iterator(a.tolist(), b.tolist(), batch_size=3):
             print(one, two)
+
+    with DebugContext('Check tuples return.'):
+        a, b = np.ones(4), np.ones(4) * 2
+        for one in data_iterator(a.tolist(), batch_size=3):
+            print(one)
