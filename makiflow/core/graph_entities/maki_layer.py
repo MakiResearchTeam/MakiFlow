@@ -204,7 +204,7 @@ class MakiLayer(MakiRestorable):
 
     def _output_tensor_name(self, name):
         if self._n_calls != 0:
-            name += f':{self._n_calls}'
+            name += f'_{self._n_calls}'
         return name
 
     def _update_children(self, parent_tensor_names: list, output_mt):
