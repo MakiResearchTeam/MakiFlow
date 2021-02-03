@@ -17,9 +17,9 @@
 
 import tensorflow as tf
 from ..main_modules import NeuralRenderBasis
-from makiflow.core.training.loss_builder import Loss
-from makiflow.core.training.utils import print_train_info, moving_average
-from makiflow.core.training.utils import loss_is_built, new_optimizer_used
+from makiflow.core.training.loss_fabric import LossFabric
+from makiflow.core.training.trainer.utils import print_train_info, moving_average
+from makiflow.core.training.trainer.utils import loss_is_built, new_optimizer_used
 from sklearn.utils import shuffle
 from tqdm import tqdm
 
@@ -32,7 +32,7 @@ class MseTrainingModule(NeuralRenderBasis):
         super()._prepare_training_vars()
 
     def _build_mse_loss(self):
-        self._mse_loss = Loss.mse_loss(self._images, self._training_out)
+        self._mse_loss = LossFabric.mse_loss(self._images, self._training_out)
         self._final_mse_loss = self._build_final_loss(self._mse_loss)
 
     def _setup_mse_loss_inputs(self):

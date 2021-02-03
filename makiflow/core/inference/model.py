@@ -4,7 +4,7 @@ import numpy as np
 from .model_serializer import ModelSerializer
 from .. import MakiTensor
 from .maki_builder import MakiBuilder
-from ..training.utils import pack_data
+from makiflow.core.training.trainer.utils import pack_data
 from ...generators import data_iterator
 
 

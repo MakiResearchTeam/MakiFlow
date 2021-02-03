@@ -15,24 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.core.training.trainer.tensorboard.gradient_variables_watcher import GradientVariablesWatcher
-from .loss_builder import Loss
-from abc import ABC
+from .trainer import Trainer, TensorBoard, GradientVariablesWatcher
+from .loss_fabric import LossFabric
 from .loss import Loss
-
-
-class MakiTrainer(ModelFitter, ABC):
-    pass
-
-
-del ModelFitter
-del ABC
 
 
 """
 MakiTrainer consists of several layers of abstraction:
 
-^------------------------------------MakiTrainer-----------------------------------^
+^--------------------------------------Trainer-------------------------------------^
 | Dummy wrapper.                                                                   |
 ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

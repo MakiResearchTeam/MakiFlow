@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..core import SSPTrainer
-from makiflow.core.training import Loss
+from makiflow.core.training import LossFabric
 import tensorflow as tf
 
 
@@ -29,7 +29,7 @@ class CETrainer(SSPTrainer):
         n_positives = tf.maximum(tf.reduce_sum(label_human_indicators), 1.0)
 
         with tf.name_scope(SSPTrainer.COORDS_LOSS):
-            coords_loss = Loss.mse_loss(
+            coords_loss = LossFabric.mse_loss(
                 labels=label_coords, predictions=coords, raw_tensor=True
             )
             b, h, w, c = coords_loss.get_shape().as_list()

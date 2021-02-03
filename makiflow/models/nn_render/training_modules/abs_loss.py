@@ -17,9 +17,9 @@
 
 import tensorflow as tf
 from ..main_modules import NeuralRenderBasis
-from makiflow.core.training.loss_builder import Loss
-from makiflow.core.training.utils import print_train_info, moving_average
-from makiflow.core.training.utils import new_optimizer_used, loss_is_built
+from makiflow.core.training.loss_fabric import LossFabric
+from makiflow.core.training.trainer.utils import print_train_info, moving_average
+from makiflow.core.training.trainer.utils import new_optimizer_used, loss_is_built
 from tqdm import tqdm
 from sklearn.utils import shuffle
 
@@ -32,7 +32,7 @@ class AbsTrainingModule(NeuralRenderBasis):
         super()._prepare_training_vars()
 
     def _build_abs_loss(self):
-        self._abs_loss = Loss.abs_loss(self._images, self._training_out)
+        self._abs_loss = LossFabric.abs_loss(self._images, self._training_out)
         self._final_abs_loss = self._build_final_loss(self._abs_loss)
 
     def _setup_abs_loss_inputs(self):

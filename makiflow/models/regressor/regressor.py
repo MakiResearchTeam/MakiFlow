@@ -17,11 +17,10 @@
 
 from __future__ import absolute_import
 
-import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 from makiflow.core import MakiTensor, MakiBuilder, MakiModel
-from makiflow.core.training.utils import pack_data
+from makiflow.core.training.trainer.utils import pack_data
 from .core import RegressorInterface
 from makiflow.generators import data_iterator
 

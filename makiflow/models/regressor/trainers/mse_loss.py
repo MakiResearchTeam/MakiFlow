@@ -17,7 +17,7 @@
 
 import tensorflow as tf
 from ..core import RegressorTrainer
-from makiflow.core import TrainerBuilder, Loss
+from makiflow.core import TrainerBuilder, LossFabric
 
 
 class MseTrainer(RegressorTrainer):
@@ -26,7 +26,7 @@ class MseTrainer(RegressorTrainer):
     MSE_LOSS = 'MSE_LOSS'
 
     def _build_local_loss(self, prediction, label):
-        mse_loss = Loss.mse_loss(label, prediction, raw_tensor=True)
+        mse_loss = LossFabric.mse_loss(label, prediction, raw_tensor=True)
         final_loss = tf.reduce_mean(mse_loss)
         return final_loss
 

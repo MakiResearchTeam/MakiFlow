@@ -1,9 +1,9 @@
 import tensorflow as tf
 
-from makiflow.core import Loss
+from makiflow.core import LossFabric
 
 
-class MAE(Loss):
+class MAE(LossFabric):
     LABELS = 'labels'
     WEIGHTS = 'weights'
 

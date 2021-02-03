@@ -18,20 +18,20 @@
 import tensorflow as tf
 from tqdm import tqdm
 
-from makiflow.core.training.utils import print_train_info, moving_average
-from makiflow.core.training.utils import new_optimizer_used, loss_is_built
 from .l2_regularization import L2RegularizationModule
-from makiflow.core.training.trainer.tensorboard.gradient_variables_watcher import GradientVariablesWatcher
-from makiflow.core.training.utils import pack_data, IteratorCloser
-from makiflow.core.inference import MakiModel
-from makiflow.core.training.loss.core import LossInterface
+from .utils import print_train_info, moving_average
+from .utils import new_optimizer_used, loss_is_built
+from .utils import pack_data, IteratorCloser
+from .tensorboard import GradientVariablesWatcher
+from ..core import LossInterface
+from makiflow.core.inference import Model
 
 
 class Trainer(L2RegularizationModule):
     # Contains fit loops
     TRAINING_LOSS = 'TRAINING_LOSS'
 
-    def __init__(self, model: MakiModel, train_inputs: list, loss: LossInterface):
+    def __init__(self, model: Model, train_inputs: list, loss: LossInterface):
         """
         Provides basic tools for the training setup. Builds final loss tensor and the training graph.
 

@@ -23,7 +23,7 @@ from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
 from makiflow.core.inference import MakiModel as MakiCore
 from makiflow.models.ssd.training_literals import TL
 from makiflow.models.ssd.ssd_utils import bboxes_wh2xy, bboxes_xy2wh
-from makiflow.core.training.loss_builder import Loss
+from makiflow.core.training.loss_fabric import LossFabric
 
 import numpy as np
 import tensorflow as tf
@@ -1143,7 +1143,7 @@ class SSDModel(MakiCore):
     # -----------------------------------------------------------MAKI LOSS----------------------------------------------
 
     def _build_maki_loss(self):
-        self._maki_loss = Loss.maki_loss(
+        self._maki_loss = LossFabric.maki_loss(
             flattened_logits=self._flattened_logits,
             flattened_labels=self._flattened_labels,
             num_positives=self._num_positives,
@@ -1359,7 +1359,7 @@ class SSDModel(MakiCore):
 # -----------------------------------------------------------QUADRATIC CE LOSS------------------------------------------
 
     def _build_quadratic_ce_loss(self):
-        self._quadratic_ce_loss = Loss.quadratic_ce_loss(
+        self._quadratic_ce_loss = LossFabric.quadratic_ce_loss(
             ce_loss=self._ce_loss,
             num_positives=self._num_positives
         )
@@ -1561,7 +1561,7 @@ class SSDModel(MakiCore):
         self._poly_loss_is_build = False
 
     def _build_poly_loss(self):
-        self._poly_loss = Loss.poly_loss(
+        self._poly_loss = LossFabric.poly_loss(
             flattened_logits=self._flattened_logits,
             flattened_labels=self._flattened_labels,
             num_positives=self._num_positives,

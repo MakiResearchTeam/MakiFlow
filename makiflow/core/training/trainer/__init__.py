@@ -15,5 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .l2_regularization import L2RegularizationModule
-from abc import ABC
+from .trainer import Trainer
+from .tensorboard import GradientVariablesWatcher, TensorBoard
+

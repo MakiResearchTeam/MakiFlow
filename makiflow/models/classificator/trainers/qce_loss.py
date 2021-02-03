@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..core import ClassificatorTrainer
-from makiflow.core import Loss, TrainerBuilder
+from makiflow.core import LossFabric, TrainerBuilder
 import tensorflow as tf
 
 
@@ -28,7 +28,7 @@ class QCETrainer(ClassificatorTrainer):
             labels=super().get_labels(),
             logits=super().get_logits()
         )
-        qce_loss = Loss.quadratic_ce_loss(
+        qce_loss = LossFabric.quadratic_ce_loss(
             ce_loss=ce_loss
         )
         super().track_loss(qce_loss, QCETrainer.QCE_LOSS)

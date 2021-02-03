@@ -19,7 +19,7 @@ import tensorflow as tf
 from scipy.special import binom
 
 
-class Loss:
+class LossFabric:
     MAKI_LOSS = 'MAKI_LOSS'
     FOCAL_LOSS = 'FOCAL_LOSS'
     CE_LOSS = 'CE_LOSS'
@@ -71,8 +71,8 @@ class Loss:
             # Do subtraction because gradient must be with minus as well
             # Maki loss grad: -(1 - p)^gamma / p
             # CE loss grad: - 1 / p
-            maki_polynomial -= Loss._create_maki_polynomial_part(k, sparse_confidences, maki_gamma) - \
-                               Loss._create_maki_polynomial_part(k, tf.ones_like(sparse_confidences), maki_gamma)
+            maki_polynomial -= LossFabric._create_maki_polynomial_part(k, sparse_confidences, maki_gamma) - \
+                               LossFabric._create_maki_polynomial_part(k, tf.ones_like(sparse_confidences), maki_gamma)
 
         num_positives = tf.reduce_sum(num_positives)
         return tf.reduce_sum(maki_polynomial + ce_loss) / num_positives

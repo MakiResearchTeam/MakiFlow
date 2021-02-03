@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..core import ClassificatorTrainer
-from makiflow.core import Loss, TrainerBuilder
+from makiflow.core import LossFabric, TrainerBuilder
 import tensorflow as tf
 
 
@@ -72,7 +72,7 @@ class FocalTrainer(ClassificatorTrainer):
             axis = list(range(1, positives_dim_n))
             num_positives = tf.reduce_sum(positives, axis=axis)  # [BATCH_SIZE, N_POSITIVES]
 
-        focal_loss = Loss.focal_loss(
+        focal_loss = LossFabric.focal_loss(
             logits=logits,
             labels=labels,
             num_classes=num_classes,
