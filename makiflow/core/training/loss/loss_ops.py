@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from abc import abstractmethod
 
-from .core import LossInterface, TensorProvider
+from ..core import LossInterface, TensorProvider
 
 
 class LossOp(LossInterface):
