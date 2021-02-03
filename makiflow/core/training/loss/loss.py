@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from ...debug import ExceptionScope
-from .core import TensorProvider, LossInterface
+from ..core import TensorProvider, LossInterface
 from .loss_ops import MulOp, AddOp, DivOp
 from ...dev import ClassDecorator
 
