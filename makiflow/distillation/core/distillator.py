@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.core.training.core.train_graph_compiler import TrainGraphCompiler
+from makiflow.core.training.trainer.train_graph_compiler import TrainGraphCompiler
 # It is for the teacher network.
 # Hephaestus is required since its a great tool that provides API for interacting with the training graph.
 # The functionality of the full trainer (that includes all the API of Hephaestus) is redundant and may even harm.

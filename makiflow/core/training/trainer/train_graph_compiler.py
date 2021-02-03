@@ -17,9 +17,10 @@
 
 from makiflow.core.graph_entities import MakiTensor, MakiRestorable
 from makiflow.core.inference.maki_core import MakiCore
+from ..core import TensorProvider
 
 
-class TrainGraphCompiler:
+class TrainGraphCompiler(TensorProvider):
     # This entity is responsible for building the training graph and
     # the final loss
     def __init__(self, model: MakiCore, train_inputs: list):

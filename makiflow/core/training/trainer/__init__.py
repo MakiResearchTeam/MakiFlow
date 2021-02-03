@@ -15,31 +15,5 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .train_graph_compiler import TrainGraphCompiler
-
-
-class Serializer(TrainGraphCompiler):
-    TYPE = 'type'
-    PARAMS = 'params'
-
-    def to_dict(self):
-        assert self.TYPE != Serializer.TYPE, 'The trainer did not specified its type via static TYPE variable.'
-        return {
-            Serializer.TYPE: self.TYPE,
-            Serializer.PARAMS: {}
-        }
-
-    def set_params(self, params):
-        """
-        This method must be overloaded if the trainer uses some additional
-        parameters.
-
-        Parameters
-        ----------
-        params : dict
-            Dictionary of parameters for the trainer.
-        """
-        pass
-
-
-
+from .l2_regularization import L2RegularizationModule
+from abc import ABC

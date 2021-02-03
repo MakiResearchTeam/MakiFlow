@@ -15,11 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .model_fitter import ModelFitter
-from .gradient_variables_watcher import GradientVariablesWatcher
-from .tensorboard import TensorBoard
+from makiflow.core.training.trainer.tensorboard.gradient_variables_watcher import GradientVariablesWatcher
 from .loss_builder import Loss
-from .trainer_builder import TrainerBuilder
 from abc import ABC
 from .loss import Loss
 

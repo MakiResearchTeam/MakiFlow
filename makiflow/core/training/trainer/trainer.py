@@ -16,21 +16,22 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from .utils import print_train_info, moving_average
-from .utils import new_optimizer_used, loss_is_built
-from .core import TrainingCore
 from tqdm import tqdm
-from abc import abstractmethod
-from .gradient_variables_watcher import GradientVariablesWatcher
+
+from makiflow.core.training.utils import print_train_info, moving_average
+from makiflow.core.training.utils import new_optimizer_used, loss_is_built
+from .l2_regularization import L2RegularizationModule
+from makiflow.core.training.trainer.tensorboard.gradient_variables_watcher import GradientVariablesWatcher
 from makiflow.core.training.utils import pack_data, IteratorCloser
-from ..inference import MakiModel
+from makiflow.core.inference import MakiModel
+from makiflow.core.training.loss.core import LossInterface
 
 
-class ModelFitter(TrainingCore):
+class Trainer(L2RegularizationModule):
     # Contains fit loops
     TRAINING_LOSS = 'TRAINING_LOSS'
 
-    def __init__(self, model: MakiModel, train_inputs: list, label_tensors: dict = None):
+    def __init__(self, model: MakiModel, train_inputs: list, loss: LossInterface):
         """
         Provides basic tools for the training setup. Builds final loss tensor and the training graph.
 
@@ -40,12 +41,11 @@ class ModelFitter(TrainingCore):
             The model's object.
         train_inputs : list
             List of the input training MakiTensors. Their names must be the same as their inference counterparts!
-        label_tensors : dict
-            Contains pairs (tensor_name, tf.Tensor), where tf.Tensor contains the required training data.
         """
         # Can be required during _setup_for_training call. Thus, create this variable
         # first and then call super init.
-        self._label_tensors = label_tensors
+        self._loss = loss
+        self._label_tensors = loss.get_label_tensors()
         super().__init__(model, train_inputs)
         self._track_losses = {}
         self._training_loss = None
@@ -60,21 +60,7 @@ class ModelFitter(TrainingCore):
         dict
             Contains pairs (tensor_name, tf.Tensor) of required tensors of labels.
         """
-        if self._label_tensors is None:
-            self._label_tensors = self._setup_label_placeholders()
         return self._label_tensors.copy()
-
-    @abstractmethod
-    def _setup_label_placeholders(self):
-        """
-        In case generator tensors are not provided, tf.placeholders will be used instead.
-
-        Returns
-        -------
-        dict
-            Contains pairs (tensor_name, tf.Tensor) of required tensors of labels.
-        """
-        pass
 
     def get_hermes(self):
         return self._hermes
@@ -91,16 +77,11 @@ class ModelFitter(TrainingCore):
         Builds the training loss and adds it to the track list.
         """
         # noinspection PyAttributeOutsideInit
-        loss = self._build_loss()
-        assert loss is not None, '_build_loss method returned None, but must return the loss scalar.'
+        loss = self._loss.build(self)
+        assert loss is not None, 'build method of the Loss instince returned None, but must return the loss scalar.'
         self._training_loss = super()._build_final_loss(loss)
-        self.track_loss(self._training_loss, ModelFitter.TRAINING_LOSS)
+        self.track_loss(self._training_loss, Trainer.TRAINING_LOSS)
         loss_is_built()
-
-    @abstractmethod
-    def _build_loss(self):
-        # Must return the training loss scalar
-        pass
 
     def track_loss(self, loss_tensor, loss_name):
         """
@@ -314,12 +295,9 @@ class ModelFitter(TrainingCore):
             train_feed_dict_config[tensor] = i
         return train_feed_dict_config
 
-    @abstractmethod
     def get_label_feed_dict_config(self):
-        """
-        Returns
-        -------
-        dict
-            Same as the input feed dict config, except it is for tensors with labels.
-        """
-        pass
+        labels = self.get_label_tensors()
+        label_feed_dict_config = {}
+        for i, t in enumerate(labels.values()):
+            label_feed_dict_config[t] = i
+        return label_feed_dict_config

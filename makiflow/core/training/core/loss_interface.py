@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from collections import OrderedDict
 
-from .tensor_provider import TensorProvider
+from makiflow.core.training.core.tensor_provider import TensorProvider
 
 
 class LossInterface:

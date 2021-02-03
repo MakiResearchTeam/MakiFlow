@@ -16,11 +16,11 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from .serializer import Serializer
+from .train_graph_compiler import TrainGraphCompiler
 from abc import ABC
 
 
-class L1RegularizationModule(Serializer, ABC):
+class L1RegularizationModule(TrainGraphCompiler, ABC):
     # L1 REGULARIZATION
     def _init(self):
         super()._init()
