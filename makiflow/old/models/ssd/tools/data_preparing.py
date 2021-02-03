@@ -17,7 +17,7 @@
 
 from __future__ import absolute_import
 from makiflow.metrics.od_utils import jaccard_index
-from makiflow.models.ssd.ssd_utils import bboxes_xy2wh
+from makiflow.old.models import bboxes_xy2wh
 import numpy as np
 
 

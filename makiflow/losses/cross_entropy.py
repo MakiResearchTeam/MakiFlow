@@ -1,9 +1,9 @@
 import tensorflow as tf
 
-from makiflow.core import LossFabric
+from makiflow.core import Loss
 
 
-class CrossEntropy(LossFabric):
+class CrossEntropy(Loss):
     LABELS = 'labels'
     WEIGHTS = 'weights'
 

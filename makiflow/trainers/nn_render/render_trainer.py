@@ -27,11 +27,11 @@ import copy
 from scipy.stats import skew, kurtosis
 import pandas as pd
 
-from makiflow.models.nn_render.training_modules.abs_loss import ABS_LOSS
-from makiflow.models.nn_render.training_modules.mse_loss import MSE_LOSS
-from makiflow.models.nn_render.training_modules.masked_abs_loss import MASKED_ABS_LOSS
-from makiflow.models.nn_render.training_modules.masked_mse_loss import MASKED_MSE_LOSS
-from makiflow.models.nn_render.training_modules.perceptual_loss import PERCEPTUAL_LOSS
+from makiflow.old.models import ABS_LOSS
+from makiflow.old.models import MSE_LOSS
+from makiflow.old.models import MASKED_ABS_LOSS
+from makiflow.old.models import MASKED_MSE_LOSS
+from makiflow.old.models import PERCEPTUAL_LOSS
 
 from makiflow.trainers.utils.optimizer_builder import OptimizerBuilder
 from makiflow.tools.test_visualizer import TestVisualizer

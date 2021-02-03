@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
 from makiflow.core import MakiModel
-from makiflow.models.ssd.ssd_utils import bboxes_wh2xy, bboxes_xy2wh
+from makiflow.old.models import bboxes_wh2xy, bboxes_xy2wh
 import numpy as np
 import tensorflow as tf
 

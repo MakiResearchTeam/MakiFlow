@@ -18,7 +18,7 @@
 import tensorflow as tf
 
 from makiflow.core.debug import d_msg
-from makiflow.models.ssp.core.head_interface import HeadInterface
+from makiflow.old.models.ssp import HeadInterface
 
 
 class HeadLabel(HeadInterface):

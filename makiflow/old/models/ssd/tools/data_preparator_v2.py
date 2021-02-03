@@ -16,8 +16,8 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.models.ssd.ssd_utils import resize_images_and_bboxes_v2, prepare_data_v2
-from makiflow.models.ssd.tools.data_preparing import prepare_data_rcnn
+from makiflow.old.models import resize_images_and_bboxes_v2, prepare_data_v2
+from makiflow.old.models.ssd.tools import prepare_data_rcnn
 from makiflow.metrics.od_utils import parse_dicts
 from tqdm import tqdm
 import cv2

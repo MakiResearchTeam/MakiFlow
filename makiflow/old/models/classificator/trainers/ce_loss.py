@@ -38,7 +38,7 @@ TrainerBuilder.register_trainer(CETrainer)
 
 
 if __name__ == '__main__':
-    from makiflow.models.classificator import Classificator
+    from makiflow.old.models.classificator import Classificator
     from makiflow.layers import InputLayer
     # SEGMENTATION CASE
     print('SEGMENTATION CASE------------------------------------------------------------------------------------------')

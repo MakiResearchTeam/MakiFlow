@@ -147,7 +147,7 @@ def tes_building():
     distillator = DistillatorBuilder.distillator_from_dict(teacher, config)
     print(distillator)
     print('Compiling.')
-    from makiflow.models.classificator import CETrainer
+    from makiflow.old.models.classificator import CETrainer
     trainer = CETrainer(student, train_inputs=[train_in_x])
     trainer = distillator(trainer)
     trainer.compile()

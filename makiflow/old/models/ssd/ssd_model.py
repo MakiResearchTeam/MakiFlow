@@ -21,8 +21,8 @@ from makiflow.generators.pipeline.gen_base import GenLayer
 from makiflow.generators.ssd import SSDIterator
 from makiflow.layers import InputLayer, ConcatLayer, ActivationLayer
 from makiflow.core.inference import MakiModel as MakiCore
-from makiflow.models.ssd.training_literals import TL
-from makiflow.models.ssd.ssd_utils import bboxes_wh2xy, bboxes_xy2wh
+from makiflow.old.models import TL
+from makiflow.old.models import bboxes_wh2xy, bboxes_xy2wh
 from makiflow.core.training.loss_fabric import LossFabric
 
 import numpy as np

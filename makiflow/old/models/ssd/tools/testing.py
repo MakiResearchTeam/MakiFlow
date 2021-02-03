@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
-from makiflow.models.ssd.ssd_utils import nms
+from makiflow.old.models import nms
 from makiflow.tools.object_detection_evaluator import ODEvaluator
 from tqdm import tqdm
 import numpy as np

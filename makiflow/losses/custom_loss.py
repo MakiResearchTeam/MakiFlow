@@ -1,7 +1,7 @@
-from makiflow.core import LossFabric
+from makiflow.core import Loss
 
 
-class CustomLoss(LossFabric):
+class CustomLoss(Loss):
     def __init__(self, tensor_names, label_tensors: dict, loss_fn):
         self._loss_fn = loss_fn
         super().__init__(tensor_names, label_tensors)

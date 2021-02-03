@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from makiflow.layers import *
-from makiflow.models import Classificator
+from makiflow.old.models import Classificator
 import numpy as np
 import tensorflow as tf
 

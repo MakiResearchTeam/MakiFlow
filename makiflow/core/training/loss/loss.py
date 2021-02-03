@@ -76,13 +76,19 @@ class Loss(LossInterface, ABC):
         self._id = Loss.__instance_id
         self._tensor_names = tensor_names
         self._label_tensors = label_tensors
+        self._loss = None
 
     def build(self, tensor_provider: TensorProvider):
+        if self._loss is not None:
+            return self._loss
+
         loss = 0.0
         with ExceptionScope(self.__class__.__name__):
             for tensor_name in self._tensor_names:
                 tensor = tensor_provider.get_traingraph_tensor(tensor_name)
                 loss = loss + self.build_loss(tensor, self._label_tensors)
+        # Save the loss value to avoid unnecessary computation later
+        self._loss = loss
         return loss
 
     @abstractmethod
