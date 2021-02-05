@@ -48,7 +48,7 @@ class GD2BBuilder:
     def _load_masks_images(self, path_to_mi, resize):
         print('Loading masks and images.')
         IMAGE = 'image'
-        mi = pd.DataFrame.from_csv(path_to_mi)
+        mi = pd.DataFrame.from_csv(path_to_mi, index_col=0)
 
         self._images_masks = {}
         for mask_name, row in mi.iterrows():
