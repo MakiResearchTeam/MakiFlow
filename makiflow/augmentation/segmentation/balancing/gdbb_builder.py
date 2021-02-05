@@ -38,8 +38,8 @@ class GD2BBuilder:
         resize : tuple
             Images will be resized accordingly while loading.
         """
-        self._hc_list = pd.DataFrame.from_csv(path_to_hc_list)
-        self._balance_c = pd.DataFrame.from_csv(path_to_balance_config)
+        self._hc_list = pd.DataFrame.from_csv(path_to_hc_list, index_col=0)
+        self._balance_c = pd.DataFrame.from_csv(path_to_balance_config, index_col=0)
         self._load_masks_images(path_to_mi, resize)
         self._group_images_masks_by_id()
         self._aug = None
