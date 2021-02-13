@@ -79,7 +79,7 @@ class InputGenLayer(GenLayer):
 class InputGenNumpyGetterLayer(GenLayer):
     def __init__(
             self, prefetch_size, batch_size, path_generator: SegmentPathGenerator, name,
-            map_operation: MapMethod, num_parallel_calls=None, additional_gen_wrappers=None
+            map_operation: MapMethod, num_parallel_calls=None
     ):
         """
 
@@ -102,25 +102,15 @@ class InputGenNumpyGetterLayer(GenLayer):
         """
         self.prefetch_size = prefetch_size
         self.batch_size = batch_size
-        self.iterator = self.build_iterator(path_generator, map_operation, num_parallel_calls, additional_gen_wrappers)
+        self.iterator = self.build_iterator(path_generator, map_operation, num_parallel_calls)
         super().__init__(
             name=name,
             input_tensor=self.iterator[SegmentIterator.IMAGE]
         )
 
-    def build_iterator(self, gen: SegmentPathGenerator, map_operation: MapMethod, num_parallel_calls,
-                       additional_gen_wrappers=None):
-
-        gen_data = gen.next_element
-        if additional_gen_wrappers is not None:
-            if isinstance(additional_gen_wrappers, list):
-                for i in range(len(additional_gen_wrappers)):
-                    gen_data = additional_gen_wrappers[i](gen_data)
-            else:
-                raise TypeError('Wrong parameters for super generator!!!!')
-
+    def build_iterator(self, gen: SegmentPathGenerator, map_operation: MapMethod, num_parallel_calls):
         dataset = tf.data.Dataset.from_generator(
-            gen_data,
+            gen.next_element,
             output_types={
                 SegmentPathGenerator.IMAGE: tf.float32,
                 SegmentPathGenerator.MASK: tf.float32
