@@ -111,6 +111,8 @@ class InputGenNumpyGetterLayer(GenLayer):
     def build_iterator(self, gen, map_operation: MapMethod, num_parallel_calls):
         if isinstance(gen, SegmentPathGenerator):
             gen = gen.next_element
+        else:
+            gen = lambda: gen
 
         dataset = tf.data.Dataset.from_generator(
             gen,
