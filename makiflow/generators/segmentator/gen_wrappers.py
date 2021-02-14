@@ -55,12 +55,20 @@ def data_resize_wrapper(gen, resize_to: tuple):
     """
     while True:
         data_dict = next(gen)
-        yield dict(
-            [
-                (key, cv2.resize(value, (resize_to[1], resize_to[0])))
-                for key, value in data_dict.items()
-            ]
-        )
+        image, mask = (data_dict[SegmentPathGenerator.IMAGE], data_dict[SegmentPathGenerator.MASK])
+        yield {
+            SegmentPathGenerator.IMAGE: cv2.resize(
+                image,
+                (resize_to[1], resize_to[0]),
+                interpolation=cv2.INTER_LINEAR
+            ).astype(np.float32, copy=False),
+
+            SegmentPathGenerator.MASK: cv2.resize(
+                mask.astype(np.float32, copy=False),
+                (resize_to[1], resize_to[0]),
+                interpolation=cv2.INTER_NEAREST
+            ).astype(np.int32, copy=False)
+        }
 
 
 def data_elastic_wrapper(gen, alpha=500, std=8, num_maps=10, noise_invert_scale=5, seed=None,
