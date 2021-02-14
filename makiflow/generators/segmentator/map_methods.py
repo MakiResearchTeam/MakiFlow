@@ -128,7 +128,11 @@ class ResizePostMethod(PostMapMethod):
         self.mask_resize_method = mask_resize_method
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
+
         img = element[SegmentIterator.IMAGE]
         mask = element[SegmentIterator.MASK]
 
@@ -164,7 +168,10 @@ class NormalizePostMethod(PostMapMethod):
             self.divider = tf.constant(divider, dtype=tf.float32)
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
         img = element[SegmentIterator.IMAGE]
 
         if self.use_float64:
@@ -187,7 +194,10 @@ class SqueezeMaskPostMethod(PostMapMethod):
         super().__init__()
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
         mask = element[SegmentIterator.MASK]
         mask = mask[:, :, 0]
         element[SegmentIterator.MASK] = mask
@@ -211,7 +221,10 @@ class ComputePositivesPostMethod(PostMapMethod):
         self.background = tf.constant(background_class, dtype=dtype)
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
 
         mask = element[SegmentIterator.MASK]
         mask_shape = mask.get_shape().as_list()
@@ -232,7 +245,10 @@ class RGB2BGRPostMethod(PostMapMethod):
         super().__init__()
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
 
         img = element[SegmentIterator.IMAGE]
         # Swap channels
