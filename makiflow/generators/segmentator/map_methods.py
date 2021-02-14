@@ -18,6 +18,7 @@
 import tensorflow as tf
 from makiflow.generators.segmentator.pathgenerator import SegmentPathGenerator
 from makiflow.generators.pipeline.map_method import MapMethod, PostMapMethod
+from makiflow.generators.segmentator.utils import apply_transformation, apply_transformation_batched
 
 
 class SegmentIterator:
@@ -128,7 +129,11 @@ class ResizePostMethod(PostMapMethod):
         self.mask_resize_method = mask_resize_method
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
+
         img = element[SegmentIterator.IMAGE]
         mask = element[SegmentIterator.MASK]
 
@@ -164,7 +169,10 @@ class NormalizePostMethod(PostMapMethod):
             self.divider = tf.constant(divider, dtype=tf.float32)
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
         img = element[SegmentIterator.IMAGE]
 
         if self.use_float64:
@@ -187,7 +195,10 @@ class SqueezeMaskPostMethod(PostMapMethod):
         super().__init__()
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
         mask = element[SegmentIterator.MASK]
         mask = mask[:, :, 0]
         element[SegmentIterator.MASK] = mask
@@ -211,10 +222,13 @@ class ComputePositivesPostMethod(PostMapMethod):
         self.background = tf.constant(background_class, dtype=dtype)
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
 
         mask = element[SegmentIterator.MASK]
-        mask_shape = mask.get_shape().as_list()
+        mask_shape = tf.shape(mask)
         area = mask_shape[0] * mask_shape[1]  # tf.int32
         num_neg = tf.reduce_sum(tf.cast(tf.equal(mask, self.background), dtype=tf.int32))
 
@@ -232,11 +246,186 @@ class RGB2BGRPostMethod(PostMapMethod):
         super().__init__()
 
     def load_data(self, data_paths):
-        element = self._parent_method.load_data(data_paths)
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
 
         img = element[SegmentIterator.IMAGE]
         # Swap channels
         element[SegmentIterator.IMAGE] = tf.reverse(img, axis=[-1], name='RGB2BGR')
         return element
 
+
+class AugmentationPostMethod(PostMapMethod):
+
+    def __init__(self,
+                 use_rotation=True,
+                 angle_min=-30.0,
+                 angle_max=30.0,
+                 use_shift=False,
+                 dx_min=None,
+                 dx_max=None,
+                 dy_min=None,
+                 dy_max=None,
+                 use_zoom=True,
+                 zoom_min=0.9,
+                 zoom_max=1.1
+                 ):
+        """
+        Perform augmentation of images (rotation, shift, zoom)
+
+        Parameters
+        ----------
+        use_rotation : bool
+            If equal to True, will be performed rotation to image
+        angle_min : float
+            Minimum angle of the random rotation
+        angle_max : float
+            Maximum angle of the random rotation
+        use_shift : bool
+            If equal to True, will be performed shift to image
+        dx_min : float
+            Minimum shift by x axis of the random shift
+        dx_max : float
+            Maximum shift by x axis of the random shift
+        dy_min : float
+            Minimum shift by y axis of the random shift
+        dy_max : float
+            Maximum shift by y axis of the random shift
+        use_zoom : bool
+            If equal to True, will be performed zoom to image
+        zoom_min : float
+            Minimum zoom coeff of the random zoom
+        zoom_max : float
+            Maximum zoom of the random zoom
+
+        """
+        super().__init__()
+        self.use_rotation = use_rotation
+        if use_rotation and (angle_max is None or angle_min is None):
+            raise ValueError(
+                'Parameters angle_max and angle_min are should be not None values' + \
+                'If `use_rotation` equal to True'
+            )
+
+        if use_rotation and angle_max < angle_min:
+            raise ValueError(
+                'Parameter angle_max should be bigger that angle_min, but ' + \
+                f'angle_max = {angle_max} and angle_min = {angle_min} were given'
+            )
+
+        self.angle_min = angle_min
+        self.angle_max = angle_max
+
+        self.use_shift = use_shift
+        if use_shift and (dx_min is None or dx_max is None or dy_min is None or dy_max is None):
+            raise ValueError(
+                'Parameters dx_min, dx_max, dy_min and dy_max are should be not None values' + \
+                'If use_shift equal to True'
+            )
+
+        if use_shift and dx_max < dx_min:
+            raise ValueError(
+                'Parameter dx_max should be bigger that dx_min, but ' + \
+                f'dx_max = {dx_max} and dx_min = {dx_min} were given'
+            )
+
+        self.dx_min = dx_min
+        self.dx_max = dx_max
+
+        if use_shift and dy_max < dy_min:
+            raise ValueError(
+                'Parameter dy_max should be bigger that dy_min, but ' + \
+                f'dy_max = {dy_max} and dy_min = {dy_min} were given'
+            )
+
+        self.dy_min = dy_min
+        self.dy_max = dy_max
+
+        self.use_zoom = use_zoom
+        if use_zoom and (zoom_min is None or zoom_max is None):
+            raise ValueError(
+                'Parameters zoom_min and zoom_max are should be not None values' + \
+                'If use_zoom equal to True'
+            )
+
+        if use_shift and zoom_max < zoom_min:
+            raise ValueError(
+                'Parameter zoom_max should be bigger that zoom_min, but ' + \
+                f'zoom_max = {zoom_max} and zoom_min = {zoom_min} were given'
+            )
+
+        self.zoom_min = zoom_min
+        self.zoom_max = zoom_max
+
+    def load_data(self, data_paths):
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
+
+        if not self.use_shift and not self.use_zoom and not self.use_rotation:
+            return element
+
+        image = element[SegmentIterator.IMAGE]
+        # [H, W]
+        mask = tf.cast(element[SegmentIterator.MASK], dtype=tf.float32)
+        # [H, W, 3]
+        mask = tf.concat([tf.expand_dims(mask, axis=-1)] * 3, axis=-1)
+
+        image_shape = image.get_shape().as_list()
+        angle = None
+        dy = None
+        dx = None
+        zoom = None
+
+        if len(image_shape) == 3:
+            if self.use_rotation:
+                angle = tf.random.uniform([], minval=self.angle_min, maxval=self.angle_max, dtype='float32')
+
+            if self.use_shift:
+                dy = tf.random.uniform([], minval=self.dy_min, maxval=self.dy_max, dtype='float32')
+                dx = tf.random.uniform([], minval=self.dx_min, maxval=self.dx_max, dtype='float32')
+
+            if self.use_zoom:
+                zoom = tf.random.uniform([], minval=self.zoom_min, maxval=self.zoom_max, dtype='float32')
+
+            transformed_image, transformed_mask = apply_transformation(
+                [image, mask],
+                use_rotation=self.use_rotation,
+                angle=angle,
+                use_shift=self.use_shift,
+                dx=dx,
+                dy=dy,
+                use_zoom=self.use_zoom,
+                zoom_scale=zoom
+            )
+        else:
+            # Batched
+            N = image_shape[0]
+            if self.use_rotation:
+                angle = tf.random.uniform([N], minval=self.angle_min, maxval=self.angle_max, dtype='float32')
+
+            if self.use_shift:
+                dy = tf.random.uniform([N], minval=self.dy_min, maxval=self.dy_max, dtype='float32')
+                dx = tf.random.uniform([N], minval=self.dx_min, maxval=self.dx_max, dtype='float32')
+
+            if self.use_zoom:
+                zoom = tf.random.uniform([N], minval=self.zoom_min, maxval=self.zoom_max, dtype='float32')
+
+            transformed_image, transformed_mask = apply_transformation_batched(
+                [image, mask],
+                use_rotation=self.use_rotation,
+                angle_batched=angle,
+                use_shift=self.use_shift,
+                dx_batched=dx,
+                dy_batched=dy,
+                use_zoom=self.use_zoom,
+                zoom_scale_batched=zoom
+            )
+
+        element[SegmentIterator.IMAGE] = transformed_image
+        element[SegmentIterator.MASK] = tf.cast(transformed_mask[..., 0:1], dtype=tf.int32)
+        return element
 
