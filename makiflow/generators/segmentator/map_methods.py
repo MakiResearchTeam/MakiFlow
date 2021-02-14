@@ -426,6 +426,6 @@ class AugmentationPostMethod(PostMapMethod):
             )
 
         element[SegmentIterator.IMAGE] = transformed_image
-        element[SegmentIterator.MASK] = tf.cast(transformed_mask[..., 0], dtype=tf.int32)
+        element[SegmentIterator.MASK] = tf.cast(transformed_mask[..., 0:1], dtype=tf.int32)
         return element
 
