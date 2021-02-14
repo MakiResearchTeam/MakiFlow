@@ -34,8 +34,8 @@ def data_reader_wrapper(gen, use_bgr2rgb=False) -> dict:
                 cv2.COLOR_BGR2GRAY
         )
         yield {
-            SegmentPathGenerator.IMAGE: image,
-            SegmentPathGenerator.MASK: mask
+            SegmentPathGenerator.IMAGE: image.astype(np.float32, copy=False),
+            SegmentPathGenerator.MASK: mask.astype(np.int32, copy=False)
         }
 
 

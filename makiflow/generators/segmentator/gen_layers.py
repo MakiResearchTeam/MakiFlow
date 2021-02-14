@@ -118,7 +118,7 @@ class InputGenNumpyGetterLayer(GenLayer):
             gen,
             output_types={
                 SegmentPathGenerator.IMAGE: tf.float32,
-                SegmentPathGenerator.MASK: tf.float32
+                SegmentPathGenerator.MASK: tf.int32
             }
         )
 
