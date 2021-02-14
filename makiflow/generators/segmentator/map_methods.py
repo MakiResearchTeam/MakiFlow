@@ -369,7 +369,10 @@ class AugmentationPostMethod(PostMapMethod):
             return element
 
         image = element[SegmentIterator.IMAGE]
+        # [H, W]
         mask = tf.cast(element[SegmentIterator.MASK], dtype=tf.float32)
+        # [H, W, 3]
+        mask = tf.concat([tf.expand_dims(mask, axis=-1)] * 3, axis=-1)
 
         image_shape = image.get_shape().as_list()
         angle = None
@@ -423,6 +426,6 @@ class AugmentationPostMethod(PostMapMethod):
             )
 
         element[SegmentIterator.IMAGE] = transformed_image
-        element[SegmentIterator.MASK] = tf.cast(transformed_mask, dtype=tf.int32)
+        element[SegmentIterator.MASK] = tf.cast(transformed_mask[..., 0], dtype=tf.int32)
         return element
 
