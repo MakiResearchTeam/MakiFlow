@@ -78,8 +78,9 @@ class InputGenLayer(GenLayer):
 
 class InputGenNumpyGetterLayer(GenLayer):
     def __init__(
-            self, prefetch_size, batch_size, path_generator, name,
-            map_operation: MapMethod, num_parallel_calls=None
+            self, prefetch_size, batch_size, path_generator, name, map_operation: MapMethod,
+            mask_shape=(1024, 1024), image_shape=(1024, 1024, 3),
+            num_parallel_calls=None
     ):
         """
 
@@ -102,19 +103,28 @@ class InputGenNumpyGetterLayer(GenLayer):
         """
         self.prefetch_size = prefetch_size
         self.batch_size = batch_size
-        self.iterator = self.build_iterator(path_generator, map_operation, num_parallel_calls)
+        self.iterator = self.build_iterator(
+            path_generator, map_operation, num_parallel_calls,
+            mask_shape, image_shape
+        )
         super().__init__(
             name=name,
             input_tensor=self.iterator[SegmentIterator.IMAGE]
         )
 
-    def build_iterator(self, gen, map_operation: MapMethod, num_parallel_calls):
+    def build_iterator(
+            self, gen, map_operation: MapMethod, num_parallel_calls,
+            mask_shape, image_shape):
         dataset = tf.data.Dataset.from_generator(
             lambda: gen,
             output_types={
                 SegmentPathGenerator.IMAGE: tf.float32,
                 SegmentPathGenerator.MASK: tf.int32
-            }
+            },
+            output_shapes={
+                SegmentPathGenerator.IMAGE: tf.TensorShape(image_shape),
+                SegmentPathGenerator.MASK: tf.TensorShape(mask_shape)
+            },
         )
 
         dataset = dataset.map(map_func=map_operation.load_data, num_parallel_calls=num_parallel_calls)
