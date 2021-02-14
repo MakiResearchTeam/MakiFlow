@@ -78,7 +78,7 @@ class InputGenLayer(GenLayer):
 
 class InputGenNumpyGetterLayer(GenLayer):
     def __init__(
-            self, prefetch_size, batch_size, path_generator: SegmentPathGenerator, name,
+            self, prefetch_size, batch_size, path_generator, name,
             map_operation: MapMethod, num_parallel_calls=None
     ):
         """
@@ -89,7 +89,7 @@ class InputGenNumpyGetterLayer(GenLayer):
             Number of batches to prepare before feeding into the network.
         batch_size : int
             The batch size.
-        path_generator : makiflow.generators.segmentation.pathgenerator.SegmentPathGenerator
+        path_generator : python generator
             The path generator.
         name : str
             Name of the input layer of the model. You can find it in the
@@ -108,9 +108,14 @@ class InputGenNumpyGetterLayer(GenLayer):
             input_tensor=self.iterator[SegmentIterator.IMAGE]
         )
 
-    def build_iterator(self, gen: SegmentPathGenerator, map_operation: MapMethod, num_parallel_calls):
+    def build_iterator(self, gen, map_operation: MapMethod, num_parallel_calls):
+        if isinstance(gen, SegmentPathGenerator):
+            gen = gen.next_element
+        else:
+            gen = lambda: gen
+
         dataset = tf.data.Dataset.from_generator(
-            gen.next_element,
+            gen,
             output_types={
                 SegmentPathGenerator.IMAGE: tf.float32,
                 SegmentPathGenerator.MASK: tf.float32
