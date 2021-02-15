@@ -30,8 +30,8 @@ def data_reader_wrapper(gen, use_bgr2rgb=False) -> dict:
             image = image[..., ::-1]
 
         mask = cv2.cvtColor(
-                cv2.imread(path_dict[SegmentPathGenerator.MASK]),
-                cv2.COLOR_BGR2GRAY
+            cv2.imread(path_dict[SegmentPathGenerator.MASK]),
+            cv2.COLOR_BGR2GRAY
         )
         yield {
             SegmentPathGenerator.IMAGE: image.astype(np.float32, copy=False),
@@ -71,41 +71,33 @@ def data_resize_wrapper(gen, resize_to: tuple):
         }
 
 
-def data_elastic_wrapper(gen, alpha=500, std=8, num_maps=10, noise_invert_scale=5, seed=None,
-            img_inter='linear', mask_inter='nearest', border_mode='reflect',
-            keep_old_data=True
-    ):
+def data_elastic_wrapper(
+        gen, alpha=500, std=8, num_maps=10, noise_invert_scale=5, seed=None,
+        img_inter='linear', mask_inter='nearest', border_mode='reflect',
+        keep_old_data=True, image_shape=(1024, 1024), prob=0.5, aug_update_period=300
+):
     elastic_aug = ElasticAugment(
         alpha=alpha, std=std, num_maps=num_maps, noise_invert_scale=noise_invert_scale,
         seed=seed, img_inter=img_inter, mask_inter=mask_inter, border_mode=border_mode,
         keep_old_data=keep_old_data
     )
-    saved_images = [] # list
-    saved_masks = []  # list
+    elastic_aug.setup_augmentor(image_shape)
 
+    counter = 1
     while True:
-        if len(saved_images) == 0:
-            data_dict = next(gen)
-            image, mask = (data_dict[SegmentPathGenerator.IMAGE], data_dict[SegmentPathGenerator.MASK])
+        data_dict = next(gen)
+        image, mask = data_dict[SegmentPathGenerator.IMAGE], data_dict[SegmentPathGenerator.MASK]
 
-            data = Data([image], [mask])
-            data = elastic_aug(data)
-
-            images, masks = data.get_data()
-            if len(images) != 1:
-                saved_masks = masks
-                saved_images = images
-            image, mask = (images.pop(), masks.pop())
-
-            yield {
-                SegmentPathGenerator.IMAGE: image,
-                SegmentPathGenerator.MASK: mask
-            }
-        else:
-            image, mask = (saved_images.pop(), saved_masks.pop())
+        if np.random.uniform() < prob:
+            image, mask = elastic_aug.perform_augment(image, mask)
 
         yield {
             SegmentPathGenerator.IMAGE: image,
             SegmentPathGenerator.MASK: mask
         }
 
+        counter += 1
+        # Update mapping fields
+        if counter % aug_update_period:
+            counter = 0
+            elastic_aug.setup_augmentor(image_shape)
