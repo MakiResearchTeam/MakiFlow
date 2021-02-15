@@ -233,6 +233,40 @@ class ElasticAugment(AugmentOp):
             mapy = np.float32(y + dy)
             self._maps += [(mapx, mapy)]
 
+    def perform_augment(self, image, mask, map_id=None):
+        """
+        Perform elastic augmentation on the give image and mask using map with the give id.
+        If `map_id` is None, a random map is used.
+
+        Parameters
+        ----------
+        image : ndarray
+            The image to augment.
+        mask : ndarray
+            The mask to augment.
+        map_id : int or None
+            Index of the map to use for augmentation. If None, random map is picked.
+
+        Returns
+        -------
+        ndarray, ndarray
+            Augmented image and mask.
+        """
+        if map_id is None:
+            map_id = np.random.randint(low=0, high=len(self._maps))
+
+        assert map_id in range(len(self._maps)), \
+            f'map id is not in the range of allowed indices, received map_id={map_id}'
+        mapx, mapy = self._maps[map_id]
+        # Perform augmentation
+        new_img = cv2.remap(
+            image, mapx, mapy, interpolation=self.img_inter, borderMode=self.border_mode
+        )
+        new_mask = cv2.remap(
+            mask, mapx, mapy, interpolation=self.mask_inter, borderMode=self.border_mode
+        )
+        return new_img, new_mask
+
     def get_data(self):
         """
         Starts augmentation process.
@@ -245,14 +279,10 @@ class ElasticAugment(AugmentOp):
 
         new_imgs, new_masks = [], []
         for img, mask in zip(imgs, masks):
-            for mapx, mapy in self._maps:
-                new_imgs.append(
-                    cv2.remap(
-                        img, mapx, mapy, interpolation=self.img_inter, borderMode=self.border_mode
-                    )
-                )
-                new_masks.append(
-                    cv2.remap(mask, mapx, mapy, interpolation=self.mask_inter, borderMode=self.border_mode))
+            for i in range(len(self._maps)):
+                new_img, new_mask = self.perform_augment(img, mask, map_id=i)
+                new_imgs.append(new_img)
+                new_masks.append(new_mask)
 
         if self.keep_old_data:
             new_imgs += imgs
