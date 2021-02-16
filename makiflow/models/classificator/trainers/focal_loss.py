@@ -79,6 +79,10 @@ class FocalTrainer(ClassificatorTrainer):
             num_positives=num_positives,
             focal_gamma=self._focal_gamma
         )
+
+        if not self._normalize_by_positives:
+            focal_loss = focal_loss / float(super().get_batch_size())
+
         super().track_loss(focal_loss, FocalTrainer.FOCAL_LOSS)
         return focal_loss
 
