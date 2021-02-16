@@ -89,8 +89,8 @@ class Loss:
             labels,
             num_classes,
             focal_gamma=2.0,
-            num_positives=False,
-            ce_loss=False,
+            num_positives=None,
+            ce_loss=None,
             raw_tensor=False
     ):
         """
