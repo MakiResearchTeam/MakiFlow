@@ -15,10 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
+from .segmentator_gym import *
 
-from .nn_render import RenderTrainer
-from .utils import LearningRateBuilder, OptimizerBuilder
+SEGMENTATION = 'segmentation'
+ASSEMBLER = 'assembler'
+TESTER = 'tester'
 
-del absolute_import
 
+GYM_COLLECTOR = {
+    SEGMENTATION: {
+        ASSEMBLER: ModelAssemblerSegmentator,
+        TESTER: SegmentatorTester,
+    }
+}

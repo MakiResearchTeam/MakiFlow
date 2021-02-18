@@ -22,7 +22,7 @@ class ExampleModel(MakiModel):
 
     def get_feed_dict_config(self) -> dict:
         """
-        This method will be used by trainers for feeding data into the model.
+        This method will be used by gyms for feeding data into the model.
         """
         return {
             self._in_x: 0

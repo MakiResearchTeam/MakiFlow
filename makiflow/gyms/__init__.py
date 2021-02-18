@@ -15,10 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from makiflow.core import MakiTensor
+from __future__ import absolute_import
 
+from .gym import Gym
+from .gyms_modules import *
+from .utils import LearningRateBuilder, OptimizerBuilder
 
-def to_makitensor(x, name):
-    return MakiTensor(x, parent_layer=None, parent_tensor_names=[], previous_tensors={}, name=name)
-
+del absolute_import
 

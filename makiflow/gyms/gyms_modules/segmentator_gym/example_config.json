@@ -1,0 +1,93 @@
+{
+    "type": "segmentation",
+    "tb_config": {
+        "layer_histograms": [
+            "layer_1",
+            "layer_n"
+        ]
+    },
+    
+    "genlayer_config": {
+        "data_gen_path": [
+            "/home/user/tfrecords_1",
+            "/home/user/tfrecords_n"
+        ],
+        "im_hw": [512, 512],
+        "batch_size": 46,
+        "prefetch_size": 2,
+    },
+    
+    "training_config": {
+        "epochs": 800,
+        "iters": 880,
+        "test_period": 1,
+        "save_period": 1,
+        "print_period": 10,
+        "gym_folder": "/home/user/long_exp_num_1",
+        "optimizer_info": {
+            "type": "AdamOptimizer",
+                "params": {
+                    "learning_rate": 4e-4,
+                    "beta1": 0.9,
+                    "beta2": 0.999,
+                    "use_locking": false,
+                    "epsilon": 1e-8,
+                    "name": "adam1"
+            }
+        }
+            
+    },
+    
+    "model_config": {
+        "arch_path": "model.json",
+        "weights_path": null,
+        "pretrained_layers": null
+    },
+    "trainer_config": {
+        "trainer_info": {
+            "type": "MSETrainer",
+            "params": { }
+        },
+        "untrainable_layers": null,
+        "l1_reg": null,
+        "l2_reg": null,
+        "l2_reg_layers": null,
+        
+        "distillation_info": {
+            "weights": "/home/user/model/weights/weights.ckpt",
+            "arch": "/home/user/model/model_1heads.json",
+            "type": "CosineDistillator",
+            "params": {
+                "layer_pairs": [
+                    ["layer_student_1",  "layer_teacher_1"],
+                    ["layer_student_n",  "layer_teacher_n"]
+                ],
+                "scale": 40.0,
+                "axis": [1, 2, 3]
+            }
+        }
+    },
+    
+    "test_config": {
+        "test_image": [
+            "test_image/1.png",
+            "test_image/n.png"
+        ],
+        "test_mask": [
+            "test_image/1_mask.png",
+            "test_image/n_mask.png"
+        ],
+        "classes_names": [
+            "10",
+            "22"
+        ],
+        "train_image": null,
+        "train_mask": null,
+        "norm_mode": null,
+        "normalization_shift": null,
+        "normalization_div": 255.0,
+        "resize_to": null,
+        "use_bgr2rgb": false
+    }
+        
+}
