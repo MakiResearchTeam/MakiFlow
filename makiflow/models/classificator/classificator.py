@@ -36,7 +36,7 @@ class Classificator(ClassificatorInterface):
     @staticmethod
     def from_json(path: str, input_tensor: MakiTensor = None):
         """Creates and returns ConvModel from json.json file contains its architecture"""
-        model_info, graph_info = super().load_architecture(path)
+        model_info, graph_info = Classificator.load_architecture(path)
 
         output_tensor_name = model_info[Classificator.OUTPUT]
         input_tensor_name = model_info[Classificator.INPUT]
