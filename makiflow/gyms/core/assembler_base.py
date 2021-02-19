@@ -53,7 +53,7 @@ class ModelAssemblerBase:
     def assemble(config, gen_layer_fabric, sess):
         gen_layer = ModelAssemblerBase.build_gen_layer(config[ModelAssemblerBase.GENLAYER_CONFIG], gen_layer_fabric)
         model, type_model = ModelAssemblerBase.setup_model(config[ModelAssemblerBase.MODEL_CONFIG], gen_layer, sess)
-        trainer = ModelAssemblerBase.setup_trainer(
+        trainer = ModelAssemblerBase._setup_trainer(
             config[ModelAssemblerBase.TRAINER_CONFIG],
             model=model,
             type_model=type_model,
