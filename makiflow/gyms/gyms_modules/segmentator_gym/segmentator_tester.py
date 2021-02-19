@@ -215,8 +215,8 @@ class SegmentatorTester(TesterBase):
                     }
                 )
             # Confuse matrix
-            labels = np.array(self._test_mask_np).astype(np.int32)
-            pred_np = np.stack(all_pred[:len(labels)], axis=0).astype(np.int32)
+            labels = np.array(self._test_mask_np).astype(np.uint8)
+            pred_np = np.stack(all_pred[:len(labels)], axis=0).astype(np.float32)
             mat_img, res_dices_dict = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
             dict_summary_to_tb.update({ self._names_test[-1]: np.expand_dims(mat_img.astype(np.uint8), axis=0) })
             dict_summary_to_tb.update(res_dices_dict)
