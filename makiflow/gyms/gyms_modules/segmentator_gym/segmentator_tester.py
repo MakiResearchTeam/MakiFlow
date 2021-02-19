@@ -21,6 +21,7 @@ from makiflow.tools.preprocess import preprocess_input
 from makiflow.metrics import categorical_dice_coeff
 from makiflow.metrics import confusion_mat
 from makiflow.tools.test_visualizer import TestVisualizer
+from sklearn.metrics import f1_score
 import pandas as pd
 import cv2
 import numpy as np
@@ -33,6 +34,7 @@ class SegmentatorTester(TesterBase):
     TRAIN_IMAGE = 'train_image'
     TEST_MASK = 'test_mask'
     TRAIN_MASK = 'train_mask'
+    F1_SCORE = 'f1_score'
     PREFIX_CLASSES = 'V-Dice info/{}'
     CLASSES_NAMES = 'classes_names'
     V_DICE = 'V_Dice'
@@ -48,6 +50,7 @@ class SegmentatorTester(TesterBase):
 
     def _init(self):
         # Add sublists for each class
+        self.add_scalar(SegmentatorTester.F1_SCORE)
         self.dices_for_each_class = {SegmentatorTester.V_DICE: []}
         self.add_scalar(SegmentatorTester.PREFIX_CLASSES.format(SegmentatorTester.V_DICE))
         for class_name in self._config[SegmentatorTester.CLASSES_NAMES]:
@@ -220,6 +223,11 @@ class SegmentatorTester(TesterBase):
             mat_img, res_dices_dict = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
             dict_summary_to_tb.update({ self._names_test[-1]: np.expand_dims(mat_img.astype(np.uint8), axis=0) })
             dict_summary_to_tb.update(res_dices_dict)
+            # f1 score
+            labels = np.array(self._test_mask_np).astype(np.uint8)
+            pred_np = np.argmax(np.stack(all_pred[:len(labels)], axis=0), axis=-1).astype(np.uint8)
+            f1_score_np = f1_score(labels, pred_np, average='micro')
+            dict_summary_to_tb.update({ SegmentatorTester.F1_SCORE: f1_score_np})
         else:
             for i, (single_norm_train, single_train) in enumerate(zip(self._test_norm_images, self._test_images)):
                 # If there is not original masks
