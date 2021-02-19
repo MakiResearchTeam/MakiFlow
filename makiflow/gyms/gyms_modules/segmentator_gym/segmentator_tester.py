@@ -78,7 +78,7 @@ class SegmentatorTester(TesterBase):
             n_images = 2
             # Mask
             if self._train_masks_path is not None and len(self._train_masks_path) > i:
-                _, orig_mask = self.__preprocess(self._train_masks_path[i])
+                _, orig_mask = self.__preprocess(self._train_masks_path[i], mask_preprocess=True)
                 self._train_masks_np.append(orig_mask.astype(np.uint8))
                 n_images += 1
 
@@ -107,7 +107,7 @@ class SegmentatorTester(TesterBase):
             n_images = 2
             # Mask
             if self._test_masks_path is not None and len(self._test_masks_path) > i:
-                _, orig_mask = self.__preprocess(self._test_masks_path[i])
+                _, orig_mask = self.__preprocess(self._test_masks_path[i], mask_preprocess=True)
                 self._test_mask_np.append(orig_mask.astype(np.uint8))
                 n_images += 1
 
