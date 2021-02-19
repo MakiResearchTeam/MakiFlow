@@ -48,8 +48,10 @@ class SegmentatorTester(TesterBase):
     def _init(self):
         # Add sublists for each class
         self.dices_for_each_class = {SegmentatorTester.ALL_DVICE: []}
+        self.add_scalar(SegmentatorTester.ALL_DVICE)
         for class_name in self._config[SegmentatorTester.CLASSES_NAMES]:
             self.dices_for_each_class[class_name] = []
+            self.add_scalar(class_name)
         # Test images
         self.__init_test_images()
         # Train images
@@ -214,8 +216,9 @@ class SegmentatorTester(TesterBase):
             # Confuse matrix
             labels = np.array(self._test_mask_np).astype(np.int32)
             pred_np = np.stack(all_pred[:len(labels)], axis=0).astype(np.int32)
-            mat_img = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
+            mat_img, res_dices_dict = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
             dict_summary_to_tb.update({ self._names_test[-1]: np.expand_dims(mat_img.astype(np.uint8), axis=0) })
+            dict_summary_to_tb.update(res_dices_dict)
         else:
             for i, (single_norm_train, single_train) in enumerate(zip(self._test_norm_images, self._test_images)):
                 # If there is not original masks
@@ -284,16 +287,28 @@ class SegmentatorTester(TesterBase):
         return norm_image, orig_img
 
     def _v_dice_calc_and_confuse_m(self, predictions, labels, save_folder):
+        """
+        Returns
+        -------
+        confuse_matrix: np.ndarray
+        res_dices_dict : dict
+
+        """
         print('Computing V-Dice...')
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
+
+        res_dices_dict = {SegmentatorTester.ALL_DVICE: v_dice_val}
         self.dices_for_each_class[SegmentatorTester.ALL_DVICE] += [v_dice_val]
+
         for i, class_name in enumerate(self._config[SegmentatorTester.CLASSES_NAMES]):
             self.dices_for_each_class[class_name] += [dices[i]]
+            res_dices_dict[class_name] = dices[i]
             print(f'{class_name}: {dices[i]}')
             str_to_save_vdice += f'{class_name}: {dices[i]}\n'
+
         with open(os.path.join(save_folder, SegmentatorTester.VDICE_TXT), 'w') as fp:
             fp.write(str_to_save_vdice)
         # Compute and save matrix
@@ -303,9 +318,8 @@ class SegmentatorTester(TesterBase):
             predictions, labels, use_argmax_p=True, to_flatten=True,
             save_path=conf_mat_path, dpi=175
         )
-
         # Read img and convert it to rgb
-        return cv2.imread(conf_mat_path)[..., ::-1]
+        return cv2.imread(conf_mat_path)[..., ::-1], res_dices_dict
 
     def final_eval(self, path_to_save):
         test_df = pd.DataFrame(self.dices_for_each_class)
