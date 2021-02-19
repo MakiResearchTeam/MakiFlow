@@ -43,6 +43,7 @@ class SegmentatorTester(TesterBase):
     ITERATION_COUNTER = 'iteration_counter'
 
     _EXCEPTION_IMAGE_WAS_NOT_FOUND = "Image by path {0} was not found!"
+    _CENTRAL_SIZE = 600
 
     def _init(self):
         # Add sublists for each class
@@ -77,7 +78,7 @@ class SegmentatorTester(TesterBase):
             n_images = 2
             # Mask
             if self._train_masks_path is not None and len(self._train_masks_path) > i:
-                _, orig_mask = self.__preprocess(self._train_masks_path[i])
+                _, orig_mask = self.__preprocess(self._train_masks_path[i], mask_preprocess=True)
                 self._train_masks_np.append(orig_mask.astype(np.uint8))
                 n_images += 1
 
@@ -106,7 +107,7 @@ class SegmentatorTester(TesterBase):
             n_images = 2
             # Mask
             if self._test_masks_path is not None and len(self._test_masks_path) > i:
-                _, orig_mask = self.__preprocess(self._test_masks_path[i])
+                _, orig_mask = self.__preprocess(self._test_masks_path[i], mask_preprocess=True)
                 self._test_mask_np.append(orig_mask.astype(np.uint8))
                 n_images += 1
 
@@ -148,10 +149,10 @@ class SegmentatorTester(TesterBase):
 
         plt.close('all')
 
-        return self.__put_text_on_image(data, name_heatmap, shift_image)
+        return data.astype(np.uint8)
 
     def __get_train_tb_data(self, model, dict_summary_to_tb):
-        if self._train_masks_path is None:
+        if self._train_masks_path is not None:
             for i, (single_norm_train, single_train, single_mask_np) in enumerate(
                     zip(self._norm_images_train, self._train_images, self._train_masks_np)
             ):
@@ -163,7 +164,11 @@ class SegmentatorTester(TesterBase):
                 dict_summary_to_tb.update(
                     {
                         self._names_train[i]: np.stack(
-                            [single_train, single_mask_np, prediction]
+                            [
+                                single_train,
+                                self.draw_heatmap(single_mask_np, self._names_train[i] + '_truth'),
+                                self.draw_heatmap(prediction, self._names_train[i])
+                            ]
                         ).astype(np.uint8)
                     }
                 )
@@ -179,27 +184,30 @@ class SegmentatorTester(TesterBase):
                 dict_summary_to_tb.update(
                     {
                         self._names_train[i]: np.stack(
-                            [single_train, prediction]
+                            [single_train, self.draw_heatmap(prediction, self._names_train[i])]
                         ).astype(np.uint8)
                     }
                 )
 
     def __get_test_tb_data(self, model, dict_summary_to_tb, path_save_res):
-        if self._test_masks_path is None:
+        if self._test_masks_path is not None:
             all_pred = []
             for i, (single_norm_train, single_train, single_mask_np) in enumerate(
                     zip(self._test_norm_images, self._test_images, self._test_mask_np)
             ):
                 # If original masks were provided
-                prediction = np.argmax(
-                    model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0],
-                    axis=-1
-                )
+                prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
                 all_pred.append(prediction)
+                # [..., num_classes]
+                prediction_argmax = np.argmax(prediction, axis=-1)
                 dict_summary_to_tb.update(
                     {
                         self._names_test[i]: np.stack(
-                            [single_train, single_mask_np, prediction]
+                            [
+                                single_train,
+                                self.draw_heatmap(single_mask_np, self._names_test[i] + '_truth'),
+                                self.draw_heatmap(prediction_argmax, self._names_test[i])
+                            ]
                         ).astype(np.uint8)
                     }
                 )
@@ -219,7 +227,7 @@ class SegmentatorTester(TesterBase):
                 dict_summary_to_tb.update(
                     {
                         self._names_test[i]: np.stack(
-                            [single_train, prediction]
+                            [single_train, self.draw_heatmap(prediction, self._names_test[i])]
                         ).astype(np.uint8)
                     }
                 )
@@ -255,11 +263,11 @@ class SegmentatorTester(TesterBase):
             else:
                 image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
 
-        if self._use_bgr2rgb:
-            if mask_preprocess:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            else:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if mask_preprocess:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        elif self._use_bgr2rgb:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         orig_img = image.copy()
 
         if self._norm_mode is not None:
@@ -284,8 +292,8 @@ class SegmentatorTester(TesterBase):
         self.dices_for_each_class[SegmentatorTester.ALL_DVICE] += [v_dice_val]
         for i, class_name in enumerate(self._config[SegmentatorTester.CLASSES_NAMES]):
             self.dices_for_each_class[class_name] += [dices[i]]
-            print(f'{class_name}:', dices[i])
-            str_to_save_vdice += f'{class_name}: ' + dices[i] + "\n"
+            print(f'{class_name}: {dices[i]}')
+            str_to_save_vdice += f'{class_name}: {dices[i]}\n'
         with open(os.path.join(save_folder, SegmentatorTester.VDICE_TXT), 'w') as fp:
             fp.write(str_to_save_vdice)
         # Compute and save matrix
