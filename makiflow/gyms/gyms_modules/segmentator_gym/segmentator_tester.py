@@ -33,8 +33,9 @@ class SegmentatorTester(TesterBase):
     TRAIN_IMAGE = 'train_image'
     TEST_MASK = 'test_mask'
     TRAIN_MASK = 'train_mask'
+    PREFIX_CLASSES = 'V-Dice info/{}'
     CLASSES_NAMES = 'classes_names'
-    ALL_DVICE = 'all_vdice'
+    V_DICE = 'V_Dice'
     VDICE_TXT = 'v_dice.txt'
 
     TRAIN_N = 'train_{}'
@@ -47,11 +48,11 @@ class SegmentatorTester(TesterBase):
 
     def _init(self):
         # Add sublists for each class
-        self.dices_for_each_class = {SegmentatorTester.ALL_DVICE: []}
-        self.add_scalar(SegmentatorTester.ALL_DVICE)
+        self.dices_for_each_class = {SegmentatorTester.V_DICE: []}
+        self.add_scalar(SegmentatorTester.PREFIX_CLASSES.format(SegmentatorTester.V_DICE))
         for class_name in self._config[SegmentatorTester.CLASSES_NAMES]:
             self.dices_for_each_class[class_name] = []
-            self.add_scalar(class_name)
+            self.add_scalar(SegmentatorTester.PREFIX_CLASSES.format(class_name))
         # Test images
         self.__init_test_images()
         # Train images
@@ -274,17 +275,18 @@ class SegmentatorTester(TesterBase):
         orig_img = image.copy()
 
         if self._norm_mode is not None:
-            norm_image = preprocess_input(
+            image = preprocess_input(
                     image,
                     mode=self._norm_mode
-            ).astype(np.float32)
+            )
+        elif self._norm_div is not None or self._norm_shift is not None:
+            if self._norm_div is not None:
+                image /= self._norm_div
 
-        elif self._norm_div is not None and self._norm_shift is not None:
-            norm_image = (image / self._norm_div - self._norm_shift).astype(np.float32)
-        else:
-            norm_image = image.astype(np.float32)
+            if self._norm_shift is not None:
+                image -= self._norm_shift
 
-        return norm_image, orig_img
+        return image.astype(np.float32, copy=False), orig_img
 
     def _v_dice_calc_and_confuse_m(self, predictions, labels, save_folder):
         """
@@ -300,12 +302,12 @@ class SegmentatorTester(TesterBase):
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
 
-        res_dices_dict = {SegmentatorTester.ALL_DVICE: v_dice_val}
-        self.dices_for_each_class[SegmentatorTester.ALL_DVICE] += [v_dice_val]
+        res_dices_dict = {SegmentatorTester.PREFIX_CLASSES.format(SegmentatorTester.V_DICE): v_dice_val}
+        self.dices_for_each_class[SegmentatorTester.V_DICE] += [v_dice_val]
 
         for i, class_name in enumerate(self._config[SegmentatorTester.CLASSES_NAMES]):
             self.dices_for_each_class[class_name] += [dices[i]]
-            res_dices_dict[class_name] = dices[i]
+            res_dices_dict[SegmentatorTester.PREFIX_CLASSES.format(class_name)] = dices[i]
             print(f'{class_name}: {dices[i]}')
             str_to_save_vdice += f'{class_name}: {dices[i]}\n'
 
