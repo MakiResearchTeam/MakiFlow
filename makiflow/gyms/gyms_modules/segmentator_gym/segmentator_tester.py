@@ -179,7 +179,7 @@ class SegmentatorTester(TesterBase):
                 dict_summary_to_tb.update(
                     {
                         self._names_train[i]: np.stack(
-                            [single_train, prediction]
+                            [single_train, self.draw_heatmap(prediction, self._names_train[i])]
                         ).astype(np.uint8)
                     }
                 )
@@ -219,7 +219,7 @@ class SegmentatorTester(TesterBase):
                 dict_summary_to_tb.update(
                     {
                         self._names_test[i]: np.stack(
-                            [single_train, prediction]
+                            [single_train, self.draw_heatmap(prediction, self._names_test[i])]
                         ).astype(np.uint8)
                     }
                 )
