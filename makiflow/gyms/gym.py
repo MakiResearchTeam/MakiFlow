@@ -18,7 +18,7 @@
 import json
 import os
 import tensorflow as tf
-from makiflow.gyms.utils.optimizer_builder import OptimizerBuilder
+from makiflow.gyms.utils import OptimizerBuilder
 from makiflow.gyms.core import TesterBase
 from makiflow.gyms.gyms_modules.gyms_collector import GYM_COLLECTOR, ASSEMBLER, TESTER
 

@@ -19,7 +19,6 @@ from __future__ import absolute_import
 
 from .gym import Gym
 from .gyms_modules import *
-from .utils import LearningRateBuilder, OptimizerBuilder
 
 del absolute_import
 
