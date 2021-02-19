@@ -149,7 +149,7 @@ class SegmentatorTester(TesterBase):
 
         plt.close('all')
 
-        return self.__put_text_on_image(data, name_heatmap, shift_image)
+        return data.astype(np.uint8)
 
     def __get_train_tb_data(self, model, dict_summary_to_tb):
         if self._train_masks_path is None:
