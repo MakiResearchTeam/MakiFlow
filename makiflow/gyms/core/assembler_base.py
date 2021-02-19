@@ -95,19 +95,7 @@ class ModelAssemblerBase:
         return model, type_model
 
     @staticmethod
-    def setup_trainer(config_data: dict, model, type_model, gen_layer):
-        iterator = gen_layer.get_iterator()
-        # TODO: Label tensor - tensors from iterator - how connect different models???
-        trainer = TrainerBuilder.trainer_from_dict(
-            model=model,
-            train_inputs=[gen_layer],
-            label_tensors={
-                "LABELS": iterator['mask'],
-                "WEIGHT_MAP": None
-            },
-            info_dict=config_data[ModelAssemblerBase.TRAINER_INFO]
-        )
-
+    def _setup_trainer(trainer, config_data: dict, model, type_model):
         untrainable_layers = config_data[ModelAssemblerBase.UNTRAINABLE_LAYERS]
         if untrainable_layers is not None:
             layers = []

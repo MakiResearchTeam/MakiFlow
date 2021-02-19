@@ -23,6 +23,7 @@ import tensorflow as tf
 class FocalTrainer(ClassificatorTrainer):
     TYPE = 'FocalTrainer'
     GAMMA = 'gamma'
+    NORM_BY_POS = 'norm_by_pos'
 
     FOCAL_LOSS = 'FOCAL_LOSS'
 
@@ -36,6 +37,7 @@ class FocalTrainer(ClassificatorTrainer):
 
     def set_params(self, params):
         self.set_gamma(params[FocalTrainer.GAMMA])
+        self.set_norm_by_pos(params[FocalTrainer.NORM_BY_POS])
 
     def _init(self):
         super()._init()
@@ -59,6 +61,9 @@ class FocalTrainer(ClassificatorTrainer):
         Enables loss normalization by the number of positive samples in the batch.
         """
         self._normalize_by_positives = True
+
+    def set_norm_by_pos(self, norm_by_pos: bool):
+        self._normalize_by_positives = norm_by_pos
 
     def _build_loss(self):
         logits = super().get_logits()

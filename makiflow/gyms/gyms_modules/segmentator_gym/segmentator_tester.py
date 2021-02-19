@@ -215,7 +215,7 @@ class SegmentatorTester(TesterBase):
             labels = np.array(self._test_mask_np).astype(np.int32)
             pred_np = np.stack(all_pred[:len(labels)], axis=0).astype(np.int32)
             mat_img = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
-            dict_summary_to_tb.update({ self._names_test[-1]: mat_img.astype(np.uint8) })
+            dict_summary_to_tb.update({ self._names_test[-1]: np.expand_dims(mat_img.astype(np.uint8), axis=0) })
         else:
             for i, (single_norm_train, single_train) in enumerate(zip(self._test_norm_images, self._test_images)):
                 # If there is not original masks
@@ -304,7 +304,7 @@ class SegmentatorTester(TesterBase):
             save_path=conf_mat_path, dpi=175
         )
 
-        # Read img and back to rgb
+        # Read img and convert it to rgb
         return cv2.imread(conf_mat_path)[..., ::-1]
 
     def final_eval(self, path_to_save):
