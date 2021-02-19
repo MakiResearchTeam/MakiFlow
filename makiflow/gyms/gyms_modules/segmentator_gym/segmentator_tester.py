@@ -226,7 +226,7 @@ class SegmentatorTester(TesterBase):
             # f1 score
             labels = np.array(self._test_mask_np).astype(np.uint8)
             pred_np = np.argmax(np.stack(all_pred[:len(labels)], axis=0), axis=-1).astype(np.uint8)
-            f1_score_np = f1_score(labels, pred_np, average='micro')
+            f1_score_np = f1_score(labels.reshape(-1), pred_np.reshape(-1), average='micro')
             dict_summary_to_tb.update({ SegmentatorTester.F1_SCORE: f1_score_np})
         else:
             for i, (single_norm_train, single_train) in enumerate(zip(self._test_norm_images, self._test_images)):
