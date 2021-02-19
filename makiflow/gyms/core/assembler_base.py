@@ -103,6 +103,7 @@ class ModelAssemblerBase:
             train_inputs=[gen_layer],
             label_tensors={
                 "LABELS": iterator['mask']
+                "WEIGHT_MAP": None
             },
             info_dict=config_data[ModelAssemblerBase.TRAINER_INFO]
         )
