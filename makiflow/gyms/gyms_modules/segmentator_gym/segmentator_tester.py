@@ -192,15 +192,14 @@ class SegmentatorTester(TesterBase):
                     zip(self._test_norm_images, self._test_images, self._test_mask_np)
             ):
                 # If original masks were provided
-                prediction = np.argmax(
-                    model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0],
-                    axis=-1
-                )
+                prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
                 all_pred.append(prediction)
+                # [..., num_classes]
+                prediction_argmax = np.argmax(prediction, axis=-1)
                 dict_summary_to_tb.update(
                     {
                         self._names_test[i]: np.stack(
-                            [single_train, single_mask_np, self.draw_heatmap(prediction, self._names_test[i])]
+                            [single_train, single_mask_np, self.draw_heatmap(prediction_argmax, self._names_test[i])]
                         ).astype(np.uint8)
                     }
                 )
