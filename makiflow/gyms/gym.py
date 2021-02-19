@@ -94,8 +94,7 @@ class Gym:
         self._tb_path = tensorboard_path
         self._tester = GYM_COLLECTOR[self._type][TESTER](
             config,
-            self._sess,
-            self._train_config[Gym.GYM_FOLDER]
+            self._sess
         )
 
         # Create model, trainer and set the tensorboard folder
