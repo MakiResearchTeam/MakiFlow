@@ -26,7 +26,7 @@ import traceback
 from sklearn.utils import shuffle
 
 from makiflow.metrics import categorical_dice_coeff
-from makiflow.trainers.utils.optimizer_builder import OptimizerBuilder
+from makiflow.gyms.utils.optimizer_builder import OptimizerBuilder
 from makiflow.save_recover.builder import Builder
 from makiflow.tools.test_visualizer import TestVisualizer
 from makiflow.metrics import confusion_mat

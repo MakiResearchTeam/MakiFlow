@@ -73,6 +73,9 @@ class Classificator(ClassificatorInterface):
         self._tf_logits = self._output.get_data_tensor()
         self._softmax_out = tf.nn.softmax(self._tf_logits)
 
+    def get_batch_size(self):
+        return self._input.get_shape()[0]
+
     def get_logits(self):
         return self._output
 

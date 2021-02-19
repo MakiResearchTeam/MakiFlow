@@ -15,8 +15,5 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .gen_layers import InputGenLayer, InputGenNumpyGetterLayer
-from .map_methods import *
-from .pathgenerator import *
-from .gen_wrappers import *
-
+from .assembler_base import ModelAssemblerBase
+from .tester_base import TesterBase
