@@ -43,6 +43,7 @@ class SegmentatorTester(TesterBase):
     ITERATION_COUNTER = 'iteration_counter'
 
     _EXCEPTION_IMAGE_WAS_NOT_FOUND = "Image by path {0} was not found!"
+    _CENTRAL_SIZE = 600
 
     def _init(self):
         # Add sublists for each class
