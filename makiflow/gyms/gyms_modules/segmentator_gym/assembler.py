@@ -20,8 +20,7 @@ from makiflow.gyms.core.assembler_base import ModelAssemblerBase
 
 class ModelAssemblerSegmentator(ModelAssemblerBase):
 
-    @staticmethod
-    def setup_trainer(config_data: dict, model, type_model, gen_layer):
+    def build_trainer(self, config_data: dict, model, gen_layer):
         iterator = gen_layer.get_iterator()
         # TODO: Label tensor - tensors from iterator - how connect different models???
         trainer = TrainerBuilder.trainer_from_dict(
@@ -33,5 +32,5 @@ class ModelAssemblerSegmentator(ModelAssemblerBase):
             },
             info_dict=config_data[ModelAssemblerBase.TRAINER_INFO]
         )
-        super()._setup_trainer(trainer, config_data, model, type_model)
 
+        return trainer

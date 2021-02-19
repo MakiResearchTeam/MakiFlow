@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
+from abc import abstractmethod
 from makiflow.models.classificator import Classificator
 from makiflow.core import TrainerBuilder
 from makiflow.layers import InputLayer
@@ -49,11 +50,13 @@ class ModelAssemblerBase:
     PREFETCH_SIZE = 'prefetch_size'
     BATCH_SZ = 'batch_size'
 
-    @staticmethod
-    def assemble(config, gen_layer_fabric, sess):
+    def __init__(self):
+        pass
+
+    def assemble(self, config, gen_layer_fabric, sess):
         gen_layer = ModelAssemblerBase.build_gen_layer(config[ModelAssemblerBase.GENLAYER_CONFIG], gen_layer_fabric)
         model, type_model = ModelAssemblerBase.setup_model(config[ModelAssemblerBase.MODEL_CONFIG], gen_layer, sess)
-        trainer = ModelAssemblerBase._setup_trainer(
+        trainer = self.setup_trainer(
             config[ModelAssemblerBase.TRAINER_CONFIG],
             model=model,
             type_model=type_model,
@@ -94,8 +97,14 @@ class ModelAssemblerBase:
 
         return model, type_model
 
-    @staticmethod
-    def _setup_trainer(trainer, config_data: dict, model, type_model):
+    @abstractmethod
+    def build_trainer(self, config_data, model, gen_layer):
+        pass
+
+    def setup_trainer(self, config_data: dict, model, type_model, gen_layer):
+        # TODO: Label tensor - tensors from iterator - how connect different models???
+        trainer = self.build_trainer(config_data, model, gen_layer)
+
         untrainable_layers = config_data[ModelAssemblerBase.UNTRAINABLE_LAYERS]
         if untrainable_layers is not None:
             layers = []
