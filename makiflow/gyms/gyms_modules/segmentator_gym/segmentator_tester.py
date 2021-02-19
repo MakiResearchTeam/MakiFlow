@@ -276,10 +276,11 @@ class SegmentatorTester(TesterBase):
 
         if self._norm_mode is not None:
             image = preprocess_input(
-                    image,
+                    image.astype(np.float32, copy=False),
                     mode=self._norm_mode
             )
         elif self._norm_div is not None or self._norm_shift is not None:
+            image = image.astype(np.float32, copy=False)
             if self._norm_div is not None:
                 image /= self._norm_div
 
