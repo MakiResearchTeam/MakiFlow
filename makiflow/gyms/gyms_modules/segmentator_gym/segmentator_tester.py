@@ -152,7 +152,7 @@ class SegmentatorTester(TesterBase):
         return data.astype(np.uint8)
 
     def __get_train_tb_data(self, model, dict_summary_to_tb):
-        if self._train_masks_path is None:
+        if self._train_masks_path is not None:
             for i, (single_norm_train, single_train, single_mask_np) in enumerate(
                     zip(self._norm_images_train, self._train_images, self._train_masks_np)
             ):
@@ -164,7 +164,7 @@ class SegmentatorTester(TesterBase):
                 dict_summary_to_tb.update(
                     {
                         self._names_train[i]: np.stack(
-                            [single_train, single_mask_np, prediction]
+                            [single_train, single_mask_np, self.draw_heatmap(prediction, self._names_train[i])]
                         ).astype(np.uint8)
                     }
                 )
@@ -186,7 +186,7 @@ class SegmentatorTester(TesterBase):
                 )
 
     def __get_test_tb_data(self, model, dict_summary_to_tb, path_save_res):
-        if self._test_masks_path is None:
+        if self._test_masks_path is not None:
             all_pred = []
             for i, (single_norm_train, single_train, single_mask_np) in enumerate(
                     zip(self._test_norm_images, self._test_images, self._test_mask_np)
@@ -200,7 +200,7 @@ class SegmentatorTester(TesterBase):
                 dict_summary_to_tb.update(
                     {
                         self._names_test[i]: np.stack(
-                            [single_train, single_mask_np, prediction]
+                            [single_train, single_mask_np, self.draw_heatmap(prediction, self._names_test[i])]
                         ).astype(np.uint8)
                     }
                 )
