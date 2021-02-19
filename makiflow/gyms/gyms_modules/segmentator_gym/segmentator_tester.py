@@ -255,11 +255,11 @@ class SegmentatorTester(TesterBase):
             else:
                 image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
 
-        if self._use_bgr2rgb:
-            if mask_preprocess:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            else:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if mask_preprocess:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        elif self._use_bgr2rgb:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         orig_img = image.copy()
 
         if self._norm_mode is not None:
