@@ -101,7 +101,9 @@ class ModelAssemblerBase:
         trainer = TrainerBuilder.trainer_from_dict(
             model=model,
             train_inputs=[gen_layer],
-            label_tensors=None,
+            label_tensors={
+                "LABELS": iterator['mask']
+            },
             info_dict=config_data[ModelAssemblerBase.TRAINER_INFO]
         )
 
