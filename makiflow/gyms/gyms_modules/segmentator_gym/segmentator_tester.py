@@ -292,8 +292,8 @@ class SegmentatorTester(TesterBase):
         self.dices_for_each_class[SegmentatorTester.ALL_DVICE] += [v_dice_val]
         for i, class_name in enumerate(self._config[SegmentatorTester.CLASSES_NAMES]):
             self.dices_for_each_class[class_name] += [dices[i]]
-            print(f'{class_name}:', dices[i])
-            str_to_save_vdice += f'{class_name}: ' + dices[i] + "\n"
+            print(f'{class_name}: {dices[i]}')
+            str_to_save_vdice += f'{class_name}: {dices[i]}\n'
         with open(os.path.join(save_folder, SegmentatorTester.VDICE_TXT), 'w') as fp:
             fp.write(str_to_save_vdice)
         # Compute and save matrix
