@@ -28,6 +28,49 @@ class Loss:
     POLY_LOSS = 'POLY_LOSS'
 
     @staticmethod
+    def dice_loss(p, g, eps, axes=None):
+        """
+        Computes Dice loss according to the formula from:
+        V-Net: Fully Convolutional Neural Networks forVolumetric Medical Image Segmentation
+        Link to the paper: http://campar.in.tum.de/pub/milletari2016Vnet/milletari2016Vnet.pdf
+
+        Parameters
+        ----------
+        p : tf.Tensor
+            Predicted probabilities.
+        g : tf.Tensor
+            Ground truth labels.
+        eps : float
+            Used to prevent division by zero in the Dice denominator.
+        axes : list
+            Defines which axes the dice value will be computed on. The computed dice values will be averaged
+            along the remaining axes. If None, Dice is computed on an entire batch.
+
+        Returns
+        -------
+        tf.Tensor
+            Scalar dice loss tensor.
+        """
+
+        numerator = p * g
+        # [batch_size, -1]
+        numerator = tf.layers.flatten(numerator)
+        # [batch_size]
+        numerator = tf.reduce_sum(numerator, axis=axes)
+
+        p_squared = tf.square(p)
+        p_squared = tf.layers.flatten(p_squared)
+        p_squared = tf.reduce_sum(p_squared, axis=axes)
+        # g is not squared to avoid unnecessary computation.
+        # 0^2 = 0
+        # 1^2 = 1
+        g_squared = tf.reduce_sum(g, axis=axes)
+        denominator = p_squared + g + eps
+
+        dice = 2 * numerator / denominator
+        return 1 - tf.reduce_mean(dice)
+
+    @staticmethod
     def maki_loss(
             flattened_logits,
             flattened_labels,
