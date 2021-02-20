@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+import glob
 import os
 from makiflow.gyms.gyms_modules.gyms_collector import GymCollector, SEGMENTATION, TESTER
 from makiflow.gyms.gyms_modules.segmentator_gym import SegmentatorTester
@@ -25,6 +26,8 @@ import numpy as np
 
 
 class SegmentatorBinaryTester(SegmentatorTester):
+    THREASHOLD = 0.4
+    # TODO: add threashold???
 
     def __init_train_images(self):
         if not isinstance(self._config[SegmentatorBinaryTester.TRAIN_IMAGE], list):
@@ -40,7 +43,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
 
         for i in range(len(train_images_path)):
             # Image
-            norm_img, orig_img = self.__preprocess(train_images_path[i])
+            norm_img, orig_img = self._preprocess(train_images_path[i])
             self._norm_images_train.append(
                 norm_img
             )
@@ -48,10 +51,9 @@ class SegmentatorBinaryTester(SegmentatorTester):
             n_images = 2
             # Mask
             if self._train_masks_path is not None and len(self._train_masks_path) > i:
-                # TODO: n masks
-                _, orig_mask = self.__preprocess(self._train_masks_path[i], mask_preprocess=True)
+                orig_mask = self._preprocess_masks(self._train_masks_path[i])
                 self._train_masks_np.append(orig_mask.astype(np.uint8))
-                n_images += 1
+                n_images += orig_mask.shape[-1]
 
             self._names_train.append(SegmentatorBinaryTester.TEST_N.format(i))
             self.add_image(self._names_train[-1], n_images=n_images)
@@ -70,7 +72,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
 
         for i, single_path in enumerate(test_images_path):
             # Image
-            norm_img, orig_img = self.__preprocess(single_path)
+            norm_img, orig_img = self._preprocess(single_path)
             self._test_norm_images.append(
                 norm_img
             )
@@ -78,10 +80,9 @@ class SegmentatorBinaryTester(SegmentatorTester):
             n_images = 2
             # Mask
             if self._test_masks_path is not None and len(self._test_masks_path) > i:
-                # TODO: n masks
-                _, orig_mask = self.__preprocess(self._test_masks_path[i], mask_preprocess=True)
+                orig_mask = self._preprocess_masks(self._test_masks_path[i])
                 self._test_mask_np.append(orig_mask.astype(np.uint8))
-                n_images += 1
+                n_images += orig_mask.shape[-1]
 
             self._names_test.append(SegmentatorBinaryTester.TEST_N.format(i))
             # Image + orig mask (if was given) + prediction
@@ -97,19 +98,17 @@ class SegmentatorBinaryTester(SegmentatorTester):
                     zip(self._norm_images_train, self._train_images, self._train_masks_np)
             ):
                 # If original masks were provided
-                prediction = np.argmax(
-                    model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0],
-                    axis=-1
-                )
+                prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
+                prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
+                array_ans = [single_train]
+                for indx in range(single_mask_np.shape[-1]):
+                    array_ans += [
+                        self.draw_heatmap(single_mask_np[..., indx], self._names_train[i] + f'_truth_{i}'),
+                        self.draw_heatmap(prediction[..., indx], self._names_train[i] + f'_{i}')
+                    ]
                 dict_summary_to_tb.update(
                     {
-                        self._names_train[i]: np.stack(
-                            [
-                                single_train,
-                                self.draw_heatmap(single_mask_np, self._names_train[i] + '_truth'),
-                                self.draw_heatmap(prediction, self._names_train[i])
-                            ]
-                        ).astype(np.uint8)
+                        self._names_train[i]: np.stack(array_ans).astype(np.uint8)
                     }
                 )
 
@@ -117,38 +116,35 @@ class SegmentatorBinaryTester(SegmentatorTester):
             for i, (single_norm_train, single_train) in enumerate(zip(self._norm_images_train, self._train_images)):
                 # If there is not original masks
                 # Just vis. input image and predicted mask
-                prediction = np.argmax(
-                    model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0],
-                    axis=-1
-                )
+                prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
+                prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
+                array_ans = [single_train]
+                for indx in range(prediction.shape[-1]):
+                    array_ans += [self.draw_heatmap(prediction[..., indx], self._names_train[i] + f'_truth_{i}')]
                 dict_summary_to_tb.update(
                     {
-                        self._names_train[i]: np.stack(
-                            [single_train, self.draw_heatmap(prediction, self._names_train[i])]
-                        ).astype(np.uint8)
+                        self._names_train[i]: np.stack(array_ans).astype(np.uint8)
                     }
                 )
 
     def __get_test_tb_data(self, model, dict_summary_to_tb, path_save_res):
         if self._test_masks_path is not None:
             all_pred = []
-            for i, (single_norm_train, single_train, single_mask_np) in enumerate(
+            for i, (single_norm_test, single_test, single_mask_np) in enumerate(
                     zip(self._test_norm_images, self._test_images, self._test_mask_np)
             ):
                 # If original masks were provided
-                prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
-                all_pred.append(prediction)
-                # [..., num_classes]
-                prediction_argmax = np.argmax(prediction, axis=-1)
+                prediction = model.predict(np.stack([single_norm_test] * model.get_batch_size(), axis=0))[0]
+                prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
+                array_ans = [single_test]
+                for indx in range(single_mask_np.shape[-1]):
+                    array_ans += [
+                        self.draw_heatmap(single_mask_np[..., indx], self._names_test[i] + f'_truth_{i}'),
+                        self.draw_heatmap(prediction[..., indx], self._names_test[i] + f'_{i}')
+                    ]
                 dict_summary_to_tb.update(
                     {
-                        self._names_test[i]: np.stack(
-                            [
-                                single_train,
-                                self.draw_heatmap(single_mask_np, self._names_test[i] + '_truth'),
-                                self.draw_heatmap(prediction_argmax, self._names_test[i])
-                            ]
-                        ).astype(np.uint8)
+                        self._names_test[i]: np.stack(array_ans).astype(np.uint8)
                     }
                 )
             # Confuse matrix
@@ -158,25 +154,47 @@ class SegmentatorBinaryTester(SegmentatorTester):
             dict_summary_to_tb.update({ self._names_test[-1]: np.expand_dims(mat_img.astype(np.uint8), axis=0) })
             dict_summary_to_tb.update(res_dices_dict)
             # f1 score
+            # TODO: Delete or refactor
             labels = np.array(self._test_mask_np).astype(np.uint8)
             pred_np = np.argmax(np.stack(all_pred[:len(labels)], axis=0), axis=-1).astype(np.uint8)
             f1_score_np = f1_score(labels.reshape(-1), pred_np.reshape(-1), average='micro')
             dict_summary_to_tb.update({ SegmentatorBinaryTester.F1_SCORE: f1_score_np})
         else:
-            for i, (single_norm_train, single_train) in enumerate(zip(self._test_norm_images, self._test_images)):
+            for i, (single_norm_test, single_test) in enumerate(zip(self._test_norm_images, self._test_images)):
                 # If there is not original masks
                 # Just vis. input image and predicted mask
-                prediction = np.argmax(
-                    model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0],
-                    axis=-1
-                )
+                prediction = model.predict(np.stack([single_norm_test] * model.get_batch_size(), axis=0))[0]
+                prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
+                array_ans = [single_test]
+                for indx in range(prediction.shape[-1]):
+                    array_ans += [self.draw_heatmap(prediction[..., indx], self._names_test[i] + f'_{i}')]
+
                 dict_summary_to_tb.update(
                     {
-                        self._names_test[i]: np.stack(
-                            [single_train, self.draw_heatmap(prediction, self._names_test[i])]
-                        ).astype(np.uint8)
+                        self._names_test[i]: np.stack(array_ans).astype(np.uint8)
                     }
                 )
+
+    def _preprocess_masks(self, path_mask_folder: str):
+        if super()._resize_to is None:
+            first_img = cv2.imread(glob.glob(os.path.join(path_mask_folder, '*.bmp'))[0])
+            labels = np.zeros((
+                first_img.shape[0],
+                first_img.shape[1],
+                len(self._config[SegmentatorTester.CLASSES_NAMES])
+            )).astype(np.uint8)
+        else:
+            labels = np.zeros((
+                *super()._resize_to,
+                len(self._config[SegmentatorTester.CLASSES_NAMES])
+            )).astype(np.uint8)
+
+        for i in range(len(self._config[SegmentatorTester.CLASSES_NAMES])):
+            single_label = cv2.imread(os.path.join(path_mask_folder, f'{i+1}.bmp'))
+            if single_label is not None:
+                _, labels[..., i] = super()._preprocess(single_label, mask_preprocess=True)
+
+        return labels
 
     def _v_dice_calc_and_confuse_m(self, predictions, labels, save_folder):
         """
@@ -188,6 +206,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
         """
         print('Computing V-Dice...')
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
+        # TODO: Refactor method `categorical_dice_coeff`
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)

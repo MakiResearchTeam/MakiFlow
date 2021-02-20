@@ -77,7 +77,7 @@ class SegmentatorTester(TesterBase):
 
         for i in range(len(train_images_path)):
             # Image
-            norm_img, orig_img = self.__preprocess(train_images_path[i])
+            norm_img, orig_img = self._preprocess(train_images_path[i])
             self._norm_images_train.append(
                 norm_img
             )
@@ -85,7 +85,7 @@ class SegmentatorTester(TesterBase):
             n_images = 2
             # Mask
             if self._train_masks_path is not None and len(self._train_masks_path) > i:
-                _, orig_mask = self.__preprocess(self._train_masks_path[i], mask_preprocess=True)
+                _, orig_mask = self._preprocess(self._train_masks_path[i], mask_preprocess=True)
                 self._train_masks_np.append(orig_mask.astype(np.uint8))
                 n_images += 1
 
@@ -106,7 +106,7 @@ class SegmentatorTester(TesterBase):
 
         for i, single_path in enumerate(test_images_path):
             # Image
-            norm_img, orig_img = self.__preprocess(single_path)
+            norm_img, orig_img = self._preprocess(single_path)
             self._test_norm_images.append(
                 norm_img
             )
@@ -114,7 +114,7 @@ class SegmentatorTester(TesterBase):
             n_images = 2
             # Mask
             if self._test_masks_path is not None and len(self._test_masks_path) > i:
-                _, orig_mask = self.__preprocess(self._test_masks_path[i], mask_preprocess=True)
+                _, orig_mask = self._preprocess(self._test_masks_path[i], mask_preprocess=True)
                 self._test_mask_np.append(orig_mask.astype(np.uint8))
                 n_images += 1
 
@@ -262,12 +262,15 @@ class SegmentatorTester(TesterBase):
 
         return img.astype(np.uint8)
 
-    def __preprocess(self, single_path: str, mask_preprocess=False):
-        image = cv2.imread(single_path)
-        if image is None:
-            raise TypeError(
-                SegmentatorTester._EXCEPTION_IMAGE_WAS_NOT_FOUND.format(single_path)
-            )
+    def _preprocess(self, data, mask_preprocess=False):
+        if isinstance(data, str):
+            image = cv2.imread(data)
+            if image is None:
+                raise TypeError(
+                    SegmentatorTester._EXCEPTION_IMAGE_WAS_NOT_FOUND.format(data)
+                )
+        else:
+            image = data
 
         if self._resize_to is not None:
             new_h, new_w = self._resize_to
