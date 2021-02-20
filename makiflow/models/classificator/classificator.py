@@ -34,7 +34,9 @@ class Classificator(ClassificatorInterface):
     NAME = 'name'
 
     @staticmethod
-    def from_json(path: str, input_tensor: MakiTensor = None):
+    def from_json(
+            path: str, input_tensor: MakiTensor = None,
+            activation_on_logits=tf.nn.softmax):
         """Creates and returns ConvModel from json.json file contains its architecture"""
         model_info, graph_info = Classificator.load_architecture(path)
 
@@ -46,9 +48,14 @@ class Classificator(ClassificatorInterface):
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
-        return Classificator(in_x=in_x, out_x=out_x, name=model_name)
+        return Classificator(in_x=in_x, out_x=out_x, name=model_name, activation_on_logits=activation_on_logits)
 
-    def __init__(self, in_x: InputLayer, out_x: MakiTensor, name='MakiClassificator'):
+    def __init__(
+            self,
+            in_x: InputLayer,
+            out_x: MakiTensor,
+            name='MakiClassificator',
+            activation_on_logits=tf.nn.softmax):
         """
         A classifier model.
 
@@ -63,6 +70,7 @@ class Classificator(ClassificatorInterface):
         """
         self._input = in_x
         self._output = out_x
+        self._activation_on_logits = activation_on_logits
         super().__init__([out_x], [in_x])
         self.name = str(name)
         self._init_inference()
@@ -71,13 +79,16 @@ class Classificator(ClassificatorInterface):
         self._batch_sz = self._input.get_shape()[0]
         self._tf_input = self._input.get_data_tensor()
         self._tf_logits = self._output.get_data_tensor()
-        self._softmax_out = tf.nn.softmax(self._tf_logits)
+        self._logits_out = self._activation_on_logits(self._tf_logits)
 
     def get_batch_size(self):
         return self._input.get_shape()[0]
 
     def get_logits(self):
         return self._output
+
+    def get_func_act_on_logits(self):
+        return self._activation_on_logits
 
     def get_feed_dict_config(self) -> dict:
         return {
@@ -113,7 +124,7 @@ class Classificator(ClassificatorInterface):
         error_r = error_rate(predictions, Ytest)
         return error_r
 
-    def predict(self, Xtest, use_softmax=True):
+    def predict(self, Xtest, use_act_onlogits=True):
         """
         Performs prediction on the given data.
 
@@ -121,15 +132,15 @@ class Classificator(ClassificatorInterface):
         ----------
         Xtest : arraylike of shape [n, ...]
             The input data.
-        use_softmax : bool
-            Whether to use softmax or not.
+        use_act_onlogits : bool
+            Whether to use activation on logits or not.
 
         Returns
         -------
         arraylike
             Predictions.
         """
-        out = self._softmax_out if use_softmax else self._tf_logits
+        out = self._logits_out if use_act_onlogits else self._tf_logits
         batch_size = self._batch_sz if self._batch_sz is not None else 1
         predictions = []
         for Xbatch in tqdm(data_iterator(Xtest, batch_size=batch_size)):

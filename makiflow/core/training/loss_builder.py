@@ -17,6 +17,7 @@
 
 import tensorflow as tf
 from scipy.special import binom
+from .utils import _process_labels
 
 
 class Loss:
@@ -131,6 +132,77 @@ class Loss:
         ones_arr = tf.ones_like(labels, dtype=tf.float32)
         focal_weights = tf.pow(ones_arr - sparse_confidences, focal_gamma)
         focal_loss = focal_weights * ce_loss
+
+        if num_positives is not None:
+            num_positives = tf.reduce_sum(num_positives)
+            focal_loss = focal_loss / num_positives
+
+        if raw_tensor:
+            return focal_loss
+
+        return tf.reduce_sum(focal_loss)
+
+    @staticmethod
+    def focal_binary_loss(
+            logits,
+            labels,
+            focal_gamma=2.0,
+            num_positives=None,
+            ce_loss=None,
+            raw_tensor=False,
+            label_smoothing=None
+    ):
+        """
+        Creates Focal Loss.
+        Parameters
+        ----------
+        logits : tf.Tensor
+            Tensor of flattened logits with shape [batch_sz, total_predictions, num_classes].
+        labels : tf.Tensor
+            Tensor of flattened labels with shape [batch_sz, total_predictions, num_classes].
+        num_positives : tf.Tensor
+            Tensor of shape [batch_sz], contains number of hard examples per sample. If the `num_positives` is
+            provided, then the loss will be divided by the sum of `num_positives`.
+        focal_gamma : float
+            The Focal Loss hyperparameter. Higher the `focal_gamma` - higher the penalty for the
+            predominant classes.
+        ce_loss : tf.Tensor
+            Tensor with the cross-entropy loss of shape [batch_sz, total_predictions].
+        raw_tensor : bool
+            Whether to return a sum of all values or an original loss tensor with shape [batch_sz, ...].
+        Returns
+        -------
+        tf.Tensor
+            Constructed Focal loss.
+        """
+        if label_smoothing is not None:
+            labels = _process_labels(labels, label_smoothing)
+            train_confidences = tf.sigmoid(logits)
+            # Terms for the positive and negative class components of the loss
+            pos_term = labels * ((1 - train_confidences) ** focal_gamma)
+            neg_term = (1 - labels) * (train_confidences ** focal_gamma)
+            # Term involving the log and ReLU
+            log_weight = pos_term
+            log_weight += neg_term
+            log_term = tf.math.log1p(tf.math.exp(-tf.math.abs(logits)))
+            log_term += tf.nn.relu(-logits)
+            log_term *= log_weight
+
+            # Combine all the terms into the loss
+            focal_loss = neg_term * logits + log_term
+        else:
+            if ce_loss is None:
+                ce_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
+            # [batch_sz, total_predictions, num_classes]
+            train_confidences = tf.sigmoid(logits)
+            # [batch_sz, total_predictions, num_classes]
+            loss_pos = tf.pow(1 - train_confidences, focal_gamma)
+            loss_neg = tf.pow(train_confidences, focal_gamma)
+            label_mask = tf.cast(labels, tf.bool)
+            # True  - y = 1, (1-p)**gamma * log(p)
+            # False - y = 0, p ** gamma * log(1 - p)
+            loss_mask = tf.where(label_mask, loss_pos, loss_neg)
+            focal_loss = loss_mask * ce_loss
 
         if num_positives is not None:
             num_positives = tf.reduce_sum(num_positives)

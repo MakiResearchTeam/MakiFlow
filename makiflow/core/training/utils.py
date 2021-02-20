@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 from makiflow.core import MakiTensor
-
+import tensorflow as tf
 EPOCH = 'Epoch:'
 
 
@@ -102,3 +102,27 @@ class IteratorCloser:
 
         # Re-raise exception
         return False
+
+
+def _process_labels(labels, label_smoothing, dtype=tf.float32):
+    """Pre-process a binary label tensor, maybe applying smoothing.
+    Parameters
+    ----------
+    labels : tensor-like
+        Tensor of 0's and 1's.
+    label_smoothing : float or None
+        Float in [0, 1]. When 0, no smoothing occurs. When positive, the binary
+        ground truth labels `y_true` are squeezed toward 0.5, with larger values
+        of `label_smoothing` leading to label values closer to 0.5.
+    dtype : tf.dtypes.DType
+        Desired type of the elements of `labels`.
+    Returns
+    -------
+    tf.Tensor
+        The processed labels.
+    """
+    labels = tf.dtypes.cast(labels, dtype=dtype)
+    if label_smoothing is not None:
+        labels = (1 - label_smoothing) * labels + label_smoothing * 0.5
+    return labels
+
