@@ -79,6 +79,7 @@ class TensorBoard:
         ----------
         summary : tf.Summary
             The total summary (received from the `get_total_summary` method).
+
         Returns
         -------
 

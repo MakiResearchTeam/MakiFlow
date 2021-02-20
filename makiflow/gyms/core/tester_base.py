@@ -99,6 +99,7 @@ class TesterBase(ABC):
     def write_summaries(self, summaries, step=None):
         """
         Writes the summary to the tensorboard log file.
+
         Parameters
         ----------
         summaries : dict
