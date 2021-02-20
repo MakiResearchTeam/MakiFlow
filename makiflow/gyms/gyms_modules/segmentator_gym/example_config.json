@@ -44,6 +44,7 @@
         "pretrained_layers": null
     },
     "trainer_config": {
+        "type": "ModelAssemblerSegmentator",
         "trainer_info": {
             "type": "MSETrainer",
             "params": { }
@@ -69,6 +70,7 @@
     },
     
     "test_config": {
+        "type": "SegmentatorBinaryTester",
         "test_image": [
             "test_image/1.png",
             "test_image/n.png"

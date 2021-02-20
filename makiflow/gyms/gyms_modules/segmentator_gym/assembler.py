@@ -16,6 +16,7 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 from makiflow.core import TrainerBuilder
 from makiflow.gyms.core.assembler_base import ModelAssemblerBase
+from makiflow.gyms.gyms_modules.gyms_collector import GymCollector, SEGMENTATION, ASSEMBLER
 
 
 class ModelAssemblerSegmentator(ModelAssemblerBase):
@@ -34,3 +35,7 @@ class ModelAssemblerSegmentator(ModelAssemblerBase):
         )
 
         return trainer
+
+
+GymCollector.update_collector(SEGMENTATION, ASSEMBLER, ModelAssemblerSegmentator)
+

@@ -15,16 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .segmentator_gym import *
-
 SEGMENTATION = 'segmentation'
 ASSEMBLER = 'assembler'
 TESTER = 'tester'
 
 
-GYM_COLLECTOR = {
-    SEGMENTATION: {
-        ASSEMBLER: ModelAssemblerSegmentator,
-        TESTER: SegmentatorTester,
+class GymCollector:
+    GYM_COLLECTOR = {
+        SEGMENTATION: {
+            ASSEMBLER: {},
+            TESTER: {}
+        }
     }
-}
+
+    @staticmethod
+    def update_collector(type_train, type_obj, class_obj):
+        GymCollector[type_train][type_obj][class_obj.__name__] = class_obj
+

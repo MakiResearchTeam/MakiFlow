@@ -19,8 +19,8 @@ import json
 import os
 import tensorflow as tf
 from makiflow.gyms.utils import OptimizerBuilder
-from makiflow.gyms.core import TesterBase
-from makiflow.gyms.gyms_modules.gyms_collector import GYM_COLLECTOR, ASSEMBLER, TESTER
+from makiflow.gyms.core import TesterBase, ModelAssemblerBase
+from makiflow.gyms.gyms_modules.gyms_collector import GymCollector, ASSEMBLER, TESTER
 
 
 class Gym:
@@ -92,13 +92,15 @@ class Gym:
         os.makedirs(tensorboard_path, exist_ok=True)
         config[TesterBase.TB_FOLDER] = tensorboard_path
         self._tb_path = tensorboard_path
-        self._tester = GYM_COLLECTOR[self._type][TESTER](
+        tester_type = config[TesterBase.TEST_CONFIG][Gym.TYPE]
+        self._tester = GymCollector.GYM_COLLECTOR[self._type][TESTER][tester_type](
             config,
             self._sess
         )
 
         # Create model, trainer and set the tensorboard folder
-        self._trainer, self._model = GYM_COLLECTOR[self._type][ASSEMBLER]().assemble(
+        assembler_type = config[ModelAssemblerBase.TRAINER_CONFIG][Gym.TYPE]
+        self._trainer, self._model = GymCollector.GYM_COLLECTOR[self._type][ASSEMBLER][assembler_type]().assemble(
             config,
             self._gen_layer_fabric,
             self._sess
