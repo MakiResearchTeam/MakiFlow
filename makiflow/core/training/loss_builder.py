@@ -53,9 +53,7 @@ class Loss:
         """
 
         numerator = p * g
-        # [batch_size, -1]
         numerator = tf.layers.flatten(numerator)
-        # [batch_size]
         numerator = tf.reduce_sum(numerator, axis=axes)
 
         p_squared = tf.square(p)
@@ -65,7 +63,7 @@ class Loss:
         # 0^2 = 0
         # 1^2 = 1
         g_squared = tf.reduce_sum(g, axis=axes)
-        denominator = p_squared + g + eps
+        denominator = p_squared + g_squared + eps
 
         dice = 2 * numerator / denominator
         return 1 - tf.reduce_mean(dice)
