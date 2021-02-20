@@ -14,10 +14,23 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
-
+from makiflow.core import TrainerBuilder
 from makiflow.gyms.core.assembler_base import ModelAssemblerBase
 
 
 class ModelAssemblerSegmentator(ModelAssemblerBase):
-    pass
 
+    def build_trainer(self, config_data: dict, model, gen_layer):
+        iterator = gen_layer.get_iterator()
+        # TODO: Label tensor - tensors from iterator - how connect different models???
+        trainer = TrainerBuilder.trainer_from_dict(
+            model=model,
+            train_inputs=[gen_layer],
+            label_tensors={
+                "LABELS": iterator['mask'],
+                "WEIGHT_MAP": None
+            },
+            info_dict=config_data[ModelAssemblerBase.TRAINER_INFO]
+        )
+
+        return trainer

@@ -21,6 +21,7 @@ from makiflow.tools.preprocess import preprocess_input
 from makiflow.metrics import categorical_dice_coeff
 from makiflow.metrics import confusion_mat
 from makiflow.tools.test_visualizer import TestVisualizer
+from sklearn.metrics import f1_score
 import pandas as pd
 import cv2
 import numpy as np
@@ -33,8 +34,10 @@ class SegmentatorTester(TesterBase):
     TRAIN_IMAGE = 'train_image'
     TEST_MASK = 'test_mask'
     TRAIN_MASK = 'train_mask'
+    F1_SCORE = 'f1_score'
+    PREFIX_CLASSES = 'V-Dice info/{}'
     CLASSES_NAMES = 'classes_names'
-    ALL_DVICE = 'all_vdice'
+    V_DICE = 'V_Dice'
     VDICE_TXT = 'v_dice.txt'
 
     TRAIN_N = 'train_{}'
@@ -47,9 +50,12 @@ class SegmentatorTester(TesterBase):
 
     def _init(self):
         # Add sublists for each class
-        self.dices_for_each_class = {SegmentatorTester.ALL_DVICE: []}
+        self.add_scalar(SegmentatorTester.F1_SCORE)
+        self.dices_for_each_class = {SegmentatorTester.V_DICE: []}
+        self.add_scalar(SegmentatorTester.PREFIX_CLASSES.format(SegmentatorTester.V_DICE))
         for class_name in self._config[SegmentatorTester.CLASSES_NAMES]:
             self.dices_for_each_class[class_name] = []
+            self.add_scalar(SegmentatorTester.PREFIX_CLASSES.format(class_name))
         # Test images
         self.__init_test_images()
         # Train images
@@ -212,10 +218,16 @@ class SegmentatorTester(TesterBase):
                     }
                 )
             # Confuse matrix
-            labels = np.array(self._test_mask_np).astype(np.int32)
-            pred_np = np.stack(all_pred[:len(labels)], axis=0).astype(np.int32)
-            mat_img = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
-            dict_summary_to_tb.update({ self._names_test[-1]: mat_img.astype(np.uint8) })
+            labels = np.array(self._test_mask_np).astype(np.uint8)
+            pred_np = np.stack(all_pred[:len(labels)], axis=0).astype(np.float32)
+            mat_img, res_dices_dict = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
+            dict_summary_to_tb.update({ self._names_test[-1]: np.expand_dims(mat_img.astype(np.uint8), axis=0) })
+            dict_summary_to_tb.update(res_dices_dict)
+            # f1 score
+            labels = np.array(self._test_mask_np).astype(np.uint8)
+            pred_np = np.argmax(np.stack(all_pred[:len(labels)], axis=0), axis=-1).astype(np.uint8)
+            f1_score_np = f1_score(labels.reshape(-1), pred_np.reshape(-1), average='micro')
+            dict_summary_to_tb.update({ SegmentatorTester.F1_SCORE: f1_score_np})
         else:
             for i, (single_norm_train, single_train) in enumerate(zip(self._test_norm_images, self._test_images)):
                 # If there is not original masks
@@ -271,29 +283,43 @@ class SegmentatorTester(TesterBase):
         orig_img = image.copy()
 
         if self._norm_mode is not None:
-            norm_image = preprocess_input(
-                    image,
+            image = preprocess_input(
+                    image.astype(np.float32, copy=False),
                     mode=self._norm_mode
-            ).astype(np.float32)
+            )
+        elif self._norm_div is not None or self._norm_shift is not None:
+            image = image.astype(np.float32, copy=False)
+            if self._norm_div is not None:
+                image /= self._norm_div
 
-        elif self._norm_div is not None and self._norm_shift is not None:
-            norm_image = (image / self._norm_div - self._norm_shift).astype(np.float32)
-        else:
-            norm_image = image.astype(np.float32)
+            if self._norm_shift is not None:
+                image -= self._norm_shift
 
-        return norm_image, orig_img
+        return image.astype(np.float32, copy=False), orig_img
 
     def _v_dice_calc_and_confuse_m(self, predictions, labels, save_folder):
+        """
+        Returns
+        -------
+        confuse_matrix: np.ndarray
+        res_dices_dict : dict
+
+        """
         print('Computing V-Dice...')
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
-        self.dices_for_each_class[SegmentatorTester.ALL_DVICE] += [v_dice_val]
+
+        res_dices_dict = {SegmentatorTester.PREFIX_CLASSES.format(SegmentatorTester.V_DICE): v_dice_val}
+        self.dices_for_each_class[SegmentatorTester.V_DICE] += [v_dice_val]
+
         for i, class_name in enumerate(self._config[SegmentatorTester.CLASSES_NAMES]):
             self.dices_for_each_class[class_name] += [dices[i]]
+            res_dices_dict[SegmentatorTester.PREFIX_CLASSES.format(class_name)] = dices[i]
             print(f'{class_name}: {dices[i]}')
             str_to_save_vdice += f'{class_name}: {dices[i]}\n'
+
         with open(os.path.join(save_folder, SegmentatorTester.VDICE_TXT), 'w') as fp:
             fp.write(str_to_save_vdice)
         # Compute and save matrix
@@ -303,9 +329,8 @@ class SegmentatorTester(TesterBase):
             predictions, labels, use_argmax_p=True, to_flatten=True,
             save_path=conf_mat_path, dpi=175
         )
-
-        # Read img and back to rgb
-        return cv2.imread(conf_mat_path)[..., ::-1]
+        # Read img and convert it to rgb
+        return cv2.imread(conf_mat_path)[..., ::-1], res_dices_dict
 
     def final_eval(self, path_to_save):
         test_df = pd.DataFrame(self.dices_for_each_class)

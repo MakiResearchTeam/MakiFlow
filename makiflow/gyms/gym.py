@@ -98,7 +98,7 @@ class Gym:
         )
 
         # Create model, trainer and set the tensorboard folder
-        self._trainer, self._model = GYM_COLLECTOR[self._type][ASSEMBLER].assemble(
+        self._trainer, self._model = GYM_COLLECTOR[self._type][ASSEMBLER]().assemble(
             config,
             self._gen_layer_fabric,
             self._sess
