@@ -53,11 +53,9 @@ class Loss:
         """
 
         numerator = p * g
-        numerator = tf.layers.flatten(numerator)
         numerator = tf.reduce_sum(numerator, axis=axes)
 
         p_squared = tf.square(p)
-        p_squared = tf.layers.flatten(p_squared)
         p_squared = tf.reduce_sum(p_squared, axis=axes)
         # g is not squared to avoid unnecessary computation.
         # 0^2 = 0
