@@ -30,5 +30,5 @@ class GymCollector:
 
     @staticmethod
     def update_collector(type_train, type_obj, class_obj):
-        GymCollector[type_train][type_obj][class_obj.__name__] = class_obj
+        GymCollector.GYM_COLLECTOR[type_train][type_obj][class_obj.__name__] = class_obj
 
