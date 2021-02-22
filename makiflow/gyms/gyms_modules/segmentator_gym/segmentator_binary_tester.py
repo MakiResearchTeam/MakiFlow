@@ -216,6 +216,9 @@ class SegmentatorBinaryTester(SegmentatorTester):
         with open(os.path.join(save_folder, SegmentatorBinaryTester.VDICE_TXT), 'w') as fp:
             fp.write(str_to_save_vdice)
         # Compute and save matrix
+        # TODO: modify conf matrix
+
+        """
         conf_mat_path = os.path.join(save_folder,  f'mat.png')
         print('Computing confusion matrix...')
         confusion_mat(
@@ -224,7 +227,8 @@ class SegmentatorBinaryTester(SegmentatorTester):
         )
         # Read img and convert it to rgb
         return cv2.imread(conf_mat_path)[..., ::-1], res_dices_dict
-
+        """
+        return np.zeros((1024, 1024, 3)).astype(np.uint8), res_dices_dict
 
 GymCollector.update_collector(SEGMENTATION, TESTER, SegmentatorBinaryTester)
 
