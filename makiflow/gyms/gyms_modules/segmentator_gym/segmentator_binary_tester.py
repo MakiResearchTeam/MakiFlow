@@ -28,7 +28,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
     THREASHOLD = 0.4
     # TODO: add threashold???
 
-    def __init_train_images(self):
+    def _init_train_images(self):
         if not isinstance(self._config[SegmentatorBinaryTester.TRAIN_IMAGE], list):
             train_images_path = [self._config[SegmentatorBinaryTester.TRAIN_IMAGE]]
         else:
@@ -57,7 +57,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
             self._names_train.append(SegmentatorBinaryTester.TEST_N.format(i))
             self.add_image(self._names_train[-1], n_images=n_images)
 
-    def __init_test_images(self):
+    def _init_test_images(self):
         self._test_masks_path = self._config[self.TEST_MASK]
         if not isinstance(self._config[SegmentatorBinaryTester.TEST_IMAGE], list):
             test_images_path = [self._config[SegmentatorBinaryTester.TEST_IMAGE]]
@@ -91,7 +91,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
             self._names_test += [self.CONFUSE_MATRIX]
             self.add_image(self._names_test[-1])
 
-    def __get_train_tb_data(self, model, dict_summary_to_tb):
+    def _get_train_tb_data(self, model, dict_summary_to_tb):
         if self._train_masks_path is not None:
             for i, (single_norm_train, single_train, single_mask_np) in enumerate(
                     zip(self._norm_images_train, self._train_images, self._train_masks_np)
@@ -126,7 +126,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
                     }
                 )
 
-    def __get_test_tb_data(self, model, dict_summary_to_tb, path_save_res):
+    def _get_test_tb_data(self, model, dict_summary_to_tb, path_save_res):
         if self._test_masks_path is not None:
             all_pred = []
             for i, (single_norm_test, single_test, single_mask_np) in enumerate(
@@ -199,7 +199,6 @@ class SegmentatorBinaryTester(SegmentatorTester):
         """
         print('Computing V-Dice...')
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
-        # TODO: Refactor method `categorical_dice_coeff`
         v_dice_val, dices = bin_categorical_dice_coeff(predictions, labels, use_argmax=True)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)

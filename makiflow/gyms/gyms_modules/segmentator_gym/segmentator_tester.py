@@ -58,12 +58,12 @@ class SegmentatorTester(TesterBase):
             self.dices_for_each_class[class_name] = []
             self.add_scalar(SegmentatorTester.PREFIX_CLASSES.format(class_name))
         # Test images
-        self.__init_test_images()
+        self._init_test_images()
         # Train images
-        self.__init_train_images()
+        self._init_train_images()
         self.add_scalar(SegmentatorTester.ITERATION_COUNTER)
 
-    def __init_train_images(self):
+    def _init_train_images(self):
         if not isinstance(self._config[SegmentatorTester.TRAIN_IMAGE], list):
             train_images_path = [self._config[SegmentatorTester.TRAIN_IMAGE]]
         else:
@@ -92,7 +92,7 @@ class SegmentatorTester(TesterBase):
             self._names_train.append(SegmentatorTester.TEST_N.format(i))
             self.add_image(self._names_train[-1], n_images=n_images)
 
-    def __init_test_images(self):
+    def _init_test_images(self):
         self._test_masks_path = self._config[self.TEST_MASK]
         if not isinstance(self._config[SegmentatorTester.TEST_IMAGE], list):
             test_images_path = [self._config[SegmentatorTester.TEST_IMAGE]]
@@ -130,9 +130,9 @@ class SegmentatorTester(TesterBase):
         dict_summary_to_tb = {SegmentatorTester.ITERATION_COUNTER: iteration}
         # Draw test images
         # Write heatmap,paf and image itself for each image in `_test_images`
-        self.__get_test_tb_data(model, dict_summary_to_tb, path_save_res)
+        self._get_test_tb_data(model, dict_summary_to_tb, path_save_res)
         # Draw train images
-        self.__get_train_tb_data(model, dict_summary_to_tb)
+        self._get_train_tb_data(model, dict_summary_to_tb)
         # Write data into tensorBoard
         self.write_summaries(
             summaries=dict_summary_to_tb,
@@ -158,7 +158,7 @@ class SegmentatorTester(TesterBase):
 
         return data.astype(np.uint8)
 
-    def __get_train_tb_data(self, model, dict_summary_to_tb):
+    def _get_train_tb_data(self, model, dict_summary_to_tb):
         if self._train_masks_path is not None:
             for i, (single_norm_train, single_train, single_mask_np) in enumerate(
                     zip(self._norm_images_train, self._train_images, self._train_masks_np)
@@ -196,7 +196,7 @@ class SegmentatorTester(TesterBase):
                     }
                 )
 
-    def __get_test_tb_data(self, model, dict_summary_to_tb, path_save_res):
+    def _get_test_tb_data(self, model, dict_summary_to_tb, path_save_res):
         if self._test_masks_path is not None:
             all_pred = []
             for i, (single_norm_train, single_train, single_mask_np) in enumerate(
