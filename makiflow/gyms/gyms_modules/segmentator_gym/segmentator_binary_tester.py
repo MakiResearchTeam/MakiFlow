@@ -169,7 +169,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 )
 
     def _preprocess_masks(self, path_mask_folder: str):
-        if super()._resize_to is None:
+        if self._resize_to is None:
             first_img = cv2.imread(glob.glob(os.path.join(path_mask_folder, '*.bmp'))[0])
             labels = np.zeros((
                 first_img.shape[0],
@@ -178,7 +178,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
             )).astype(np.uint8)
         else:
             labels = np.zeros((
-                *super()._resize_to,
+                *self._resize_to,
                 len(self._config[SegmentatorTester.CLASSES_NAMES])
             )).astype(np.uint8)
 
