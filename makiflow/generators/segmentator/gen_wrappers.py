@@ -115,9 +115,10 @@ def binary_masks_reader(gen, n_classes, image_shape):
         for binary_mask_path in glob(join(mask_folder, '*')):
             filename = binary_mask_path.split('/')[-1]
             class_id = int(filename.split('.')[0])
+            assert class_id != 0, 'Encountered class 0. Class names must start from 1.'
             binary_mask = cv2.imread(binary_mask_path)
             assert binary_mask is not None, f'Could not load mask with name={binary_mask_path}'
-            label_tensor[..., class_id] = binary_mask[..., 0]
+            label_tensor[..., class_id - 1] = binary_mask[..., 0]
 
         yield {
             SegmentPathGenerator.IMAGE: image.astype(np.float32, copy=False),

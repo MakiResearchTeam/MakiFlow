@@ -78,6 +78,51 @@ def categorical_dice_coeff(P, L, use_argmax=False, ind_norm=True):
     return v_dice, dices
 
 
+# When training masks are tensors of binary masks
+def bin_categorical_dice_coeff(P, L, use_argmax=False, ind_norm=True):
+    """
+    Calculates V-Dice for give predictions and labels.
+    WARNING! THIS IMPLIES SEGMENTATION CONTEXT.
+    Parameters
+    ----------
+    P : np.ndarray
+        Predictions of a segmentator. Array of shape [batch_sz, W, H, num_classes].
+    L : np.ndarray
+        Labels for the segmentator. Array of shape [batch_sz, W, H]
+    use_argmax : bool
+        Converts the segmentator's predictions to one-hot format.
+        Example: [0.4, 0.1, 0.5] -> [0., 0., 1.]
+    ind_norm : bool
+        Normalize each dice separately. Useful in case some classes don't appear
+        on some images.
+    """
+    batch_sz = len(P)
+    L = np.asarray(L)
+    P = np.asarray(P)
+    P = np.round(P).astype('int32', copy=False)
+    num_classes = P.shape[-1]
+    P = P.reshape(batch_sz, -1, num_classes)
+    L = L.reshape(batch_sz, -1, num_classes)
+
+    class_dices = np.zeros(num_classes)
+    class_counts = np.zeros(num_classes) + EPSILON  # Smoothing to avoid division by zero
+    for i in range(batch_sz):
+        sample_actual = L[i]
+        sample_pred = P[i]
+        for j in range(num_classes):
+            sub_actual = sample_actual[..., j].astype(np.int32)
+            sub_confs = sample_pred[..., j]
+            if np.sum(sub_actual) == 0 and np.sum(sub_confs) == 0:
+                continue
+            class_dices[j] += binary_dice(sub_confs, sub_actual)
+            class_counts[j] += 1
+
+    v_dice, dices = class_dices.mean() / batch_sz, class_dices / batch_sz
+    if ind_norm:
+        v_dice, dices = (class_dices / class_counts).mean(), class_dices / class_counts
+    return v_dice, dices
+
+
 def v_dice_coeff(P, L, use_argmax=False, one_hot_labels=False):
     """
     Calculates V-Dice for give predictions and labels.

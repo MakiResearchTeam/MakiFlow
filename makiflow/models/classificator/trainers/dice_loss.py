@@ -90,15 +90,27 @@ class DiceTrainer(ClassificatorTrainer):
 
 TrainerBuilder.register_trainer(DiceTrainer)
 
-
 if __name__ == '__main__':
     from makiflow.models.classificator import Classificator
     from makiflow.layers import InputLayer
+
     # SEGMENTATION CASE
     print('SEGMENTATION CASE------------------------------------------------------------------------------------------')
     x = InputLayer(input_shape=[32, 128, 128, 3], name='input')
 
     model = Classificator(in_x=x, out_x=x)
+    TrainerBuilder.trainer_from_dict(
+        model,
+        None,
+        None,
+        {
+            "type": "DiceTrainer",
+            "params": {
+                "axes": [1, 2, 3],
+                "eps": 0.000001
+            }
+        }
+    )
     trainer = DiceTrainer(model=model, train_inputs=[x])
 
     print('LABELS TENSORS:', trainer.get_label_tensors())

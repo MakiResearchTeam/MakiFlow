@@ -18,7 +18,7 @@ import glob
 import os
 from makiflow.gyms.gyms_modules.gyms_collector import GymCollector, SEGMENTATION, TESTER
 from makiflow.gyms.gyms_modules.segmentator_gym import SegmentatorTester
-from makiflow.metrics import categorical_dice_coeff
+from makiflow.metrics import bin_categorical_dice_coeff
 from makiflow.metrics import confusion_mat
 import cv2
 import numpy as np
@@ -152,12 +152,6 @@ class SegmentatorBinaryTester(SegmentatorTester):
             mat_img, res_dices_dict = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
             dict_summary_to_tb.update({ self._names_test[-1]: np.expand_dims(mat_img.astype(np.uint8), axis=0) })
             dict_summary_to_tb.update(res_dices_dict)
-            # f1 score
-            # TODO: Delete or refactor
-            labels = np.array(self._test_mask_np).astype(np.uint8)
-            pred_np = np.argmax(np.stack(all_pred[:len(labels)], axis=0), axis=-1).astype(np.uint8)
-            f1_score_np = f1_score(labels.reshape(-1), pred_np.reshape(-1), average='micro')
-            dict_summary_to_tb.update({ SegmentatorBinaryTester.F1_SCORE: f1_score_np})
         else:
             for i, (single_norm_test, single_test) in enumerate(zip(self._test_norm_images, self._test_images)):
                 # If there is not original masks
@@ -206,7 +200,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
         print('Computing V-Dice...')
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
         # TODO: Refactor method `categorical_dice_coeff`
-        v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
+        v_dice_val, dices = bin_categorical_dice_coeff(predictions, labels, use_argmax=True)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
 
