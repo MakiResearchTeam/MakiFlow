@@ -200,7 +200,7 @@ class SqueezeMaskPostMethod(PostMapMethod):
         else:
             element = data_paths
         mask = element[SegmentIterator.MASK]
-        mask = mask[:, :, 0]
+        mask = mask[..., 0]
         element[SegmentIterator.MASK] = mask
         return element
 

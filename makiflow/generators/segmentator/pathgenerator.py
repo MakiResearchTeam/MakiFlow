@@ -148,7 +148,7 @@ class DistributionBasedPathGen(SegmentPathGenerator):
             Contains pairs { groupid: prob }, where `prob` is a probability of selecting images from
             `groupid` group.
         update_period : int
-            Every `update_period` iterations all the list in `groupid_image_dict` are being shuffled.
+            Every `update_period` iterations all the lists in `groupid_image_dict` are being shuffled.
         """
         self._groupids = []
         self._groupid_distribution = []
