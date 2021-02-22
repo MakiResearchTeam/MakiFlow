@@ -369,8 +369,8 @@ class AugmentationPostMethod(PostMapMethod):
             return element
 
         image = element[SegmentIterator.IMAGE]
-        # [H, W] or [H, W, n_classes] - we must check it looking at image
-        # i.e decided batched or not
+        # [H, W] or [H, W, n_classes] - we must check it looking at `image`
+        # i.e decided batched or not after that we should add color dimension into masks
         mask = tf.cast(element[SegmentIterator.MASK], dtype=tf.float32)
 
         image_shape = image.get_shape().as_list()
@@ -381,6 +381,8 @@ class AugmentationPostMethod(PostMapMethod):
         zoom = None
 
         if len(image_shape) == 3:
+            # Single data
+            # Check whatever mask have color dimension
             # if [H, W] mask provided
             if len(mask.get_shape().as_list()) == 2:
                 given_2d = True
@@ -416,6 +418,8 @@ class AugmentationPostMethod(PostMapMethod):
             if given_2d:
                 transformed_mask = transformed_mask[..., 0]
         else:
+            # Batched
+            # Check whatever mask have color dimension
             # if [H, W] mask provided
             if len(mask.get_shape().as_list()) == 3:
                 given_2d = True
@@ -426,7 +430,8 @@ class AugmentationPostMethod(PostMapMethod):
                 raise ValueError("Wrong shape for mask, were given: {mask.get_shape().as_list()}\n"
                                  "but only 2d/3d must be provided as input"
                 )
-            # Batched
+
+            # Take batch-size
             N = image_shape[0]
             if self.use_rotation:
                 angle = tf.random.uniform([N], minval=self.angle_min, maxval=self.angle_max, dtype='float32')
@@ -448,11 +453,13 @@ class AugmentationPostMethod(PostMapMethod):
                 use_zoom=self.use_zoom,
                 zoom_scale_batched=zoom
             )
-
+        # Slice at the end - only if input mask have dimensions - [..., H, W]
         if given_2d:
             transformed_mask = transformed_mask[..., 0]
 
         element[SegmentIterator.IMAGE] = transformed_image
+        # After rotation and other aug methods - integer values are looks like garbage
+        # And simple cast can ruin all masks - so, first we round - then cast
         element[SegmentIterator.MASK] = tf.cast(tf.round(transformed_mask), dtype=tf.int32)
         return element
 
