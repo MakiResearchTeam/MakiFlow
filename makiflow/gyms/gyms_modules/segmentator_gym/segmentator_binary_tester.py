@@ -99,11 +99,14 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 # If original masks were provided
                 prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
                 prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
-                array_ans = [single_train]
+                array_ans = [np.concatenate([single_train, np.zeros_like(single_train).astype(np.uint8)], axis=2) ]
                 for indx in range(single_mask_np.shape[-1]):
                     array_ans += [
-                        self.draw_heatmap(single_mask_np[..., indx], self._names_train[i] + f'_truth_{i}'),
-                        self.draw_heatmap(prediction[..., indx], self._names_train[i] + f'_{i}')
+                        np.concatenate([
+                            self.draw_heatmap(single_mask_np[..., indx], self._names_train[i] + f'_truth_{i}'),
+                            self.draw_heatmap(prediction[..., indx], self._names_train[i] + f'_{i}')
+                        ],
+                        axis=2)
                     ]
                 dict_summary_to_tb.update(
                     {
@@ -136,11 +139,14 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 prediction = model.predict(np.stack([single_norm_test] * model.get_batch_size(), axis=0))[0]
                 prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
                 all_pred.append(prediction)
-                array_ans = [single_test]
+                array_ans = [np.concatenate([single_test, np.zeros_like(single_test).astype(np.uint8)], axis=2) ]
                 for indx in range(single_mask_np.shape[-1]):
                     array_ans += [
-                        self.draw_heatmap(single_mask_np[..., indx], self._names_test[i] + f'_truth_{i}'),
-                        self.draw_heatmap(prediction[..., indx], self._names_test[i] + f'_{i}')
+                        np.concatenate([
+                            self.draw_heatmap(single_mask_np[..., indx], self._names_test[i] + f'_truth_{i}'),
+                            self.draw_heatmap(prediction[..., indx], self._names_test[i] + f'_{i}')
+                        ],
+                        axis=2)
                     ]
                 dict_summary_to_tb.update(
                     {
