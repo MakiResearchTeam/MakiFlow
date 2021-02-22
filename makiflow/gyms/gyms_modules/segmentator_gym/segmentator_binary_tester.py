@@ -20,7 +20,6 @@ from makiflow.gyms.gyms_modules.gyms_collector import GymCollector, SEGMENTATION
 from makiflow.gyms.gyms_modules.segmentator_gym import SegmentatorTester
 from makiflow.metrics import categorical_dice_coeff
 from makiflow.metrics import confusion_mat
-from sklearn.metrics import f1_score
 import cv2
 import numpy as np
 

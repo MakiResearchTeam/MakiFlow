@@ -93,6 +93,9 @@ class Gym:
         config[TesterBase.TB_FOLDER] = tensorboard_path
         self._tb_path = tensorboard_path
         tester_type = config[TesterBase.TEST_CONFIG][Gym.TYPE]
+        print(GymCollector.GYM_COLLECTOR[self._type][TESTER])
+        print(tester_type)
+        print(GymCollector.GYM_COLLECTOR[self._type][TESTER][tester_type])
         self._tester = GymCollector.GYM_COLLECTOR[self._type][TESTER][tester_type](
             config,
             self._sess
