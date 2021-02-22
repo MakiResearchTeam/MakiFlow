@@ -51,7 +51,7 @@ class Loss:
         tf.Tensor
             Scalar dice loss tensor.
         """
-
+        g = tf.cast(g, 'float32')
         numerator = p * g
         numerator = tf.reduce_sum(numerator, axis=axes)
 
