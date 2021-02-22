@@ -20,3 +20,6 @@ from .focal_loss import FocalTrainer
 from .ce_loss import CETrainer
 from .qce_loss import QCETrainer
 from .weighted_ce_loss import WeightedCETrainer
+from .dice_loss import DiceTrainer
+from .focal_binary_loss import FocalBinaryTrainer
+
