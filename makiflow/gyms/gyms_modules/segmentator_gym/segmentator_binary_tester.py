@@ -135,6 +135,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 # If original masks were provided
                 prediction = model.predict(np.stack([single_norm_test] * model.get_batch_size(), axis=0))[0]
                 prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
+                all_pred.append(prediction)
                 array_ans = [single_test]
                 for indx in range(single_mask_np.shape[-1]):
                     array_ans += [
