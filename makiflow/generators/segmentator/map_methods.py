@@ -386,7 +386,7 @@ class AugmentationPostMethod(PostMapMethod):
                 given_2d = True
                 mask = tf.expand_dims(mask, axis=-1)
             elif len(mask.get_shape().as_list()) == 3:
-                given_2d = True
+                given_2d = False
             else:
                 raise ValueError("Wrong shape for mask, were given: {mask.get_shape().as_list()}\n"
                                  "but only 2d/3d must be provided as input"
@@ -421,7 +421,7 @@ class AugmentationPostMethod(PostMapMethod):
                 given_2d = True
                 mask = tf.expand_dims(mask, axis=-1)
             elif len(mask.get_shape().as_list()) == 4:
-                given_2d = True
+                given_2d = False
             else:
                 raise ValueError("Wrong shape for mask, were given: {mask.get_shape().as_list()}\n"
                                  "but only 2d/3d must be provided as input"
