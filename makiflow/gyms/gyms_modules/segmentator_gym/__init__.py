@@ -17,3 +17,5 @@
 
 from .assembler import ModelAssemblerSegmentator
 from .segmentator_tester import SegmentatorTester
+from .segmentator_binary_tester import SegmentatorBinaryTester
+
