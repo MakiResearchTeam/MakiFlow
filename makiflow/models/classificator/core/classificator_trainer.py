@@ -68,7 +68,7 @@ class ClassificatorTrainer(MakiTrainer, ABC):
         }
 
     def set_params(self, params):
-        self._smoothing_labels(params.get(ClassificatorTrainer.SMOOTHING_LABELS))
+        self.set_smoothing_labels(params.get(ClassificatorTrainer.SMOOTHING_LABELS))
 
     def set_smoothing_labels(self, smoothing_labels):
         self._smoothing_labels = smoothing_labels

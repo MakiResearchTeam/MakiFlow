@@ -81,7 +81,8 @@ class FocalBinaryTrainer(ClassificatorTrainer):
             logits=logits,
             labels=labels,
             num_positives=num_positives,
-            focal_gamma=self._focal_gamma
+            focal_gamma=self._focal_gamma,
+            label_smoothing=self._smoothing_labels
         )
 
         if not self._normalize_by_positives:
