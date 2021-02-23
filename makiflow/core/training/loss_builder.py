@@ -231,7 +231,9 @@ class Loss:
             focal_loss = neg_term * logits + log_term
         else:
             if ce_loss is None:
+                labels = tf.cast(labels, dtype=tf.float32)
                 ce_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
+                labels = tf.cast(labels, dtype=tf.int32)
             # [batch_sz, total_predictions, num_classes]
             train_confidences = tf.sigmoid(logits)
             # [batch_sz, total_predictions, num_classes]
