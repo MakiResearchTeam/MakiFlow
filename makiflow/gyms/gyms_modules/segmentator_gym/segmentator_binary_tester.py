@@ -18,6 +18,7 @@ import glob
 import os
 from makiflow.gyms.gyms_modules.gyms_collector import GymCollector, SEGMENTATION, TESTER
 from makiflow.gyms.gyms_modules.segmentator_gym import SegmentatorTester
+from makiflow.gyms.gyms_modules.segmentator_gym.utils import draw_heatmap
 from makiflow.metrics import bin_categorical_dice_coeff
 from makiflow.metrics import confusion_mat
 import cv2
@@ -25,7 +26,7 @@ import numpy as np
 
 
 class SegmentatorBinaryTester(SegmentatorTester):
-    THREASHOLD = 0.4
+    THREASHOLD = 0.5
     # TODO: add threashold???
 
     def _init_train_images(self):
@@ -54,7 +55,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 self._train_masks_np.append(orig_mask.astype(np.uint8))
                 n_images += orig_mask.shape[-1]
 
-            self._names_train.append(SegmentatorBinaryTester.TEST_N.format(i))
+            self._names_train.append(SegmentatorBinaryTester.TRAIN_N.format(i))
             self.add_image(self._names_train[-1], n_images=n_images)
 
     def _init_test_images(self):
@@ -102,11 +103,13 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 array_ans = [np.concatenate([single_train, np.zeros_like(single_train).astype(np.uint8)], axis=1) ]
                 for indx in range(single_mask_np.shape[-1]):
                     array_ans += [
-                        np.concatenate([
-                            self.draw_heatmap(single_mask_np[..., indx], self._names_train[i] + f'_truth_{i}'),
-                            self.draw_heatmap(prediction[..., indx], self._names_train[i] + f'_{i}')
-                        ],
-                        axis=1)
+                        np.concatenate(
+                            [
+                                draw_heatmap(single_mask_np[..., indx], self._names_train[i] + f'_truth_{i}'),
+                                draw_heatmap(prediction[..., indx], self._names_train[i] + f'_{i}')
+                            ],
+                            axis=1
+                        )
                     ]
                 dict_summary_to_tb.update(
                     {
@@ -122,7 +125,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
                 array_ans = [single_train]
                 for indx in range(prediction.shape[-1]):
-                    array_ans += [self.draw_heatmap(prediction[..., indx], self._names_train[i] + f'_truth_{i}')]
+                    array_ans += [draw_heatmap(prediction[..., indx], self._names_train[i] + f'_truth_{i}')]
                 dict_summary_to_tb.update(
                     {
                         self._names_train[i]: np.stack(array_ans).astype(np.uint8)
@@ -142,11 +145,13 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 array_ans = [np.concatenate([single_test, np.zeros_like(single_test).astype(np.uint8)], axis=1) ]
                 for indx in range(single_mask_np.shape[-1]):
                     array_ans += [
-                        np.concatenate([
-                            self.draw_heatmap(single_mask_np[..., indx], self._names_test[i] + f'_truth_{i}'),
-                            self.draw_heatmap(prediction[..., indx], self._names_test[i] + f'_{i}')
-                        ],
-                        axis=1)
+                        np.concatenate(
+                            [
+                                draw_heatmap(single_mask_np[..., indx], self._names_test[i] + f'_truth_{i}'),
+                                draw_heatmap(prediction[..., indx], self._names_test[i] + f'_{i}')
+                            ],
+                            axis=1
+                        )
                     ]
                 dict_summary_to_tb.update(
                     {
@@ -167,7 +172,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
                 array_ans = [single_test]
                 for indx in range(prediction.shape[-1]):
-                    array_ans += [self.draw_heatmap(prediction[..., indx], self._names_test[i] + f'_{i}')]
+                    array_ans += [draw_heatmap(prediction[..., indx], self._names_test[i] + f'_{i}')]
 
                 dict_summary_to_tb.update(
                     {
@@ -223,7 +228,6 @@ class SegmentatorBinaryTester(SegmentatorTester):
             fp.write(str_to_save_vdice)
         # Compute and save matrix
         # TODO: modify conf matrix
-
         """
         conf_mat_path = os.path.join(save_folder,  f'mat.png')
         print('Computing confusion matrix...')
@@ -236,5 +240,5 @@ class SegmentatorBinaryTester(SegmentatorTester):
         """
         return np.zeros((1024, 1024, 3)).astype(np.uint8), res_dices_dict
 
-GymCollector.update_collector(SEGMENTATION, TESTER, SegmentatorBinaryTester)
 
+GymCollector.update_collector(SEGMENTATION, TESTER, SegmentatorBinaryTester)

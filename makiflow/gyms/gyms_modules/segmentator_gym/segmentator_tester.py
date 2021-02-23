@@ -22,12 +22,12 @@ from makiflow.tools.preprocess import preprocess_input
 from makiflow.metrics import categorical_dice_coeff
 from makiflow.metrics import confusion_mat
 from makiflow.tools.test_visualizer import TestVisualizer
+from makiflow.gyms.gyms_modules.segmentator_gym.utils import draw_heatmap
 from sklearn.metrics import f1_score
 import pandas as pd
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+
 
 
 class SegmentatorTester(TesterBase):
@@ -89,7 +89,7 @@ class SegmentatorTester(TesterBase):
                 self._train_masks_np.append(orig_mask.astype(np.uint8))
                 n_images += 1
 
-            self._names_train.append(SegmentatorTester.TEST_N.format(i))
+            self._names_train.append(SegmentatorTester.TRAIN_N.format(i))
             self.add_image(self._names_train[-1], n_images=n_images)
 
     def _init_test_images(self):
@@ -139,25 +139,6 @@ class SegmentatorTester(TesterBase):
             step=iteration
         )
 
-    def draw_heatmap(self, heatmap, name_heatmap, shift_image=60, dpi=80):
-        h, w = heatmap.shape
-
-        figsize = w / float(dpi), h / float(dpi)
-
-        fig = plt.figure(frameon=False, figsize=figsize, dpi=dpi)
-        ax = fig.add_axes([0, 0, 1, 1])
-        ax.axis('off')
-
-        sns.heatmap(heatmap)
-        fig.canvas.draw()
-
-        data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-        data = np.reshape(data, (h, w, 3))
-
-        plt.close('all')
-
-        return data.astype(np.uint8)
-
     def _get_train_tb_data(self, model, dict_summary_to_tb):
         if self._train_masks_path is not None:
             for i, (single_norm_train, single_train, single_mask_np) in enumerate(
@@ -173,8 +154,8 @@ class SegmentatorTester(TesterBase):
                         self._names_train[i]: np.stack(
                             [
                                 single_train,
-                                self.draw_heatmap(single_mask_np, self._names_train[i] + '_truth'),
-                                self.draw_heatmap(prediction, self._names_train[i])
+                                draw_heatmap(single_mask_np, self._names_train[i] + '_truth'),
+                                draw_heatmap(prediction, self._names_train[i])
                             ]
                         ).astype(np.uint8)
                     }
@@ -191,7 +172,7 @@ class SegmentatorTester(TesterBase):
                 dict_summary_to_tb.update(
                     {
                         self._names_train[i]: np.stack(
-                            [single_train, self.draw_heatmap(prediction, self._names_train[i])]
+                            [single_train, draw_heatmap(prediction, self._names_train[i])]
                         ).astype(np.uint8)
                     }
                 )
@@ -212,8 +193,8 @@ class SegmentatorTester(TesterBase):
                         self._names_test[i]: np.stack(
                             [
                                 single_train,
-                                self.draw_heatmap(single_mask_np, self._names_test[i] + '_truth'),
-                                self.draw_heatmap(prediction_argmax, self._names_test[i])
+                                draw_heatmap(single_mask_np, self._names_test[i] + '_truth'),
+                                draw_heatmap(prediction_argmax, self._names_test[i])
                             ]
                         ).astype(np.uint8)
                     }
@@ -240,27 +221,10 @@ class SegmentatorTester(TesterBase):
                 dict_summary_to_tb.update(
                     {
                         self._names_test[i]: np.stack(
-                            [single_train, self.draw_heatmap(prediction, self._names_test[i])]
+                            [single_train, draw_heatmap(prediction, self._names_test[i])]
                         ).astype(np.uint8)
                     }
                 )
-
-    def __put_text_on_image(self, image, text, shift_image=60):
-        h,w = image.shape[:-1]
-        img = np.ones((h + shift_image, w, 3)) * 255.0
-        img[:h, :w] = image
-
-        cv2.putText(
-            img,
-            text,
-            (shift_image // 4, h + shift_image // 2),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            min(h / self._CENTRAL_SIZE, w / self._CENTRAL_SIZE),
-            (0, 0, 0),
-            1
-        )
-
-        return img.astype(np.uint8)
 
     def _preprocess(self, data, mask_preprocess=False):
         if isinstance(data, str):

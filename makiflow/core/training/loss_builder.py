@@ -218,8 +218,8 @@ class Loss:
             labels = _process_labels(labels, label_smoothing)
             train_confidences = tf.sigmoid(logits)
             # Terms for the positive and negative class components of the loss
-            pos_term = labels * ((1 - train_confidences) ** focal_gamma)
-            neg_term = (1 - labels) * (train_confidences ** focal_gamma)
+            pos_term = labels * ((1.0 - train_confidences) ** focal_gamma)
+            neg_term = (1.0 - labels) * (train_confidences ** focal_gamma)
             # Term involving the log and ReLU
             log_weight = pos_term
             log_weight += neg_term
