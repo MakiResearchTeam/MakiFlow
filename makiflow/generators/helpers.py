@@ -40,7 +40,6 @@ def data_iterator(*args, batch_size=1):
         yield tuple(batches) if len(batches) > 1 else batches[0]
 
     if iterations * batch_size != len(args[0]):
-        print('last pack')
         i = iterations
         to_add = batch_size - len(args[0]) % batch_size
         batches = []
