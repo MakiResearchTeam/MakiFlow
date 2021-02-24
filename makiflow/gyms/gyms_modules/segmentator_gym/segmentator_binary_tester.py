@@ -26,8 +26,14 @@ import numpy as np
 
 
 class SegmentatorBinaryTester(SegmentatorTester):
-    THREASHOLD = 0.5
-    # TODO: add threashold???
+    THREASH_HOLD = 'threash_hold'
+    THREASHOLD_DEFAULT = 0.5
+
+    def _init(self):
+        if self._config.get(SegmentatorBinaryTester.THREASH_HOLD) is None:
+            self._thr_hold = SegmentatorBinaryTester.THREASHOLD_DEFAULT
+        else:
+            self._thr_hold = self._config.get(SegmentatorBinaryTester.THREASH_HOLD)
 
     def _init_train_images(self):
         if not isinstance(self._config[SegmentatorBinaryTester.TRAIN_IMAGE], list):
@@ -99,7 +105,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
             ):
                 # If original masks were provided
                 prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
-                prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
+                prediction = (prediction > self._thr_hold).astype(np.uint8)
                 array_ans = [np.concatenate([single_train, np.zeros_like(single_train).astype(np.uint8)], axis=1) ]
                 for indx in range(single_mask_np.shape[-1]):
                     array_ans += [
@@ -122,7 +128,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 # If there is not original masks
                 # Just vis. input image and predicted mask
                 prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
-                prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
+                prediction = (prediction > self._thr_hold).astype(np.uint8)
                 array_ans = [single_train]
                 for indx in range(prediction.shape[-1]):
                     array_ans += [draw_heatmap(prediction[..., indx], self._names_train[i] + f'_truth_{i}')]
@@ -140,7 +146,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
             ):
                 # If original masks were provided
                 prediction = model.predict(np.stack([single_norm_test] * model.get_batch_size(), axis=0))[0]
-                prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
+                prediction = (prediction > self._thr_hold).astype(np.uint8)
                 all_pred.append(prediction)
                 array_ans = [np.concatenate([single_test, np.zeros_like(single_test).astype(np.uint8)], axis=1) ]
                 for indx in range(single_mask_np.shape[-1]):
@@ -169,7 +175,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
                 # If there is not original masks
                 # Just vis. input image and predicted mask
                 prediction = model.predict(np.stack([single_norm_test] * model.get_batch_size(), axis=0))[0]
-                prediction = (prediction > SegmentatorBinaryTester.THREASHOLD).astype(np.uint8)
+                prediction = (prediction > self._thr_hold).astype(np.uint8)
                 array_ans = [single_test]
                 for indx in range(prediction.shape[-1]):
                     array_ans += [draw_heatmap(prediction[..., indx], self._names_test[i] + f'_{i}')]

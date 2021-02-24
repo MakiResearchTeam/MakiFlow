@@ -45,10 +45,13 @@ def draw_heatmap(heatmap, name_heatmap=None, shift_image=60, dpi=80):
     data = np.reshape(data, (h, w, 3))
 
     plt.close('all')
+    """
     if name_heatmap is None:
         return data.astype(np.uint8, copy=False)
     else:
         return put_text_on_image(data.astype(np.uint8, copy=False), name_heatmap, shift_image=shift_image)
+    """
+    return data.astype(np.uint8, copy=False)
 
 
 def put_text_on_image(image, text, shift_image=60, medium_size=800):
