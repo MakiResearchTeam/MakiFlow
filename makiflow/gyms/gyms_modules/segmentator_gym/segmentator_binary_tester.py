@@ -34,6 +34,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
             self._thr_hold = SegmentatorBinaryTester.THREASHOLD_DEFAULT
         else:
             self._thr_hold = self._config.get(SegmentatorBinaryTester.THREASH_HOLD)
+        super()._init()
 
     def _init_train_images(self):
         if not isinstance(self._config[SegmentatorBinaryTester.TRAIN_IMAGE], list):
