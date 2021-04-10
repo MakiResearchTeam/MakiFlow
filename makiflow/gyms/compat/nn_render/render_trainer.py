@@ -33,7 +33,7 @@ from makiflow.old.models import MASKED_ABS_LOSS
 from makiflow.old.models import MASKED_MSE_LOSS
 from makiflow.old.models import PERCEPTUAL_LOSS
 
-from makiflow.trainers.utils.optimizer_builder import OptimizerBuilder
+from makiflow.gyms.utils.optimizer_builder import OptimizerBuilder
 from makiflow.tools.test_visualizer import TestVisualizer
 
 """

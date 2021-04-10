@@ -15,10 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
+SEGMENTATION = 'segmentation'
+ASSEMBLER = 'assembler'
+TESTER = 'tester'
 
-from .nn_render import RenderTrainer
-from .utils import LearningRateBuilder, OptimizerBuilder
 
-del absolute_import
+class GymCollector:
+    GYM_COLLECTOR = {
+        SEGMENTATION: {
+            ASSEMBLER: {},
+            TESTER: {}
+        }
+    }
+
+    @staticmethod
+    def update_collector(type_train, type_obj, class_obj):
+        GymCollector.GYM_COLLECTOR[type_train][type_obj][class_obj.__name__] = class_obj
 

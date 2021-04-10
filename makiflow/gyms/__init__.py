@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .gen_layers import InputGenLayer, InputGenNumpyGetterLayer
-from .map_methods import *
-from .pathgenerator import *
-from .gen_wrappers import *
+from __future__ import absolute_import
+
+from .gym import Gym
+from .gyms_modules import *
+
+del absolute_import
 

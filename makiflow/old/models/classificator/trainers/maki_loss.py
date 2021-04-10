@@ -22,7 +22,7 @@ import tensorflow as tf
 
 class MakiLossTrainer(ClassificatorTrainer):
     TYPE = 'MakiLossTrainer'
-    GAMMA = 'GAMMA'
+    GAMMA = 'gamma'
     MAKI_LOSS = 'MAKI_LOSS'
 
     def to_dict(self):

@@ -23,6 +23,7 @@ from abc import ABC
 class ClassificatorTrainer(MakiTrainer, ABC):
     WEIGHT_MAP = 'WEIGHT_MAP'
     LABELS = 'LABELS'
+    SMOOTHING_LABELS = 'SMOOTHING_LABELS'
 
     def _init(self):
         super()._init()
@@ -65,3 +66,10 @@ class ClassificatorTrainer(MakiTrainer, ABC):
         return {
             self._labels: 0
         }
+
+    def set_params(self, params):
+        self.set_smoothing_labels(params.get(ClassificatorTrainer.SMOOTHING_LABELS))
+
+    def set_smoothing_labels(self, smoothing_labels):
+        self._smoothing_labels = smoothing_labels
+

@@ -16,28 +16,29 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..core import ClassificatorTrainer
-from makiflow.core import LossFabric, TrainerBuilder
+from makiflow.core import Loss, TrainerBuilder
 import tensorflow as tf
 
 
-class FocalTrainer(ClassificatorTrainer):
-    TYPE = 'FocalTrainer'
+class FocalBinaryTrainer(ClassificatorTrainer):
+    TYPE = 'FocalBinaryTrainer'
     GAMMA = 'gamma'
     NORM_BY_POS = 'norm_by_pos'
 
-    FOCAL_LOSS = 'FOCAL_LOSS'
+    FOCAL_LOSS = 'FOCAL_BINARY_LOSS'
 
     def to_dict(self):
         return {
-            TrainerBuilder.TYPE: FocalTrainer.TYPE,
+            TrainerBuilder.TYPE: FocalBinaryTrainer.TYPE,
             TrainerBuilder.PARAMS: {
-                FocalTrainer.GAMMA: self._focal_gamma
+                FocalBinaryTrainer.GAMMA: self._focal_gamma
             }
         }
 
     def set_params(self, params):
-        self.set_gamma(params[FocalTrainer.GAMMA])
-        self.set_norm_by_pos(params[FocalTrainer.NORM_BY_POS])
+        self.set_gamma(params[FocalBinaryTrainer.GAMMA])
+        self.set_norm_by_pos(params[FocalBinaryTrainer.NORM_BY_POS])
+        super().set_params(params)
 
     def _init(self):
         super()._init()
@@ -68,7 +69,6 @@ class FocalTrainer(ClassificatorTrainer):
     def _build_loss(self):
         logits = super().get_logits()
         labels = super().get_labels()
-        num_classes = super().get_num_classes()
 
         num_positives = None
         if self._normalize_by_positives:
@@ -77,19 +77,19 @@ class FocalTrainer(ClassificatorTrainer):
             axis = list(range(1, positives_dim_n))
             num_positives = tf.reduce_sum(positives, axis=axis)  # [BATCH_SIZE, N_POSITIVES]
 
-        focal_loss = LossFabric.focal_loss(
+        focal_loss = Loss.focal_binary_loss(
             logits=logits,
             labels=labels,
-            num_classes=num_classes,
             num_positives=num_positives,
-            focal_gamma=self._focal_gamma
+            focal_gamma=self._focal_gamma,
+            label_smoothing=self._smoothing_labels
         )
 
         if not self._normalize_by_positives:
             focal_loss = focal_loss / float(super().get_batch_size())
 
-        super().track_loss(focal_loss, FocalTrainer.FOCAL_LOSS)
+        super().track_loss(focal_loss, FocalBinaryTrainer.FOCAL_LOSS)
         return focal_loss
 
 
-TrainerBuilder.register_trainer(FocalTrainer)
+TrainerBuilder.register_trainer(FocalBinaryTrainer)

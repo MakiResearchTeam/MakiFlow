@@ -75,7 +75,7 @@ class TrainGraphCompiler(TensorProvider):
 
     def _init(self):
         """
-        This method must be used by other trainers to create necessary variables.
+        This method must be used by other gyms to create necessary variables.
         The parent's `_init` must be called first.
         """
         # Collect all the layers names since all of them are trainable from
