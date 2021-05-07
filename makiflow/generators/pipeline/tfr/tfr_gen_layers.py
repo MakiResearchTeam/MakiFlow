@@ -145,38 +145,41 @@ class InputGenLayerV2Batched(GenLayer):
         self.block_length = block_length
         self.shuffle = shuffle
         self.buffer_size = buffer_size
-        self.iterator = self.build_iterator(tfr_path_generator, operation_before_batched, map_operation,
-                                            num_parallel_calls)
+        self.iterator = self.build_iterator(
+            tfr_path_generator, operation_before_batched,
+            map_operation, num_parallel_calls
+        )
         super().__init__(
             name=name,
             input_tensor=self.iterator[input_data_type]
         )
 
-    def build_iterator(self, gen: TFRPathGenerator, operation_before_batched, map_operation: TFRMapMethod,
-                       num_parallel_calls):
+    def build_iterator(
+            self, gen: TFRPathGenerator, operation_before_batched,
+            map_operation: TFRMapMethod, num_parallel_calls):
         tf_records = tf.data.Dataset.from_generator(
             gen.next_element,
             output_types={
                 TFRPathGenerator.TFRECORD: tf.string
             }
         )
+
         dataset = tf_records.interleave(
             map_func=lambda x: tf.data.TFRecordDataset(x[TFRPathGenerator.TFRECORD]),
             cycle_length=self.cycle_length,
             block_length=self.block_length,
         )
-
+        
+        if self.shuffle:
+            dataset = dataset.shuffle(buffer_size=self.buffer_size)
         dataset = dataset.map(map_func=operation_before_batched.read_record, num_parallel_calls=num_parallel_calls)
         # Set `drop_remainder` to True since otherwise the batch dimension
         # would be None. Example: [None, 1024, 1024, 3]
         dataset = dataset.batch(self.batch_size, drop_remainder=True)
         dataset = dataset.prefetch(self.prefetch_size)
-
-        if self.shuffle:
-            dataset = dataset.shuffle(buffer_size=self.buffer_size)
-
+        # Apply map methods
         dataset = dataset.map(map_func=map_operation.read_record, num_parallel_calls=num_parallel_calls)
-
+        # Take iterator
         iterator = dataset.make_one_shot_iterator()
         return iterator.get_next()
 
@@ -254,12 +257,13 @@ class InputGenLayerV2(GenLayer):
 
         if self.shuffle:
             dataset = dataset.shuffle(buffer_size=self.buffer_size)
-
+        # Apply map methods
         dataset = dataset.map(map_func=map_operation.read_record, num_parallel_calls=num_parallel_calls)
         # Set `drop_remainder` to True since otherwise the batch dimension
         # would be None. Example: [None, 1024, 1024, 3]
         dataset = dataset.batch(self.batch_size, drop_remainder=True)
         dataset = dataset.prefetch(self.prefetch_size)
+        # Take iterator
         iterator = dataset.make_one_shot_iterator()
         return iterator.get_next()
 
