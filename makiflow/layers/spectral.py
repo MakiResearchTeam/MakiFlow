@@ -104,20 +104,20 @@ class FourierConvLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiLayer.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 X = tf.fft(tf.cast(X, 'complex64'))
                 X = tf.real(X)
                 conv_out = tf.nn.conv2d(
                     X, self.W,
                     strides=[1, self.stride, self.stride, 1],
                     padding=self.padding,
-                    name=self.get_name()
+                    name=self.name()
                 )
                 conv_out = tf.ifft(tf.cast(conv_out, 'complex64'))
                 conv_out = tf.cast(tf.real(conv_out), 'float32')
                 if self.f is None:
                     return conv_out
-                return self.f(conv_out, name=self.get_name() + FourierConvLayer.ACTIVATION_PREFIX)
+                return self.f(conv_out, name=self.name() + FourierConvLayer.ACTIVATION_PREFIX)
 
     def training_forward(self, X):
         return self.forward(X, computation_mode=MakiLayer.TRAINING_MODE)
@@ -148,7 +148,7 @@ class FourierConvLayer(MakiLayer):
         return {
             MakiLayer.FIELD_TYPE: FourierConvLayer.TYPE,
             MakiLayer.PARAMS: {
-                MakiLayer.NAME: self.get_name(),
+                MakiLayer.NAME: self.name(),
                 FourierConvLayer.SHAPE: list(self.shape),
                 FourierConvLayer.STRIDE: self.stride,
                 FourierConvLayer.PADDING: self.padding,

@@ -59,7 +59,7 @@ class WeightedFocalTrainer(ClassificatorTrainer):
         num_classes = super().get_num_classes()
 
         positives = tf.not_equal(labels, 0)                     # [BATCH_SIZE, ...]
-        positives_dim_n = len(positives.get_shape())
+        positives_dim_n = len(positives.shape())
         axis = list(range(1, positives_dim_n))
         num_positives = tf.reduce_sum(positives, axis=axis)     # [BATCH_SIZE, N_POSITIVES]
 

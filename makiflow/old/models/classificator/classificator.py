@@ -76,13 +76,13 @@ class Classificator(ClassificatorInterface):
         self._init_inference()
 
     def _init_inference(self):
-        self._batch_sz = self._input.get_shape()[0]
-        self._tf_input = self._input.get_data_tensor()
-        self._tf_logits = self._output.get_data_tensor()
+        self._batch_sz = self._input.shape()[0]
+        self._tf_input = self._input.tensor()
+        self._tf_logits = self._output.tensor()
         self._logits_out = self._activation_on_logits(self._tf_logits)
 
     def get_batch_size(self):
-        return self._input.get_shape()[0]
+        return self._input.shape()[0]
 
     def get_logits(self):
         return self._output
@@ -97,8 +97,8 @@ class Classificator(ClassificatorInterface):
 
     def _get_model_info(self):
         return {
-            Classificator.INPUT: self._input.get_name(),
-            Classificator.OUTPUT: self._output.get_name(),
+            Classificator.INPUT: self._input.name(),
+            Classificator.OUTPUT: self._output.name(),
             Classificator.NAME: self.name
         }
 

@@ -47,12 +47,12 @@ def classificator(input_shape=[32, 32, 3], n_classes=10, train_batch_size=None):
     x = ConvLayer(kw=3, kh=3, in_f=3, out_f=32, stride=1, name='conv1')(in_x)
 
     conv_id = 2
-    while x.get_shape()[1] > 3:
+    while x.shape()[1] > 3:
         x = ConvLayer(kw=3, kh=3, in_f=32, out_f=32, stride=2, name=f'conv{conv_id}')(x)
         conv_id += 1
 
     x = FlattenLayer('flatten')(x)
-    out_d = x.get_shape()[-1]
+    out_d = x.shape()[-1]
     out_x = DenseLayer(in_d=out_d, out_d=n_classes, activation=None, name='class_head')(x)
     model = Classificator(in_x=in_x, out_x=out_x)
 

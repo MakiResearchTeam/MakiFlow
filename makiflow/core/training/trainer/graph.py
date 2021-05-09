@@ -23,34 +23,24 @@ from ..core import TensorProvider
 class GraphCompiler(TensorProvider):
     # This entity is responsible for building the training graph and
     # the final loss
-    def __init__(self, model: MakiCore, train_inputs: list):
+    def __init__(self, graph_tensors: dict, inputs: list):
         """
         Provides basic tools for the training setup. Builds final loss tensor and the training graph.
         Parameters
         ----------
         model : MakiCore
             The model's object.
-        train_inputs : list
+        inputs : list
             List of the input training tensors. Their names must be the same as their inference counterparts!
         """
-        self._model = model
-        self._graph_tensors = model.get_graph_tensors()
-        self._train_inputs_list = train_inputs
+        self._graph_tensors = graph_tensors
+        self._train_inputs_list = inputs
         self._train_inputs = {}
-        for train_input in train_inputs:
+        for train_input in inputs:
             self._train_inputs.update(train_input.get_self_pair())
 
         self._is_compiled = False
         self._init()
-
-    def get_train_inputs_list(self):
-        return self._train_inputs_list.copy()
-
-    def get_session(self):
-        return self._model.get_session()
-
-    def get_model(self):
-        return self._model
 
     def get_batch_size(self):
         """
@@ -112,33 +102,13 @@ class GraphCompiler(TensorProvider):
     def _collect_train_params(self):
         self._trainable_vars.clear()
         for layer_name in self._trainable_layers:
-            layer = self._graph_tensors[layer_name].parent_layer
+            layer = self._graph_tensors[layer_name].parent_layer()
             self._trainable_vars += layer.get_params()
 
     def get_trainable_params(self):
         return self._trainable_vars
 
-    # noinspection PyAttributeOutsideInit
-    def add_loss(self, loss):
-        """
-        Adds an external loss that is defined outside the model or trainer.
-        Can be used for such things as perceptual loss.
-        Parameters
-        ----------
-        loss : tf.Tensor
-            A scalar that will be added to all the other losses used to train the model.
-        """
-        # noinspection PyTypeChecker
-        self._external_loss = loss
-        self._uses_external_loss = True
-
-    def _build_final_loss(self, training_loss):
-        if self._uses_external_loss:
-            training_loss += self._external_loss
-
-        return training_loss
-
-    def compile_training_graph(self):
+    def compile_training_graph(self, input_mapping: dict, outputs: list):
         # The algorithm recursively goes down the graph until it finds the input layer
         # and then passes its tensor through all the layers it has encountered so far.
 
@@ -150,25 +120,25 @@ class GraphCompiler(TensorProvider):
 
         def create_tensor(maki_tensor: MakiTensor):
             # If the parent layer has been used, the required tensor is already constructed.
-            layer = maki_tensor.parent_layer
+            layer = maki_tensor.parent_layer()
 
             # Check if we haven't used this layer before.
             # If haven't, add an empty dictionary.
-            if layer_name2output_tensors.get(layer.name) is None:
-                layer_name2output_tensors[layer.name] = dict()
+            if layer_name2output_tensors.get(layer.name()) is None:
+                layer_name2output_tensors[layer.name()] = dict()
 
-            outputs = layer_name2output_tensors.get(layer.name)
+            outputs = layer_name2output_tensors.get(layer.name())
 
             # Check if the tensor has already been created.
-            if outputs.get(maki_tensor.name) is not None:
-                return outputs.get(maki_tensor.name)
+            if outputs.get(maki_tensor.name()) is not None:
+                return outputs.get(maki_tensor.name())
 
             # If we are here, then the tensor hasn't been created.
 
             # Check if we at the beginning of the computational graph, i.e. InputLayer
             if len(maki_tensor.parent_tensor_names()) == 0:
                 # Replace an inference input tensor with its training counterpart
-                name = maki_tensor.name
+                name = maki_tensor.name()
                 training_makitensor = self._train_inputs.get(name)
                 if training_makitensor is None:
                     raise KeyError(f'There is no training input tensor with name {name}. The names of the training'
@@ -176,7 +146,7 @@ class GraphCompiler(TensorProvider):
 
                 X = training_makitensor.get_data_tensor()
                 outputs.update(
-                    {maki_tensor.name: X}
+                    {maki_tensor.name(): X}
                 )
                 self._traingraph_tensors.update(
                     {name: X}
@@ -193,7 +163,7 @@ class GraphCompiler(TensorProvider):
             if len(parent_tensors) == 1:
                 parent_tensors = parent_tensors[0]
 
-            if layer.name in self._trainable_layers:
+            if layer.name() in self._trainable_layers:
                 X = layer.training_forward(
                     parent_tensors
                 )
@@ -219,7 +189,7 @@ class GraphCompiler(TensorProvider):
                 outputs.update({x_name: _x})
                 self._traingraph_tensors[x_name] = _x
 
-            return outputs.get(maki_tensor.name)
+            return outputs.get(maki_tensor.name())
 
         for output in self._model.get_outputs():
             # Even though the method does return some tensors, they are not being collected here.

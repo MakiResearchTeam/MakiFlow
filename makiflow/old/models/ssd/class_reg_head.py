@@ -77,15 +77,15 @@ class ClassRegHead:
 
     def _check_dimensionality(self):
         # Height and width of the feature sources must be the same
-        _, CH, CW, _ = self._class_f.get_shape()
-        _, RH, RW, _ = self._reg_f.get_shape()
+        _, CH, CW, _ = self._class_f.shape()
+        _, RH, RW, _ = self._reg_f.shape()
         msg = 'Dimensionality of {0} and {1} are not the same. Dim of {0} is {2}, dim of {1} is {3}'
         assert CH == RH and CW == RW, msg.format('class_f', 'reg_f', (CH, CW), (RH, RW))
 
     def _setup_heads(self):
         # SETUP CLASSIFICATION HEAD
         # Class for each point + class which indicates presence of a human in the bounding box
-        B, H, W, C = self._class_f.get_shape()
+        B, H, W, C = self._class_f.shape()
         kw, kh = self.class_kernel
         self._classification_head = ConvLayer(
             kw=kw, kh=kh, in_f=C, out_f=self._n_classes,
@@ -95,7 +95,7 @@ class ClassRegHead:
 
         # SETUP REGRESSION HEAD
         n_box_types = len(self._default_boxes)
-        B, H, W, C = self._reg_f.get_shape()
+        B, H, W, C = self._reg_f.shape()
         kw, kh = self.reg_kernel
         self._regression_head = ConvLayer(
             kw=kw, kh=kh, in_f=C, out_f=n_box_types * 4,     # regression of x, y, w, h simultaneously
@@ -109,7 +109,7 @@ class ClassRegHead:
         Example: [confidences, offsets]
         """
         self._classification_logits = self._classification_head(self._class_f)
-        _, H, W, C = self._classification_logits.get_shape()
+        _, H, W, C = self._classification_logits.shape()
         self._flat_classification_logits = ReshapeLayer(new_shape=[H * W, C], name=f'{self.name}/flat_class')(
             self._classification_logits
         )
@@ -140,8 +140,8 @@ class ClassRegHead:
             Points coordinates with applied offsets.
         """
         box_types = self._default_boxes
-        B, H, W, C = self._points_offsets.get_shape()
-        B_, H_, W_, C_ = bbox_offsets.get_shape()
+        B, H, W, C = self._points_offsets.shape()
+        B_, H_, W_, C_ = bbox_offsets.shape()
         assert (B, H, W, C) == (B_, H_, W_, C_), f'{self.name} / Original and new shapes must be the same.' \
                                                  f' Original={(B, H, W, C)}, new={(B_, H_, W_, C_)}'
 
@@ -166,7 +166,7 @@ class ClassRegHead:
             xy_wh_maps += [xy_wh_map_]
 
         xy_wh_maps = np.concatenate(xy_wh_maps, axis=-1)
-        bbox_offsets_tensor = bbox_offsets.get_data_tensor()
+        bbox_offsets_tensor = bbox_offsets.tensor()
         return bbox_offsets_tensor + xy_wh_maps
 
     def get_name(self):

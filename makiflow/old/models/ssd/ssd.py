@@ -52,8 +52,8 @@ class SSDModel(MakiModel):
             # `confs` shape is [batch_sz, fmap_square, num_classes]
             # `offs` shape is [batch_sz, fmap_square, 4]
             confs, offs = dc.get_conf_offsets()
-            graph_tensors.update(confs.get_previous_tensors())
-            graph_tensors.update(offs.get_previous_tensors())
+            graph_tensors.update(confs.previous_tensors())
+            graph_tensors.update(offs.previous_tensors())
             graph_tensors.update(confs.get_self_pair())
             graph_tensors.update(offs.get_self_pair())
 
@@ -171,7 +171,7 @@ class SSDModel(MakiModel):
     def _get_model_info(self):
         model_dict = {
             'name': self._name,
-            'input_s': self._inputs[0].get_name(),
+            'input_s': self._inputs[0].name(),
             'reg_type': self.regression_type,
             'dcs': []
         }
@@ -195,7 +195,7 @@ class SSDModel(MakiModel):
         concatenate = ConcatLayer(axis=1, name='InferencePredictionConcat' + self._name)
         self.confidences_ish = concatenate(confidences)
         self.offsets = concatenate(offsets)
-        self.offsets_tensor = self.offsets.get_data_tensor()
+        self.offsets_tensor = self.offsets.tensor()
         # Dummy offset regression
         if self.regression_type == OffsetRegression.DUMMY:
             self.predicted_boxes = self.offsets_tensor + self.dboxes_xy
@@ -229,7 +229,7 @@ class SSDModel(MakiModel):
 
         classificator = ActivationLayer(name='Classificator' + self._name, activation=tf.nn.softmax)
         self.confidences = classificator(self.confidences_ish)
-        confidences_tensor = self.confidences.get_data_tensor()
+        confidences_tensor = self.confidences.tensor()
 
         self.predictions = [confidences_tensor, self.predicted_boxes]
 

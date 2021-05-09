@@ -61,7 +61,7 @@ class SSPModel(SSPInterface):
         self._setup_inference()
 
     def get_image_size(self):
-        _, h, w, _ = self._in_x.get_shape()
+        _, h, w, _ = self._in_x.shape()
         return w, h
 
     def _setup_inference(self):
@@ -70,12 +70,12 @@ class SSPModel(SSPInterface):
         human_indicators_logits = []
         regressed_points = []
         for head in self._heads:
-            point_indicators_logits += [head.get_point_indicators().get_data_tensor()]
-            human_indicators_logits += [head.get_human_indicators().get_data_tensor()]
-            regressed_points += [head.get_coords().get_data_tensor()]
+            point_indicators_logits += [head.get_point_indicators().tensor()]
+            human_indicators_logits += [head.get_human_indicators().tensor()]
+            regressed_points += [head.get_coords().tensor()]
 
         def flatten(x):
-            b, h, w, c = x.get_shape().as_list()
+            b, h, w, c = x.shape().as_list()
             return tf.reshape(x, shape=[b, h * w, c])
 
         point_indicators_logits = list(map(flatten, point_indicators_logits))
@@ -100,7 +100,7 @@ class SSPModel(SSPInterface):
         self._human_indicators_logits = tf.concat(human_indicators_logits, axis=1)
         regressed_points = tf.concat(regressed_points, axis=1)
 
-        b, n, c = regressed_points.get_shape().as_list()
+        b, n, c = regressed_points.shape().as_list()
         w, h = self.get_image_size()
         regressed_points = tf.reshape(regressed_points, shape=[b, n, c // 2, 2])
         # Scale the grid: [-1, 1] -> [-w/2, w/2]
@@ -116,7 +116,7 @@ class SSPModel(SSPInterface):
         assert (self._session is not None)
         predictions = self._session.run(
             [self._regressed_points, self._point_indicators, self._human_indicators],
-            feed_dict={self._in_x.get_data_tensor(): X}
+            feed_dict={self._in_x.tensor(): X}
         )
         if raw_data:
             return predictions
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     coords = SkeletonEmbeddingLayer(embedding_dim=None, name='TestEmbedding', custom_embedding=points)(in_x)
 
     print('Coords MakiTensor', coords)
-    print('Coords TfTensor', coords.get_data_tensor())
+    print('Coords TfTensor', coords.tensor())
 
     point_indicators = InputLayer(input_shape=[1, 3, 3, 100], name='point_indicators')
     human_indicators = InputLayer(input_shape=[1, 3, 3, 1], name='human_indicators')
@@ -169,9 +169,9 @@ if __name__ == '__main__':
     coords, _, _ = model._session.run(
         [model._regressed_points, model._point_indicators, model._human_indicators],
         feed_dict={
-            model._in_x.get_data_tensor(): np.zeros(shape=[1, 3, 3, 200], dtype='float32'),
-            point_indicators.get_data_tensor(): np.ones(shape=[1, 3, 3, 100], dtype='float32'),
-            human_indicators.get_data_tensor(): np.ones(shape=[1, 3, 3, 1], dtype='float32')
+            model._in_x.tensor(): np.zeros(shape=[1, 3, 3, 200], dtype='float32'),
+            point_indicators.tensor(): np.ones(shape=[1, 3, 3, 100], dtype='float32'),
+            human_indicators.tensor(): np.ones(shape=[1, 3, 3, 1], dtype='float32')
         }
     )
 

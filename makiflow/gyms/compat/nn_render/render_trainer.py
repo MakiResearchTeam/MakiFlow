@@ -338,7 +338,7 @@ class RenderTrainer:
 
         # Plot distribution of prediction of the Neural Network at the certain layers
         for name_layer in exp_params[ExpField.PLOT_VALUE_LAYERS]:
-            tensor_of_layer = self._test_model.get_node(name_layer).get_data_tensor()
+            tensor_of_layer = self._test_model.get_node(name_layer).tensor()
             layer_values.append(self._sess.run(tensor_of_layer,
                                          feed_dict={self._test_model._input_data_tensors[0]: uv})[0])
 
@@ -347,7 +347,7 @@ class RenderTrainer:
         )
 
         # Plot distribution of weights of the texture
-        texture = self._test_model._sampled_texture.get_parent_layer()._texture[0]
+        texture = self._test_model._sampled_texture.parent_layer()._texture[0]
         texture = self._sess.run(texture).astype(np.float32)
 
         values_texture = []

@@ -108,7 +108,7 @@ class SkeletonEmbeddingLayer(MakiLayer):
         # Do not add the name_scope since in future it won't be used anyway
         _, h, w, c = x.get_shape().as_list()
         assert c == self._embedding_dim * 2, d_msg(
-            self.get_name(),
+            self.name(),
             'The depth of the input tensor must twice as large as the embedding dimensionality. '
             f'Received input tensor channels={c}, embedding dimensionality*2={self._embedding_dim * 2}'
         )
@@ -202,14 +202,14 @@ if __name__ == '__main__':
     coords_ish = SkeletonEmbeddingLayer(embedding_dim=None, name='TestEmbedding', custom_embedding=points)(in_x)
 
     print('Coords MakiTensor', coords_ish)
-    print('Coords TfTensor', coords_ish.get_data_tensor())
+    print('Coords TfTensor', coords_ish.tensor())
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
     coords = sess.run(
-        coords_ish.get_data_tensor(),
+        coords_ish.tensor(),
         feed_dict={
-            in_x.get_data_tensor(): np.zeros(shape=[1, 3, 3, 200], dtype='float32')
+            in_x.tensor(): np.zeros(shape=[1, 3, 3, 200], dtype='float32')
         }
     )
 

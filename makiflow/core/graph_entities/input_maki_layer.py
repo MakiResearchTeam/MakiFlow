@@ -79,5 +79,5 @@ class InputMakiLayer(MakiTensor, ABC):
         """
         return self._regularize_params
 
-    def get_name(self):
+    def name(self):
         return self._name

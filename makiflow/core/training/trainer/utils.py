@@ -67,7 +67,7 @@ def pack_data(feed_dict_config, data: list):
         # If the `t` is a tf.Tensor
         data_tensor = t
         if isinstance(t, MakiTensor):
-            data_tensor = t.get_data_tensor()
+            data_tensor = t.tensor()
         feed_dict[data_tensor] = data[i]
     return feed_dict
 

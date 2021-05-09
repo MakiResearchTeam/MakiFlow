@@ -68,7 +68,7 @@ class L2RegularizationModule(L1RegularizationModule, ABC):
         for layer_name in self._l2_regularized_layers:
             decay = self._l2_regularized_layers[layer_name]
             if decay is not None:
-                layer = self._graph_tensors[layer_name].get_parent_layer()
+                layer = self._graph_tensors[layer_name].parent_layer()
                 params = layer.get_params_regularize()
                 for param in params:
                     self._l2_reg_loss += tf.nn.l2_loss(param) * tf.constant(decay)

@@ -16,11 +16,11 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import tensorflow as tf
-from .train_graph_compiler import TrainGraphCompiler
+from .train_graph_compiler import GraphCompiler
 from abc import ABC
 
 
-class L1RegularizationModule(TrainGraphCompiler, ABC):
+class L1RegularizationModule(GraphCompiler, ABC):
     # L1 REGULARIZATION
     def _init(self):
         super()._init()
@@ -69,7 +69,7 @@ class L1RegularizationModule(TrainGraphCompiler, ABC):
         for layer_name in self._l1_regularized_layers:
             decay = self._l1_regularized_layers[layer_name]
             if decay is not None:
-                layer = self._graph_tensors[layer_name].get_parent_layer()
+                layer = self._graph_tensors[layer_name].parent_layer()
                 params = layer.get_params_regularize()
                 for param in params:
                     self._l1_reg_loss += tf.reduce_sum(tf.abs(param)) * tf.constant(decay)

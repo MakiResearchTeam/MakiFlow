@@ -32,7 +32,7 @@ class CETrainer(SSPTrainer):
             coords_loss = LossFabric.mse_loss(
                 labels=label_coords, predictions=coords, raw_tensor=True
             )
-            b, h, w, c = coords_loss.get_shape().as_list()
+            b, h, w, c = coords_loss.shape().as_list()
             coords_loss = tf.reshape(coords_loss, shape=[b, h, w, c // 2, 2])
             # Mask out the loss of the absent points
             coords_loss = coords_loss * tf.expand_dims(label_point_indicators, axis=-1)

@@ -24,7 +24,7 @@ N_POINTS = 15
 
 
 def make_head(x, ind):
-    _, _, _, c = x.get_shape()
+    _, _, _, c = x.shape()
     offsets = ConvLayer(
         kw=1, kh=1, in_f=c, out_f=N_POINTS*2, activation=None, name=f'offsets_{ind}'
     )(x)

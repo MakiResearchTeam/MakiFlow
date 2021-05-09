@@ -50,7 +50,7 @@ class NeuralRenderBasis(MakiCore):
             Name of this model
         """
         self.name = str(name)
-        graph_tensors = output_x.get_previous_tensors()
+        graph_tensors = output_x.previous_tensors()
         graph_tensors.update(output_x.get_self_pair())
         super().__init__(outputs=[output_x], inputs=[input_x])
         self._sampled_texture = sampled_texture
@@ -82,8 +82,8 @@ class NeuralRenderBasis(MakiCore):
     def _get_model_info(self):
         return {
             NeuralRenderBasis.NAME: self.name,
-            NeuralRenderBasis.INPUT_MT: self._inputs[0].get_name(),
-            NeuralRenderBasis.OUTPUT_MT: self._outputs[0].get_name()
+            NeuralRenderBasis.INPUT_MT: self._inputs[0].name(),
+            NeuralRenderBasis.OUTPUT_MT: self._outputs[0].name()
         }
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -93,7 +93,7 @@ class NeuralRenderBasis(MakiCore):
         if not self._set_for_training:
             super()._setup_for_training()
         # VARIABLES PREPARATION
-        out_shape = self._outputs[0].get_shape()
+        out_shape = self._outputs[0].shape()
         self._out_h = out_shape[1]
         self._out_w = out_shape[2]
         self._batch_sz = out_shape[0]
@@ -136,7 +136,7 @@ class NeuralRenderBasis(MakiCore):
         self._texture_loss_scale = scale
 
     def _build_texture_loss(self):
-        texture_tensor = self._sampled_texture.get_data_tensor()
+        texture_tensor = self._sampled_texture.tensor()
         # [batch_size, height, width, channels]
         sampled_rgb_channels = texture_tensor[:, :, :, :3]
         diff = tf.abs(sampled_rgb_channels - self._images)

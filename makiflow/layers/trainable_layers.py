@@ -108,18 +108,18 @@ class ConvLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 conv_out = tf.nn.conv2d(
                     X, self.W,
                     strides=[1, self.stride, self.stride, 1],
                     padding=self.padding,
-                    name=self.get_name()
+                    name=self.name()
                 )
                 if self.use_bias:
-                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.get_name() + ConvLayer.BIAS)
+                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.name() + ConvLayer.BIAS)
                 if self.f is None:
                     return conv_out
-                return self.f(conv_out, name=self.get_name() + ConvLayer.ACTIVATION_PREFIX)
+                return self.f(conv_out, name=self.name() + ConvLayer.ACTIVATION_PREFIX)
 
     def training_forward(self, X):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -150,7 +150,7 @@ class ConvLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ConvLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 ConvLayer.SHAPE: list(self.shape),
                 ConvLayer.STRIDE: self.stride,
                 ConvLayer.PADDING: self.padding,
@@ -250,8 +250,8 @@ class UpConvLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
-                out_shape = X.get_shape().as_list()
+            with tf.name_scope(self.name()):
+                out_shape = X.shape().as_list()
                 out_shape[1] *= self.size[0]
                 out_shape[2] *= self.size[1]
                 # out_f
@@ -259,14 +259,14 @@ class UpConvLayer(MakiLayer):
                 conv_out = tf.nn.conv2d_transpose(
                     X, self.W,
                     output_shape=out_shape, strides=self.strides, padding=self.padding,
-                    name=self.get_name()
+                    name=self.name()
                 )
                 if self.use_bias:
-                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.get_name() + UpConvLayer.BIAS)
+                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.name() + UpConvLayer.BIAS)
 
                 if self.f is None:
                     return conv_out
-                return self.f(conv_out, name=self.get_name() + UpConvLayer.ACTIVATION_PREFIX)
+                return self.f(conv_out, name=self.name() + UpConvLayer.ACTIVATION_PREFIX)
 
     def training_forward(self, X):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -297,7 +297,7 @@ class UpConvLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: UpConvLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 UpConvLayer.SHAPE: list(self.shape),
                 UpConvLayer.SIZE: self.size,
                 UpConvLayer.PADDING: self.padding,
@@ -362,8 +362,8 @@ class BiasLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
-                return tf.nn.bias_add(X, self.b, name=self.get_name())
+            with tf.name_scope(self.name()):
+                return tf.nn.bias_add(X, self.b, name=self.name())
 
     def training_forward(self, X):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -379,7 +379,7 @@ class BiasLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: BiasLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 BiasLayer.D: self.D,
                 BiasLayer.TRAINABLE: self.trainable,
             }
@@ -472,20 +472,20 @@ class DepthWiseConvLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 conv_out = tf.nn.depthwise_conv2d(
                     input=X,
                     filter=self.W,
                     strides=[1, self.stride, self.stride, 1],
                     padding=self.padding,
                     rate=self.rate,
-                    name=self.get_name()
+                    name=self.name()
                 )
                 if self.use_bias:
-                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.get_name() + DepthWiseConvLayer.BIAS)
+                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.name() + DepthWiseConvLayer.BIAS)
                 if self.f is None:
                     return conv_out
-                return self.f(conv_out, name=self.get_name() + DepthWiseConvLayer.ACTIVATION_PREFIX)
+                return self.f(conv_out, name=self.name() + DepthWiseConvLayer.ACTIVATION_PREFIX)
 
     def training_forward(self, X):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -518,7 +518,7 @@ class DepthWiseConvLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: DepthWiseConvLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 DepthWiseConvLayer.SHAPE: list(self.shape),
                 DepthWiseConvLayer.STRIDE: self.stride,
                 DepthWiseConvLayer.PADDING: self.padding,
@@ -628,20 +628,20 @@ class SeparableConvLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 conv_out = tf.nn.separable_conv2d(
                     input=X,
                     depthwise_filter=self.W_dw,
                     pointwise_filter=self.W_pw,
                     strides=[1, self.stride, self.stride, 1],
                     padding=self.padding,
-                    name=self.get_name()
+                    name=self.name()
                 )
                 if self.use_bias:
-                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.get_name() + SeparableConvLayer.BIAS)
+                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.name() + SeparableConvLayer.BIAS)
                 if self.f is None:
                     return conv_out
-                return self.f(conv_out, name=self.get_name() + SeparableConvLayer.ACTIVATION_PREFIX)
+                return self.f(conv_out, name=self.name() + SeparableConvLayer.ACTIVATION_PREFIX)
 
     def training_forward(self, X):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -677,7 +677,7 @@ class SeparableConvLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: SeparableConvLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 SeparableConvLayer.DW_SHAPE: list(self.dw_shape),
                 SeparableConvLayer.OUT_F: self.out_f,
                 SeparableConvLayer.STRIDE: self.stride,
@@ -758,13 +758,13 @@ class DenseLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
-                out = tf.matmul(X, self.W, name=self.get_name())
+            with tf.name_scope(self.name()):
+                out = tf.matmul(X, self.W, name=self.name())
                 if self.use_bias:
-                    out = tf.nn.bias_add(out, self.b, name=self.get_name() + DenseLayer.BIAS)
+                    out = tf.nn.bias_add(out, self.b, name=self.name() + DenseLayer.BIAS)
                 if self.f is None:
                     return out
-                return self.f(out, name=self.get_name() + DenseLayer.ACTIVATION_PREFIX)
+                return self.f(out, name=self.name() + DenseLayer.ACTIVATION_PREFIX)
 
     def training_forward(self, X):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -790,7 +790,7 @@ class DenseLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: DenseLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 DenseLayer.INPUT_SHAPE: self.input_shape,
                 DenseLayer.OUTPUT_SHAPE: self.output_shape,
                 DenseLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f),
@@ -886,17 +886,17 @@ class AtrousConvLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 conv_out = tf.nn.atrous_conv2d(X, self.W,
                                                self.rate,
                                                self.padding,
-                                               name=self.get_name()
+                                               name=self.name()
                 )
                 if self.use_bias:
-                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.get_name() + AtrousConvLayer.BIAS)
+                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.name() + AtrousConvLayer.BIAS)
                 if self.f is None:
                     return conv_out
-                return self.f(conv_out, name=self.get_name() + AtrousConvLayer.ACTIVATION_PREFIX)
+                return self.f(conv_out, name=self.name() + AtrousConvLayer.ACTIVATION_PREFIX)
 
     def training_forward(self, x):
         return self.forward(x, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -929,7 +929,7 @@ class AtrousConvLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: AtrousConvLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 AtrousConvLayer.SHAPE: list(self.shape),
                 AtrousConvLayer.RATE: self.rate,
                 AtrousConvLayer.PADDING: self.padding,
@@ -987,7 +987,7 @@ class BatchNormLayer(BatchNormBaseLayer):
         if self.running_variance is None:
             self.running_variance = np.ones(self.D)
 
-        name = str(self.get_name())
+        name = str(self.name())
 
         self.name_mean = BatchNormLayer.NAME_MEAN.format(self.D, name)
         self.name_var = BatchNormLayer.NAME_VAR.format(self.D, name)
@@ -1001,7 +1001,7 @@ class BatchNormLayer(BatchNormBaseLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 if self._track_running_stats:
                     return tf.nn.batch_normalization(
                         X,
@@ -1010,7 +1010,7 @@ class BatchNormLayer(BatchNormBaseLayer):
                         self.beta,
                         self.gamma,
                         self.eps,
-                        name=self.get_name()
+                        name=self.name()
                     )
                 else:
                     # These if statements check if we do batchnorm for convolution or dense
@@ -1030,7 +1030,7 @@ class BatchNormLayer(BatchNormBaseLayer):
                         self.beta,
                         self.gamma,
                         self.eps,
-                        name=self.get_name()
+                        name=self.name()
                     )
 
     def training_forward(self, X):
@@ -1038,7 +1038,7 @@ class BatchNormLayer(BatchNormBaseLayer):
             return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 # These if statements check if we do batchnorm for convolution or dense
                 if len(X.shape) == 4:
                     # conv
@@ -1065,7 +1065,7 @@ class BatchNormLayer(BatchNormBaseLayer):
                         self.beta,
                         self.gamma,
                         self.eps,
-                        name=self.get_name()
+                        name=self.name()
                     )
 
                 return out
@@ -1088,7 +1088,7 @@ class BatchNormLayer(BatchNormBaseLayer):
         return {
             MakiRestorable.FIELD_TYPE: BatchNormLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 BatchNormLayer.D: self.D,
                 BatchNormLayer.DECAY: self.decay,
                 BatchNormLayer.EPS: self.eps,
@@ -1166,7 +1166,7 @@ class GroupNormLayer(BatchNormBaseLayer):
                 # Dense
                 self.running_variance = np.ones((N, self.G, 1))
 
-        name = str(self.get_name())
+        name = str(self.name())
 
         self.name_mean = GroupNormLayer.NAME_MEAN.format(N, self.G, name)
         self.name_var = GroupNormLayer.NAME_VAR.format(N, self.G, name)
@@ -1180,7 +1180,7 @@ class GroupNormLayer(BatchNormBaseLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 # These if statements check if we do batchnorm for convolution or dense
                 if len(X.shape) == 4:
                     # conv
@@ -1219,7 +1219,7 @@ class GroupNormLayer(BatchNormBaseLayer):
             return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 # These if statements check if we do batchnorm for convolution or dense
                 if len(X.shape) == 4:
                     # conv
@@ -1282,7 +1282,7 @@ class GroupNormLayer(BatchNormBaseLayer):
         return {
             MakiRestorable.FIELD_TYPE: GroupNormLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 GroupNormLayer.D: self.D,
                 GroupNormLayer.DECAY: self.decay,
                 GroupNormLayer.EPS: self.eps,
@@ -1355,7 +1355,7 @@ class NormalizationLayer(BatchNormBaseLayer):
                 # Dense
                 self.running_variance = np.ones((N, 1))
 
-        name = str(self.get_name())
+        name = str(self.name())
         self.name_mean = NormalizationLayer.NAME_MEAN.format(N, name)
         self.name_var = NormalizationLayer.NAME_VAR.format(N, name)
 
@@ -1368,7 +1368,7 @@ class NormalizationLayer(BatchNormBaseLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 if self._track_running_stats:
                     return tf.nn.batch_normalization(
                         X,
@@ -1377,7 +1377,7 @@ class NormalizationLayer(BatchNormBaseLayer):
                         self.beta,
                         self.gamma,
                         self.eps,
-                        name=self.get_name()
+                        name=self.name()
                     )
                 else:
                     # These if statements check if we do batchnorm for convolution or dense
@@ -1398,7 +1398,7 @@ class NormalizationLayer(BatchNormBaseLayer):
                         self.beta,
                         self.gamma,
                         self.eps,
-                        name=self.get_name()
+                        name=self.name()
                     )
 
     def training_forward(self, X):
@@ -1406,7 +1406,7 @@ class NormalizationLayer(BatchNormBaseLayer):
             return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 # These if statements check if we do batchnorm for convolution or dense
                 if len(X.shape) == 4:
                     # conv
@@ -1435,7 +1435,7 @@ class NormalizationLayer(BatchNormBaseLayer):
                         self.beta,
                         self.gamma,
                         self.eps,
-                        name=self.get_name()
+                        name=self.name()
                     )
 
                 return X
@@ -1460,7 +1460,7 @@ class NormalizationLayer(BatchNormBaseLayer):
         return {
             MakiRestorable.FIELD_TYPE: NormalizationLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 NormalizationLayer.D: self.D,
                 NormalizationLayer.DECAY: self.decay,
                 NormalizationLayer.EPS: self.eps,
@@ -1535,7 +1535,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
                 # Dense
                 self.running_variance = np.ones((N, shape[-1]))
 
-        name = str(self.get_name())
+        name = str(self.name())
         self.name_mean = InstanceNormLayer.NAME_MEAN.format(N, shape[-1], name)
         self.name_var = InstanceNormLayer.NAME_VAR.format(N, shape[-1], name)
 
@@ -1548,7 +1548,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 if self._track_running_stats:
                     return tf.nn.batch_normalization(
                         X,
@@ -1557,7 +1557,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
                         self.beta,
                         self.gamma,
                         self.eps,
-                        name=self.get_name()
+                        name=self.name()
                     )
                 else:
                     # These if statements check if we do batchnorm for convolution or dense
@@ -1578,7 +1578,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
                         self.beta,
                         self.gamma,
                         self.eps,
-                        name=self.get_name()
+                        name=self.name()
                     )
 
     def training_forward(self, X):
@@ -1586,7 +1586,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
             return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
 
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 # These if statements check if we do batchnorm for convolution or dense
                 if len(X.shape) == 4:
                     # conv
@@ -1594,7 +1594,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
                 else:
                     # dense
                     axes = [1]
-                with tf.name_scope(self.get_name() + MakiRestorable.TRAINING_MODE):
+                with tf.name_scope(self.name() + MakiRestorable.TRAINING_MODE):
                     # Output shape [N, 1, 1, C] for Conv and [N, F] for Dense
                     batch_mean, batch_var = tf.nn.moments(X, axes=axes, keep_dims=True)
 
@@ -1615,7 +1615,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
                             self.beta,
                             self.gamma,
                             self.eps,
-                            name=self.get_name()
+                            name=self.name()
                         )
 
                     return X
@@ -1640,7 +1640,7 @@ class InstanceNormLayer(BatchNormBaseLayer):
         return {
             MakiRestorable.FIELD_TYPE: InstanceNormLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 InstanceNormLayer.D: self.D,
                 InstanceNormLayer.DECAY: self.decay,
                 InstanceNormLayer.EPS: self.eps,
@@ -1684,8 +1684,8 @@ class ScaleLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
-                return tf.math.multiply(X, self.scale, name=self.get_name())
+            with tf.name_scope(self.name()):
+                return tf.math.multiply(X, self.scale, name=self.name())
 
     def training_forward(self, X):
         return self.forward(X, computation_mode=MakiRestorable.TRAINING_MODE)
@@ -1700,7 +1700,7 @@ class ScaleLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ScaleLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 ScaleLayer.INIT_VALUE: self.init_value
             }
         }
@@ -1784,25 +1784,25 @@ class WeightStandConvLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 conv_out = tf.nn.conv2d(
                     X, self.W_infer,
                     strides=[1, self.stride, self.stride, 1],
                     padding=self.padding,
-                    name=self.get_name()
+                    name=self.name()
                 )
 
                 if self.use_bias:
-                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.get_name() + ConvLayer.BIAS)
+                    conv_out = tf.nn.bias_add(conv_out, self.b, name=self.name() + ConvLayer.BIAS)
 
                 if self.f is None:
                     return conv_out
 
-                return self.f(conv_out, name=self.get_name() + ConvLayer.ACTIVATION_PREFIX)
+                return self.f(conv_out, name=self.name() + ConvLayer.ACTIVATION_PREFIX)
 
     def training_forward(self, x):
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name()):
                 W_mean, W_var = tf.nn.moments(self.W_train, axes=[1, 2, 3], keep_dims=True)
                 W_hat = (self.W_train - W_mean) / (tf.sqrt(W_var) + 1e-6)
                 # Update inference weights.
@@ -1813,16 +1813,16 @@ class WeightStandConvLayer(MakiLayer):
                         x, W_hat,
                         strides=[1, self.stride, self.stride, 1],
                         padding=self.padding,
-                        name=self.get_name()
+                        name=self.name()
                     )
 
                     if self.use_bias:
-                        conv_out = tf.nn.bias_add(conv_out, self.b, name=self.get_name() + ConvLayer.BIAS)
+                        conv_out = tf.nn.bias_add(conv_out, self.b, name=self.name() + ConvLayer.BIAS)
 
                     if self.f is None:
                         return conv_out
 
-                    return self.f(conv_out, name=self.get_name() + ConvLayer.ACTIVATION_PREFIX)
+                    return self.f(conv_out, name=self.name() + ConvLayer.ACTIVATION_PREFIX)
 
     @staticmethod
     def build(params: dict):
@@ -1850,7 +1850,7 @@ class WeightStandConvLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: WeightStandConvLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 ConvLayer.SHAPE: list(self.shape),
                 ConvLayer.STRIDE: self.stride,
                 ConvLayer.PADDING: self.padding,
@@ -1917,7 +1917,7 @@ class DummyEmbeddingLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: DummyEmbeddingLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name(),
                 DummyEmbeddingLayer.DIM: self._dim,
                 DummyEmbeddingLayer.N_REPEAT: self._n_repeat
             }

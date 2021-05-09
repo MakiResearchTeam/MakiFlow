@@ -44,15 +44,15 @@ class Head(HeadInterface):
         self._point_indicators = point_indicators
         self._human_indicators = human_indicators
 
-        self._context = f'SSP Head({coords.get_name()}, {point_indicators.get_name()}, {human_indicators.get_name()})'
+        self._context = f'SSP Head({coords.name()}, {point_indicators.name()}, {human_indicators.name()})'
         self.__check_dimensionality()
         self.__collect_info()
 
     def __check_dimensionality(self):
         # All have dimensions [b, h, w, c]
-        coords_shape = self._coords.get_shape()
-        point_indicators_shape = self._point_indicators.get_shape()
-        human_indicators_shape = self._human_indicators.get_shape()
+        coords_shape = self._coords.shape()
+        point_indicators_shape = self._point_indicators.shape()
+        human_indicators_shape = self._human_indicators.shape()
 
         # Only convolutional networks are supported
         assert len(coords_shape) == 4 and \
@@ -97,12 +97,12 @@ class Head(HeadInterface):
         )
 
     def __collect_info(self):
-        self._embedding_layer = self._coords.get_parent_layer()
+        self._embedding_layer = self._coords.parent_layer()
         assert isinstance(self._embedding_layer, SkeletonEmbeddingLayer), d_msg(
             self._context,
             "coords tensor's parent layer must be of type SkeletonEmbeddingLayer, "
             f"received parent layer type={type(self._embedding_layer)}, "
-            f"parent layer name={self._embedding_layer.get_name()}"
+            f"parent layer name={self._embedding_layer.name()}"
         )
         # The method returns a list. Convert it to ndarray
         self._source_embedding = np.array(self._embedding_layer.get_embedding())
@@ -125,7 +125,7 @@ class Head(HeadInterface):
         # - bottom right point = [1, 1]
         self._bbox_configuration = [width / 2.0, height / 2.0]
 
-        coords_shape = self._coords.get_shape()
+        coords_shape = self._coords.shape()
         self._grid_size = coords_shape[1:-1]
 
     def get_grid_size(self) -> list:

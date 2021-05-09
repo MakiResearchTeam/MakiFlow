@@ -306,7 +306,7 @@ class Trainer(L2RegularizationModule):
         feed_dict_config = model.get_feed_dict_config()
         train_feed_dict_config = dict()
         for t, i in feed_dict_config.items():
-            name = t.get_name()
+            name = t.name()
             tensor = super().get_traingraph_tensor(name)
             train_feed_dict_config[tensor] = i
         return train_feed_dict_config

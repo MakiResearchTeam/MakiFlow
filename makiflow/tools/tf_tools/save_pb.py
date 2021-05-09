@@ -47,14 +47,14 @@ def mf_model2pb(model: MakiModel, path_to_save, model_save_name, output_tensors=
     if output_tensors is None:
         for elem in model.get_outputs():
             if isinstance(elem, MakiTensor):
-                elem = elem.get_data_tensor()
+                elem = elem.tensor()
 
             print('t: ', elem.name)
             tf_output_tensors.append(elem)
     else:
         for elem in output_tensors:
             if isinstance(elem, MakiTensor):
-                elem = elem.get_data_tensor()
+                elem = elem.tensor()
 
             print('t: ', elem.name)
             tf_output_tensors.append(elem)
@@ -64,14 +64,14 @@ def mf_model2pb(model: MakiModel, path_to_save, model_save_name, output_tensors=
     if input_tensors is None:
         for elem in model.get_inputs():
             if isinstance(elem, MakiTensor):
-                elem = elem.get_data_tensor()
+                elem = elem.tensor()
 
             print('t: ', elem.name)
             tf_input_tensors.append(elem)
     else:
         for elem in input_tensors:
             if isinstance(elem, MakiTensor):
-                elem = elem.get_data_tensor()
+                elem = elem.tensor()
 
             print('t: ', elem.name)
             tf_input_tensors.append(elem)

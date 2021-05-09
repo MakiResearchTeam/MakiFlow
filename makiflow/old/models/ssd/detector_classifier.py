@@ -131,7 +131,7 @@ class DetectorClassifier:
         # FLATTEN PREDICTIONS OF THE CLASSIFIER
         confidences = self.classifier(self.class_x)
         # [BATCH SIZE, WIDTH, HEIGHT, DEPTH]
-        conf_shape = confidences.get_shape()
+        conf_shape = confidences.shape()
         # width of the tensor
         conf_w = conf_shape[1]
         # height of the tensor
@@ -142,7 +142,7 @@ class DetectorClassifier:
         # FLATTEN PREDICTIONS OF THE REGRESSOR
         offsets = self.bb_regressor(self.reg_x)
         # [BATCH SIZE, WIDTH, HEIGHT, DEPTH]
-        off_shape = offsets.get_shape()
+        off_shape = offsets.shape()
         # width of the tensor
         off_w = off_shape[1]
         # height of the tensor
@@ -162,7 +162,7 @@ class DetectorClassifier:
         It is used for creating default boxes since their size depends
         on the feature maps' widths and heights.
         """
-        return self.reg_x.get_shape()
+        return self.reg_x.shape()
 
     def get_height_width(self):
         pass
@@ -171,14 +171,14 @@ class DetectorClassifier:
         return {
             'type': DCParams.TYPE,
             'params': {
-                DCParams.REG_X_NAME: self.reg_x.get_name(),
+                DCParams.REG_X_NAME: self.reg_x.name(),
                 DCParams.RKW: self.rkw,
                 DCParams.RKH: self.rkh,
                 DCParams.RIN_F: self.rin_f,
                 DCParams.USE_REG_BIAS: self.use_reg_bias,
                 DCParams.REG_INIT_TYPE: self.reg_init_type,
 
-                DCParams.CLASS_X_NAME: self.class_x.get_name(),
+                DCParams.CLASS_X_NAME: self.class_x.name(),
                 DCParams.CKW: self.ckw,
                 DCParams.CKH: self.ckh,
                 DCParams.CIN_F: self.cin_f,

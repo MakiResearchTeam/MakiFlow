@@ -142,10 +142,10 @@ class MakiLayer(MakiRestorable):
         previous_tensors = {}
         parent_tensor_names = []
         for _x in x:
-            data_tensors += [_x.get_data_tensor()]
-            previous_tensors.update(_x.get_previous_tensors())
+            data_tensors += [_x.tensor]
+            previous_tensors.update(_x.previous_tensors)
             previous_tensors.update(_x.get_self_pair())
-            parent_tensor_names += [_x.get_name()]
+            parent_tensor_names += [_x.name]
 
         if len(data_tensors) == 1:
             data_tensors = data_tensors[0]
@@ -157,7 +157,7 @@ class MakiLayer(MakiRestorable):
             # OUTPUT CONTAINS SEVERAL TENSORS
             output_mt = []
             for i, (t, name) in enumerate(zip(output, self._outputs_names)):
-                makitensor_name = self.get_name() + '/' + name
+                makitensor_name = self.name + '/' + name
                 makitensor_name = self._output_tensor_name(makitensor_name)
                 output_mt += [
                     MakiTensor(
@@ -171,7 +171,7 @@ class MakiLayer(MakiRestorable):
                 ]
         else:
             # OUTPUTS IS A SINGLE TENSOR
-            makitensor_name = self._output_tensor_name(self.get_name())
+            makitensor_name = self._output_tensor_name(self.name)
             output_mt = MakiTensor(
                 data_tensor=output,
                 parent_layer=self,
@@ -213,7 +213,7 @@ class MakiLayer(MakiRestorable):
 
         output_mt_names = []
         for output_tensor in output_mt:
-            output_mt_names += [output_tensor.get_name()]
+            output_mt_names += [output_tensor.name]
 
         for parent_tensor_name in parent_tensor_names:
             self._children_dict[parent_tensor_name] = output_mt_names
@@ -287,7 +287,8 @@ class MakiLayer(MakiRestorable):
         """
         return self._regularize_params
 
-    def get_name(self):
+    @property
+    def name(self):
         """
         Returns
         -------

@@ -28,8 +28,8 @@ class ClassificatorTrainer(MakiTrainer, ABC):
     def _init(self):
         super()._init()
         logits_makitensor = super().get_model().get_logits()
-        self._logits_name = logits_makitensor.get_name()
-        self._num_classes = logits_makitensor.get_shape()[-1]
+        self._logits_name = logits_makitensor.name()
+        self._num_classes = logits_makitensor.shape()[-1]
         self._labels = super().get_label_tensors()[ClassificatorTrainer.LABELS]
         self._weight_map = super().get_label_tensors()[ClassificatorTrainer.WEIGHT_MAP]
 
@@ -48,7 +48,7 @@ class ClassificatorTrainer(MakiTrainer, ABC):
 
     def _setup_label_placeholders(self):
         logits = super().get_model().get_logits()
-        logits_shape = logits.get_shape()
+        logits_shape = logits.shape()
         return {
             ClassificatorTrainer.LABELS: tf.placeholder(
                 dtype=tf.int32,

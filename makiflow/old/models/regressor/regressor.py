@@ -62,7 +62,7 @@ class Regressor(RegressorInterface):
         """
         super().__init__(out_x, in_x)
         self.name = str(name)
-        self._batch_sz = super().get_inputs()[0].get_shape()[0]
+        self._batch_sz = super().get_inputs()[0].shape()[0]
 
     def get_logits(self):
         return super().get_outputs()
@@ -76,8 +76,8 @@ class Regressor(RegressorInterface):
 
     def _get_model_info(self):
         return {
-            Regressor.INPUTS: [in_x.get_name() for in_x in super().get_inputs()],
-            Regressor.OUTPUTS: [out_x.get_name() for out_x in super().get_outputs()],
+            Regressor.INPUTS: [in_x.name() for in_x in super().get_inputs()],
+            Regressor.OUTPUTS: [out_x.name() for out_x in super().get_outputs()],
             Regressor.NAME: self.name
         }
 
@@ -103,7 +103,7 @@ class Regressor(RegressorInterface):
             packed_data = pack_data(feed_dict_config, data)
             predictions += [
                 self._session.run(
-                    [out_x.get_data_tensor() for out_x in super().get_outputs()],
+                    [out_x.tensor() for out_x in super().get_outputs()],
                     feed_dict=packed_data)
             ]
         new_pred = []
