@@ -78,7 +78,7 @@ class Trainer(L2RegularizationModule):
         """
         # noinspection PyAttributeOutsideInit
         loss = self._loss.build(self)
-        assert loss is not None, 'build method of the Loss instince returned None, but must return the loss scalar.'
+        assert loss is not None, 'build method of the Loss instance returned None, but must return the loss scalar.'
         self._training_loss = super()._build_final_loss(loss)
         self.track_loss(self._training_loss, Trainer.TRAINING_LOSS)
         loss_is_built()
@@ -127,8 +127,6 @@ class Trainer(L2RegularizationModule):
         dict
             Dictionary with values of the tracked losses.
         """
-        train_op = self.__minimize_loss(optimizer, global_step)
-
         if print_period is None:
             print_period = iter
 
@@ -136,10 +134,6 @@ class Trainer(L2RegularizationModule):
         loss_collectors = {}
         for loss_name in self.get_track_losses():
             loss_collectors[loss_name] = []
-
-        sess = super().get_session()
-        track_losses = self.get_track_losses()
-        total_summary = self._hermes.get_total_summary()
 
         # This context manager is used to prevent tqdm from breaking in case of exception
         with IteratorCloser() as ic:
@@ -154,9 +148,7 @@ class Trainer(L2RegularizationModule):
 
                 # Performs training iterations
                 for j in it:
-                    tracked_losses_vals, summary, _ = sess.run(
-                        [track_losses, total_summary, train_op]
-                    )
+                    tracked_losses_vals, summary = self.train_step(optimizer=optimizer, global_step=global_step)
                     # Interpolate loss values and collect them
                     for loss_name in tracked_losses_vals:
                         loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
@@ -196,8 +188,6 @@ class Trainer(L2RegularizationModule):
         dict
             Dictionary with values of the tracked losses.
         """
-        train_op = self.__minimize_loss(optimizer, global_step)
-
         if print_period is None:
             print_period = iter
 
@@ -206,9 +196,6 @@ class Trainer(L2RegularizationModule):
         for loss_name in self.get_track_losses():
             loss_collectors[loss_name] = []
 
-        sess = super().get_session()
-        track_losses = self.get_track_losses()
-        total_summary = self._hermes.get_total_summary()
         input_feed_dict = self.get_input_feed_dict_config()
         label_feed_dict = self.get_label_feed_dict_config()
 
@@ -230,9 +217,8 @@ class Trainer(L2RegularizationModule):
                     packed_data = pack_data(input_feed_dict, input_data)
                     packed_labels = pack_data(label_feed_dict, labels)
                     packed_data.update(packed_labels)
-                    tracked_losses_vals, summary, _ = sess.run(
-                        [track_losses, total_summary, train_op],
-                        feed_dict=packed_data
+                    tracked_losses_vals, summary = self.train_step(
+                        optimizer=optimizer, global_step=global_step, feed_dict=packed_data
                     )
                     # Interpolate loss values and collect them
                     for loss_name in tracked_losses_vals:
@@ -249,6 +235,36 @@ class Trainer(L2RegularizationModule):
                         self._hermes.write_summary(summary)
 
         return loss_collectors
+
+    def train_step(self, optimizer, global_step, feed_dict=None):
+        """
+        A single training step.
+
+        Parameters
+        ----------
+        optimizer : tf.train.Optimizer
+        global_step
+            Please refer to TensorFlow documentation about the global step for more info.
+        feed_dict : dict
+            A dictionary which maps input tensors to the actual data to be fed into the network.
+            Examples: { placeholder: np.ndarray }
+        Returns
+        -------
+        dict
+            Dictionary containing values of tracked losses.
+        tf.Summary
+            tf.Summary of the tracked losses.
+        """
+        track_losses = self.get_track_losses()
+        total_summary = self._hermes.get_total_summary()
+
+        sess = super().get_session()
+        train_op = self.__minimize_loss(optimizer, global_step)
+        tracked_losses_vals, summary, _ = sess.run(
+            [track_losses, total_summary, train_op],
+            feed_dict=feed_dict
+        )
+        return tracked_losses_vals, summary
 
     def __minimize_loss(self, optimizer, global_step):
         assert optimizer is not None, 'No optimizer is provided.'

@@ -20,10 +20,6 @@ from __future__ import absolute_import
 from makiflow.tf_scripts import get_low_memory_sess, set_main_gpu, get_fraction_memory_sess
 from makiflow.tf_scripts import freeze_model, load_frozen_graph
 
-import makiflow.layers
-import makiflow.generators
-import makiflow.metrics
-import makiflow.experimental
-import makiflow.augmentation
+from makiflow.core import Model, Trainer
 
 del absolute_import

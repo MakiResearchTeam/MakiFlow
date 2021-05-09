@@ -17,7 +17,7 @@
 
 import tensorflow as tf
 from scipy.special import binom
-from .utils import _process_labels
+from .trainer.utils import _process_labels
 
 
 class LossFabric:
