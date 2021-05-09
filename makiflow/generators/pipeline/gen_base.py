@@ -56,12 +56,12 @@ class GenLayer(InputMakiLayer):
 
     def to_dict(self):
         return {
-            MakiRestorable.NAME: self.name(),
+            MakiRestorable.NAME: self.name,
             MakiTensor.PARENT_TENSOR_NAMES: self.parent_tensor_names(),
             MakiTensor.PARENT_LAYER_INFO: {
                 MakiRestorable.TYPE: InputMakiLayer.TYPE,
                 MakiRestorable.PARAMS: {
-                    MakiRestorable.NAME: self.name(),
+                    MakiRestorable.NAME: self.name,
                     InputMakiLayer.INPUT_SHAPE: self.shape()
                 }
             }

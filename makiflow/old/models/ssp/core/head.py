@@ -44,7 +44,7 @@ class Head(HeadInterface):
         self._point_indicators = point_indicators
         self._human_indicators = human_indicators
 
-        self._context = f'SSP Head({coords.name()}, {point_indicators.name()}, {human_indicators.name()})'
+        self._context = f'SSP Head({coords.name}, {point_indicators.name}, {human_indicators.name})'
         self.__check_dimensionality()
         self.__collect_info()
 
@@ -102,7 +102,7 @@ class Head(HeadInterface):
             self._context,
             "coords tensor's parent layer must be of type SkeletonEmbeddingLayer, "
             f"received parent layer type={type(self._embedding_layer)}, "
-            f"parent layer name={self._embedding_layer.name()}"
+            f"parent layer name={self._embedding_layer.name}"
         )
         # The method returns a list. Convert it to ndarray
         self._source_embedding = np.array(self._embedding_layer.get_embedding())

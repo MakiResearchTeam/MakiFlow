@@ -76,8 +76,8 @@ class Regressor(RegressorInterface):
 
     def _get_model_info(self):
         return {
-            Regressor.INPUTS: [in_x.name() for in_x in super().get_inputs()],
-            Regressor.OUTPUTS: [out_x.name() for out_x in super().get_outputs()],
+            Regressor.INPUTS: [in_x.name for in_x in super().get_inputs()],
+            Regressor.OUTPUTS: [out_x.name for out_x in super().get_outputs()],
             Regressor.NAME: self.name
         }
 

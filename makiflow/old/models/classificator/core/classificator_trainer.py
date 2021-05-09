@@ -28,7 +28,7 @@ class ClassificatorTrainer(MakiTrainer, ABC):
     def _init(self):
         super()._init()
         logits_makitensor = super().get_model().get_logits()
-        self._logits_name = logits_makitensor.name()
+        self._logits_name = logits_makitensor.name
         self._num_classes = logits_makitensor.shape()[-1]
         self._labels = super().get_label_tensors()[ClassificatorTrainer.LABELS]
         self._weight_map = super().get_label_tensors()[ClassificatorTrainer.WEIGHT_MAP]

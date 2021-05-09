@@ -51,7 +51,7 @@ class MakiTensor:
         if name is not None:
             self._name = name
         else:
-            self._name: str = parent_layer.name()
+            self._name: str = parent_layer.name
         self._parent_tensor_names = parent_tensor_names
         self._parent_layer = parent_layer
         self._previous_tensors: dict = previous_tensors

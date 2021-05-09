@@ -171,14 +171,14 @@ class DetectorClassifier:
         return {
             'type': DCParams.TYPE,
             'params': {
-                DCParams.REG_X_NAME: self.reg_x.name(),
+                DCParams.REG_X_NAME: self.reg_x.name,
                 DCParams.RKW: self.rkw,
                 DCParams.RKH: self.rkh,
                 DCParams.RIN_F: self.rin_f,
                 DCParams.USE_REG_BIAS: self.use_reg_bias,
                 DCParams.REG_INIT_TYPE: self.reg_init_type,
 
-                DCParams.CLASS_X_NAME: self.class_x.name(),
+                DCParams.CLASS_X_NAME: self.class_x.name,
                 DCParams.CKW: self.ckw,
                 DCParams.CKH: self.ckh,
                 DCParams.CIN_F: self.cin_f,

@@ -82,8 +82,8 @@ class NeuralRenderBasis(MakiCore):
     def _get_model_info(self):
         return {
             NeuralRenderBasis.NAME: self.name,
-            NeuralRenderBasis.INPUT_MT: self._inputs[0].name(),
-            NeuralRenderBasis.OUTPUT_MT: self._outputs[0].name()
+            NeuralRenderBasis.INPUT_MT: self._inputs[0].name,
+            NeuralRenderBasis.OUTPUT_MT: self._outputs[0].name
         }
 
     # ------------------------------------------------------------------------------------------------------------------

@@ -186,7 +186,7 @@ class SSDModel(MakiCore):
     def _get_model_info(self):
         model_dict = {
             'name': self.name,
-            'input_s': self._inputs[0].name(),
+            'input_s': self._inputs[0].name,
             'reg_type': self.regression_type,
             'dcs': []
         }

@@ -81,7 +81,7 @@ class ModelAssemblerBase:
         # Change image size to dynamic size
         shape[1] = None
         shape[2] = None
-        name = gen_layer.name()
+        name = gen_layer.name
 
         input_layer = InputLayer(input_shape=shape, name=name)
         # TODO: Watcher for type of model????

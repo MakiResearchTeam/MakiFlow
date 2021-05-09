@@ -124,21 +124,21 @@ class GraphCompiler(TensorProvider):
 
             # Check if we haven't used this layer before.
             # If haven't, add an empty dictionary.
-            if layer_name2output_tensors.get(layer.name()) is None:
-                layer_name2output_tensors[layer.name()] = dict()
+            if layer_name2output_tensors.get(layer.name) is None:
+                layer_name2output_tensors[layer.name] = dict()
 
-            outputs = layer_name2output_tensors.get(layer.name())
+            outputs = layer_name2output_tensors.get(layer.name)
 
             # Check if the tensor has already been created.
-            if outputs.get(maki_tensor.name()) is not None:
-                return outputs.get(maki_tensor.name())
+            if outputs.get(maki_tensor.name) is not None:
+                return outputs.get(maki_tensor.name)
 
             # If we are here, then the tensor hasn't been created.
 
             # Check if we at the beginning of the computational graph, i.e. InputLayer
             if len(maki_tensor.parent_tensor_names()) == 0:
                 # Replace an inference input tensor with its training counterpart
-                name = maki_tensor.name()
+                name = maki_tensor.name
                 training_makitensor = self._train_inputs.get(name)
                 if training_makitensor is None:
                     raise KeyError(f'There is no training input tensor with name {name}. The names of the training'
@@ -146,7 +146,7 @@ class GraphCompiler(TensorProvider):
 
                 X = training_makitensor.get_data_tensor()
                 outputs.update(
-                    {maki_tensor.name(): X}
+                    {maki_tensor.name: X}
                 )
                 self._traingraph_tensors.update(
                     {name: X}
@@ -163,7 +163,7 @@ class GraphCompiler(TensorProvider):
             if len(parent_tensors) == 1:
                 parent_tensors = parent_tensors[0]
 
-            if layer.name() in self._trainable_layers:
+            if layer.name in self._trainable_layers:
                 X = layer.training_forward(
                     parent_tensors
                 )
@@ -189,7 +189,7 @@ class GraphCompiler(TensorProvider):
                 outputs.update({x_name: _x})
                 self._traingraph_tensors[x_name] = _x
 
-            return outputs.get(maki_tensor.name())
+            return outputs.get(maki_tensor.name)
 
         for output in self._model.get_outputs():
             # Even though the method does return some tensors, they are not being collected here.

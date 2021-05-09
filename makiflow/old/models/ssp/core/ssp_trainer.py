@@ -179,7 +179,7 @@ class SSPTrainer(MakiTrainer, ABC):
             print(f'- label - {head_label.get_description()}')
             print(f'- nn head - {head.get_description()}')
             coords = head.get_coords()
-            coords = super().get_traingraph_tensor(coords.name())
+            coords = super().get_traingraph_tensor(coords.name)
             _, ch, cw, d = coords.shape().as_list()
             # Transform the coords to the image plane.
             input_image = super().get_train_inputs_list()[0]
@@ -193,9 +193,9 @@ class SSPTrainer(MakiTrainer, ABC):
             coords = flatten(coords)
 
             point_indicators = head.get_point_indicators()
-            point_indicators = super().get_traingraph_tensor(point_indicators.name())
+            point_indicators = super().get_traingraph_tensor(point_indicators.name)
             human_indicators = head.get_human_indicators()
-            human_indicators = super().get_traingraph_tensor(human_indicators.name())
+            human_indicators = super().get_traingraph_tensor(human_indicators.name)
 
             label_coords = head_label.get_coords()
             label_point_indicators = head_label.get_point_indicators()

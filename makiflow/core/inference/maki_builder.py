@@ -102,7 +102,7 @@ class MakiBuilder:
             if len(parent_makitensor_names) == 0:
                 layer = get_parent_layer(makitensor_info[MakiTensor.PARENT_LAYER_INFO], layer=input_layer)
                 # The input layer is a MakiTensor as well.
-                makitensors[layer.name()] = layer
+                makitensors[layer.name] = layer
                 return layer
 
             parent_makitensors = []
@@ -159,7 +159,7 @@ class MakiBuilder:
                 # Therefore, we need to change 'parent_tensor_names' list for each makitensor there is in the graph.
                 # P.S. If we don't do that we'll get an exception during graph restoration.
                 old_name = name
-                new_name = layer.name()
+                new_name = layer.name
                 for makitensor_name in graph_info:
                     mt_info = graph_info[makitensor_name]
                     # Change tensor names

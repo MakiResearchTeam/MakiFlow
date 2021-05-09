@@ -28,7 +28,7 @@ class RegressorTrainer(MakiTrainer, ABC):
         super()._init()
         self._use_weight_mask = False
         logits_makitensor = super().get_model().get_logits()
-        self._logits_names = [l.name() for l in logits_makitensor]
+        self._logits_names = [l.name for l in logits_makitensor]
         self._labels = super().get_label_tensors()
 
     # noinspection PyAttributeOutsideInit
@@ -62,8 +62,8 @@ class RegressorTrainer(MakiTrainer, ABC):
         batch_size = super().get_batch_size()
         label_tensors = {}
         for l in logits:
-            label_tensors[l.name()] = tf.placeholder(
-                dtype='float32', shape=[batch_size, *l.shape()[1:]], name=f'label_{l.name()}'
+            label_tensors[l.name] = tf.placeholder(
+                dtype='float32', shape=[batch_size, *l.shape()[1:]], name=f'label_{l.name}'
             )
         return label_tensors
 

@@ -97,8 +97,8 @@ class Classificator(ClassificatorInterface):
 
     def _get_model_info(self):
         return {
-            Classificator.INPUT: self._input.name(),
-            Classificator.OUTPUT: self._output.name(),
+            Classificator.INPUT: self._input.name,
+            Classificator.OUTPUT: self._output.name,
             Classificator.NAME: self.name
         }
 

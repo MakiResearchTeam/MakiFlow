@@ -166,7 +166,7 @@ class GraphCompiler(TensorProvider):
             # If we are here, then the tensor hasn't been created.
 
             # Check if we at the beginning of the computational graph, i.e. InputLayer
-            if len(maki_tensor.parent_tensor_names()) == 0:
+            if len(maki_tensor.parent_tensor_names) == 0:
                 # Replace an inference input tensor with its training counterpart
                 name = maki_tensor.name
                 training_makitensor = self._train_inputs.get(name)
@@ -174,7 +174,7 @@ class GraphCompiler(TensorProvider):
                     raise KeyError(f'There is no training input tensor with name {name}. The names of the training'
                                    f'input tensors must be the same with their corresponding inference counterparts.')
 
-                X = training_makitensor.get_data_tensor()
+                X = training_makitensor.tensor
                 outputs.update(
                     {maki_tensor.name: X}
                 )
@@ -185,7 +185,7 @@ class GraphCompiler(TensorProvider):
 
             # Collect tensors that were used to create current `maki_tensor`
             parent_tensors = []
-            for tensor in maki_tensor.parent_tensors():
+            for tensor in maki_tensor.parent_tensors:
                 parent_tensors += [create_tensor(tensor)]
 
             # If only one tensor is used for creation, then the layer does not expect
@@ -213,7 +213,7 @@ class GraphCompiler(TensorProvider):
             # Order of the names is always the same as the order
             # of the returned tensors.
             # This is done this way because the same layer can be reused several times.
-            parent_name = maki_tensor.parent_tensor_names()[0]
+            parent_name = maki_tensor.parent_tensor_names[0]
             output_names = layer.get_children(parent_name)
             for _x, x_name in zip(X, output_names):
                 outputs.update({x_name: _x})

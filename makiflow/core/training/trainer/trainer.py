@@ -255,11 +255,12 @@ class Trainer(L2RegularizationModule):
         tf.Summary
             tf.Summary of the tracked losses.
         """
+        train_op = self.__minimize_loss(optimizer, global_step)
         track_losses = self.get_track_losses()
+        # Summary is created after creation of the train_op
         total_summary = self._tracker.get_total_summary()
 
         sess = super().get_session()
-        train_op = self.__minimize_loss(optimizer, global_step)
         tracked_losses_vals, summary, _ = sess.run(
             [track_losses, total_summary, train_op],
             feed_dict=feed_dict
@@ -306,7 +307,7 @@ class Trainer(L2RegularizationModule):
         feed_dict_config = model.get_feed_dict_config()
         train_feed_dict_config = dict()
         for t, i in feed_dict_config.items():
-            name = t.name()
+            name = t.name
             tensor = super().get_traingraph_tensor(name)
             train_feed_dict_config[tensor] = i
         return train_feed_dict_config

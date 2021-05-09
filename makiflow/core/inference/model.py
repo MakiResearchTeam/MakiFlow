@@ -34,13 +34,13 @@ class Model(ModelSerializer):
 
     def _get_model_info(self):
         return {
-            Model.INPUTS: [in_x.name() for in_x in super().get_inputs()],
-            Model.OUTPUTS: [out_x.name() for out_x in super().get_outputs()],
+            Model.INPUTS: [in_x.name for in_x in super().get_inputs()],
+            Model.OUTPUTS: [out_x.name for out_x in super().get_outputs()],
             Model.NAME: self.name
         }
 
     def get_batch_size(self):
-        return self.get_inputs()[0].shape()[0]
+        return self.get_inputs()[0].shape[0]
 
     def get_feed_dict_config(self) -> dict:
         feed_dict_config = {}

@@ -108,7 +108,7 @@ class SkeletonEmbeddingLayer(MakiLayer):
         # Do not add the name_scope since in future it won't be used anyway
         _, h, w, c = x.get_shape().as_list()
         assert c == self._embedding_dim * 2, d_msg(
-            self.name(),
+            self.name,
             'The depth of the input tensor must twice as large as the embedding dimensionality. '
             f'Received input tensor channels={c}, embedding dimensionality*2={self._embedding_dim * 2}'
         )
