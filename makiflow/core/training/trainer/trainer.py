@@ -49,7 +49,7 @@ class Trainer(L2RegularizationModule):
         super().__init__(model, train_inputs)
         self._track_losses = {}
         self._training_loss = None
-        self._hermes = GradientVariablesWatcher(model)
+        self._tracker = GradientVariablesWatcher(model)
         self._optimizer = None
         self._grads_and_vars = None
 
@@ -62,8 +62,8 @@ class Trainer(L2RegularizationModule):
         """
         return self._label_tensors.copy()
 
-    def get_hermes(self):
-        return self._hermes
+    def get_tracker(self):
+        return self._tracker
 
     def compile(self):
         """
@@ -101,7 +101,7 @@ class Trainer(L2RegularizationModule):
             print(f'Overriding already existing {loss_name} loss tensor.')
 
         self._track_losses[loss_name] = loss_tensor
-        self._hermes.add_scalar(loss_tensor, loss_name)
+        self._tracker.add_scalar(loss_tensor, loss_name)
 
     def get_track_losses(self):
         return self._track_losses.copy()
@@ -154,14 +154,14 @@ class Trainer(L2RegularizationModule):
                         loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
                         loss_collectors[loss_name].append(loss_holders[loss_name])
 
-                    self._hermes.increment()
+                    self._tracker.increment()
                     if (j + 1) % print_period == 0:
                         name_loss = list(loss_holders.items())
                         print_train_info(
                             i,
                             *name_loss
                         )
-                        self._hermes.write_summary(summary)
+                        self._tracker.write_summary(summary)
 
         return loss_collectors
 
@@ -225,14 +225,14 @@ class Trainer(L2RegularizationModule):
                         loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
                         loss_collectors[loss_name].append(loss_holders[loss_name])
 
-                    self._hermes.increment()
+                    self._tracker.increment()
                     if (j + 1) % print_period == 0:
                         name_loss = list(loss_holders.items())
                         print_train_info(
                             i,
                             *name_loss
                         )
-                        self._hermes.write_summary(summary)
+                        self._tracker.write_summary(summary)
 
         return loss_collectors
 
@@ -256,7 +256,7 @@ class Trainer(L2RegularizationModule):
             tf.Summary of the tracked losses.
         """
         track_losses = self.get_track_losses()
-        total_summary = self._hermes.get_total_summary()
+        total_summary = self._tracker.get_total_summary()
 
         sess = super().get_session()
         train_op = self.__minimize_loss(optimizer, global_step)
@@ -283,8 +283,8 @@ class Trainer(L2RegularizationModule):
             # Returns list of tuples: [ (grad, var) ]
             self._grads_and_vars = optimizer.compute_gradients(self._training_loss, training_vars)
             vars_and_grads = [(var, grad) for grad, var in self._grads_and_vars]
-            self._hermes.set_vars_grads(vars_and_grads)
-            self._hermes.setup_tensorboard()
+            self._tracker.set_vars_grads(vars_and_grads)
+            self._tracker.setup_tensorboard()
 
         self._train_op = optimizer.apply_gradients(
             grads_and_vars=self._grads_and_vars, global_step=global_step
