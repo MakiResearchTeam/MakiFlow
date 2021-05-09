@@ -146,3 +146,18 @@ class MakiTensor:
             feed_dict=tf_feed_dict
         )
 
+    def rebuild(self, input_tensors):
+        """
+        Traverses graph recursively until it finds the requested nodes.
+
+        Parameters
+        ----------
+        input_tensors : dict
+            Contains pairs of { 'layer_name': [MakiTensor] } where the key is a layer name
+            and the value is a list of makitensors.
+
+        Returns
+        -------
+
+        """
+        pass

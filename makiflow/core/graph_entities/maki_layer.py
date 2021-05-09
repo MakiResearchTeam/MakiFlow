@@ -18,6 +18,7 @@
 from abc import abstractmethod, ABC
 from .maki_tensor import MakiTensor
 from warnings import warn
+import tensorflow as tf
 
 
 class MakiRestorable(ABC):
@@ -109,13 +110,14 @@ class MakiLayer(MakiRestorable):
             outputs_names = []
         self._outputs_names = outputs_names
         self._n_calls = 0
+        self._n_calls_training = 0
         # This is used during training graph construction and is a solution for cases
         # when the same layer is being used several times. Unfortunately
         # there is no better solution yet.
         # Dictionary of pairs { parent MakiTensor name : list child MakiTensor name }
         self._children_dict = {}
 
-    def __call__(self, x):
+    def __call__(self, x, is_training=False):
         """
         Unpacks datatensor(s) (tf.Tensor) from the given MakiTensor(s) `x`, performs layer's transformation and
         wraps out the output of that transformation into a new MakiTensor.
@@ -138,6 +140,7 @@ class MakiLayer(MakiRestorable):
         if not isinstance(x, list):
             x = [x]
 
+        # --- Gather graph information for the future MakiTensors
         data_tensors = []
         previous_tensors = {}
         parent_tensor_names = []
@@ -149,39 +152,43 @@ class MakiLayer(MakiRestorable):
 
         if len(data_tensors) == 1:
             data_tensors = data_tensors[0]
-        output = self.forward(data_tensors)
+
+        # --- Do a forward pass
+        if is_training:
+            output = self.training_forward(data_tensors)
+        else:
+            output = self.forward(data_tensors)
 
         self.__check_output(output)
-        # Output MakiTensors
-        if isinstance(output, tuple):
-            # OUTPUT CONTAINS SEVERAL TENSORS
-            output_mt = []
-            for i, (t, name) in enumerate(zip(output, self._outputs_names)):
-                makitensor_name = self.name + '/' + name
-                makitensor_name = self._output_tensor_name(makitensor_name)
-                output_mt += [
-                    MakiTensor(
-                        data_tensor=t,
-                        parent_layer=self,
-                        parent_tensor_names=parent_tensor_names,
-                        previous_tensors=previous_tensors,
-                        name=makitensor_name,
-                        index=i
-                    )
-                ]
+        # --- Generate output MakiTensors and return them
+        if not isinstance(output, tuple):
+            output = (output,)
+            output_names = [self.name]
         else:
-            # OUTPUTS IS A SINGLE TENSOR
-            makitensor_name = self._output_tensor_name(self.name)
-            output_mt = MakiTensor(
-                data_tensor=output,
-                parent_layer=self,
-                parent_tensor_names=parent_tensor_names,
-                previous_tensors=previous_tensors,
-                name=makitensor_name
-            )
+            output_names = [self.name + '/' + name for name in self._outputs_names]
 
-        self._n_calls += 1
+        output_mt = []
+        for i, (t, makitensor_name) in enumerate(zip(output, output_names)):
+            makitensor_name = self._output_tensor_name(makitensor_name, is_training=is_training)
+            output_mt += [
+                MakiTensor(
+                    data_tensor=t,
+                    parent_layer=self,
+                    parent_tensor_names=parent_tensor_names,
+                    previous_tensors=previous_tensors,
+                    name=makitensor_name,
+                    index=i
+                )
+            ]
+        if is_training:
+            self._n_calls_training += 1
+        else:
+            self._n_calls += 1
         self._update_children(parent_tensor_names, output_mt)
+
+        if len(output_mt) == 1:
+            output_mt = output_mt[0]
+
         return output_mt
 
     def __check_output(self, output):
@@ -197,14 +204,21 @@ class MakiLayer(MakiRestorable):
             for t in output:
                 message += f'{t}\n'
 
-            message = message + 'Output names are:\n'
+            message = message + '\nOutput names are:\n'
             for name in self._outputs_names:
                 message = message + name + '\n'
             raise Exception(message)
 
-    def _output_tensor_name(self, name):
+    def _output_tensor_name(self, name: str, is_training: bool):
+        if is_training:
+            if self._n_calls_training != 0:
+                name += f'_call{self._n_calls_training}'
+            name += '_training'
+            return name
+
         if self._n_calls != 0:
-            name += f'_{self._n_calls}'
+            name += f'_call{self._n_calls}'
+
         return name
 
     def _update_children(self, parent_tensor_names: list, output_mt):
