@@ -42,13 +42,6 @@ class Model(ModelSerializer):
     def get_batch_size(self):
         return self.get_inputs()[0].shape[0]
 
-    def get_feed_dict_config(self) -> dict:
-        feed_dict_config = {}
-        for i, x in enumerate(super().get_inputs()):
-            feed_dict_config[x] = i
-
-        return feed_dict_config
-
     def predict(self, *args):
         """
         Performs prediction on the given data.
@@ -63,11 +56,10 @@ class Model(ModelSerializer):
         list
             Predictions.
         """
-        feed_dict_config = self.get_feed_dict_config()
         batch_size = self.get_batch_size() if self.get_batch_size() is not None else 1
         predictions = []
         for data in tqdm(data_iterator(*args, batch_size=batch_size)):
-            packed_data = pack_data(feed_dict_config, data)
+            packed_data = pack_data(self.get_inputs(), data)
             predictions += [
                 self._session.run(
                     [out_x.tensor for out_x in super().get_outputs()],

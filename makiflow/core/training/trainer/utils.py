@@ -62,6 +62,7 @@ def pack_data(tensors: list, data: list):
     dict
         Dictionary with packed data.
     """
+    tensors = [x.tensor if isinstance(x, MakiTensor) else x for x in tensors]
     return dict(zip(tensors, data))
 
 
