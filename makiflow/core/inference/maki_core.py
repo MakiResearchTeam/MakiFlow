@@ -165,22 +165,3 @@ class MakiCore(ABC):
             Contains all the MakiTensors in the model's graph.
         """
         return self._graph_tensors.copy()
-
-    @abstractmethod
-    def get_feed_dict_config(self) -> dict:
-        """
-        Used by the predict method and the MakiTrainer.
-
-        Returns
-        -------
-        dict
-            Dictionary with the following structure:
-            { MakiTensor: int }, where MakiTensor is input tensor to the model and int is the index of the data point
-            in the input data array.
-            Example code of usage of such a dict:
-            data = next(generator)
-            feed_dict = feed_dict_config.copy()
-            for t, i in feed_dict_config.items():
-                feed_dict[t] = data[i]
-        """
-        pass

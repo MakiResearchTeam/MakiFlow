@@ -47,7 +47,7 @@ class Trainer(L2RegularizationModule):
         self._loss = loss
         self._label_tensors = []
         if loss is not None:
-            self._label_tensors += loss.get_label_tensors()
+            self._label_tensors += loss.get_label_tensors().values()
         self._input_tensors = [x.tensor for x in train_inputs]
         super().__init__(model, train_inputs)
         self._track_losses = {}
@@ -64,6 +64,11 @@ class Trainer(L2RegularizationModule):
     @property
     def input_tensors(self):
         return self._input_tensors.copy()
+
+    @property
+    def training_loss(self):
+        assert self._training_loss is not None, 'Training loss is not built.'
+        return self._training_loss
 
     def get_tracker(self):
         return self._tracker
@@ -105,12 +110,12 @@ class Trainer(L2RegularizationModule):
         if self._loss is not None:
             loss = self._loss.build(self)
         assert loss is not None, 'build method of the Loss instance returned None, but must return the loss scalar.'
-        self._training_loss = super()._build_final_loss(loss)
+        self._training_loss = self._build_final_loss(loss)
         self.track_loss(self._training_loss, Trainer.TRAINING_LOSS)
         loss_is_built()
 
     def _build_final_loss(self, loss):
-        assert loss is not None and len(self._losses) > 0, 'No loss is provided. ' \
+        assert loss is not None or len(self._losses) > 0, 'No loss is provided. ' \
                                                            'Please add training loss using add_loss method.'
         if loss is None:
             loss = 0.0
