@@ -31,7 +31,7 @@ class Trainer(L2RegularizationModule):
     # Contains fit loops
     TRAINING_LOSS = 'TRAINING_LOSS'
 
-    def __init__(self, model: Model, train_inputs: list, loss: LossInterface):
+    def __init__(self, model: Model, train_inputs: list, loss: LossInterface = None):
         """
         Provides basic tools for the training setup. Builds final loss tensor and the training graph.
 
@@ -45,22 +45,25 @@ class Trainer(L2RegularizationModule):
         # Can be required during _setup_for_training call. Thus, create this variable
         # first and then call super init.
         self._loss = loss
-        self._label_tensors = loss.get_label_tensors()
+        self._label_tensors = []
+        if loss is not None:
+            self._label_tensors += loss.get_label_tensors()
+        self._input_tensors = [x.tensor for x in train_inputs]
         super().__init__(model, train_inputs)
         self._track_losses = {}
         self._training_loss = None
         self._tracker = GradientVariablesWatcher(model)
         self._optimizer = None
         self._grads_and_vars = None
+        self._losses = []
 
-    def get_label_tensors(self):
-        """
-        Returns
-        -------
-        dict
-            Contains pairs (tensor_name, tf.Tensor) of required tensors of labels.
-        """
+    @property
+    def label_tensors(self):
         return self._label_tensors.copy()
+
+    @property
+    def input_tensors(self):
+        return self._input_tensors.copy()
 
     def get_tracker(self):
         return self._tracker
@@ -72,16 +75,47 @@ class Trainer(L2RegularizationModule):
         super().compile_training_graph()
         self.build_loss()
 
+    def add_loss(self, loss: tf.Tensor, label_tensors: list, loss_name=None):
+        """
+        Adds the loss to the losses buffer. The final loss will be computed as a sum of all the losses in the buffer.
+
+        Parameters
+        ----------
+        loss : tf.Tensor
+            The loss scalar.
+        label_tensors : list
+            List of placeholders which will be used for feed the label data into the training graph.
+            If multiple losses reuse the same placeholder, it must be passed in only once.
+        loss_name : str
+            If provided, the loss will be tracked.
+        """
+        assert len(loss.shape) == 0, f'The loss must be a scalar, but is a tensor: {label_tensors}'
+        self._losses.append(loss)
+        self._label_tensors += label_tensors
+
+        if isinstance(loss_name, str):
+            self.track_loss(loss_tensor=loss, loss_name=loss_name)
+
     def build_loss(self):
         """
         Builds the training loss and adds it to the track list.
         """
         # noinspection PyAttributeOutsideInit
-        loss = self._loss.build(self)
+        loss = None
+        if self._loss is not None:
+            loss = self._loss.build(self)
         assert loss is not None, 'build method of the Loss instance returned None, but must return the loss scalar.'
         self._training_loss = super()._build_final_loss(loss)
         self.track_loss(self._training_loss, Trainer.TRAINING_LOSS)
         loss_is_built()
+
+    def _build_final_loss(self, loss):
+        assert loss is not None and len(self._losses) > 0, 'No loss is provided. ' \
+                                                           'Please add training loss using add_loss method.'
+        if loss is None:
+            loss = 0.0
+
+        return loss + tf.reduce_sum(self._losses)
 
     def track_loss(self, loss_tensor, loss_name):
         """
@@ -196,9 +230,6 @@ class Trainer(L2RegularizationModule):
         for loss_name in self.get_track_losses():
             loss_collectors[loss_name] = []
 
-        input_feed_dict = self.get_input_feed_dict_config()
-        label_feed_dict = self.get_label_feed_dict_config()
-
         # This context manager is used to prevent tqdm from breaking in case of exception
         with IteratorCloser() as ic:
             for i in range(epochs):
@@ -214,8 +245,8 @@ class Trainer(L2RegularizationModule):
                 # Performs training iterations
                 for j in it:
                     input_data, labels = next(generator)
-                    packed_data = pack_data(input_feed_dict, input_data)
-                    packed_labels = pack_data(label_feed_dict, labels)
+                    packed_data = pack_data(self.input_tensors, input_data)
+                    packed_labels = pack_data(self.label_tensors, labels)
                     packed_data.update(packed_labels)
                     tracked_losses_vals, summary = self.train_step(
                         optimizer=optimizer, global_step=global_step, feed_dict=packed_data
@@ -312,9 +343,3 @@ class Trainer(L2RegularizationModule):
             train_feed_dict_config[tensor] = i
         return train_feed_dict_config
 
-    def get_label_feed_dict_config(self):
-        labels = self.get_label_tensors()
-        label_feed_dict_config = {}
-        for i, t in enumerate(labels.values()):
-            label_feed_dict_config[t] = i
-        return label_feed_dict_config

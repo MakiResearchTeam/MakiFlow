@@ -118,26 +118,6 @@ class GraphCompiler(TensorProvider):
     def get_trainable_params(self):
         return self._trainable_vars
 
-    # noinspection PyAttributeOutsideInit
-    def add_loss(self, loss):
-        """
-        Adds an external loss that is defined outside the model or trainer.
-        Can be used for such things as perceptual loss.
-        Parameters
-        ----------
-        loss : tf.Tensor
-            A scalar that will be added to all the other losses used to train the model.
-        """
-        # noinspection PyTypeChecker
-        self._external_loss = loss
-        self._uses_external_loss = True
-
-    def _build_final_loss(self, training_loss):
-        if self._uses_external_loss:
-            training_loss += self._external_loss
-
-        return training_loss
-
     def compile_training_graph(self):
         # The algorithm recursively goes down the graph until it finds the input layer
         # and then passes its tensor through all the layers it has encountered so far.
