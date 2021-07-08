@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 from makiflow.core import MakiLayer, MakiBuilder
-from .utils import InitConvKernel
+from .initializers import He, InitController
 from .activation_converter import ActivationConverter
 import tensorflow as tf
 import numpy as np
@@ -40,7 +40,7 @@ class FourierConvLayer(MakiLayer):
     NAME_CONV_W = 'ConvKernel_{}x{}_in{}_out{}_id_{}'
 
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=False, W=None, b=None):
+                 kernel_initializer=He(), use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Parameters
         ----------
@@ -75,12 +75,12 @@ class FourierConvLayer(MakiLayer):
         self.padding = padding
         self.f = activation
         self.use_bias = use_bias
-        self.init_type = kernel_initializer
+        self.init_type = str(kernel_initializer)
 
         name = str(name)
 
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
+            W = kernel_initializer(shape=(kw, kh, out_f, in_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -135,7 +135,7 @@ class FourierConvLayer(MakiLayer):
         padding = params[FourierConvLayer.PADDING]
         activation = ActivationConverter.str_to_activation(params[FourierConvLayer.ACTIVATION])
 
-        init_type = params[FourierConvLayer.INIT_TYPE]
+        init_type = InitController.SET_INITS.get(params[FourierConvLayer.INIT_TYPE], He())
         use_bias = params[FourierConvLayer.USE_BIAS]
 
         return FourierConvLayer(

@@ -22,7 +22,7 @@ import tensorflow as tf
 from makiflow.core.graph_entities.maki_layer import MakiRestorable, MakiLayer
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.core import BatchNormBaseLayer
-from makiflow.layers.utils import InitConvKernel, InitDenseMat
+from makiflow.layers.initializers import He, XavierGaussianInf, InitController
 
 
 class ConvLayer(MakiLayer):
@@ -44,7 +44,7 @@ class ConvLayer(MakiLayer):
     NAME_CONV_W = 'ConvKernel_{}x{}_in{}_out{}_id_{}'
 
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=False, W=None, b=None):
+                 kernel_initializer=He(), use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Parameters
         ----------
@@ -79,12 +79,12 @@ class ConvLayer(MakiLayer):
         self.padding = padding
         self.f = activation
         self.use_bias = use_bias
-        self.init_type = kernel_initializer
+        self.init_type = str(kernel_initializer)
 
         name = str(name)
 
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
+            W = kernel_initializer(shape=(kw, kh, out_f, in_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -137,7 +137,7 @@ class ConvLayer(MakiLayer):
         padding = params[ConvLayer.PADDING]
         activation = ActivationConverter.str_to_activation(params[ConvLayer.ACTIVATION])
 
-        init_type = params[ConvLayer.INIT_TYPE]
+        init_type = InitController.SET_INITS.get(params[ConvLayer.INIT_TYPE], He())
         use_bias = params[ConvLayer.USE_BIAS]
 
         return ConvLayer(
@@ -181,7 +181,7 @@ class UpConvLayer(MakiLayer):
     NAME_CONV_W = 'UpConvKernel_{}x{}_out{}_in{}_id_{}'
 
     def __init__(self, kw, kh, in_f, out_f, name, size=(2, 2), padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=False, W=None, b=None):
+                 kernel_initializer=He(), use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Parameters
         ----------
@@ -220,12 +220,12 @@ class UpConvLayer(MakiLayer):
         self.padding = padding
         self.f = activation
         self.use_bias = use_bias
-        self.init_type = kernel_initializer
+        self.init_type = str(kernel_initializer)
 
         name = str(name)
 
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, in_f, out_f, kernel_initializer)
+            W =  kernel_initializer(shape=(kw, kh, in_f, out_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -285,7 +285,7 @@ class UpConvLayer(MakiLayer):
 
         activation = ActivationConverter.str_to_activation(params[UpConvLayer.ACTIVATION])
 
-        init_type = params[UpConvLayer.INIT_TYPE]
+        init_type = InitController.SET_INITS.get(params[ConvLayer.INIT_TYPE], He())
         use_bias = params[UpConvLayer.USE_BIAS]
         return UpConvLayer(
             kw=kw, kh=kh, in_f=in_f, out_f=out_f, size=size,
@@ -406,7 +406,7 @@ class DepthWiseConvLayer(MakiLayer):
     NAME_BIAS = 'DepthWiseConvBias_{}{}'
 
     def __init__(self, kw, kh, in_f, multiplier, name, stride=1, padding='SAME', rate=[1, 1],
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, activation=tf.nn.relu,
+                 kernel_initializer=He(), use_bias=True, activation=tf.nn.relu,
                  regularize_bias=False, W=None, b=None):
         """
         Parameters
@@ -442,12 +442,12 @@ class DepthWiseConvLayer(MakiLayer):
         self.f = activation
         self.use_bias = use_bias
         self.rate = rate
-        self.init_type = kernel_initializer
+        self.init_type = str(kernel_initializer)
 
         name = str(name)
 
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, multiplier, in_f, kernel_initializer)
+            W =  kernel_initializer(shape=(kw, kh, multiplier, in_f))
         if b is None:
             b = np.zeros(in_f * multiplier)
 
@@ -502,7 +502,7 @@ class DepthWiseConvLayer(MakiLayer):
         padding = params[DepthWiseConvLayer.PADDING]
         stride = params[DepthWiseConvLayer.STRIDE]
 
-        init_type = params[DepthWiseConvLayer.INIT_TYPE]
+        init_type = InitController.SET_INITS.get(params[DepthWiseConvLayer.INIT_TYPE], He())
         use_bias = params[DepthWiseConvLayer.USE_BIAS]
         rate = params[DepthWiseConvLayer.RATE]
 
@@ -552,7 +552,7 @@ class SeparableConvLayer(MakiLayer):
     NAME_BIAS = 'SeparableConvBias_{}{}'
 
     def __init__(self, kw, kh, in_f, out_f, multiplier, name, stride=1, padding='SAME',
-                 dw_kernel_initializer=InitConvKernel.XAVIER_GAUSSIAN_INF, pw_kernel_initializer=InitConvKernel.HE,
+                 dw_kernel_initializer=XavierGaussianInf(), pw_kernel_initializer=He(),
                  use_bias=True, regularize_bias=False, activation=tf.nn.relu,
                  W_dw=None, W_pw=None, b=None):
         """
@@ -597,9 +597,9 @@ class SeparableConvLayer(MakiLayer):
         name = str(name)
 
         if W_dw is None:
-            W_dw = InitConvKernel.init_by_name(kw, kh, multiplier, in_f, dw_kernel_initializer)
+            W_dw = dw_kernel_initializer(shape=(kw, kh, multiplier, in_f))
         if W_pw is None:
-            W_pw = InitConvKernel.init_by_name(1, 1, out_f, multiplier * in_f, pw_kernel_initializer)
+            W_pw = pw_kernel_initializer(shape=(1, 1, out_f, multiplier * in_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -660,8 +660,8 @@ class SeparableConvLayer(MakiLayer):
         padding = params[SeparableConvLayer.PADDING]
         stride = params[SeparableConvLayer.STRIDE]
 
-        dw_init_type = params[SeparableConvLayer.DW_INIT_TYPE]
-        pw_init_type = params[SeparableConvLayer.PW_INIT_TYPE]
+        dw_init_type = InitController.SET_INITS.get(params[SeparableConvLayer.DW_INIT_TYPE], XavierGaussianInf())
+        pw_init_type = InitController.SET_INITS.get(params[SeparableConvLayer.PW_INIT_TYPE], He())
         use_bias = params[SeparableConvLayer.USE_BIAS]
 
         activation = ActivationConverter.str_to_activation(params[SeparableConvLayer.ACTIVATION])
@@ -704,7 +704,7 @@ class DenseLayer(MakiLayer):
     NAME_DENSE_W = 'DenseMat_{}x{}_id_{}'
     NAME_BIAS = 'DenseBias_{}x{}_id_{}'
 
-    def __init__(self, in_d, out_d, name, activation=tf.nn.relu, mat_initializer=InitDenseMat.HE,
+    def __init__(self, in_d, out_d, name, activation=tf.nn.relu, mat_initializer=He(),
                  use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Parameters
@@ -731,7 +731,7 @@ class DenseLayer(MakiLayer):
         self.init_type = mat_initializer
 
         if W is None:
-            W = InitDenseMat.init_by_name(in_d, out_d, mat_initializer)
+            W = mat_initializer(shape=(in_d, out_d))
 
         if b is None:
             b = np.zeros(out_d)
@@ -777,7 +777,7 @@ class DenseLayer(MakiLayer):
 
         activation = ActivationConverter.str_to_activation(params[DenseLayer.ACTIVATION])
 
-        init_type = params[DenseLayer.INIT_TYPE]
+        init_type = InitController.SET_INITS.get(params[DenseLayer.INIT_TYPE], He())
         use_bias = params[DenseLayer.USE_BIAS]
 
         return DenseLayer(
@@ -819,7 +819,7 @@ class AtrousConvLayer(MakiLayer):
     NAME_BIAS = 'AtrousConvBias_{}x{}_in{}_out{}_id_{}'
 
     def __init__(self, kw, kh, in_f, out_f, rate, name, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=False, W=None, b=None):
+                 kernel_initializer=He(), use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Parameters
         ----------
@@ -856,13 +856,13 @@ class AtrousConvLayer(MakiLayer):
         self.padding = padding
         self.f = activation
         self.use_bias = use_bias
-        self.init_type = kernel_initializer
+        self.init_type = str(kernel_initializer)
 
         name = str(name)
         self.name_conv = AtrousConvLayer.NAME_ATROUS_W.format(kw, kh, in_f, out_f, name)
 
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
+            W = kernel_initializer(shape=(kw, kh, out_f, in_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -913,7 +913,7 @@ class AtrousConvLayer(MakiLayer):
         rate = params[AtrousConvLayer.RATE]
         padding = params[AtrousConvLayer.PADDING]
 
-        init_type = params[AtrousConvLayer.INIT_TYPE]
+        init_type = InitController.SET_INITS.get(params[AtrousConvLayer.INIT_TYPE], He())
         use_bias = params[AtrousConvLayer.USE_BIAS]
 
         activation = ActivationConverter.str_to_activation(params[AtrousConvLayer.ACTIVATION])
@@ -1710,7 +1710,7 @@ class WeightStandConvLayer(MakiLayer):
     TYPE = 'WeightStandConvLayer'
 
     def __init__(self, kw, kh, in_f, out_f, name, stride=1, padding='SAME', activation=tf.nn.relu,
-                 kernel_initializer=InitConvKernel.HE, use_bias=True, regularize_bias=False, W=None, b=None):
+                 kernel_initializer=He(), use_bias=True, regularize_bias=False, W=None, b=None):
         """
         Convolutional layer that incorporates weights standardization.
 
@@ -1747,13 +1747,13 @@ class WeightStandConvLayer(MakiLayer):
         self.padding = padding
         self.f = activation
         self.use_bias = use_bias
-        self.init_type = kernel_initializer
+        self.init_type = str(kernel_initializer)
 
         name = str(name)
 
         # CREATE WEIGHTS
         if W is None:
-            W = InitConvKernel.init_by_name(kw, kh, out_f, in_f, kernel_initializer)
+            W = kernel_initializer(shape=(kw, kh, out_f, in_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -1837,7 +1837,7 @@ class WeightStandConvLayer(MakiLayer):
         padding = params[ConvLayer.PADDING]
         activation = ActivationConverter.str_to_activation(params[ConvLayer.ACTIVATION])
 
-        init_type = params[ConvLayer.INIT_TYPE]
+        init_type = InitController.SET_INITS.get(params[ConvLayer.INIT_TYPE], He())
         use_bias = params[ConvLayer.USE_BIAS]
 
         return WeightStandConvLayer(
