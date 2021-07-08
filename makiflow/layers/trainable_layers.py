@@ -84,7 +84,7 @@ class ConvLayer(MakiLayer):
         name = str(name)
 
         if W is None:
-            W = kernel_initializer(shape=(kw, kh, out_f, in_f))
+            W = kernel_initializer(shape=(kw, kh, in_f, out_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -225,7 +225,7 @@ class UpConvLayer(MakiLayer):
         name = str(name)
 
         if W is None:
-            W =  kernel_initializer(shape=(kw, kh, in_f, out_f))
+            W =  kernel_initializer(shape=(kw, kh, out_f, in_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -447,7 +447,7 @@ class DepthWiseConvLayer(MakiLayer):
         name = str(name)
 
         if W is None:
-            W =  kernel_initializer(shape=(kw, kh, multiplier, in_f))
+            W =  kernel_initializer(shape=(kw, kh, in_f, multiplier))
         if b is None:
             b = np.zeros(in_f * multiplier)
 
@@ -597,9 +597,9 @@ class SeparableConvLayer(MakiLayer):
         name = str(name)
 
         if W_dw is None:
-            W_dw = dw_kernel_initializer(shape=(kw, kh, multiplier, in_f))
+            W_dw = dw_kernel_initializer(shape=(kw, kh, in_f, multiplier))
         if W_pw is None:
-            W_pw = pw_kernel_initializer(shape=(1, 1, out_f, multiplier * in_f))
+            W_pw = pw_kernel_initializer(shape=(1, 1, multiplier * in_f, out_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -862,7 +862,7 @@ class AtrousConvLayer(MakiLayer):
         self.name_conv = AtrousConvLayer.NAME_ATROUS_W.format(kw, kh, in_f, out_f, name)
 
         if W is None:
-            W = kernel_initializer(shape=(kw, kh, out_f, in_f))
+            W = kernel_initializer(shape=(kw, kh, in_f, out_f))
         if b is None:
             b = np.zeros(out_f)
 
@@ -1753,7 +1753,7 @@ class WeightStandConvLayer(MakiLayer):
 
         # CREATE WEIGHTS
         if W is None:
-            W = kernel_initializer(shape=(kw, kh, out_f, in_f))
+            W = kernel_initializer(shape=(kw, kh, in_f, out_f))
         if b is None:
             b = np.zeros(out_f)
 

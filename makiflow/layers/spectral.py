@@ -80,7 +80,7 @@ class FourierConvLayer(MakiLayer):
         name = str(name)
 
         if W is None:
-            W = kernel_initializer(shape=(kw, kh, out_f, in_f))
+            W = kernel_initializer(shape=(kw, kh, in_f, out_f))
         if b is None:
             b = np.zeros(out_f)
 
