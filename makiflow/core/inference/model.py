@@ -30,6 +30,12 @@ class Model(ModelSerializer):
 
     def __init__(self, inputs, outputs, name):
         self.name = name
+
+        if not isinstance(inputs, list):
+            inputs = [inputs]
+        if not isinstance(outputs, list):
+            outputs = [outputs]
+
         super().__init__(outputs, inputs)
 
     def _get_model_info(self):

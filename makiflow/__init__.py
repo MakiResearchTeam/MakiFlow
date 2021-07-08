@@ -21,5 +21,5 @@ from makiflow.tf_scripts import get_low_memory_sess, set_main_gpu, get_fraction_
 from makiflow.tf_scripts import freeze_model, load_frozen_graph
 
 from makiflow.core import Model, Trainer
-
+import makiflow.layers
 del absolute_import

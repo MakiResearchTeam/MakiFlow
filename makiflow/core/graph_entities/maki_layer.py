@@ -16,9 +16,11 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from abc import abstractmethod, ABC
-from .maki_tensor import MakiTensor
 from warnings import warn
 import tensorflow as tf
+
+from .maki_tensor import MakiTensor
+from ..debug.exception_scope import method_exception_scope
 
 
 class MakiRestorable(ABC):
@@ -117,6 +119,7 @@ class MakiLayer(MakiRestorable):
         # Dictionary of pairs { parent MakiTensor name : list child MakiTensor name }
         self._children_dict = {}
 
+    @method_exception_scope()
     def __call__(self, x, is_training=False):
         """
         Unpacks datatensor(s) (tf.Tensor) from the given MakiTensor(s) `x`, performs layer's transformation and
@@ -139,6 +142,10 @@ class MakiLayer(MakiRestorable):
         """
         if not isinstance(x, list):
             x = [x]
+
+        # --- Make sure all the input data are MakiTensors
+        for x_ in x:
+            assert isinstance(x_, MakiTensor), f'Expected type MakiTensor, but received {type(x_)}.'
 
         # --- Gather graph information for the future MakiTensors
         data_tensors = []
