@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 from makiflow.core import MakiLayer, MakiBuilder
-from .initializers import He, InitController
+from .initializers import He, InitFabric
 from .activation_converter import ActivationConverter
 import tensorflow as tf
 import numpy as np
@@ -134,8 +134,9 @@ class FourierConvLayer(MakiLayer):
         stride = params[FourierConvLayer.STRIDE]
         padding = params[FourierConvLayer.PADDING]
         activation = ActivationConverter.str_to_activation(params[FourierConvLayer.ACTIVATION])
-
-        init_type = InitController.SET_INITS.get(params[FourierConvLayer.INIT_TYPE], He())
+        init_type = InitFabric.get_init(params[FourierConvLayer.INIT_TYPE])
+        if init_type is None:
+            init_type = He()
         use_bias = params[FourierConvLayer.USE_BIAS]
 
         return FourierConvLayer(

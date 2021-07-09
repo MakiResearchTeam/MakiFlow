@@ -22,7 +22,7 @@ import tensorflow as tf
 from makiflow.core.graph_entities.maki_layer import MakiRestorable, MakiLayer
 from makiflow.layers.activation_converter import ActivationConverter
 from makiflow.core import BatchNormBaseLayer
-from makiflow.layers.initializers import He, XavierGaussianInf, InitController
+from makiflow.layers.initializers import He, XavierGaussianInf, InitFabric
 
 
 class ConvLayer(MakiLayer):
@@ -137,7 +137,10 @@ class ConvLayer(MakiLayer):
         padding = params[ConvLayer.PADDING]
         activation = ActivationConverter.str_to_activation(params[ConvLayer.ACTIVATION])
 
-        init_type = InitController.SET_INITS.get(params[ConvLayer.INIT_TYPE], He())
+        init_type = InitFabric.get_init(params[ConvLayer.INIT_TYPE])
+        if init_type is None:
+            init_type = He()
+
         use_bias = params[ConvLayer.USE_BIAS]
 
         return ConvLayer(
@@ -284,8 +287,9 @@ class UpConvLayer(MakiLayer):
         size = params[UpConvLayer.SIZE]
 
         activation = ActivationConverter.str_to_activation(params[UpConvLayer.ACTIVATION])
-
-        init_type = InitController.SET_INITS.get(params[ConvLayer.INIT_TYPE], He())
+        init_type = InitFabric.get_init(params[UpConvLayer.INIT_TYPE])
+        if init_type is None:
+            init_type = He()
         use_bias = params[UpConvLayer.USE_BIAS]
         return UpConvLayer(
             kw=kw, kh=kh, in_f=in_f, out_f=out_f, size=size,
@@ -501,8 +505,9 @@ class DepthWiseConvLayer(MakiLayer):
 
         padding = params[DepthWiseConvLayer.PADDING]
         stride = params[DepthWiseConvLayer.STRIDE]
-
-        init_type = InitController.SET_INITS.get(params[DepthWiseConvLayer.INIT_TYPE], He())
+        init_type = InitFabric.get_init(params[DepthWiseConvLayer.INIT_TYPE])
+        if init_type is None:
+            init_type = He()
         use_bias = params[DepthWiseConvLayer.USE_BIAS]
         rate = params[DepthWiseConvLayer.RATE]
 
@@ -660,8 +665,14 @@ class SeparableConvLayer(MakiLayer):
         padding = params[SeparableConvLayer.PADDING]
         stride = params[SeparableConvLayer.STRIDE]
 
-        dw_init_type = InitController.SET_INITS.get(params[SeparableConvLayer.DW_INIT_TYPE], XavierGaussianInf())
-        pw_init_type = InitController.SET_INITS.get(params[SeparableConvLayer.PW_INIT_TYPE], He())
+        dw_init_type = InitFabric.get_init(params[SeparableConvLayer.DW_INIT_TYPE])
+        if dw_init_type is None:
+            dw_init_type = XavierGaussianInf()
+
+        pw_init_type = InitFabric.get_init(params[SeparableConvLayer.PW_INIT_TYPE])
+        if pw_init_type is None:
+            pw_init_type = He()
+
         use_bias = params[SeparableConvLayer.USE_BIAS]
 
         activation = ActivationConverter.str_to_activation(params[SeparableConvLayer.ACTIVATION])
@@ -776,8 +787,9 @@ class DenseLayer(MakiLayer):
         output_shape = params[DenseLayer.OUTPUT_SHAPE]
 
         activation = ActivationConverter.str_to_activation(params[DenseLayer.ACTIVATION])
-
-        init_type = InitController.SET_INITS.get(params[DenseLayer.INIT_TYPE], He())
+        init_type = InitFabric.get_init(params[DenseLayer.INIT_TYPE])
+        if init_type is None:
+            init_type = He()
         use_bias = params[DenseLayer.USE_BIAS]
 
         return DenseLayer(
@@ -912,8 +924,9 @@ class AtrousConvLayer(MakiLayer):
 
         rate = params[AtrousConvLayer.RATE]
         padding = params[AtrousConvLayer.PADDING]
-
-        init_type = InitController.SET_INITS.get(params[AtrousConvLayer.INIT_TYPE], He())
+        init_type = InitFabric.get_init(params[AtrousConvLayer.INIT_TYPE])
+        if init_type is None:
+            init_type = He()
         use_bias = params[AtrousConvLayer.USE_BIAS]
 
         activation = ActivationConverter.str_to_activation(params[AtrousConvLayer.ACTIVATION])
@@ -1836,8 +1849,9 @@ class WeightStandConvLayer(MakiLayer):
         stride = params[ConvLayer.STRIDE]
         padding = params[ConvLayer.PADDING]
         activation = ActivationConverter.str_to_activation(params[ConvLayer.ACTIVATION])
-
-        init_type = InitController.SET_INITS.get(params[ConvLayer.INIT_TYPE], He())
+        init_type = InitFabric.get_init(params[ConvLayer.INIT_TYPE])
+        if init_type is None:
+            init_type = He()
         use_bias = params[ConvLayer.USE_BIAS]
 
         return WeightStandConvLayer(
