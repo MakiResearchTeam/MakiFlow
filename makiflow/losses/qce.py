@@ -1,9 +1,10 @@
 import tensorflow as tf
 
 from makiflow.core import Loss, LossFabric
+from .single_tensor_loss import SingleTensorLoss
 
 
-class QCE(Loss):
+class QCE(SingleTensorLoss):
     def __init__(
             self, tensor_names, label_tensors: dict,
             normalize_by_positives=False,

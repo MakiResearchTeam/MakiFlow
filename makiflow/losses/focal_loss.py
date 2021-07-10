@@ -1,9 +1,10 @@
 import tensorflow as tf
 
 from makiflow.core import Loss, LossFabric
+from .single_tensor_loss import SingleTensorLoss
 
 
-class FocalLoss(Loss):
+class FocalLoss(SingleTensorLoss):
     def __init__(
             self, tensor_names, label_tensors: dict,
             num_classes, gamma=2.0, normalize_by_positives=False,

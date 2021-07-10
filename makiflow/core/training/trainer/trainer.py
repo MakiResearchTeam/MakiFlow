@@ -44,6 +44,11 @@ class Trainer(L2RegularizationModule):
         """
         # Can be required during _setup_for_training call. Thus, create this variable
         # first and then call super init.
+        if loss.loss is not None:
+            print('The provided loss object has already been built. It may cause errors when calling fit method '
+                  'as the loss computation might be done in another graph requiring data supply for  '
+                  'already unreachable tensors.\n'
+                  'To avoid that you need to recreate the loss object.')
         self._loss = loss
         self._label_tensors = []
         self._label_tensors += loss.unique_label_tensors.values()

@@ -1,9 +1,10 @@
 import tensorflow as tf
 
 from makiflow.core import Loss
+from .single_tensor_loss import SingleTensorLoss
 
 
-class CrossEntropy(Loss):
+class CrossEntropy(SingleTensorLoss):
     def __init__(self, tensor_names, label_tensors: dict, reduction=Loss.REDUCTION_MEAN, sparse=True):
         loss_fn = lambda t, lt: CrossEntropy.cross_entropy(t, lt, reduction, sparse)
         super().__init__(tensor_names, label_tensors, loss_fn)

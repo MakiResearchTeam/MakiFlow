@@ -1,9 +1,10 @@
 import tensorflow as tf
 
 from makiflow.core import Loss
+from .single_tensor_loss import SingleTensorLoss
 
 
-class MSE(Loss):
+class MSE(SingleTensorLoss):
     def __init__(self, tensor_names, label_tensors: dict, reduction=Loss.REDUCTION_MEAN):
         loss_fn = lambda t, lt: MSE.mean_squared_error(t, lt, reduction)
         super().__init__(tensor_names, label_tensors, loss_fn)
