@@ -11,16 +11,16 @@ class CrossEntropy(Loss):
     @staticmethod
     def cross_entropy(tensors, label_tensors, reduction, sparse):
         preds = tensors[0]
-        labels = label_tensors.get(CrossEntropy.LABELS)
-        weights = label_tensors.get(CrossEntropy.WEIGHTS)
+        labels = label_tensors.get(Loss.LABELS)
+        weights = label_tensors.get(Loss.WEIGHTS)
 
         if sparse:
             loss_fn = lambda label, pred: tf.nn.sparse_softmax_cross_entropy_with_logits(
-                label=label, logits=pred
+                labels=label, logits=pred
             )
         else:
             loss_fn = lambda label, pred: tf.nn.softmax_cross_entropy_with_logits(
-                label=label, logits=pred
+                labels=label, logits=pred
             )
 
         loss = loss_fn(labels, preds)
@@ -28,5 +28,5 @@ class CrossEntropy(Loss):
         if weights:
             loss = loss * weights
 
-        reduction_fn = CrossEntropy.REDUCTION_FN[reduction]
+        reduction_fn = Loss.REDUCTION_FN[reduction]
         return reduction_fn(loss)

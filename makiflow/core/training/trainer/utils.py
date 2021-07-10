@@ -99,7 +99,8 @@ class IteratorCloser:
 
 
 def _process_labels(labels, label_smoothing, dtype=tf.float32):
-    """Pre-process a binary label tensor, maybe applying smoothing.
+    """
+    Pre-process a binary label tensor, maybe applying smoothing.
     Parameters
     ----------
     labels : tensor-like
