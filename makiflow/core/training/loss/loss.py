@@ -1,108 +1,109 @@
-from abc import ABC, abstractmethod
-from collections import OrderedDict
-from ...debug import ExceptionScope
-from ..core import TensorProvider, LossInterface
-from .loss_ops import MulOp, AddOp, DivOp
-from ...dev import ClassDecorator
+import tensorflow as tf
+import numpy as np
+
+from ..core import TensorProvider, AbstractLoss
+from .utils import filter_tensors
 
 
-# There is no way of using inheritance because it comes down
-# to a situation when the Operation has to have overloaded __mul__, etc.
-# that used the Operation before it was actually defined.
-# Therefore, decorator pattern is used to overcome this issue.
-
-# noinspection PyShadowingNames
-class MutableLoss(ClassDecorator, ABC):
-    def __mul__(self, other):
-        if isinstance(other, int) or isinstance(other, float):
-            loss2 = ConstantLoss(other)
-            return self(MulOp(self.get_obj(), loss2))
-        elif isinstance(other, MutableLoss):
-            return self(MulOp(self.get_obj(), other.get_obj()))
-        else:
-            raise ValueError(f'Expected type LossInterface, but received {type(other)}')
-
-    def __add__(self, other):
-        if isinstance(other, int) or isinstance(other, float):
-            loss2 = ConstantLoss(other)
-            return self(AddOp(self.get_obj(), loss2))
-        elif isinstance(other, MutableLoss):
-            return self(AddOp(self.get_obj(), other.get_obj()))
-        else:
-            raise ValueError(f'Expected type LossInterface, but received {type(other)}')
-
-    def __div__(self, other):
-        if isinstance(other, int) or isinstance(other, float):
-            loss2 = ConstantLoss(other)
-            return self(DivOp(self.get_obj(), loss2))
-        elif isinstance(other, MutableLoss):
-            return self(DivOp(self.get_obj(), other.get_obj()))
-        else:
-            raise ValueError(f'Expected type LossInterface, but received {type(other)}')
-
-    def __truediv__(self, other):
-        if isinstance(other, int) or isinstance(other, float):
-            loss2 = ConstantLoss(other)
-            return self(DivOp(self.get_obj(), loss2))
-        elif isinstance(other, MutableLoss):
-            return self(DivOp(self.get_obj(), other.get_obj()))
-        else:
-            raise ValueError(f'Expected type LossInterface, but received {type(other)}')
-
-
-class ConstantLoss(LossInterface):
+class ConstantLoss(AbstractLoss):
     def __init__(self, const):
-        self._const = float(const)
+        super().__init__({})
+        self._const = const
 
     def build(self, tensor_provider: TensorProvider):
         return self._const
 
-    def get_label_tensors(self) -> OrderedDict:
-        return OrderedDict()
+
+class ModularLoss(AbstractLoss):
+    def __init__(self, loss1, loss2, op):
+        super(ModularLoss, self).__init__(filter_tensors(loss1.label_tensors, loss2.label_tensors))
+        self.parent_losses = loss1, loss2
+        self.op = op
+        self.loss = None
+
+    def build(self, tensor_provider):
+        if self.loss is not None:
+            return self.loss
+
+        loss1 = self.parent_losses[0].build(tensor_provider)
+        loss2 = self.parent_losses[1].build(tensor_provider)
+
+        self.loss = self.op(loss1, loss2)
+        return self.loss
+
+    def check_other(self, other):
+        if isinstance(other, int) or isinstance(other, float) \
+                or isinstance(other, tf.Tensor) or isinstance(other, np.float32):
+            other = ConstantLoss(other)
+        else:
+            ValueError(f'Unsupported type for ModularLoss: {type(other)}.'
+                       f'Supported types are: int, float, tf.Tensor, np.float32')
+        return other
+
+    def __add__(self, other):
+        other = self.check_other(other)
+        return ModularLoss(self, other, lambda x, y: x + y)
+
+    def __mul__(self, other):
+        other = self.check_other(other)
+        return ModularLoss(self, other, lambda x, y: x * y)
+
+    def __div__(self, other):
+        other = self.check_other(other)
+        return ModularLoss(self, other, lambda x, y: x / y)
+
+    def __truediv__(self, other):
+        other = self.check_other(other)
+        return ModularLoss(self, other, lambda x, y: x / y)
 
 
-class Loss(LossInterface, ABC):
-    __instance_id = 0
+class Loss(AbstractLoss):
+    def __init__(self, tensor_names, label_tensors: dict, loss_fn):
+        """
+        Builds loss using 'loss_fn' by providing it the required tensors from the model
+        (according to `tensor_names`) and `label_tensors`.
+        Parameters
+        ----------
+        tensor_names : list
+            List of tensors from the model.
+        label_tensors : dict
+            Dictionary of pairs { 'tensor_name': tf.Tensor }. Usually tf.Tensor is a placeholder or some other
+            data source that provides labels for loss computation.
+        loss_fn : function
+            Function with the following signature: (tensors: list, label_tensors: dict), where tensors are the
+            tensors gathered from the model in accordance to `tensor_names` and label_tensors is the `label_tensors`
+            dictionary which passed as is.
+        """
+        super(Loss, self).__init__(label_tensors)
+        self.tensor_names = tensor_names
+        self.loss_fn = loss_fn
+        self.loss = None
 
-    def __new__(cls, *args, **kwargs):
-        loss = object.__new__(cls)
-        loss.__init__(*args, **kwargs)
-        decorator = MutableLoss()
-        Loss.__instance_id += 1
-        return decorator(loss)
+    def build(self, tensor_provider):
+        """
+        Build the loss and returns tf.Tensor.
+        """
+        if self.loss is not None:
+            return self.loss
 
-    def __init__(self, tensor_names, label_tensors: dict):
-        assert len(tensor_names) != 0
-        self._id = Loss.__instance_id
-        self._tensor_names = tensor_names
-        self._label_tensors = label_tensors
-        self._loss = None
+        tensors = []
+        for t_name in self.tensor_names:
+            tensors += [tensor_provider.get_traingraph_tensor(t_name)]
 
-    def build(self, tensor_provider: TensorProvider):
-        if self._loss is not None:
-            return self._loss
+        self.loss = self.loss_fn(tensors, self.label_tensors)
+        return self.loss
 
-        loss = 0.0
-        with ExceptionScope(self.__class__.__name__):
-            for tensor_name in self._tensor_names:
-                tensor = tensor_provider.get_traingraph_tensor(tensor_name)
-                loss = loss + self.build_loss(tensor, self._label_tensors)
-        # Save the loss value to avoid unnecessary computation later
-        self._loss = loss
-        return loss
+    def __add__(self, other):
+        return ModularLoss(self, other, lambda x, y: x + y)
 
-    @abstractmethod
-    def build_loss(self, prediction, label_tensors):
-        pass
+    def __mul__(self, other):
+        return ModularLoss(self, other, lambda x, y: x * y)
 
-    def get_label_tensors(self) -> OrderedDict:
-        # This guaranties that label tensor names won't overlap during
-        # tensor gathering inside the trainer.
-        modified_label_tensors = OrderedDict()
-        for tensor_name, tensor in self._label_tensors.items():
-            tensor_name = f'{self._id}_{tensor_name}'
-            modified_label_tensors[tensor_name] = tensor
-        return modified_label_tensors
+    def __div__(self, other):
+        return ModularLoss(self, other, lambda x, y: x / y)
+
+    def __truediv__(self, other):
+        return ModularLoss(self, other, lambda x, y: x / y)
 
 
 if __name__ == '__main__':
