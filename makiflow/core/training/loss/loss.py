@@ -58,6 +58,16 @@ class ModularLoss(AbstractLoss):
 
 
 class Loss(AbstractLoss):
+    LABELS = 'labels'
+    WEIGHTS = 'weights'
+    REDUCTION_MEAN = 0
+    REDUCTION_SUM = 1
+
+    REDUCTION_FN = {
+        0: tf.reduce_mean,
+        1: tf.reduce_sum
+    }
+
     def __init__(self, tensor_names, label_tensors: dict, loss_fn):
         """
         Builds loss using 'loss_fn' by providing it the required tensors from the model

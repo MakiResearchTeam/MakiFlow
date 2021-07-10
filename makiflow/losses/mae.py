@@ -4,16 +4,20 @@ from makiflow.core import Loss
 
 
 class MAE(Loss):
-    LABELS = 'labels'
-    WEIGHTS = 'weights'
+    def __init__(self, tensor_names, label_tensors: dict, reduction=Loss.REDUCTION_MEAN):
+        loss_fn = lambda t, lt: MAE.mean_absolute_error(t, lt, reduction)
+        super().__init__(tensor_names, label_tensors, loss_fn)
 
-    def build_loss(self, prediction, label_tensors):
-        with tf.name_scope(f'MSE/{self._id}'):
-            labels = label_tensors[MAE.LABELS]
-            loss = tf.abs(labels - prediction)
+    @staticmethod
+    def mean_absolute_error(tensors, label_tensors, reduction):
+        preds = tensors[0]
+        labels = label_tensors.get(Loss.LABELS)
+        weights = label_tensors.get(Loss.WEIGHTS)
 
-            if MAE.WEIGHTS in label_tensors:
-                loss = loss * label_tensors[MAE.WEIGHTS]
+        loss = tf.abs(labels - preds)
 
-            loss = tf.reduce_mean(loss)
-        return loss
+        if weights:
+            loss = loss * weights
+
+        reduction_fn = Loss.REDUCTION_FN[reduction]
+        return reduction_fn(loss)

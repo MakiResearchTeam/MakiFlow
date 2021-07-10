@@ -4,18 +4,29 @@ from makiflow.core import Loss
 
 
 class CrossEntropy(Loss):
-    LABELS = 'labels'
-    WEIGHTS = 'weights'
+    def __init__(self, tensor_names, label_tensors: dict, reduction=Loss.REDUCTION_MEAN, sparse=True):
+        loss_fn = lambda t, lt: CrossEntropy.cross_entropy(t, lt, reduction, sparse)
+        super().__init__(tensor_names, label_tensors, loss_fn)
 
-    def build_loss(self, prediction, label_tensors):
-        with tf.name_scope(f'CrossEntropy/{self._id}'):
-            labels = label_tensors[CrossEntropy.LABELS]
-            loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                labels=labels, logits=prediction
+    @staticmethod
+    def cross_entropy(tensors, label_tensors, reduction, sparse):
+        preds = tensors[0]
+        labels = label_tensors.get(CrossEntropy.LABELS)
+        weights = label_tensors.get(CrossEntropy.WEIGHTS)
+
+        if sparse:
+            loss_fn = lambda label, pred: tf.nn.sparse_softmax_cross_entropy_with_logits(
+                label=label, logits=pred
+            )
+        else:
+            loss_fn = lambda label, pred: tf.nn.softmax_cross_entropy_with_logits(
+                label=label, logits=pred
             )
 
-            if CrossEntropy.WEIGHTS in label_tensors:
-                loss = loss * label_tensors[CrossEntropy.WEIGHTS]
+        loss = loss_fn(labels, preds)
 
-            loss = tf.reduce_mean(loss)
-        return loss
+        if weights:
+            loss = loss * weights
+
+        reduction_fn = CrossEntropy.REDUCTION_FN[reduction]
+        return reduction_fn(loss)
