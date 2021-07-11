@@ -24,7 +24,7 @@ class MakiTensor:
     PARENT_LAYER_INFO = 'parent_layer_info'
 
     OBJ2STR = "MakiTensor(name={}, shape={}, dtype={})"
-    OBJ2REPR = "<mf.trainer.MakiTensor 'name={}' shape={} dtype={}>"
+    OBJ2REPR = "<mf.core.MakiTensor 'name={}' shape={} dtype={}>"
 
     def __init__(self, data_tensor: tf.Tensor, parent_layer, parent_tensor_names: list,
                  previous_tensors: dict, name=None, index=None):
@@ -51,18 +51,16 @@ class MakiTensor:
         if name is not None:
             self._name = name
         else:
-            self._name: str = parent_layer.name
+            self._name: str = parent_layer.get_name()
         self._parent_tensor_names = parent_tensor_names
         self._parent_layer = parent_layer
         self._previous_tensors: dict = previous_tensors
         self._index = index
 
-    @property
-    def tensor(self):
+    def get_data_tensor(self):
         return self._data_tensor
 
-    @property
-    def parent_layer(self):
+    def get_parent_layer(self):
         """
         Returns
         -------
@@ -71,8 +69,7 @@ class MakiTensor:
         """
         return self._parent_layer
 
-    @property
-    def parent_tensors(self) -> list:
+    def get_parent_tensors(self) -> list:
         """
         Returns
         -------
@@ -84,12 +81,10 @@ class MakiTensor:
             parent_tensors += [self._previous_tensors[name]]
         return parent_tensors
 
-    @property
-    def parent_tensor_names(self):
+    def get_parent_tensor_names(self):
         return self._parent_tensor_names
 
-    @property
-    def previous_tensors(self) -> dict:
+    def get_previous_tensors(self) -> dict:
         """
         Returns
         -------
@@ -99,8 +94,7 @@ class MakiTensor:
         """
         return self._previous_tensors
 
-    @property
-    def shape(self):
+    def get_shape(self):
         return self._data_tensor.get_shape().as_list()
 
     def get_self_pair(self) -> dict:
@@ -108,20 +102,19 @@ class MakiTensor:
 
     def __str__(self):
         name = self._name
-        shape = self.shape
+        shape = self.get_shape()
         dtype = self._data_tensor.dtype.name
 
         return MakiTensor.OBJ2STR.format(name, shape, dtype)
 
     def __repr__(self):
         name = self._name
-        shape = self.shape
+        shape = self.get_shape()
         dtype = self._data_tensor.dtype.name
 
         return MakiTensor.OBJ2REPR.format(name, shape, dtype)
 
-    @property
-    def name(self):
+    def get_name(self):
         return self._name
 
     def get_index(self):
@@ -138,26 +131,11 @@ class MakiTensor:
     def eval(self, feed_dict: dict, sess):
         tf_feed_dict = {}
         for makitensor, datatensor in feed_dict.items():
-            tf_feed_dict[makitensor.tensor] = datatensor
+            tf_feed_dict[makitensor.get_data_tensor()] = datatensor
 
-        run_tensor = self.tensor
+        run_tensor = self.get_data_tensor()
         return sess.run(
             run_tensor,
             feed_dict=tf_feed_dict
         )
 
-    def rebuild(self, input_tensors):
-        """
-        Traverses graph recursively until it finds the requested nodes.
-
-        Parameters
-        ----------
-        input_tensors : dict
-            Contains pairs of { 'layer_name': [MakiTensor] } where the key is a layer name
-            and the value is a list of makitensors.
-
-        Returns
-        -------
-
-        """
-        pass

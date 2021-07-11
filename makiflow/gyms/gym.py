@@ -105,7 +105,7 @@ class Gym:
             self._gen_layer_fabric,
             self._sess
         )
-        self._hermes = self._trainer.get_tracker()
+        self._hermes = self._trainer.get_hermes()
         self._hermes.set_tensorboard_writer(self._tester.get_writer())
 
     def _create_gym_folder(self):

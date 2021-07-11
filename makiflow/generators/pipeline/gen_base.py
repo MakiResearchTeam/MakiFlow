@@ -40,10 +40,10 @@ class GenLayer(InputMakiLayer):
     def get_iterator(self):
         pass
 
-    def shape(self):
-        return self._input_tensor.shape().as_list()
+    def get_shape(self):
+        return self._input_tensor.get_shape().as_list()
 
-    def name(self):
+    def get_name(self):
         return self._name
 
     # noinspection PyMethodMayBeStatic
@@ -56,13 +56,13 @@ class GenLayer(InputMakiLayer):
 
     def to_dict(self):
         return {
-            MakiRestorable.NAME: self.name,
-            MakiTensor.PARENT_TENSOR_NAMES: self.parent_tensor_names(),
+            MakiRestorable.NAME: self.get_name(),
+            MakiTensor.PARENT_TENSOR_NAMES: self.get_parent_tensor_names(),
             MakiTensor.PARENT_LAYER_INFO: {
                 MakiRestorable.TYPE: InputMakiLayer.TYPE,
                 MakiRestorable.PARAMS: {
-                    MakiRestorable.NAME: self.name,
-                    InputMakiLayer.INPUT_SHAPE: self.shape()
+                    MakiRestorable.NAME: self.get_name(),
+                    InputMakiLayer.INPUT_SHAPE: self.get_shape()
                 }
             }
         }

@@ -26,8 +26,8 @@ import json
 
 import tensorflow as tf
 from makiflow.save_recover.builder import Builder
-from makiflow.old.models.ssd.tools import SSDTester
-from makiflow.old.models.ssd.tools import DataPreparator
+from makiflow.models.ssd.tools import SSDTester
+from makiflow.models.ssd.tools import DataPreparator
 
 
 class ConvModelTrainer:

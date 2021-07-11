@@ -66,13 +66,13 @@ class InputLayer(InputMakiLayer):
 
     def to_dict(self):
         return {
-            MakiRestorable.NAME: self.name,
-            MakiTensor.PARENT_TENSOR_NAMES: self.parent_tensor_names(),
+            MakiRestorable.NAME: self.get_name(),
+            MakiTensor.PARENT_TENSOR_NAMES: self.get_parent_tensor_names(),
             MakiTensor.PARENT_LAYER_INFO: {
                 MakiRestorable.TYPE: InputMakiLayer.TYPE,
                 MakiRestorable.PARAMS: {
-                    MakiRestorable.NAME: self.name,
-                    InputMakiLayer.INPUT_SHAPE: self.shape()
+                    MakiRestorable.NAME: self.get_name(),
+                    InputMakiLayer.INPUT_SHAPE: self.get_shape()
                 }
             }
         }
@@ -110,9 +110,9 @@ class ReshapeLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 if self.ignore_batch:
-                    origin_shape = X.shape().as_list()
+                    origin_shape = X.get_shape().as_list()
                     dynamic_shape = tf.shape(X)
                     new_shape = copy.deepcopy(self.new_shape)
 
@@ -125,8 +125,8 @@ class ReshapeLayer(MakiLayer):
 
                     return tf.reshape(tensor=X, shape=new_shape, name=self._name)
                 else:
-                    bs = X.shape().as_list()[0]
-                    origin_shape = X.shape().as_list()[1:]
+                    bs = X.get_shape().as_list()[0]
+                    origin_shape = X.get_shape().as_list()[1:]
                     dynamic_shape = tf.shape(X)[1:]
                     new_shape = copy.deepcopy(self.new_shape)
 
@@ -158,7 +158,7 @@ class ReshapeLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ReshapeLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 ReshapeLayer.NEW_SHAPE: self.new_shape,
                 ReshapeLayer.IGNORE_BATCH: self.ignore_batch
             }
@@ -188,7 +188,7 @@ class MulByAlphaLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return tf.math.multiply(X, self.alpha, name=self._name)
 
     def training_forward(self, X):
@@ -208,7 +208,7 @@ class MulByAlphaLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: MulByAlphaLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 MulByAlphaLayer.ALPHA: float(self.alpha),
             }
         }
@@ -234,7 +234,7 @@ class SumLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 # Compare with tf.reduce_sum and tf.add_n, sum(X) works faster in running session
                 return sum(X)
 
@@ -251,7 +251,7 @@ class SumLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: SumLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
             }
         }
 
@@ -280,7 +280,7 @@ class ConcatLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return tf.concat(values=X, axis=self.axis, name=self._name)
 
     def training_forward(self, X):
@@ -300,7 +300,7 @@ class ConcatLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ConcatLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 ConcatLayer.AXIS: self.axis,
             }
         }
@@ -336,7 +336,7 @@ class ZeroPaddingLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return tf.pad(
                     tensor=X,
                     paddings=self.padding,
@@ -361,7 +361,7 @@ class ZeroPaddingLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ZeroPaddingLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 ZeroPaddingLayer.PADDING: self.input_padding,
             }
         }
@@ -388,7 +388,7 @@ class GlobalMaxPoolLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 assert (len(X.shape) == 4), GlobalMaxPoolLayer._ASSERT_WRONG_INPUT_SHAPE
                 return tf.reduce_max(X, axis=[1, 2], name=self._name)
 
@@ -405,7 +405,7 @@ class GlobalMaxPoolLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: GlobalMaxPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
             }
         }
 
@@ -431,7 +431,7 @@ class GlobalAvgPoolLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 assert (len(X.shape) == 4), GlobalAvgPoolLayer._ASSERT_WRONG_INPUT_SHAPE
                 return tf.reduce_mean(X, axis=[1, 2], name=self._name)
 
@@ -448,7 +448,7 @@ class GlobalAvgPoolLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: GlobalAvgPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
             }
         }
 
@@ -490,7 +490,7 @@ class MaxPoolLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return tf.nn.max_pool(
                     X,
                     ksize=self.ksize,
@@ -519,7 +519,7 @@ class MaxPoolLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: MaxPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 MaxPoolLayer.KSIZE: self.ksize,
                 MaxPoolLayer.STRIDES: self.strides,
                 MaxPoolLayer.PADDING: self.padding
@@ -564,7 +564,7 @@ class AvgPoolLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return tf.nn.avg_pool(
                     X,
                     ksize=self.ksize,
@@ -593,7 +593,7 @@ class AvgPoolLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: AvgPoolLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 AvgPoolLayer.KSIZE: self.ksize,
                 AvgPoolLayer.STRIDES: self.strides,
                 AvgPoolLayer.PADDING: self.padding
@@ -629,7 +629,7 @@ class ActivationLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return self.f(X, name=self._name)
 
     def training_forward(self, X):
@@ -649,7 +649,7 @@ class ActivationLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ActivationLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 ActivationLayer.ACTIVATION: ActivationConverter.activation_to_str(self.f)
             }
         }
@@ -679,7 +679,7 @@ class FlattenLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 if self._keep_depth:
                     shape = tf.shape(X)
                     bs = shape[0]
@@ -700,7 +700,7 @@ class FlattenLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: FlattenLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 FlattenLayer.KEEP_DEPTH: self._keep_depth
             }
         }
@@ -743,7 +743,7 @@ class DropoutLayer(MakiLayer):
 
     def training_forward(self, X):
         with tf.name_scope(MakiRestorable.TRAINING_MODE):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return tf.nn.dropout(X, self._p_keep,
                                      noise_shape=self.noise_shape,
                                      seed=self.seed,
@@ -767,7 +767,7 @@ class DropoutLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: DropoutLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 DropoutLayer.P_KEEP: self._p_keep,
                 DropoutLayer.NOISE_SHAPE: self.noise_shape,
                 DropoutLayer.SEED: self.seed
@@ -827,11 +827,11 @@ class ResizeLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
 
                 if self.scales is not None:
                     # Take size of the H and W
-                    new_shape = X.shape().as_list()[1:-1]
+                    new_shape = X.get_shape().as_list()[1:-1]
                     new_shape[self.H_DIMENSION_SCALES] *= int(self.scales[self.H_DIMENSION_SCALES])
                     new_shape[self.W_DIMENSION_SCALES] *= int(self.scales[self.W_DIMENSION_SCALES])
                 else:
@@ -892,7 +892,7 @@ class ResizeLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ResizeLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 ResizeLayer.FIELD_INTERPOLATION: self.interpolation,
                 ResizeLayer.NEW_SHAPE: self.new_shape,
                 ResizeLayer.ALIGN_CORNERS: self.align_corners,
@@ -919,7 +919,7 @@ class L2NormalizationLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return tf.math.l2_normalize(
                     x=X, epsilon=self._eps, axis=-1, name=self._name
                 )
@@ -941,7 +941,7 @@ class L2NormalizationLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: L2NormalizationLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 L2NormalizationLayer.EPS: self._eps
             }
         }
@@ -989,7 +989,7 @@ class ChannelSplitLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return tuple(tf.split(
                     X,
                     num_or_size_splits=self._num_or_size_splits,
@@ -1018,7 +1018,7 @@ class ChannelSplitLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ChannelSplitLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 ChannelSplitLayer.NUM_OR_SIZE_SPLITS: self._num_or_size_splits,
                 ChannelSplitLayer.AXIS: self._axis,
                 ChannelSplitLayer.NUM: self._num
@@ -1053,9 +1053,9 @@ class ChannelShuffleLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
 
-                original_shape = X.shape()
+                original_shape = X.get_shape()
                 c = original_shape[-1]
                 if c % self._num_groups != 0:
                     raise ValueError("Number of channels must be divided by num_group. "
@@ -1090,7 +1090,7 @@ class ChannelShuffleLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: ChannelShuffleLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 ChannelShuffleLayer.NUM_GROUPS: self._num_groups,
             }
         }
@@ -1147,7 +1147,7 @@ class SinusEmbeddingLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: SinusEmbeddingLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 SinusEmbeddingLayer.MAX_POWER: self._max_power,
                 SinusEmbeddingLayer.DIM: self._dim
             }

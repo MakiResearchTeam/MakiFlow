@@ -146,10 +146,10 @@ def get_shift_matrix_batched(dx_batched, dy_batched):
     Get batched shift matrix with certain dx and dy in dx_batched and dy_batched array
 
     """
-    assert dx_batched.shape().as_list()[0] == dy_batched.shape().as_list()[0]
+    assert dx_batched.get_shape().as_list()[0] == dy_batched.get_shape().as_list()[0]
 
     return tf.stack(
-        [get_shift_matrix(dx_batched[i], dy_batched[i]) for i in range(dx_batched.shape().as_list()[0])]
+        [get_shift_matrix(dx_batched[i], dy_batched[i]) for i in range(dx_batched.get_shape().as_list()[0])]
     )
 
 
@@ -283,10 +283,10 @@ def apply_transformation_batched(
     if isinstance(images, list):
         for i in range(len(images)):
             images[i] = tf.convert_to_tensor(images[i], dtype=tf.float32)
-        N = images[0].shape().as_list()[0]
+        N = images[0].get_shape().as_list()[0]
     else:
         images = tf.convert_to_tensor(images, dtype=tf.float32)
-        N = images.shape().as_list()[0]
+        N = images.get_shape().as_list()[0]
 
     zoom_matrix = None
     shift_matrix = None
