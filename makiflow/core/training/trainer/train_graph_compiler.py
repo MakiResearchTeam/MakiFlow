@@ -34,7 +34,7 @@ class GraphCompiler(TensorProvider):
             List of the input training tensors. Their names must be the same as their inference counterparts!
         """
         self._model = model
-        self._graph_tensors = model.get_graph_tensors()
+        self._graph_tensors = model.graph_tensors
         self._train_inputs_list = train_inputs
         self._train_inputs = {}
         for train_input in train_inputs:
@@ -201,7 +201,7 @@ class GraphCompiler(TensorProvider):
 
             return outputs.get(maki_tensor.name)
 
-        for output in self._model.get_outputs():
+        for output in self._model.outputs:
             # Even though the method does return some tensors, they are not being collected here.
             # It is done internally in the method. All the necessary tensors can be accessed
             # via the `get_traingraph_tensor` method.

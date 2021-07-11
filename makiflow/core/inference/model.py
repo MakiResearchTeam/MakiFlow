@@ -40,13 +40,13 @@ class Model(ModelSerializer):
 
     def _get_model_info(self):
         return {
-            Model.INPUTS: [in_x.name for in_x in super().get_inputs()],
-            Model.OUTPUTS: [out_x.name for out_x in super().get_outputs()],
+            Model.INPUTS: [in_x.name for in_x in super().inputs],
+            Model.OUTPUTS: [out_x.name for out_x in super().outputs],
             Model.NAME: self.name
         }
 
     def get_batch_size(self):
-        return self.get_inputs()[0].shape[0]
+        return self.inputs[0].shape[0]
 
     def predict(self, *args):
         """
@@ -65,15 +65,15 @@ class Model(ModelSerializer):
         batch_size = self.get_batch_size() if self.get_batch_size() is not None else 1
         predictions = []
         for data in tqdm(data_iterator(*args, batch_size=batch_size)):
-            packed_data = pack_data(self.get_inputs(), data)
+            packed_data = pack_data(self.inputs, data)
             predictions += [
                 self._session.run(
-                    [out_x.tensor for out_x in super().get_outputs()],
+                    [out_x.tensor for out_x in super().outputs],
                     feed_dict=packed_data)
             ]
         # Group data by the model's inputs
         new_pred = []
-        for i in range(len(super().get_outputs())):
+        for i in range(len(super().outputs)):
             single_preds = []
             for output in predictions:
                 # grab i-th data

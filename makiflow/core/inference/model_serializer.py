@@ -92,7 +92,7 @@ class ModelSerializer(MakiCore):
             for single_output in self._outputs
         ] + [
             single_output.tensor.name.split(':')[0]
-            for single_output in super().get_graph_tensors().values()
+            for single_output in super().graph_tensors.values()
         ]
 
         graph = self._session.graph
@@ -130,9 +130,9 @@ class ModelSerializer(MakiCore):
 
             if output_tensors is None:
                 print('Output tensors are not provided. Using the standard ones:')
-                print(super().get_outputs())
+                print(super().outputs)
                 print("Use `get_outputs` in order to obtain the output tensors and their names.")
-                output_tensors = super().get_outputs()
+                output_tensors = super().outputs
 
             # output_tensors contains MakiTensors
             if isinstance(output_tensors[0], MakiTensor):
