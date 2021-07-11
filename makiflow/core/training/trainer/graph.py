@@ -35,7 +35,7 @@ class Graph(TensorProvider):
         """
         self._model = model
         self._inputs = None
-        self._graph_tensors = model.get_graph_tensors()
+        self._graph_tensors = model.graph_tensors
         self._train_inputs = {}
         self._is_compiled = False
         self._init()
@@ -82,7 +82,7 @@ class Graph(TensorProvider):
         Initiates building the training graph. Has to be called before the training.
         """
         print('Compile the graph...')
-        for makitensor in self._model.get_outputs():
+        for makitensor in self._model.outputs:
             self.create_tensor(makitensor)
 
         self._is_compiled = True

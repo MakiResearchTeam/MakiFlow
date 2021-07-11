@@ -17,7 +17,6 @@
 
 from abc import abstractmethod, ABC
 import tensorflow as tf
-import json
 
 
 class MakiCore(ABC):
@@ -88,7 +87,8 @@ class MakiCore(ABC):
             self._params += layer.get_params()
             self._named_dict_params.update(layer.get_params_dict())
 
-    def get_outputs(self):
+    @property
+    def outputs(self):
         """
         Returns
         -------
@@ -97,7 +97,8 @@ class MakiCore(ABC):
         """
         return self._outputs
 
-    def get_inputs(self):
+    @property
+    def inputs(self):
         """
         Returns
         -------
@@ -148,7 +149,8 @@ class MakiCore(ABC):
             raise KeyError(f'Could not find layer with name={layer_name}')
         return layer
 
-    def get_layers(self):
+    @property
+    def layers(self):
         """
         Returns
         -------
@@ -157,7 +159,8 @@ class MakiCore(ABC):
         """
         return self._layers.copy()
 
-    def get_graph_tensors(self):
+    @property
+    def graph_tensors(self):
         """
         Returns
         -------
