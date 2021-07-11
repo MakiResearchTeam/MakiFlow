@@ -49,7 +49,7 @@ class SingleTextureLayer(MakiLayer):
 
     def forward(self, X, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name):
                 # Normalize the input UV map so that its coordinates are within [-1, 1] range.
                 x = X * 2.0 - 1.0
                 batch_size = x.get_shape().as_list()[0]
@@ -116,7 +116,7 @@ class LaplacianPyramidTextureLayer(MakiLayer):
 
     def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.get_name()):
+            with tf.name_scope(self.name):
                 # Normalize the input UV map so that its coordinates are within [-1, 1] range.
                 y = []
                 for d in range(self._depth):

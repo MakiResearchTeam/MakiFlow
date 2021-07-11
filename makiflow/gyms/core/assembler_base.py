@@ -75,13 +75,13 @@ class ModelAssemblerBase:
 
     @staticmethod
     def setup_model(model_config, gen_layer, sess):
-        shape = gen_layer.get_shape()
+        shape = gen_layer.shape()
         # Change batch_size to 1
         shape[0] = 1
         # Change image size to dynamic size
         shape[1] = None
         shape[2] = None
-        name = gen_layer.get_name()
+        name = gen_layer.name
 
         input_layer = InputLayer(input_shape=shape, name=name)
         # TODO: Watcher for type of model????

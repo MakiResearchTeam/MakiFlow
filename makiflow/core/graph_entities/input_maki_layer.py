@@ -79,5 +79,16 @@ class InputMakiLayer(MakiTensor, ABC):
         """
         return self._regularize_params
 
-    def get_name(self):
+    @property
+    def name(self):
         return self._name
+
+    @property
+    def parent_layer(self):
+        """
+        Returns
+        -------
+        Layer
+            Layer which produced current MakiTensor.
+        """
+        return self

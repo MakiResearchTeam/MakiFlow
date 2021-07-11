@@ -8,10 +8,11 @@ def assert_array_lens(arrs):
                 f'have lengths of {len(arr1)} and {len(arr2)} respectively.'
 
 
-def data_iterator(*args, batch_size=1):
+def data_iterator(*args, batch_size=1, force_tuple=True):
     """
     Iterates over the array yielding batches of the given size.
     Once array is finished, the iterator is closed.
+
     Parameters
     ----------
     *args : arraylike
@@ -37,7 +38,7 @@ def data_iterator(*args, batch_size=1):
         for arr in args:
             batches.append(arr[i*batch_size: (i+1)*batch_size])
 
-        yield tuple(batches) if len(batches) > 1 else batches[0]
+        yield tuple(batches) if len(batches) > 1 or force_tuple else batches[0]
 
     if iterations * batch_size != len(args[0]):
         i = iterations
@@ -55,7 +56,7 @@ def data_iterator(*args, batch_size=1):
 
             batches.append(updated)
 
-        yield tuple(batches) if len(batches) > 1 else batches[0]
+        yield tuple(batches) if len(batches) > 1 or force_tuple else batches[0]
 
 
 if __name__ == '__main__':
@@ -80,7 +81,7 @@ if __name__ == '__main__':
         for one, two in data_iterator(a.tolist(), b.tolist(), batch_size=3):
             print(one, two)
 
-    with DebugContext('Batch==1.'):
-        a = np.ones((4, 1))
-        for one in data_iterator(a.tolist(), batch_size=1):
+    with DebugContext('Check tuples return.'):
+        a, b = np.ones(4), np.ones(4) * 2
+        for one in data_iterator(a.tolist(), batch_size=3):
             print(one)

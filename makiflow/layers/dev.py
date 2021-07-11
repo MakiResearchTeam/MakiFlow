@@ -37,7 +37,7 @@ class ShapeLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: self.__class__.__name__,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name,
             }
         }
 
@@ -63,7 +63,7 @@ class IndexLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: self.__class__.__name__,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name,
                 IndexLayer.KEY: self._key
             }
         }
@@ -89,7 +89,7 @@ class ReshapeLikeLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: self.__class__.__name__,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.get_name(),
+                MakiRestorable.NAME: self.name,
             }
         }
 

@@ -15,5 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .model_serializer import ModelSerializer as MakiModel
 from .maki_builder import MakiBuilder
+from .model import Model
+
+"""
+Model consists of several layers of abstraction:
+
+^-------Model-------^
+|||||||||||||||||||||
+|--ModelSerializer--|
+|||||||||||||||||||||
+|-----MakiCore------|
+"""

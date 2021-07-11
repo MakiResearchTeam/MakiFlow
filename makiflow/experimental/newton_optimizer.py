@@ -55,10 +55,10 @@ class NewtonOptimizer:
     def _init_hessian_vars(self, params, objective):
         self._params = params
         self._grads = tf.gradients(objective, params)
-        self._params_shape = [param.get_shape() for param in params]
+        self._params_shape = [param.shape() for param in params]
         self._flattened_params = [tf.reshape(param, [-1]) for param in params]
         self._flattened_params_shape = [
-            int(param.get_shape().as_list()[0]) for param in self._flattened_params
+            int(param.shape().as_list()[0]) for param in self._flattened_params
         ]
         self._grad_vector = self._flatten(self._grads)
 
@@ -144,7 +144,7 @@ class NewtonOptimizer:
                 name=NewtonOptimizer.HESSIAN_RANK
             )
             # Number of row must be equal with matrix rank
-            condition = tf.math.equal(matrix_rank, self._hessian.get_shape()[0])
+            condition = tf.math.equal(matrix_rank, self._hessian.shape()[0])
             self._update_op = tf.cond(
                 condition,
                 self._compute_newton_var_updates,  # newton mode

@@ -373,7 +373,7 @@ class AugmentationPostMethod(PostMapMethod):
         # i.e decided batched or not after that we should add color dimension into masks
         mask = tf.cast(element[SegmentIterator.MASK], dtype=tf.float32)
 
-        image_shape = image.get_shape().as_list()
+        image_shape = image.shape().as_list()
         given_2d = None
         angle = None
         dy = None
@@ -384,10 +384,10 @@ class AugmentationPostMethod(PostMapMethod):
             # Single data
             # Check whatever mask have color dimension
             # if [H, W] mask provided
-            if len(mask.get_shape().as_list()) == 2:
+            if len(mask.shape().as_list()) == 2:
                 given_2d = True
                 mask = tf.expand_dims(mask, axis=-1)
-            elif len(mask.get_shape().as_list()) == 3:
+            elif len(mask.shape().as_list()) == 3:
                 given_2d = False
             else:
                 raise ValueError("Wrong shape for mask, were given: {mask.get_shape().as_list()}\n"
@@ -421,10 +421,10 @@ class AugmentationPostMethod(PostMapMethod):
             # Batched
             # Check whatever mask have color dimension
             # if [H, W] mask provided
-            if len(mask.get_shape().as_list()) == 3:
+            if len(mask.shape().as_list()) == 3:
                 given_2d = True
                 mask = tf.expand_dims(mask, axis=-1)
-            elif len(mask.get_shape().as_list()) == 4:
+            elif len(mask.shape().as_list()) == 4:
                 given_2d = False
             else:
                 raise ValueError("Wrong shape for mask, were given: {mask.get_shape().as_list()}\n"
