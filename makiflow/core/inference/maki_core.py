@@ -48,7 +48,7 @@ class MakiCore(ABC):
         if graph_tensors is None:
             graph_tensors = {}
             for output in outputs:
-                graph_tensors.update(output.previous_tensors)
+                graph_tensors.update(output.get_previous_tensors())
                 # Add output tensor to `graph_tensors` since it doesn't have it.
                 # It is assumed that graph_tensors contains ALL THE TENSORS graph consists of.
                 graph_tensors.update(output.get_self_pair())
@@ -61,19 +61,19 @@ class MakiCore(ABC):
         # Extracted output tf.Tensors
         self._output_data_tensors = []
         for maki_tensor in self._outputs:
-            self._output_data_tensors += [maki_tensor.tensor]
+            self._output_data_tensors += [maki_tensor.get_data_tensor()]
 
         # Extracted input tf.Tensors
         self._input_data_tensors = []
         for maki_tensor in self._inputs:
-            self._input_data_tensors += [maki_tensor.tensor]
+            self._input_data_tensors += [maki_tensor.get_data_tensor()]
 
         # Collect layers
         self._layers = {}
         for tensor_name in self._graph_tensors:
             maki_tensor = self._graph_tensors[tensor_name]
-            layer = maki_tensor.parent_layer
-            self._layers[layer.name] = layer
+            layer = maki_tensor.get_parent_layer()
+            self._layers[layer.get_name()] = layer
 
         # For training
         self._training_outputs = []
@@ -84,7 +84,7 @@ class MakiCore(ABC):
         self._params = []
         self._named_dict_params = {}
         for tensor_name in self._graph_tensors:
-            layer = self._graph_tensors[tensor_name].parent_layer
+            layer = self._graph_tensors[tensor_name].get_parent_layer()
             self._params += layer.get_params()
             self._named_dict_params.update(layer.get_params_dict())
 
@@ -128,7 +128,7 @@ class MakiCore(ABC):
         return node
 
     def get_data_node(self, node_name):
-        return self.get_node(node_name).tensor
+        return self.get_node(node_name).get_data_tensor()
 
     def get_layer(self, layer_name):
         """
@@ -165,3 +165,22 @@ class MakiCore(ABC):
             Contains all the MakiTensors in the model's graph.
         """
         return self._graph_tensors.copy()
+
+    @abstractmethod
+    def get_feed_dict_config(self) -> dict:
+        """
+        Used by the predict method and the MakiTrainer.
+
+        Returns
+        -------
+        dict
+            Dictionary with the following structure:
+            { MakiTensor: int }, where MakiTensor is input tensor to the model and int is the index of the data point
+            in the input data array.
+            Example code of usage of such a dict:
+            data = next(generator)
+            feed_dict = feed_dict_config.copy()
+            for t, i in feed_dict_config.items():
+                feed_dict[t] = data[i]
+        """
+        pass

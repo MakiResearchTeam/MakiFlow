@@ -27,11 +27,11 @@ import copy
 from scipy.stats import skew, kurtosis
 import pandas as pd
 
-from makiflow.old.models import ABS_LOSS
-from makiflow.old.models import MSE_LOSS
-from makiflow.old.models import MASKED_ABS_LOSS
-from makiflow.old.models import MASKED_MSE_LOSS
-from makiflow.old.models import PERCEPTUAL_LOSS
+from makiflow.models.nn_render.training_modules.abs_loss import ABS_LOSS
+from makiflow.models.nn_render.training_modules.mse_loss import MSE_LOSS
+from makiflow.models.nn_render.training_modules.masked_abs_loss import MASKED_ABS_LOSS
+from makiflow.models.nn_render.training_modules.masked_mse_loss import MASKED_MSE_LOSS
+from makiflow.models.nn_render.training_modules.perceptual_loss import PERCEPTUAL_LOSS
 
 from makiflow.gyms.utils.optimizer_builder import OptimizerBuilder
 from makiflow.tools.test_visualizer import TestVisualizer
@@ -338,7 +338,7 @@ class RenderTrainer:
 
         # Plot distribution of prediction of the Neural Network at the certain layers
         for name_layer in exp_params[ExpField.PLOT_VALUE_LAYERS]:
-            tensor_of_layer = self._test_model.get_node(name_layer).tensor()
+            tensor_of_layer = self._test_model.get_node(name_layer).get_data_tensor()
             layer_values.append(self._sess.run(tensor_of_layer,
                                          feed_dict={self._test_model._input_data_tensors[0]: uv})[0])
 
@@ -347,7 +347,7 @@ class RenderTrainer:
         )
 
         # Plot distribution of weights of the texture
-        texture = self._test_model._sampled_texture.parent_layer()._texture[0]
+        texture = self._test_model._sampled_texture.get_parent_layer()._texture[0]
         texture = self._sess.run(texture).astype(np.float32)
 
         values_texture = []

@@ -52,7 +52,7 @@ class PositionalEncodingLayer(MakiLayer):
 
     def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 shape = tf.shape(x)
                 h, w = shape[1], shape[2]
                 pe = tf.expand_dims(positional_encoding_v2((w, h), self._depth), axis=0)
@@ -66,7 +66,7 @@ class PositionalEncodingLayer(MakiLayer):
         return {
             MakiRestorable.TYPE: self.__class__.__name__,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 PositionalEncodingLayer.DEPTH: self._depth
             }
         }
@@ -117,7 +117,7 @@ class AttentionLayer(MakiLayer):
 
     def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 keys, queries, values = x
                 # key and queries are assumed to have the same dimensionality
                 dim = tf.cast(tf.shape(keys)[-1], 'float32')
@@ -138,7 +138,7 @@ class AttentionLayer(MakiLayer):
         return {
             MakiRestorable.TYPE: AttentionLayer.TYPE,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 AttentionLayer.L2_NORMALIZE: self._l2_normalize,
                 AttentionLayer.DIM_NORMALIZE: self._dim_normalize
             }
@@ -232,7 +232,7 @@ class SpatialAttentionLayer(MakiLayer):
 
     def forward(self, x, computation_mode=MakiRestorable.INFERENCE_MODE):
         with tf.name_scope(computation_mode):
-            with tf.name_scope(self.name):
+            with tf.name_scope(self.get_name()):
                 return x[0] + x[1]
 
     def training_forward(self, X):
@@ -242,7 +242,7 @@ class SpatialAttentionLayer(MakiLayer):
         return {
             MakiRestorable.FIELD_TYPE: self.__class__.__name__,
             MakiRestorable.PARAMS: {
-                MakiRestorable.NAME: self.name,
+                MakiRestorable.NAME: self.get_name(),
                 self.IN_F: self._in_f,
                 self.KQ_DIM: self._kq_dim
             }
@@ -261,4 +261,4 @@ if __name__ == '__main__':
     x = InputLayer(input_shape=[None, 32, 12, 64], name='name')
     x = SpatialAttentionLayer(in_f=64, name='attention')(x)
     print(x)
-    print(x.parent_layer())
+    print(x.get_parent_layer())

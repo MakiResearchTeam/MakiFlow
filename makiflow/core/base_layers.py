@@ -113,7 +113,7 @@ class BatchNormBaseLayer(MakiLayer):
         )
 
     def __call__(self, x):
-        data = x.tensor
+        data = x.get_data_tensor()
 
         if self._track_running_stats and not self._is_running_vars_created:
             self._is_running_vars_created = True

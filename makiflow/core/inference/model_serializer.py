@@ -42,7 +42,7 @@ class ModelSerializer(MakiCore):
         vars_to_load = {}
         if layer_names is not None:
             for layer_name in layer_names:
-                layer = self._graph_tensors[layer_name].parent_layer()
+                layer = self._graph_tensors[layer_name].get_parent_layer()
                 vars_to_load.update(layer.get_params_dict())
         else:
             vars_to_load = self._named_dict_params
@@ -64,7 +64,7 @@ class ModelSerializer(MakiCore):
         vars_to_save = {}
         if layer_names is not None:
             for layer_name in layer_names:
-                layer = self._graph_tensors[layer_name].parent_layer
+                layer = self._graph_tensors[layer_name].get_parent_layer()
                 vars_to_save.update(layer.get_params_dict())
         else:
             vars_to_save = self._named_dict_params
@@ -88,10 +88,10 @@ class ModelSerializer(MakiCore):
         """
         # Collect all names of output variables/operations
         output_names = [
-            single_output.tensor.name.split(':')[0]
+            single_output.get_data_tensor().name.split(':')[0]
             for single_output in self._outputs
         ] + [
-            single_output.tensor.name.split(':')[0]
+            single_output.get_data_tensor().name.split(':')[0]
             for single_output in super().get_graph_tensors().values()
         ]
 
@@ -136,7 +136,7 @@ class ModelSerializer(MakiCore):
 
             # output_tensors contains MakiTensors
             if isinstance(output_tensors[0], MakiTensor):
-                output_names = [t_name(x.tensor.name) for x in output_tensors]
+                output_names = [t_name(x.get_data_tensor().name) for x in output_tensors]
             # output_tensors contains tf.Tensors
             else:
                 output_names = [t_name(x.name) for x in output_tensors]
