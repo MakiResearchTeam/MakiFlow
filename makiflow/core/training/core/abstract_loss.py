@@ -5,6 +5,7 @@ from makiflow.core.training.core.tensor_provider import TensorProvider
 
 
 class AbstractLoss(object):
+    # Used for creation of unique tensor names for lossless label_tensors dictionary merge.
     _id = 1
 
     def __new__(cls, *args, **kwargs):
@@ -31,18 +32,49 @@ class AbstractLoss(object):
 
     @property
     def label_tensors(self) -> OrderedDict:
+        """
+        Returns
+        -------
+        OrderedDict
+            Dictionary of label tensors. Used for loss_fn.
+        """
         return self.__label_tensors.copy()
 
     @property
     def unique_label_tensors(self) -> OrderedDict:
+        """
+        Returns
+        -------
+        OrderedDict
+            Dictionary of label tensors. Used by ModularLoss and Trainer.
+        """
         return self.__unique_label_tensors.copy()
 
     @property
     def loss(self):
+        """
+        Returns
+        -------
+        tf.Tensor
+            The built loss scalar tensor. Returns None is the loss hasn't been built yet.
+        """
         return self._loss
 
     # noinspection PyUnresolvedReferences
     def get_tensor_name(self, tensor_name):
+        """
+        Appends loss class name and the instance id to make the tensor name unique for this
+        particular loss instance.
+
+        Parameters
+        ----------
+        tensor_name : str
+
+        Returns
+        -------
+        str
+            Update tensor names.
+        """
         return tensor_name + '_' + self.__class__.__name__ + '_' + str(self.__id)
 
 

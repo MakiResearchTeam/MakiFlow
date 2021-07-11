@@ -6,10 +6,33 @@ from .single_tensor_loss import SingleTensorLoss
 
 class FocalLoss(SingleTensorLoss):
     def __init__(
-            self, tensor_names, label_tensors: dict,
+            self, tensor_names: list, label_tensors: dict,
             num_classes, gamma=2.0, normalize_by_positives=False,
             reduction=Loss.REDUCTION_MEAN
     ):
+        """
+        Builds Focal loss. For reference please see:
+        https://openaccess.thecvf.com/content_ICCV_2017/papers/Lin_Focal_Loss_for_ICCV_2017_paper.pdf
+
+        Parameters
+        ----------
+        tensor_names : list
+            Contains a single tensor name off of which the loss will be built.
+        label_tensors : dict
+            Dictionary of tensors that supply label data.
+        num_classes : int
+            Number of classes.
+        gamma : float
+            The focal loss hyperparameter. Determines how much penalty well-classified examples receive:
+            larger the gamma, lesser the penalty. Depends on the balance of the classes (for severe imbalance
+            a larger gamma is advised).
+        normalize_by_positives : bool
+            Whether to normalize the loss value by the number of positive examples. May improve convergence.
+            By default is disabled. When using that normalization, make sure that class 0 is responsible for
+            negative examples.
+        reduction : int
+            Type of loss tensor reduction. By default equals to 'Loss.REDUCTION_MEAN`.
+        """
         loss_fn = lambda t, lt: FocalLoss.focal_loss(t, lt, reduction, num_classes, gamma, normalize_by_positives)
         super().__init__(tensor_names, label_tensors, loss_fn)
 

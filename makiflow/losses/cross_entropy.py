@@ -5,7 +5,22 @@ from .single_tensor_loss import SingleTensorLoss
 
 
 class CrossEntropy(SingleTensorLoss):
-    def __init__(self, tensor_names, label_tensors: dict, reduction=Loss.REDUCTION_MEAN, sparse=True):
+    def __init__(self, tensor_names: list, label_tensors: dict, reduction=Loss.REDUCTION_MEAN, sparse=True):
+        """
+        Builds cross-entropy loss.
+
+        Parameters
+        ----------
+        tensor_names : list
+            Contains a single tensor name off of which the loss will be built.
+        label_tensors : dict
+            Dictionary of tensors that supply label data.
+        reduction : int
+            Type of loss tensor reduction. By default equals to 'Loss.REDUCTION_MEAN`.
+        sparse : bool
+            Determines which type of cross-entropy is being computed. Sparse entropy is set
+            by default (requires less memory).
+        """
         loss_fn = lambda t, lt: CrossEntropy.cross_entropy(t, lt, reduction, sparse)
         super().__init__(tensor_names, label_tensors, loss_fn)
 

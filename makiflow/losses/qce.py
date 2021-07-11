@@ -6,10 +6,30 @@ from .single_tensor_loss import SingleTensorLoss
 
 class QCE(SingleTensorLoss):
     def __init__(
-            self, tensor_names, label_tensors: dict,
+            self, tensor_names: list, label_tensors: dict,
             normalize_by_positives=False,
             reduction=Loss.REDUCTION_MEAN, sparse=True
     ):
+        """
+        Builds Quadratic Cross-Entropy. For reference please see:
+        https://ieeexplore.ieee.org/abstract/document/9253199
+
+        Parameters
+        ----------
+        tensor_names : list
+            Contains a single tensor name off of which the loss will be built.
+        label_tensors : dict
+            Dictionary of tensors that supply label data.
+        normalize_by_positives : bool
+            Whether to normalize the loss value by the number of positive examples. May improve convergence.
+            By default is disabled. When using that normalization, make sure that class 0 is responsible for
+            negative examples.
+        reduction : int
+            Type of loss tensor reduction. By default equals to 'Loss.REDUCTION_MEAN`.
+        sparse : bool
+            Determines which type of cross-entropy is being computed. Sparse entropy is set
+            by default (requires less memory).
+        """
         loss_fn = lambda t, lt: QCE.qce(t, lt, reduction, sparse, normalize_by_positives)
         super().__init__(tensor_names, label_tensors, loss_fn)
 
