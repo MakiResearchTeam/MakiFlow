@@ -18,7 +18,7 @@
 import tensorflow as tf
 from tqdm import tqdm
 
-from .l2_regularization import L2RegularizationModule
+from .train_graph_compiler import GraphCompiler
 from .utils import print_train_info, moving_average
 from .utils import new_optimizer_used, loss_is_built
 from .utils import pack_data, IteratorCloser
@@ -27,7 +27,7 @@ from ..core import AbstractLoss
 from makiflow.core.inference import Model
 
 
-class Trainer(L2RegularizationModule):
+class Trainer(GraphCompiler):
     # Contains fit loops
     TRAINING_LOSS = 'TRAINING_LOSS'
 

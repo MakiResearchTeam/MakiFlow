@@ -26,6 +26,7 @@ class GraphCompiler(TensorProvider):
     def __init__(self, model: MakiCore, train_inputs: list):
         """
         Provides basic tools for the training setup. Builds final loss tensor and the training graph.
+        
         Parameters
         ----------
         model : MakiCore
