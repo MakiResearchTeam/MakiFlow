@@ -16,12 +16,12 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 
 from .init_factory import InitFabric
 
 
-class BaseInitializer(ABC, metaclass=InitFabric):
+class BaseInitializer(metaclass=InitFabric):
 
     def __str__(self):
         return self.__class__.__name__
