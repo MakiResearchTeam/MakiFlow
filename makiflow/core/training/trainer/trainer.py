@@ -23,7 +23,7 @@ from .utils import print_train_info, moving_average
 from .utils import new_optimizer_used, loss_is_built
 from .utils import pack_data, IteratorCloser
 from .tensorboard import GradientVariablesWatcher
-from ..core import LossInterface
+from ..core import AbstractLoss
 from makiflow.core.inference import Model
 
 
@@ -31,7 +31,7 @@ class Trainer(L2RegularizationModule):
     # Contains fit loops
     TRAINING_LOSS = 'TRAINING_LOSS'
 
-    def __init__(self, model: Model, train_inputs: list, loss: LossInterface = None):
+    def __init__(self, model: Model, train_inputs: list, loss: AbstractLoss):
         """
         Provides basic tools for the training setup. Builds final loss tensor and the training graph.
 
@@ -44,10 +44,14 @@ class Trainer(L2RegularizationModule):
         """
         # Can be required during _setup_for_training call. Thus, create this variable
         # first and then call super init.
+        if loss.loss is not None:
+            print('The provided loss object has already been built. It may cause errors when calling fit method '
+                  'as the loss computation might be done in another graph requiring data supply for  '
+                  'already unreachable tensors.\n'
+                  'To avoid that you need to recreate the loss object.')
         self._loss = loss
         self._label_tensors = []
-        if loss is not None:
-            self._label_tensors += loss.get_label_tensors().values()
+        self._label_tensors += loss.unique_label_tensors.values()
         self._input_tensors = [x.tensor for x in train_inputs]
         super().__init__(model, train_inputs)
         self._track_losses = {}
@@ -80,7 +84,7 @@ class Trainer(L2RegularizationModule):
         super().compile_training_graph()
         self.build_loss()
 
-    def add_loss(self, loss: tf.Tensor, label_tensors: list, loss_name=None):
+    def add_loss(self, loss: tf.Tensor, label_tensors: list, loss_name: str = None):
         """
         Adds the loss to the losses buffer. The final loss will be computed as a sum of all the losses in the buffer.
 
@@ -98,7 +102,7 @@ class Trainer(L2RegularizationModule):
         self._losses.append(loss)
         self._label_tensors += label_tensors
 
-        if isinstance(loss_name, str):
+        if loss_name is not None:
             self.track_loss(loss_tensor=loss, loss_name=loss_name)
 
     def build_loss(self):
@@ -116,7 +120,7 @@ class Trainer(L2RegularizationModule):
 
     def _build_final_loss(self, loss):
         assert loss is not None or len(self._losses) > 0, 'No loss is provided. ' \
-                                                           'Please add training loss using add_loss method.'
+                                                          'Please add training loss using add_loss method.'
         if loss is None:
             loss = 0.0
 
@@ -190,7 +194,8 @@ class Trainer(L2RegularizationModule):
                     tracked_losses_vals, summary = self.train_step(optimizer=optimizer, global_step=global_step)
                     # Interpolate loss values and collect them
                     for loss_name in tracked_losses_vals:
-                        loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
+                        loss_holders[loss_name] = moving_average(loss_holders[loss_name],
+                                                                 tracked_losses_vals[loss_name], j)
                         loss_collectors[loss_name].append(loss_holders[loss_name])
 
                     self._tracker.increment()
@@ -258,7 +263,8 @@ class Trainer(L2RegularizationModule):
                     )
                     # Interpolate loss values and collect them
                     for loss_name in tracked_losses_vals:
-                        loss_holders[loss_name] = moving_average(loss_holders[loss_name], tracked_losses_vals[loss_name], j)
+                        loss_holders[loss_name] = moving_average(loss_holders[loss_name],
+                                                                 tracked_losses_vals[loss_name], j)
                         loss_collectors[loss_name].append(loss_holders[loss_name])
 
                     self._tracker.increment()
@@ -329,5 +335,3 @@ class Trainer(L2RegularizationModule):
 
         self.get_session().run(tf.variables_initializer(optimizer.variables()))
         new_optimizer_used()
-
-

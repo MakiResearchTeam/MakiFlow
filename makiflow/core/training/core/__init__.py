@@ -1,2 +1,2 @@
 from .tensor_provider import TensorProvider
-from .loss_interface import LossInterface
+from .abstract_loss import AbstractLoss

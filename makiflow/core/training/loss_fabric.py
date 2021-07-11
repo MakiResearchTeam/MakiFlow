@@ -255,7 +255,7 @@ class LossFabric:
         return tf.reduce_sum(focal_loss)
 
     @staticmethod
-    def quadratic_ce_loss(ce_loss, num_positives=None):
+    def quadratic_ce_loss(ce_loss, num_positives=None, raw_tensor=False):
         """
         Creates QuadraticCE Loss from pure CE Loss.
         Parameters
@@ -273,7 +273,11 @@ class LossFabric:
         """
         quadratic_ce = ce_loss * ce_loss / 2.0
         if num_positives is not None:
-            return tf.reduce_sum(quadratic_ce) / tf.reduce_sum(num_positives)
+            return quadratic_ce / tf.reduce_sum(num_positives)
+
+        if raw_tensor:
+            return quadratic_ce
+
         return tf.reduce_mean(quadratic_ce)
 
     @staticmethod
