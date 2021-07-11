@@ -126,7 +126,7 @@ class Trainer(GraphCompiler):
 
         return loss + tf.reduce_sum(self._losses)
 
-    def track_loss(self, loss_tensor, loss_name):
+    def track_loss(self, loss_tensor, loss_name, _label_tensors=None):
         """
         Adds loss to the track list. The loss value will be printed in the fit cycle and its value will also
         be shown on the tensorboard.
@@ -138,6 +138,9 @@ class Trainer(GraphCompiler):
             Scalar of the loss to track.
         loss_name : str
             Name of the loss.
+        _label_tensors : list
+            List of placeholders which will be used for feed the label data into the training graph.
+            If multiple losses reuse the same placeholder, it must be passed in only once.
         """
         loss = self._track_losses.get(loss_name)
         if loss is not None:
@@ -145,6 +148,11 @@ class Trainer(GraphCompiler):
 
         self._track_losses[loss_name] = loss_tensor
         self._tracker.add_scalar(loss_tensor, loss_name)
+
+        if _label_tensors is not None:
+            print(f'Tensors {_label_tensors} are passed as label_tensors into the track_loss method.')
+            print('Make sure the data generator will supply these tensors with data.')
+            self._label_tensors += _label_tensors
 
     def get_track_losses(self):
         return self._track_losses.copy()

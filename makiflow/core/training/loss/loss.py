@@ -73,6 +73,7 @@ class Loss(AbstractLoss):
         """
         Builds loss using 'loss_fn' by providing it the required tensors from the model
         (according to `tensor_names`) and `label_tensors`.
+
         Parameters
         ----------
         tensor_names : list
