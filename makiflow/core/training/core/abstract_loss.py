@@ -1,5 +1,6 @@
 import abc
 from collections import OrderedDict
+import tensorflow as tf
 
 from makiflow.core.training.core.tensor_provider import TensorProvider
 
@@ -19,6 +20,11 @@ class AbstractLoss(object):
         # Have similar names may cause tensor removal which in turn will cause errors.
         upd_label_tensors = {}
         for k, v in label_tensors.items():
+            if isinstance(v, tuple):
+                print(f"Label tensor {v[0]} won't be passed to the trainer as a data source")
+                # Save only the label_tensor in the dictionary
+                label_tensors[k] = v[0]
+                continue
             upd_label_tensors[self.get_tensor_name(k)] = v
         self.__unique_label_tensors = OrderedDict(upd_label_tensors)
         # The loss construction method will expect label_tensors to have their names as they were.
