@@ -39,7 +39,7 @@ class BaseInitializer(ABC, metaclass=InitFabric):
 
         Returns
         -------
-        np.float32
+        np.ndarray of type dtype
             Final matrix according to class name of the initialization
 
         """

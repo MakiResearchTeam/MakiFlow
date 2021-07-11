@@ -24,6 +24,6 @@ class XavierGaussianInf(BaseGaussianInitializer):
     def _create_matrix(self, shape: list, dtype=np.float32):
         w = super()._create_matrix(shape=shape, dtype=dtype)
         w *= np.sqrt(1.0 / np.prod(shape[:-1]))
-        return w.astype(dtype=dtype, copy=False)
+        return w
 
 

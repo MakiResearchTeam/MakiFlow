@@ -24,6 +24,6 @@ class Lasange(BaseGaussianInitializer):
     def _create_matrix(self, shape: list, dtype=np.float32):
         w = super()._create_matrix(shape=shape, dtype=dtype)
         w *= np.sqrt(12.0 / (np.prod(shape[:-1]) + np.prod(shape[:-2]) * shape[-1]))
-        return w.astype(dtype=dtype, copy=False)
+        return w
 
 

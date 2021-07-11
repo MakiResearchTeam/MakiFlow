@@ -23,7 +23,7 @@ class HeGrad(BaseGaussianInitializer):
 
     def _create_matrix(self, shape: list, dtype=np.float32):
         w = super()._create_matrix(shape=shape, dtype=dtype)
-        w *= np.sqrt(2.0 / np.prod(shape[:-2]) * shape[-1])
-        return w.astype(dtype=dtype, copy=False)
+        w *= np.sqrt(2.0 / (np.prod(shape[:-2]) * shape[-1]))
+        return w
 
 

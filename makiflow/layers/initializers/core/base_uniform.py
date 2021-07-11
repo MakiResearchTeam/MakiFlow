@@ -22,10 +22,13 @@ from .base_init import BaseInitializer
 
 class BaseUniformInitializer(BaseInitializer):
 
-    def _create_matrix(self, shape: list, dtype=np.float32, low=-1.0, high=1.0):
+    def __init__(self, low=-1.0, high=1.0):
         if low > high:
             raise ValueError(f"Low value {low} in {str(self)} more than high {high}")
+        self._low = low
+        self._high = high
 
-        w = np.random.uniform(low=low, high=high, size=shape)
+    def _create_matrix(self, shape: list, dtype=np.float32):
+        w = np.random.uniform(low=self._low, high=self._high, size=shape)
         return w.astype(dtype=dtype, copy=False)
 

@@ -21,9 +21,8 @@ from ..core import BaseUniformInitializer
 
 class XavierUniformInf(BaseUniformInitializer):
 
-    def _create_matrix(self, shape: list, dtype=np.float32, low=-1.0, high=1.0):
-        w = super()._create_matrix(shape=shape, dtype=dtype, low=low, high=high)
+    def _create_matrix(self, shape: list, dtype=np.float32):
+        w = super()._create_matrix(shape=shape, dtype=dtype)
         w *= np.sqrt(3.0 / np.prod(shape[:-1]))
-        return w.astype(dtype=dtype, copy=False)
-
+        return w
 
