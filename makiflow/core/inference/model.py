@@ -81,4 +81,7 @@ class Model(ModelSerializer):
                 single_preds.append(output[i])
             new_pred.append(np.concatenate(single_preds, axis=0)[:len(args[0])])
 
+        if len(new_pred) == 1 and len(self.inputs):
+            return new_pred[0]
+
         return new_pred
