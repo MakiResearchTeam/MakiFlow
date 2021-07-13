@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .gaussian import *
-from .other import *
-from .uniform import *
 from .core import InitFabric
+from .gaussian import XavierGaussianInf, XavierGaussianAvg, He, HeGrad, Lasange
+from .other import RandomNormal
+from .uniform import HeUniform, XavierUniformInf, XavierUniformAvg

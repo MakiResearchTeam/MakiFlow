@@ -243,7 +243,7 @@ def build_ResNetV1(
     if create_model:
         return Model(inputs=in_x, outputs=output, name=name_model)
 
-    return in_x, output
+    return output
 
 
 def build_LittleResNetV1(
@@ -365,4 +365,4 @@ def build_LittleResNetV1(
     if create_model:
         return Model(inputs=in_x, outputs=output, name=name_model)
     else:
-        return in_x, output
+        return output

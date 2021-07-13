@@ -116,4 +116,4 @@ def build_VGG(
     if create_model:
         return Model(inputs=in_x, outputs=output, name=name_model)
 
-    return in_x, output
+    return output

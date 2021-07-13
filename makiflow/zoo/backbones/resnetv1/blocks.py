@@ -17,6 +17,7 @@
 
 
 from makiflow.layers import *
+import makiflow.layers.initializers as init
 from makiflow.core import MakiTensor
 import tensorflow as tf
 
@@ -29,7 +30,9 @@ def identity_block(
         in_f=None,
         use_bias=False,
         activation=tf.nn.relu,
-        bn_params={}):
+        bn_params={},
+        kernel_init=init.XavierGaussianInf()
+):
     """
     Parameters
     ----------
@@ -68,19 +71,22 @@ def identity_block(
     reduction = int(in_f / 4)
 
     mx = ConvLayer(kw=1, kh=1, in_f=in_f, out_f=reduction, activation=None,
-                   use_bias=use_bias, name=prefix_name + '/bottleneck_v1/conv1/weights')(x)
+                   use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + '/bottleneck_v1/conv1/weights')(x)
 
     mx = BatchNormLayer(D=reduction, name=prefix_name + '/bottleneck_v1/conv1/BatchNorm', **bn_params)(mx)
     mx = ActivationLayer(activation=activation, name=prefix_name + '/bottleneck_v1/conv1/activ')(mx)
 
     mx = ConvLayer(kw=3, kh=3, in_f=reduction, out_f=reduction, activation=None,
-                   use_bias=use_bias, name=prefix_name + '/bottleneck_v1/conv2/weights')(mx)
+                   use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + '/bottleneck_v1/conv2/weights')(mx)
 
     mx = BatchNormLayer(D=reduction, name=prefix_name + '/bottleneck_v1/conv2/BatchNorm', **bn_params)(mx)
     mx = ActivationLayer(activation=activation, name=prefix_name + '/bottleneck_v1/conv2/activ')(mx)
 
     mx = ConvLayer(kw=1, kh=1, in_f=reduction, out_f=in_f, activation=None,
-                   use_bias=use_bias, name=prefix_name + '/bottleneck_v1/conv3/weights')(mx)
+                   use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + '/bottleneck_v1/conv3/weights')(mx)
 
     mx = BatchNormLayer(D=in_f, name=prefix_name + '/bottleneck_v1/conv3/BatchNorm', **bn_params)(mx)
 
@@ -100,7 +106,9 @@ def conv_block(
         stride=2,
         out_f=None,
         reduction=None,
-        bn_params={}):
+        bn_params={},
+        kernel_init=init.XavierGaussianInf()
+):
     """
     Parameters
     ----------
@@ -146,24 +154,28 @@ def conv_block(
         out_f = in_f * 2
 
     mx = ConvLayer(kw=1, kh=1, in_f=in_f, out_f=reduction, stride=stride, activation=None,
-                   use_bias=use_bias, name=prefix_name + '/bottleneck_v1/conv1/weights')(x)
+                   use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + '/bottleneck_v1/conv1/weights')(x)
 
     mx = BatchNormLayer(D=reduction, name=prefix_name + '/bottleneck_v1/conv1/BatchNorm', **bn_params)(mx)
     mx = ActivationLayer(activation=activation, name=prefix_name + '/bottleneck_v1/conv1/activ')(mx)
 
     mx = ConvLayer(kw=3, kh=3, in_f=reduction, out_f=reduction, activation=None,
-                   use_bias=use_bias, name=prefix_name + '/bottleneck_v1/conv2/weights')(mx)
+                   use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + '/bottleneck_v1/conv2/weights')(mx)
 
     mx = BatchNormLayer(D=reduction, name=prefix_name + '/bottleneck_v1/conv2/BatchNorm', **bn_params)(mx)
     mx = ActivationLayer(activation=activation, name=prefix_name + '/bottleneck_v1/conv2/activ')(mx)
 
     mx = ConvLayer(kw=1, kh=1, in_f=reduction, out_f=out_f, activation=None,
-                   use_bias=use_bias, name=prefix_name + '/bottleneck_v1/conv3/weights')(mx)
+                   use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + '/bottleneck_v1/conv3/weights')(mx)
 
     mx = BatchNormLayer(D=out_f, name=prefix_name + '/bottleneck_v1/conv3/BatchNorm', **bn_params)(mx)
 
     sx = ConvLayer(kw=1, kh=1, in_f=in_f, out_f=out_f, stride=stride, activation=None,
-                   use_bias=use_bias, name=prefix_name + '/bottleneck_v1/shortcut/weights')(x)
+                   use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + '/bottleneck_v1/shortcut/weights')(x)
 
     sx = BatchNormLayer(D=out_f, name=prefix_name + '/bottleneck_v1/shortcut/BatchNorm', **bn_params)(sx)
 
@@ -180,7 +192,9 @@ def without_pointwise_IB(
         in_f=None,
         use_bias=False,
         activation=tf.nn.relu,
-        bn_params={}):
+        bn_params={},
+        kernel_init=init.XavierGaussianInf()
+):
     """
     Parameters
     ----------
@@ -224,7 +238,8 @@ def without_pointwise_IB(
     mx = ZeroPaddingLayer(padding=[[1, 1], [1, 1]], name=prefix_name + 'zero_pad_1')(mx)
 
     mx = ConvLayer(kw=3, kh=3, in_f=in_f, out_f=in_f, activation=None,
-                   padding='VALID', use_bias=use_bias, name=prefix_name + 'conv1')(mx)
+                   padding='VALID', use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + 'conv1')(mx)
 
     mx = BatchNormLayer(D=in_f, name=prefix_name + 'bn2', **bn_params)(mx)
 
@@ -233,7 +248,8 @@ def without_pointwise_IB(
     mx = ZeroPaddingLayer(padding=[[1, 1], [1, 1]], name=prefix_name + 'zero_pad_2')(mx)
 
     mx = ConvLayer(kw=3, kh=3, in_f=in_f, out_f=in_f, activation=None,
-                   padding='VALID', use_bias=use_bias, name=prefix_name + 'conv2')(mx)
+                   padding='VALID', use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + 'conv2')(mx)
 
     x = SumLayer(name=num_block)([mx, x])
 
@@ -250,7 +266,9 @@ def without_pointwise_CB(
         activation=tf.nn.relu,
         stride=2,
         out_f=None,
-        bn_params={}):
+        bn_params={},
+        kernel_init=init.XavierGaussianInf()
+):
     """
     Parameters
     ----------
@@ -297,17 +315,20 @@ def without_pointwise_CB(
     mx = ZeroPaddingLayer(padding=[[1, 1], [1, 1]], name=prefix_name + 'zero_pad_1')(x)
 
     mx = ConvLayer(kw=3, kh=3, in_f=in_f, out_f=out_f, activation=None, stride=stride,
-                   padding='VALID', use_bias=use_bias, name=prefix_name + 'conv1')(mx)
+                   padding='VALID', use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + 'conv1')(mx)
 
     mx = BatchNormLayer(D=out_f, name=prefix_name + 'bn2', **bn_params)(mx)
     mx = ActivationLayer(activation=activation, name=prefix_name + 'activation_2')(mx)
 
     mx = ZeroPaddingLayer(padding=[[1, 1], [1, 1]], name=prefix_name + 'zero_pad_2')(mx)
     mx = ConvLayer(kw=3, kh=3, in_f=out_f, out_f=out_f, activation=None,
-                   padding='VALID', use_bias=use_bias, name=prefix_name + 'conv2')(mx)
+                   padding='VALID', use_bias=use_bias, kernel_initializer=kernel_init,
+                   name=prefix_name + 'conv2')(mx)
 
     sx = ConvLayer(kw=1, kh=1, in_f=in_f, out_f=out_f, stride=stride,
-                   padding='VALID', activation=None, use_bias=use_bias, name=prefix_name + 'sc/conv')(x)
+                   padding='VALID', activation=None, kernel_initializer=kernel_init,
+                   use_bias=use_bias, name=prefix_name + 'sc/conv')(x)
 
     x = SumLayer(name=num_block)([mx, sx])
 
