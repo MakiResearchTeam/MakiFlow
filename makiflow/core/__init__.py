@@ -19,4 +19,6 @@ from .graph_entities import MakiRestorable, MakiTensor, MakiLayer, InputMakiLaye
 from .base_layers import BatchNormBaseLayer
 from .training import Trainer, LossFabric, Loss
 from .inference import Model, MakiBuilder
+from .utils import to_makitensor
+
 
