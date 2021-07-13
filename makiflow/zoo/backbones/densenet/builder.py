@@ -125,15 +125,16 @@ def build_DenseNet(
                     growth_rate=growth_rate, dropout_p_keep=dropout_p_keep, use_bottleneck=use_bottleneck,
                     activation=activation, use_bias=use_bias, bn_params=bn_params)
 
-    x = BatchNormLayer(D=x.get_shape()[-1], name='bn', **bn_params)(x)
+    x = BatchNormLayer(D=x.shape[-1], name='bn', **bn_params)(x)
     x = ActivationLayer(activation=activation, name='relu')(x)
     if include_top:
         x = GlobalAvgPoolLayer(name='avg_pool')(x)
         # dense part (fc layers)
-        output = DenseLayer(in_d=x.get_shape()[-1], out_d=num_classes, activation=None, use_bias=True, name="fc1000")(x)
-        if create_model:
-            return Model(inputs=in_x, outputs=output, name=name_model)
+        output = DenseLayer(in_d=x.shape[-1], out_d=num_classes, activation=None, use_bias=True, name="fc1000")(x)
     else:
         output = x
+
+    if create_model:
+        return Model(inputs=in_x, outputs=output, name=name_model)
 
     return in_x, output

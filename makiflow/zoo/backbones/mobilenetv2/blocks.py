@@ -35,7 +35,7 @@ def inverted_res_block(
         use_expand=False,
         activation=tf.nn.relu6,
         use_bias=False,
-        bn_params={}) -> mf.core.MakiTensor:
+        bn_params={}) -> mf.MakiTensor:
     """
     Parameters
     ----------
@@ -75,7 +75,7 @@ def inverted_res_block(
     inputs = x
 
     if in_f is None:
-        in_f = x.get_shape()[-1]
+        in_f = x.shape[-1]
 
     pointwise_conv_filters = int(out_f * alpha)
     pointwise_f = make_divisible(pointwise_conv_filters, 8)

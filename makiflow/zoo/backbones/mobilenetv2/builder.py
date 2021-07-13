@@ -21,11 +21,11 @@ from .blocks import inverted_res_block
 from .utils import make_divisible, get_batchnorm_params
 
 from makiflow.layers import *
-from makiflow import Model
+from makiflow import Model, MakiTensor
 
 
 def build_MobileNetV2(
-        input_shape,
+        in_x: MakiTensor,
         include_top=False,
         num_classes=1000,
         use_bias=False,
@@ -34,7 +34,6 @@ def build_MobileNetV2(
         name_model='MakiClassificator',
         alpha=1,
         expansion=6,
-        input_tensor=None,
         stride_list=(2, 2, 2, 2, 2),
         bn_params={}):
     """
@@ -88,14 +87,9 @@ def build_MobileNetV2(
 
     first_filt = make_divisible(32 * alpha, 8)
 
-    if input_tensor is None:
-        in_x = InputLayer(input_shape=input_shape, name='input')
-    elif input_tensor is not None:
-        in_x = input_tensor
-
     x = ConvLayer(kw=3,
                   kh=3,
-                  in_f=input_shape[-1],
+                  in_f=in_x.shape[-1],
                   out_f=first_filt,
                   stride=stride_list[0],
                   padding='SAME',
@@ -203,10 +197,10 @@ def build_MobileNetV2(
         x = ReshapeLayer(new_shape=[1, 1, 1280], name='resh')(x)
         x = ConvLayer(kw=1, kh=1, in_f=1280, out_f=num_classes, name='prediction')(x)
         output = ReshapeLayer(new_shape=[num_classes], name='endo')(x)
-
-        if create_model:
-            return Model(inputs=in_x, outputs=output, name=name_model)
     else:
         output = pred_top
+
+    if create_model:
+        return Model(inputs=in_x, outputs=output, name=name_model)
 
     return in_x, output

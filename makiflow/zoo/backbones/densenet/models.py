@@ -20,9 +20,9 @@ import tensorflow as tf
 from .builder import build_DenseNet
 
 
-def DenseNet121(input_shape, classes=1000, include_top=False, create_model=False):
+def DenseNet121(in_x, classes=1000, include_top=False, create_model=False):
     return build_DenseNet(
-        input_shape=input_shape,
+        in_x=in_x,
         nb_layers=[6, 12, 24, 16],
         include_top=include_top,
         num_classes=classes,
@@ -39,9 +39,9 @@ def DenseNet121(input_shape, classes=1000, include_top=False, create_model=False
     )
 
 
-def DenseNet161(input_shape, classes=1000, include_top=False, create_model=False):
+def DenseNet161(in_x, classes=1000, include_top=False, create_model=False):
     return build_DenseNet(
-        input_shape=input_shape,
+        in_x=in_x,
         nb_layers=[6, 12, 36, 24],
         include_top=include_top,
         num_classes=classes,
@@ -58,9 +58,9 @@ def DenseNet161(input_shape, classes=1000, include_top=False, create_model=False
     )
 
 
-def DenseNet169(input_shape, classes=1000, include_top=False, create_model=False):
+def DenseNet169(in_x, classes=1000, include_top=False, create_model=False):
     return build_DenseNet(
-        input_shape=input_shape,
+        in_x=in_x,
         nb_layers=[6, 12, 32, 32],
         include_top=include_top,
         num_classes=classes,
@@ -77,9 +77,9 @@ def DenseNet169(input_shape, classes=1000, include_top=False, create_model=False
     )
 
 
-def DenseNet201(input_shape, classes=1000, include_top=False, create_model=False):
+def DenseNet201(in_x, classes=1000, include_top=False, create_model=False):
     return build_DenseNet(
-        input_shape=input_shape,
+        in_x=in_x,
         nb_layers=[6, 12, 48, 32],
         include_top=include_top,
         num_classes=classes,
@@ -96,9 +96,9 @@ def DenseNet201(input_shape, classes=1000, include_top=False, create_model=False
     )
 
 
-def DenseNet264(input_shape, classes=1000, include_top=False, create_model=False):
+def DenseNet264(in_x, classes=1000, include_top=False, create_model=False):
     return build_DenseNet(
-        input_shape=input_shape,
+        in_x=in_x,
         nb_layers=[6, 12, 64, 48],
         include_top=include_top,
         num_classes=classes,

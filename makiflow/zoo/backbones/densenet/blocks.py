@@ -19,17 +19,18 @@
 import tensorflow as tf
 
 from makiflow.layers import *
+import makiflow as mf
 
 
 def transition_layer(
-        x,
-        dropout_p_keep,
+        x: mf.MakiTensor,
+        dropout_p_keep: float,
         number,
         compression=1.0,
         activation=tf.nn.relu,
         use_bias=False,
         bn_params={}
-):
+) -> mf.MakiTensor:
     """
     Parameters
     ----------
@@ -57,7 +58,7 @@ def transition_layer(
 
     prefix = f'pool{str(number)}_'
 
-    in_f = x.get_shape()[-1]
+    in_f = x.shape[-1]
     out_f = int(in_f * compression)
 
     x = BatchNormLayer(D=in_f, name=prefix + 'bn', **bn_params)(x)
@@ -74,7 +75,7 @@ def transition_layer(
 def conv_layer(
         x,
         growth_rate,
-        dropout_p_keep,
+        dropout_p_keep: float,
         stage,
         block,
         multiply=4,
@@ -82,7 +83,7 @@ def conv_layer(
         activation=tf.nn.relu,
         use_bias=False,
         bn_params={}
-):
+) -> mf.MakiTensor:
     """
     Parameters
     ----------
@@ -114,7 +115,7 @@ def conv_layer(
     """
     prefix = f'conv{str(stage)}_block{str(block)}_'
 
-    in_f = x.get_shape()[-1]
+    in_f = x.shape[-1]
 
     x = BatchNormLayer(D=in_f, name=prefix + '0_bn', **bn_params)(x)
     x = ActivationLayer(activation=activation, name=prefix + '0_relu')(x)
@@ -129,7 +130,7 @@ def conv_layer(
         x = BatchNormLayer(D=growth_f, name=prefix + '1_bn', **bn_params)(x)
         x = ActivationLayer(activation=activation, name=prefix + '1_relu')(x)
 
-    x = ConvLayer(kw=3, kh=3, in_f=x.get_shape()[-1], out_f=growth_rate, activation=None, use_bias=use_bias,
+    x = ConvLayer(kw=3, kh=3, in_f=x.shape[-1], out_f=growth_rate, activation=None, use_bias=use_bias,
                   name=prefix + '2_conv')(x)
 
     if dropout_p_keep is not None:
@@ -143,12 +144,12 @@ def dense_block(
         nb_layers,
         stage,
         growth_rate,
-        dropout_p_keep,
+        dropout_p_keep: float,
         use_bottleneck=True,
         activation=tf.nn.relu,
         use_bias=False,
         bn_params={}
-):
+) -> mf.MakiTensor:
     """
     Parameters
     ----------

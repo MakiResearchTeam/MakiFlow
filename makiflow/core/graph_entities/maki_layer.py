@@ -18,6 +18,7 @@
 from abc import abstractmethod, ABC
 from warnings import warn
 import tensorflow as tf
+from typing import Union
 
 from .maki_tensor import MakiTensor
 from ..debug.exception_scope import method_exception_scope
@@ -120,7 +121,7 @@ class MakiLayer(MakiRestorable):
         self._children_dict = {}
 
     @method_exception_scope()
-    def __call__(self, x, is_training=False):
+    def __call__(self, x, is_training=False) -> Union[MakiTensor, list]:
         """
         Unpacks datatensor(s) (tf.Tensor) from the given MakiTensor(s) `x`, performs layer's transformation and
         wraps out the output of that transformation into a new MakiTensor.

@@ -25,9 +25,9 @@ import tensorflow as tf
 #   Standard Residual Models V1
 # --------------------------------------------------------------------------------
 
-def ResNet18(input_shape, classes=1000, include_top=False, create_model=False):
+def ResNet18(in_x, classes=1000, include_top=False, create_model=False):
     return build_ResNetV1(
-        input_shape=input_shape,
+        in_x=in_x,
         repetition=(2, 2, 2, 2),
         include_top=include_top,
         num_classes=classes,
@@ -40,9 +40,9 @@ def ResNet18(input_shape, classes=1000, include_top=False, create_model=False):
     )
 
 
-def ResNet34(input_shape, classes=1000, include_top=False, factorization_first_layer=False, create_model=False):
+def ResNet34(in_x, classes=1000, include_top=False, factorization_first_layer=False, create_model=False):
     return build_ResNetV1(
-        input_shape=input_shape,
+        in_x=in_x,
         repetition=(3, 4, 6, 3),
         include_top=include_top,
         num_classes=classes,
@@ -57,9 +57,9 @@ def ResNet34(input_shape, classes=1000, include_top=False, factorization_first_l
     )
 
 
-def ResNet50(input_shape, classes=1000, include_top=False, factorization_first_layer=False, create_model=False):
+def ResNet50(in_x, classes=1000, include_top=False, factorization_first_layer=False, create_model=False):
     return build_ResNetV1(
-        input_shape=input_shape,
+        in_x=in_x,
         repetition=(3, 4, 6, 3),
         include_top=include_top,
         num_classes=classes,
@@ -72,9 +72,9 @@ def ResNet50(input_shape, classes=1000, include_top=False, factorization_first_l
     )
 
 
-def ResNet101(input_shape, classes=1000, include_top=False, factorization_first_layer=False, create_model=False):
+def ResNet101(in_x, classes=1000, include_top=False, factorization_first_layer=False, create_model=False):
     return build_ResNetV1(
-        input_shape=input_shape,
+        in_x=in_x,
         repetition=(3, 4, 23, 3),
         include_top=include_top,
         num_classes=classes,
@@ -87,9 +87,9 @@ def ResNet101(input_shape, classes=1000, include_top=False, factorization_first_
     )
 
 
-def ResNet152(input_shape, classes=1000, include_top=False, factorization_first_layer=False, create_model=False):
+def ResNet152(in_x, classes=1000, include_top=False, factorization_first_layer=False, create_model=False):
     return build_ResNetV1(
-        input_shape=input_shape,
+        in_x=in_x,
         repetition=(3, 8, 36, 3),
         include_top=include_top,
         num_classes=classes,
@@ -108,9 +108,9 @@ def ResNet152(input_shape, classes=1000, include_top=False, factorization_first_
 # Implementation taken from https://keras.io/examples/cifar10_resnet/
 
 
-def Little_ResNet20(input_shape, classes=1000, include_top=False, create_model=False):
+def Little_ResNet20(in_x, classes=1000, include_top=False, create_model=False):
     return build_LittleResNetV1(
-        input_shape,
+        in_x,
         depth=20,
         include_top=include_top,
         num_classes=classes,
@@ -122,9 +122,9 @@ def Little_ResNet20(input_shape, classes=1000, include_top=False, create_model=F
     )
 
 
-def Little_ResNet32(input_shape, classes=1000, include_top=False, create_model=False):
+def Little_ResNet32(in_x, classes=1000, include_top=False, create_model=False):
     return build_LittleResNetV1(
-        input_shape,
+        in_x,
         depth=32,
         include_top=include_top,
         num_classes=classes,
@@ -136,9 +136,9 @@ def Little_ResNet32(input_shape, classes=1000, include_top=False, create_model=F
     )
 
 
-def Little_ResNet44(input_shape, classes=1000, include_top=False, create_model=False):
+def Little_ResNet44(in_x, classes=1000, include_top=False, create_model=False):
     return build_LittleResNetV1(
-        input_shape,
+        in_x,
         depth=44,
         include_top=include_top,
         num_classes=classes,
@@ -150,9 +150,9 @@ def Little_ResNet44(input_shape, classes=1000, include_top=False, create_model=F
     )
 
 
-def Little_ResNet56(input_shape, classes=1000, include_top=False, create_model=False):
+def Little_ResNet56(in_x, classes=1000, include_top=False, create_model=False):
     return build_LittleResNetV1(
-        input_shape,
+        in_x,
         depth=56,
         include_top=include_top,
         num_classes=classes,
@@ -164,9 +164,9 @@ def Little_ResNet56(input_shape, classes=1000, include_top=False, create_model=F
     )
 
 
-def Little_ResNet110(input_shape, classes=1000, include_top=False, create_model=False):
+def Little_ResNet110(in_x, classes=1000, include_top=False, create_model=False):
     return build_LittleResNetV1(
-        input_shape,
+        in_x,
         depth=110,
         include_top=include_top,
         num_classes=classes,

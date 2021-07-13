@@ -20,9 +20,9 @@ import tensorflow as tf
 from .builder import build_VGG
 
 
-def VGG16(input_shape, classes=1000, include_top=False, create_model=False):
+def VGG16(in_x, classes=1000, include_top=False, create_model=False):
     return build_VGG(
-        input_shape=input_shape,
+        in_x=in_x,
         repetition=3,
         include_top=include_top,
         num_classes=classes,
@@ -33,9 +33,9 @@ def VGG16(input_shape, classes=1000, include_top=False, create_model=False):
     )
 
 
-def VGG19(input_shape, classes=1000, include_top=False, create_model=False):
+def VGG19(in_x, classes=1000, include_top=False, create_model=False):
     return build_VGG(
-        input_shape=input_shape,
+        in_x=in_x,
         repetition=4,
         include_top=include_top,
         num_classes=classes,

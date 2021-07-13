@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import numpy as np
+from typing import Union
 
 from .model_serializer import ModelSerializer
 from .. import MakiTensor
@@ -28,7 +29,7 @@ class Model(ModelSerializer):
         print('Model is restored!')
         return Model(inputs=in_x, outputs=out_x, name=model_name)
 
-    def __init__(self, inputs, outputs, name):
+    def __init__(self, inputs: Union[MakiTensor, list], outputs: Union[MakiTensor, list], name):
         self.name = name
 
         if not isinstance(inputs, list):

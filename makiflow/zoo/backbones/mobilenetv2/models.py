@@ -20,9 +20,9 @@ import tensorflow as tf
 from .builder import build_MobileNetV2
 
 
-def MobileNetV2_1_0(input_shape, classes=1000, include_top=False, create_model=False):
+def MobileNetV2_1_0(in_x, classes=1000, include_top=False, create_model=False):
     return build_MobileNetV2(
-        input_shape=input_shape,
+        in_x=in_x,
         include_top=include_top,
         num_classes=classes,
         use_bias=False,
@@ -34,9 +34,9 @@ def MobileNetV2_1_0(input_shape, classes=1000, include_top=False, create_model=F
     )
 
 
-def MobileNetV2_1_4(input_shape, classes=1000, include_top=False, create_model=False):
+def MobileNetV2_1_4(in_x, classes=1000, include_top=False, create_model=False):
     return build_MobileNetV2(
-        input_shape=input_shape,
+        in_x=in_x,
         include_top=include_top,
         num_classes=classes,
         use_bias=False,
@@ -48,9 +48,9 @@ def MobileNetV2_1_4(input_shape, classes=1000, include_top=False, create_model=F
     )
 
 
-def MobileNetV2_0_75(input_shape, classes=1000, include_top=False, create_model=False):
+def MobileNetV2_0_75(in_x, classes=1000, include_top=False, create_model=False):
     return build_MobileNetV2(
-        input_shape=input_shape,
+        in_x=in_x,
         include_top=include_top,
         num_classes=classes,
         use_bias=False,
@@ -62,9 +62,9 @@ def MobileNetV2_0_75(input_shape, classes=1000, include_top=False, create_model=
     )
 
 
-def MobileNetV2_1_3(input_shape, classes=1000, include_top=False, create_model=False):
+def MobileNetV2_1_3(in_x, classes=1000, include_top=False, create_model=False):
     return build_MobileNetV2(
-        input_shape=input_shape,
+        in_x=in_x,
         include_top=include_top,
         num_classes=classes,
         use_bias=False,

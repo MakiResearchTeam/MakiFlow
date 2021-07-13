@@ -27,11 +27,11 @@ from .blocks import without_pointwise_CB
 from .utils import get_batchnorm_params, get_batchnorm_params_resnet34
 
 from makiflow.layers import *
-from makiflow import Model
+from makiflow import Model, MakiTensor
 
 
 def build_ResNetV1(
-        input_shape,
+        in_x: MakiTensor,
         repetition=(2, 2, 2, 2),
         include_top=False,
         num_classes=1000,
@@ -51,9 +51,8 @@ def build_ResNetV1(
     """
     Parameters
     ----------
-    input_shape : List
-        Input shape of neural network. Example - [32, 128, 128, 3]
-        which mean 32 - batch size, two 128 - size of picture, 3 - number of colors.
+    in_x : MakiTensor
+        A tensor that will be fed into the model.
     repetition : list
         Number of repetition on certain depth.
     include_top : bool
@@ -80,7 +79,6 @@ def build_ResNetV1(
     activation_between_blocks : bool
         Use activation between blocks.
     input_tensor : mf.MakiTensor
-        A tensor that will be fed into the model instead of InputLayer with the specified `input_shape`.
 
     Returns
     ---------
@@ -114,14 +112,9 @@ def build_ResNetV1(
     else:
         raise Exception(f'{block_type} type is not found')
 
-    if input_tensor is None:
-        in_x = InputLayer(input_shape=input_shape, name='Input')
-    elif input_tensor is not None:
-        in_x = input_tensor
-
     if factorization_first_layer:
 
-        x = ConvLayer(kw=3, kh=3, in_f=input_shape[-1], out_f=feature_maps, use_bias=use_bias,
+        x = ConvLayer(kw=3, kh=3, in_f=in_x.shape[-1], out_f=feature_maps, use_bias=use_bias,
                       activation=None, name='conv1_1/weights')(in_x)
 
         x = BatchNormLayer(D=feature_maps, name='conv1_1/BatchNorm', **bn_params)(x)
@@ -141,10 +134,10 @@ def build_ResNetV1(
 
         feature_maps = output_factorization_layer
     elif using_zero_padding:
-        x = BatchNormLayer(D=input_shape[-1], name='bn_data', **head_bn_params)(in_x)
+        x = BatchNormLayer(D=in_x.shape[-1], name='bn_data', **head_bn_params)(in_x)
 
         x = ZeroPaddingLayer(padding=[[3, 3], [3, 3]], name='zero_padding2d')(x)
-        x = ConvLayer(kw=7, kh=7, in_f=input_shape[-1],
+        x = ConvLayer(kw=7, kh=7, in_f=in_x.shape[-1],
                       out_f=feature_maps, stride=stride_list[0], use_bias=False, activation=None, padding='VALID',
                       name='conv0')(x)
         x = BatchNormLayer(D=feature_maps, name='bn0', **bn_params)(x)
@@ -152,7 +145,7 @@ def build_ResNetV1(
 
         x = ZeroPaddingLayer(padding=[[1, 1], [1, 1]], name='zero_padding2d_1')(x)
     else:
-        x = ConvLayer(kw=7, kh=7, in_f=input_shape[-1], out_f=feature_maps, use_bias=use_bias,
+        x = ConvLayer(kw=7, kh=7, in_f=in_x.shape[-1], out_f=feature_maps, use_bias=use_bias,
                       stride=stride_list[0], activation=None, name='conv1/weights')(in_x)
 
         x = BatchNormLayer(D=feature_maps, name='conv1/BatchNorm', **bn_params)(x)
@@ -237,24 +230,24 @@ def build_ResNetV1(
                 num_activation += 3
 
     if not pointwise:
-        x = BatchNormLayer(D=x.get_shape()[-1], name='bn1', **bn_params)(x)
+        x = BatchNormLayer(D=x.shape[-1], name='bn1', **bn_params)(x)
         x = ActivationLayer(activation=activation, name='relu1')(x)
 
     if include_top:
         x = GlobalAvgPoolLayer(name='avg_pool')(x)
-        output = DenseLayer(in_d=x.get_shape()[-1], out_d=num_classes, activation=None,
+        output = DenseLayer(in_d=x.shape[-1], out_d=num_classes, activation=None,
                             name='logits' if pointwise else 'fc1')(x)
-
-        if create_model:
-            return Model(inputs=in_x, outputs=output, name=name_model)
     else:
         output = x
+
+    if create_model:
+        return Model(inputs=in_x, outputs=output, name=name_model)
 
     return in_x, output
 
 
 def build_LittleResNetV1(
-        input_shape,
+        in_x: MakiTensor,
         depth=20,
         include_top=False,
         num_classes=1000,
@@ -304,12 +297,7 @@ def build_LittleResNetV1(
     conv_block = without_pointwise_CB
     iden_block = without_pointwise_IB
 
-    if input_tensor is None:
-        in_x = InputLayer(input_shape=input_shape, name='Input')
-    elif input_tensor is not None:
-        in_x = input_tensor
-
-    x = ConvLayer(kw=3, kh=3, in_f=input_shape[-1], out_f=feature_maps, activation=None,
+    x = ConvLayer(kw=3, kh=3, in_f=in_x.shape[-1], out_f=feature_maps, activation=None,
                   use_bias=use_bias, name='conv1')(in_x)
 
     x = BatchNormLayer(D=feature_maps, name='bn_1', **bm_params)(x)
@@ -370,7 +358,7 @@ def build_LittleResNetV1(
 
     if include_top:
         x = GlobalAvgPoolLayer(name='avg_pool')(x)
-        output = DenseLayer(in_d=x.get_shape()[-1], out_d=num_classes, activation=None, name='logits')(x)
+        output = DenseLayer(in_d=x.shape[-1], out_d=num_classes, activation=None, name='logits')(x)
     else:
         output = x
 

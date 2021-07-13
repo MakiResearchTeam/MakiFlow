@@ -27,7 +27,7 @@ from .blocks import repeat_n_convLayers
 
 
 def build_VGG(
-    input_shape,
+    in_x,
     repetition=3,
     number_of_blocks=5,
     include_top=False,
@@ -76,7 +76,7 @@ def build_VGG(
         Input MakiTensor.
     output : mf.MakiTensor
         Output MakiTensor.
-    Classificator : mf.models.Model
+    Classificator : mf.Model
         Constructed model.
     """
 
@@ -85,11 +85,6 @@ def build_VGG(
 
     bn_params = get_batchnorm_params()
     pool_params = get_pool_params()
-
-    if input_tensor is None:
-        in_x = InputLayer(input_shape=input_shape, name='Input')
-    elif input_tensor is not None:
-        in_x = input_tensor
 
     for i in range(1, number_of_blocks):
         # First block
@@ -111,14 +106,14 @@ def build_VGG(
 
     if include_top:
         x = FlattenLayer(name='flatten')(x)
-        in_f = x.get_shape()[1] * x.get_shape()[2] * x.get_shape()[3]
+        in_f = x.shape[1] * x.shape[2] * x.shape[3]
         x = DenseLayer(in_d=in_f, out_d=4096, name='fc6')(x)
         x = DenseLayer(in_d=4096, out_d=4096, name='fc7')(x)
         output = DenseLayer(in_d=4096, out_d=num_classes, activation=None, name='fc8')(x)
-
-        if create_model:
-            return Model(inputs=in_x, outputs=output, name=name_model)
     else:
         output = x
+
+    if create_model:
+        return Model(inputs=in_x, outputs=output, name=name_model)
 
     return in_x, output
