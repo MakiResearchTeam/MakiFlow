@@ -1,6 +1,6 @@
 from tqdm import tqdm
 import numpy as np
-from typing import Union
+from typing import Union, List
 
 from .model_serializer import ModelSerializer
 from .. import MakiTensor
@@ -29,7 +29,7 @@ class Model(ModelSerializer):
         print('Model is restored!')
         return Model(inputs=in_x, outputs=out_x, name=model_name)
 
-    def __init__(self, inputs: Union[MakiTensor, list], outputs: Union[MakiTensor, list], name):
+    def __init__(self, inputs: Union[MakiTensor, List[MakiTensor]], outputs: Union[MakiTensor, List[MakiTensor]], name):
         self.name = name
 
         if not isinstance(inputs, list):
@@ -49,7 +49,7 @@ class Model(ModelSerializer):
     def get_batch_size(self):
         return self.inputs[0].shape[0]
 
-    def predict(self, *args):
+    def predict(self, *args, _progress_bar=False, _force_batch_size=None):
         """
         Performs prediction on the given data.
 
@@ -57,6 +57,11 @@ class Model(ModelSerializer):
         ----------
         *args : arrays
             Data order must be the same as the model's inputs.
+        _progress_bar : bool
+            Set to False to turn off tqdm usage within prediction loop. Default is False.
+        _force_batch_size : int
+            If provided, the data will be passed to the model in chunks of len=`_force_batch_size`.
+            This is useful in cases when the model's InputLayers batch size dimension is None.
 
         Returns
         -------
@@ -64,8 +69,15 @@ class Model(ModelSerializer):
             Predictions.
         """
         batch_size = self.get_batch_size() if self.get_batch_size() is not None else 1
+        if _force_batch_size is not None:
+            batch_size = _force_batch_size
+
         predictions = []
-        for data in tqdm(data_iterator(*args, batch_size=batch_size)):
+        iter_wrap = lambda x: x
+        if _progress_bar:
+            iter_wrap = tqdm
+
+        for data in iter_wrap(data_iterator(*args, batch_size=batch_size)):
             packed_data = pack_data(self.inputs, data)
             predictions += [
                 self._session.run(

@@ -14,8 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
-from makiflow.core import MakiTensor
 import tensorflow as tf
+from typing import Union
+
+from makiflow.core import MakiTensor
+
+
 EPOCH = 'Epoch:'
 
 
@@ -45,16 +49,16 @@ def loss_is_built():
     print('Loss is built.')
 
 
-def pack_data(tensors: list, data: list):
+def pack_data(tensors: Union[list, tuple], data: Union[list, tuple]):
     """
     Packs data into a dictionary with pairs (tf.Tensor, data).
     This dictionary is then used as the `feed_dict` argument in the session.run() method.
 
     Parameters
     ----------
-    tensors : list
+    tensors : list or tuple
         A list of tf.Tensors.
-    data : list
+    data : list or tuple
         The data to pack.
 
     Returns

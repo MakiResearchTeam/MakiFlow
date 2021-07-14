@@ -157,67 +157,10 @@ class Trainer(GraphCompiler):
     def get_track_losses(self):
         return self._track_losses.copy()
 
-    def fit(self, optimizer, epochs=1, iter=10, print_period=None, global_step=None):
-        """
-        Performs fitting of the model.
-
-        Parameters
-        ----------
-        optimizer : TensorFlow optimizer
-            Model uses TensorFlow optimizers in order train itself.
-        epochs : int
-            Number of epochs to run.
-        iter : int
-            Number of training iterations per update.
-        print_period : int
-            Every `print_period` training iterations the training info will be displayed.
-        global_step
-            Please refer to TensorFlow documentation about the global step for more info.
-        Returns
-        -------
-        dict
-            Dictionary with values of the tracked losses.
-        """
-        if print_period is None:
-            print_period = iter
-
-        # Loss value collectors. They will collect all the loss values during this training cycle.
-        loss_collectors = {}
-        for loss_name in self.get_track_losses():
-            loss_collectors[loss_name] = []
-
-        # This context manager is used to prevent tqdm from breaking in case of exception
-        with IteratorCloser() as ic:
-            for i in range(epochs):
-                it = tqdm(range(iter))
-                ic.set_iterator(it)
-                # Loss value holders. They will hold an interpolated loss value for one iteration.
-                # This loss value will then be passed to an appropriate loss value collector.
-                loss_holders = {}
-                for loss_name in self.get_track_losses():
-                    loss_holders[loss_name] = 0.0
-
-                # Performs training iterations
-                for j in it:
-                    tracked_losses_vals, summary = self.train_step(optimizer=optimizer, global_step=global_step)
-                    # Interpolate loss values and collect them
-                    for loss_name in tracked_losses_vals:
-                        loss_holders[loss_name] = moving_average(loss_holders[loss_name],
-                                                                 tracked_losses_vals[loss_name], j)
-                        loss_collectors[loss_name].append(loss_holders[loss_name])
-
-                    self._tracker.increment()
-                    if (j + 1) % print_period == 0:
-                        name_loss = list(loss_holders.items())
-                        print_train_info(
-                            i,
-                            *name_loss
-                        )
-                        self._tracker.write_summary(summary)
-
-        return loss_collectors
-
-    def fit_generator(self, generator, optimizer, epochs=1, iter=10, print_period=None, global_step=None):
+    def fit(
+            self, optimizer, epochs=1, iter=10, generator=None, print_period=None, global_step=None,
+            _progress_bar=True, _print=True
+    ):
         """
         Performs fitting of the model.
 
@@ -235,6 +178,10 @@ class Trainer(GraphCompiler):
             Every `print_period` training iterations the training info will be displayed.
         global_step
             Please refer to TensorFlow documentation about the global step for more info.
+        _progress_bar : bool
+            Set to False to turn off tqdm usage within training loop. Default is True.
+        _print : bool
+            Set to False to turn off loss info printing after each `print_period` iterations.
         Returns
         -------
         dict
@@ -248,26 +195,30 @@ class Trainer(GraphCompiler):
         for loss_name in self.get_track_losses():
             loss_collectors[loss_name] = []
 
+        # Loss value holders. They will hold an interpolated loss value for one iteration.
+        # This loss value will then be passed to an appropriate loss value collector.
+        loss_holders = {}
+        for loss_name in self.get_track_losses():
+            loss_holders[loss_name] = 0.0
+
         # This context manager is used to prevent tqdm from breaking in case of exception
         with IteratorCloser() as ic:
             for i in range(epochs):
-                it = tqdm(range(iter))
-                ic.set_iterator(it)
-
-                # Loss value holders. They will hold an interpolated loss value for one iteration.
-                # This loss value will then be passed to an appropriate loss value collector.
-                loss_holders = {}
-                for loss_name in self.get_track_losses():
-                    loss_holders[loss_name] = 0.0
+                if _progress_bar:
+                    it = tqdm(range(iter))
+                    ic.set_iterator(it)
+                else:
+                    it = range(iter)
 
                 # Performs training iterations
                 for j in it:
-                    input_data, labels = next(generator)
-                    packed_data = pack_data(self.input_tensors, input_data)
-                    packed_labels = pack_data(self.label_tensors, labels)
-                    packed_data.update(packed_labels)
+                    input_data, labels = None, None
+                    # Fetch data from the generator if provided
+                    if generator is not None:
+                        input_data, labels = next(generator)
+
                     tracked_losses_vals, summary = self.train_step(
-                        optimizer=optimizer, global_step=global_step, feed_dict=packed_data
+                        optimizer=optimizer, global_step=global_step, input_data=input_data, label_data=labels
                     )
                     # Interpolate loss values and collect them
                     for loss_name in tracked_losses_vals:
@@ -278,15 +229,16 @@ class Trainer(GraphCompiler):
                     self._tracker.increment()
                     if (j + 1) % print_period == 0:
                         name_loss = list(loss_holders.items())
-                        print_train_info(
-                            i,
-                            *name_loss
-                        )
+                        if _print:
+                            print_train_info(
+                                i,
+                                *name_loss
+                            )
                         self._tracker.write_summary(summary)
 
         return loss_collectors
 
-    def train_step(self, optimizer, global_step, feed_dict=None):
+    def train_step(self, optimizer, global_step, input_data=None, label_data=None, _feed_dict=None):
         """
         A single training step.
 
@@ -295,7 +247,11 @@ class Trainer(GraphCompiler):
         optimizer : tf.train.Optimizer
         global_step
             Please refer to TensorFlow documentation about the global step for more info.
-        feed_dict : dict
+        input_data : tuple or list
+            Data for the model's inputs.
+        label_data : tuple or list
+            Data required for loss (or other) computation.
+        _feed_dict : dict
             A dictionary which maps input tensors to the actual data to be fed into the network.
             Examples: { placeholder: np.ndarray }
         Returns
@@ -305,6 +261,17 @@ class Trainer(GraphCompiler):
         tf.Summary
             tf.Summary of the tracked losses.
         """
+        # Pack the data into feed_dict
+        feed_dict = None
+        if input_data is not None and label_data is not None:
+            packed_data = pack_data(self.input_tensors, input_data)
+            packed_labels = pack_data(self.label_tensors, label_data)
+            packed_data.update(packed_labels)
+            feed_dict = packed_data
+
+        if _feed_dict is not None:
+            feed_dict = _feed_dict
+
         train_op = self.__minimize_loss(optimizer, global_step)
         track_losses = self.get_track_losses()
         # Summary is created after creation of the train_op
