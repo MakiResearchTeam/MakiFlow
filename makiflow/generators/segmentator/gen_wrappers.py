@@ -220,7 +220,7 @@ class BinaryMaskReader:
     def aggregate_merge(self, masks):
         final_mask = np.zeros(shape=self.image_shape, dtype='int32')
         # Start with the lowest priority class
-        for class_ind in self.class_priority.reverse():
+        for class_ind in reversed(self.class_priority):
             layer = masks[..., class_ind - 1]
             untouched_area = (layer != 0).astype('int32')
             final_mask = final_mask * untouched_area + layer * class_ind
