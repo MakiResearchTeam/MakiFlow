@@ -224,7 +224,7 @@ class BinaryMaskReader:
         # Start with the lowest priority class
         for class_ind in reversed(self.class_priority):
             layer = masks[..., class_ind - 1]
-            untouched_area = (layer != 0).astype('int32')
+            untouched_area = (layer == 0).astype('int32')
             final_mask = final_mask * untouched_area + layer * class_ind
         return final_mask
 
