@@ -185,18 +185,18 @@ class BinaryMaskReader:
 
     def load_image(self, path):
         image = self.image_cache.get(path)
-        if image:
+        if image is not None:
             return image
 
         image = cv2.imread(path)
-        assert image, f'Could not load image with path={path}.'
+        assert image is not None, f'Could not load image with path={path}.'
         image = image.astype('float32')
         self.image_cache[path] = image
         return image
 
     def load_mask(self, folder_path):
         mask = self.mask_cache.get(folder_path)
-        if mask:
+        if mask is not None:
             return mask
 
         # Load individual binary masks into a tensor of masks
