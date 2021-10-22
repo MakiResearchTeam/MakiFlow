@@ -200,6 +200,7 @@ class BinaryMaskReader:
             return mask
 
         # Load individual binary masks into a tensor of masks
+        print('folder path', folder_path)
         label_tensor = np.zeros(shape=(*self.image_shape, self.n_classes), dtype='int32')
         for binary_mask_path in glob(join(folder_path, '*')):
             filename = binary_mask_path.split('/')[-1]
@@ -208,6 +209,7 @@ class BinaryMaskReader:
                                   'class names (filenames) must start from 1.'
             binary_mask = cv2.imread(binary_mask_path)
             assert binary_mask is not None, f'Could not load mask with path={binary_mask_path}'
+            print('loaded binary mask', binary_mask_path)
             label_tensor[..., class_id - 1] = binary_mask[..., 0]
 
         # Merge all binary masks into a single-layer multiclass mask if needed
