@@ -19,4 +19,4 @@ from .gen_layers import InputGenLayer, InputGenNumpyGetterLayer
 from .map_methods import *
 from .pathgenerator import *
 from .gen_wrappers import *
-from .binary_mask_reader import BinaryMaskReader
+from .binary_mask_reader import BinaryMaskLoader

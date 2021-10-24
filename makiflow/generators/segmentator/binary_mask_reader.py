@@ -6,7 +6,7 @@ from os.path import join
 
 # This class was made off a gen wrapper with the same name
 # TODO: use this class in the corresponding wrapper
-class BinaryMaskReader:
+class BinaryMaskLoader:
     def __init__(self, n_classes: int, image_shape: tuple, class_priority=None):
         """
         Reads binary masks from the mask folder and aggregates them into a label tensor.
