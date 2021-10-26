@@ -417,6 +417,7 @@ class AugmentationPostMethod(PostMapMethod):
             print('mask after', transformed_mask)
             if given_2d:
                 transformed_mask = transformed_mask[..., 0]
+                print('mask after after', transformed_mask)
         else:
             # Batched
             # Check whatever mask have color dimension
@@ -457,7 +458,7 @@ class AugmentationPostMethod(PostMapMethod):
         # Slice at the end - only if input mask have dimensions - [..., H, W]
         if given_2d:
             transformed_mask = transformed_mask[..., 0]
-
+            print('mask after after', transformed_mask)
         element[SegmentIterator.IMAGE] = transformed_image
         # After rotation and other aug methods - integer values are looks like garbage
         # And simple cast can ruin all masks - so, first we round - then cast
