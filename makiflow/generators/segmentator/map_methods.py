@@ -403,7 +403,7 @@ class AugmentationPostMethod(PostMapMethod):
 
             if self.use_zoom:
                 zoom = tf.random.uniform([], minval=self.zoom_min, maxval=self.zoom_max, dtype='float32')
-
+            print('mask before', mask)
             transformed_image, transformed_mask = apply_transformation(
                 [image, mask],
                 use_rotation=self.use_rotation,
@@ -414,7 +414,7 @@ class AugmentationPostMethod(PostMapMethod):
                 use_zoom=self.use_zoom,
                 zoom_scale=zoom
             )
-
+            print('mask after', transformed_mask)
             if given_2d:
                 transformed_mask = transformed_mask[..., 0]
         else:
