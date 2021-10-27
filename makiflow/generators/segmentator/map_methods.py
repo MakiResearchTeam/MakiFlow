@@ -149,7 +149,7 @@ class ResizePostMethod(PostMapMethod):
 
         if self.expand_dims_mask:
             mask = mask[..., 0]
-        
+
         return {
             SegmentIterator.IMAGE: img,
             SegmentIterator.MASK: mask

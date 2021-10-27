@@ -204,13 +204,16 @@ class BinaryMaskReader:
         mask = self.mask_cache.get(folder_path)
         if mask is not None:
             return mask
-        image_shape = np.squeeze(mask.shape)
         # Load individual binary masks into a tensor of masks
-        label_tensor = np.zeros(shape=(*image_shape, self.n_classes), dtype='int32')
+        label_tensor = None
         for binary_mask_path in glob(join(folder_path, '*')):
             filename = binary_mask_path.split('/')[-1]
             class_id = int(filename.split('.')[0])
             binary_mask = cv2.imread(binary_mask_path)
+
+            if label_tensor is None:
+                image_shape = binary_mask.shape[:-1]
+                label_tensor = np.zeros(shape=(*image_shape, self.n_classes), dtype='int32')
             assert binary_mask is not None, f'Could not load mask with path={binary_mask_path}'
             assert class_id - self.class_id_offset >= 0, f'Found a mask with class_id={class_id} that is less than' \
                                                          f'class_id_offset={self.class_id_offset}. Make sure to set ' \
