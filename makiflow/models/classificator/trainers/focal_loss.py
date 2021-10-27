@@ -39,7 +39,7 @@ class FocalTrainer(ClassificatorTrainer):
     def set_params(self, params):
         self.set_gamma(params[FocalTrainer.GAMMA])
         self.set_norm_by_pos(params[FocalTrainer.NORM_BY_POS])
-        self.set_scale(params.get([FocalTrainer.SCALE], 1.0))
+        self.set_scale(params.get(FocalTrainer.SCALE, 1.0))
 
     def _init(self):
         super()._init()
