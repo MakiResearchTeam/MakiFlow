@@ -245,3 +245,66 @@ class BinaryMaskReader:
     def __iter__(self):
         assert self.path_generator, 'Path generator has not been provided.'
         return self
+
+
+class ImageMaskCrop:
+    def __init__(self, crop_size):
+        """
+        Crops image and mask to a specified `crop_size`.
+
+        Parameters
+        ----------
+        crop_size : tuple
+            The crop size (h, w).
+        """
+        self.crop_h, self.crop_w = crop_size
+        self.gen = None
+
+    def __call__(self, gen):
+        self.gen = gen
+
+    def crop(self, image, mask):
+        """
+        Crops image and mask randomly. The crop position is guarantied to be the same for the mask and the image.
+
+        Parameters
+        ----------
+        image : np.ndarray
+            The image to crop.
+        mask : np.ndarray
+            The mask to crop
+
+        Returns
+        -------
+        np.ndarray
+            Cropped image.
+        np.ndarray
+            Cropped mask.
+        """
+        h, w = image.shape[:2]
+        assert h > self.crop_h, f'Height of the received image (h={h}) is larger than the height ' \
+                                f'of the crop (crop_h={self.crop_h}).'
+        assert h > self.crop_w, f'Width of the received image (h={w}) is larger than the Width ' \
+                                f'of the crop (crop_w={self.crop_w}).'
+
+        x = np.random.randint(low=0, high=w - self.crop_w)
+        y = np.random.randint(low=0, high=h - self.crop_h)
+
+        image_crop = image[y: y + self.crop_h, x: x + self.crop_w]
+        mask_crop = mask[y: y + self.crop_h, x: x + self.crop_w]
+        return image_crop, mask_crop
+
+    def __next__(self):
+        assert self.gen is not None, 'Generator has not been provided.'
+        im_mask = next(self.gen)
+        image = im_mask[SegmentPathGenerator.IMAGE]
+        mask = im_mask[SegmentPathGenerator.MASK]
+
+        image_crop, mask_crop = self.crop(image, mask)
+
+        im_mask[SegmentPathGenerator.IMAGE] = image_crop
+        im_mask[SegmentPathGenerator.MASK] = mask_crop
+        return im_mask
+
+    def __iter__(self):
+        return self
