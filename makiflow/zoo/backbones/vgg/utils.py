@@ -16,13 +16,6 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
-def get_batchnorm_params():
-    return {
-            'decay': 0.9,
-            'eps': 1e-3
-    }
-
 def get_pool_params():
     return {
         'ksize': [1,2,2,1],

@@ -15,11 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
+MODEL_05 = '0.5'
+MODEL_10 = '1.0'
+MODEL_15 = '1.5'
+MODEL_20 = '2.0'
 
-from __future__ import absolute_import
-from .models import VGG16, VGG19
-from .blocks import VGGBlock
-from .builder import build_VGG
 
-del absolute_import
-
+SIZE_2_CONFIG_MODEL = {
+    MODEL_05: [(48, 4), (96, 8), (192, 4), 1024],
+    MODEL_10: [(116, 4), (232, 8), (464, 4), 1024],
+    MODEL_15: [(176, 4), (352, 8), (704, 4), 1024],
+    MODEL_20: [(244, 4), (488, 8), (976, 4), 2048],
+}

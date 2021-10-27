@@ -1,13 +1,13 @@
-# Copyright (C) 2020  Igor Kilbas, Danil Gribanov
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
 #
-# This file is part of MakiZoo.
+# This file is part of MakiFlow.
 #
-# MakiZoo is free software: you can redistribute it and/or modify
+# MakiFlow is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# MakiZoo is distributed in the hope that it will be useful,
+# MakiFlow is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -19,7 +19,7 @@
 from __future__ import absolute_import
 
 from .models import MobileNetV2_1_4, MobileNetV2_1_3, MobileNetV2_1_0, MobileNetV2_0_75
-from .blocks import inverted_res_block
+from .blocks import MobileNetV2InvertedResBlock
 from .builder import build_MobileNetV2
 from .utils import get_batchnorm_params, make_divisible
 

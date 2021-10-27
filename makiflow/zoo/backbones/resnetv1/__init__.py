@@ -1,13 +1,13 @@
-# Copyright (C) 2020  Igor Kilbas, Danil Gribanov
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
 #
-# This file is part of MakiZoo.
+# This file is part of MakiFlow.
 #
-# MakiZoo is free software: you can redistribute it and/or modify
+# MakiFlow is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# MakiZoo is distributed in the hope that it will be useful,
+# MakiFlow is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -16,13 +16,13 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from __future__ import absolute_import
+from .models import (ResNet18, ResNet34, ResNet50,
+                     ResNet101, ResNet152, Little_ResNet20,
+                     Little_ResNet32, Little_ResNet44,
+                     Little_ResNet56, Little_ResNet110)
 
-from .models import ResNet18, ResNet34, ResNet50, ResNet101, \
-    ResNet152, Little_ResNet20, Little_ResNet32, Little_ResNet44, Little_ResNet56, Little_ResNet110
+from .blocks import (ResNetIdentityBlockV1, ResNetConvBlockV1,
+                     ResNetConvBlock_woPointWiseV1, ResNetIdentityBlock_woPointWiseV1)
 
-from .blocks import identity_block, conv_block, without_pointwise_CB, without_pointwise_IB
 from .builder import build_ResNetV1, build_LittleResNetV1
 from .utils import get_batchnorm_params
-
-del absolute_import

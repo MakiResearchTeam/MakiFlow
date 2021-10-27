@@ -1,13 +1,13 @@
-# Copyright (C) 2020  Igor Kilbas, Danil Gribanov
+# Copyright (C) 2020  Igor Kilbas, Danil Gribanov, Artem Mukhin
 #
-# This file is part of MakiZoo.
+# This file is part of MakiFlow.
 #
-# MakiZoo is free software: you can redistribute it and/or modify
+# MakiFlow is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# MakiZoo is distributed in the hope that it will be useful,
+# MakiFlow is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -15,191 +15,242 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-
-from makiflow.layers import *
-import makiflow.layers.initializers as init
-from makiflow.core import MakiTensor
 import tensorflow as tf
+from .utils import get_batchnorm_params
+
+import makiflow as mf
+from makiflow.layers import *
+from makiflow.layers.initializers import He
+
+HE_INIT = str(He)
+
+# ResNet with pointwise operation (i.e. kernel with size 1x1)
+PREFIX_NAME_BLOCK = "block{}/unit_{}"
+PREFIX_NAME_SHORTCUT = "{}/bottleneck_v1/shortcut/{}"
+PREFIX_NAME_LAYER = "{}/bottleneck_v1/conv{}/{}"
+
+BATCH_NORM = "BatchNorm"
+ACTIV = "activ"
+WEIGHTS = "weights"
+SUM_OPERATION = '/sum_operation'
+
+# Resnet w/o pointwise (WOP) operation
+PREFIX_NAME_BLOCK_WOP = "stage{}_unit{}_"
+BN = "{}bn{}"
+CONV = "{}conv{}"
+ACTIVATION = "{}activation{}"
+ZERO_PADDING = "{}zero_padding{}"
+SCIP_BRANCH = "{}sc/conv"
 
 
-def identity_block(
-        x: MakiTensor,
+def ResNetIdentityBlockV1(
+        x: mf.MakiTensor,
         block_id: int,
         unit_id: int,
-        num_block=None,
+        num_block: int,
         in_f=None,
-        use_bias=False,
         activation=tf.nn.relu,
-        bn_params={},
-        kernel_init=init.XavierGaussianInf()
-):
+        use_bias=False,
+        kernel_initializer=HE_INIT,
+        bn_params=None) -> mf.MakiTensor:
     """
+    Create ResNet block with skip connection,
+    This type of block are presented in first paper about ResNet (i.e. v1)
+
     Parameters
     ----------
-    x : MakiTensor
-        Input MakiTensor.
-    in_f : int
-        Number of input feature maps. By default None (shape will be getted from tensor).
-    activation : tensorflow function
-        The function of activation, by default tf.nn.relu.
-    use_bias : bool
-        Use bias on layers or not.
+    x : mf.MakiTensor
+        Input mf.MakiTensor.
     block_id : int
         Number of block (used in name of layers).
     unit_id : int
         Unit of block (used in name of layers).
     num_block : int
         Number of sum operation (used in name of layers).
+    in_f : int
+        Number of input feature maps. By default None (shape will be getted from tensor).
+    activation : tensorflow function
+        The function of activation, by default tf.nn.relu.
+    use_bias : bool
+        Use bias on layers or not.
+    kernel_initializer : str
+        Name of type initialization for conv layers,
+        For more examples see: makiflow.layers.utils,
+        By default He initialization are used
     bn_params : dict
-        Parameters for BatchNormLayer. If empty all parameters will have default valued.
+        Parameters for BatchNormLayer. If equal to None all parameters will have default valued.
 
     Returns
     ---------
-    x : MakiTensor
-        Output MakiTensor.
-    """
+    x : mf.MakiTensor
+        Output mf.MakiTensor.
 
-    prefix_name = 'block' + str(block_id) + '/unit_' + str(unit_id)
-    if num_block is None:
-        num_block = prefix_name + '/sum_operation'
-    else:
-        num_block = 'add_' + str(num_block)
+    """
+    if bn_params is None:
+        bn_params = get_batchnorm_params()
+
+    prefix_name = PREFIX_NAME_BLOCK.format(block_id, unit_id)
 
     if in_f is None:
-        in_f = x.shape[-1]
+        in_f = x.shape()[-1]
 
     reduction = int(in_f / 4)
 
-    mx = ConvLayer(kw=1, kh=1, in_f=in_f, out_f=reduction, activation=None,
-                   use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + '/bottleneck_v1/conv1/weights')(x)
+    mx = ConvLayer(
+        kw=1, kh=1, in_f=in_f, out_f=reduction, activation=None,
+        use_bias=use_bias, name=PREFIX_NAME_LAYER.format(prefix_name, 1, WEIGHTS),
+        kernel_initializer=kernel_initializer
+    )(x)
+    mx = BatchNormLayer(D=reduction, name=PREFIX_NAME_LAYER.format(prefix_name, 1, BATCH_NORM), **bn_params)(mx)
+    mx = ActivationLayer(activation=activation, name=PREFIX_NAME_LAYER.format(prefix_name, 1, ACTIV))(mx)
 
-    mx = BatchNormLayer(D=reduction, name=prefix_name + '/bottleneck_v1/conv1/BatchNorm', **bn_params)(mx)
-    mx = ActivationLayer(activation=activation, name=prefix_name + '/bottleneck_v1/conv1/activ')(mx)
+    mx = ConvLayer(
+        kw=3, kh=3, in_f=reduction, out_f=reduction, activation=None,
+        use_bias=use_bias, name=PREFIX_NAME_LAYER.format(prefix_name, 2, WEIGHTS),
+        kernel_initializer=kernel_initializer
+    )(mx)
+    mx = BatchNormLayer(D=reduction, name=PREFIX_NAME_LAYER.format(prefix_name, 2, BATCH_NORM), **bn_params)(mx)
+    mx = ActivationLayer(activation=activation, name=PREFIX_NAME_LAYER.format(prefix_name, 2, ACTIV))(mx)
 
-    mx = ConvLayer(kw=3, kh=3, in_f=reduction, out_f=reduction, activation=None,
-                   use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + '/bottleneck_v1/conv2/weights')(mx)
+    mx = ConvLayer(
+        kw=1, kh=1, in_f=reduction, out_f=in_f, activation=None,
+        use_bias=use_bias, name=PREFIX_NAME_LAYER.format(prefix_name, 3, WEIGHTS),
+        kernel_initializer=kernel_initializer
+    )(mx)
+    mx = BatchNormLayer(D=in_f, name=PREFIX_NAME_LAYER.format(prefix_name, 3, BATCH_NORM), **bn_params)(mx)
 
-    mx = BatchNormLayer(D=reduction, name=prefix_name + '/bottleneck_v1/conv2/BatchNorm', **bn_params)(mx)
-    mx = ActivationLayer(activation=activation, name=prefix_name + '/bottleneck_v1/conv2/activ')(mx)
-
-    mx = ConvLayer(kw=1, kh=1, in_f=reduction, out_f=in_f, activation=None,
-                   use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + '/bottleneck_v1/conv3/weights')(mx)
-
-    mx = BatchNormLayer(D=in_f, name=prefix_name + '/bottleneck_v1/conv3/BatchNorm', **bn_params)(mx)
-
-    x = SumLayer(name=num_block)([mx, x])
+    x = SumLayer(name=prefix_name + str(num_block) + SUM_OPERATION)([mx, x])
 
     return x
 
 
-def conv_block(
-        x: MakiTensor,
+def ResNetConvBlockV1(
+        x : mf.MakiTensor,
         block_id: int,
         unit_id: int,
-        num_block=None,
-        in_f=None,
-        use_bias=False,
+        num_block: int,
         activation=tf.nn.relu,
+        use_bias=False,
         stride=2,
         out_f=None,
+        in_f=None,
         reduction=None,
-        bn_params={},
-        kernel_init=init.XavierGaussianInf()
-):
+        kernel_initializer=HE_INIT,
+        bn_params=None):
     """
+    Create ResNet block with skip connection using certain `stride`,
+    in most cases equal to 2 (and by default in out case)
+
+    Were presented in first paper about ResNet (i.e. v1)
+
     Parameters
     ----------
-    x : MakiTensor
-        Input MakiTensor.
-    in_f : int
-        Number of input feature maps. By default None (shape will be getted from tensor).
-    activation : tensorflow function
-        The function of activation, by default tf.nn.relu.
-    use_bias : bool
-        Use bias on layers or not.
-    out_f : int
-        Output number of feature maps.
+    x : mf.MakiTensor
+        Input mf.MakiTensor.
     block_id : int
         Number of block (used in name of layers).
     unit_id : int
         Unit of block (used in name of layers).
     num_block : int
         Number of sum operation (used in name of layers).
+    activation : tensorflow function
+        The function of activation, by default tf.nn.relu.
+    use_bias : bool
+        Use bias on layers or not.
+    stride : int
+        Stride for this block, by defualt equal to 2
+    out_f : int
+        Output number of feature maps.
+    in_f : int
+        Number of input feature maps. By default None (shape will be getted from tensor).
+    reduction : int
+        The number of feature maps to which you want to increase/decrease,
+        By default decrease input feature maps by 2
+    kernel_initializer : str
+        Name of type initialization for conv layers,
+        For more examples see: makiflow.layers.utils,
+        By default He initialization are used
     bn_params : dict
-        Parameters for BatchNormLayer. If empty all parameters will have default valued.
+        Parameters for BatchNormLayer. If equal to None all parameters will have default valued.
 
     Returns
     ---------
-    x : MakiTensor
-        Output MakiTensor.
+    x : mf.MakiTensor
+        Output mf.MakiTensor.
+
     """
+    if bn_params is None:
+        bn_params = get_batchnorm_params()
 
-    prefix_name = 'block' + str(block_id) + '/unit_' + str(unit_id)
-
-    if num_block is None:
-        num_block = prefix_name + '/sum_operation'
-    else:
-        num_block = 'add_' + str(num_block)
+    prefix_name = PREFIX_NAME_BLOCK.format(block_id, unit_id)
 
     if in_f is None:
-        in_f = x.shape[-1]
-
+        in_f = x.shape()[-1]
     if reduction is None:
         reduction = int(in_f / 2)
-
     if out_f is None:
         out_f = in_f * 2
 
-    mx = ConvLayer(kw=1, kh=1, in_f=in_f, out_f=reduction, stride=stride, activation=None,
-                   use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + '/bottleneck_v1/conv1/weights')(x)
+    # Main Branch
+    # Conv(1x1) -> BN -> Activ
+    mx = ConvLayer(
+        kw=1, kh=1, in_f=in_f, out_f=reduction, stride=stride, activation=None,
+        use_bias=use_bias, name=PREFIX_NAME_LAYER.format(prefix_name, 1, WEIGHTS),
+        kernel_initializer=kernel_initializer
+    )(x)
+    mx = BatchNormLayer(D=reduction, name=PREFIX_NAME_LAYER.format(prefix_name, 1, BATCH_NORM), **bn_params)(mx)
+    mx = ActivationLayer(activation=activation, name=PREFIX_NAME_LAYER.format(prefix_name, 1, ACTIV))(mx)
 
-    mx = BatchNormLayer(D=reduction, name=prefix_name + '/bottleneck_v1/conv1/BatchNorm', **bn_params)(mx)
-    mx = ActivationLayer(activation=activation, name=prefix_name + '/bottleneck_v1/conv1/activ')(mx)
+    # Conv(3x3) -> BN -> Activ
+    mx = ConvLayer(
+        kw=3, kh=3, in_f=reduction, out_f=reduction, activation=None,
+        use_bias=use_bias, name=PREFIX_NAME_LAYER.format(prefix_name, 2, WEIGHTS),
+        kernel_initializer=kernel_initializer
+    )(mx)
+    mx = BatchNormLayer(D=reduction, name=PREFIX_NAME_LAYER.format(prefix_name, 2, BATCH_NORM), **bn_params)(mx)
+    mx = ActivationLayer(activation=activation, name=PREFIX_NAME_LAYER.format(prefix_name, 2, ACTIV))(mx)
 
-    mx = ConvLayer(kw=3, kh=3, in_f=reduction, out_f=reduction, activation=None,
-                   use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + '/bottleneck_v1/conv2/weights')(mx)
+    # Conv(1x1) -> BN
+    mx = ConvLayer(
+        kw=1, kh=1, in_f=reduction, out_f=out_f, activation=None,
+        use_bias=use_bias, name=PREFIX_NAME_LAYER.format(prefix_name, 3, WEIGHTS),
+        kernel_initializer=kernel_initializer
+    )(mx)
+    mx = BatchNormLayer(D=out_f, name=PREFIX_NAME_LAYER.format(prefix_name, 3, BATCH_NORM), **bn_params)(mx)
 
-    mx = BatchNormLayer(D=reduction, name=prefix_name + '/bottleneck_v1/conv2/BatchNorm', **bn_params)(mx)
-    mx = ActivationLayer(activation=activation, name=prefix_name + '/bottleneck_v1/conv2/activ')(mx)
+    # Skip branch
+    sx = ConvLayer(
+        kw=1, kh=1, in_f=in_f, out_f=out_f, stride=stride, activation=None,
+        use_bias=use_bias, name=PREFIX_NAME_SHORTCUT.format(prefix_name, WEIGHTS),
+        kernel_initializer=kernel_initializer
+    )(x)
+    sx = BatchNormLayer(D=out_f, name=PREFIX_NAME_SHORTCUT.format(prefix_name, BATCH_NORM), **bn_params)(sx)
 
-    mx = ConvLayer(kw=1, kh=1, in_f=reduction, out_f=out_f, activation=None,
-                   use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + '/bottleneck_v1/conv3/weights')(mx)
-
-    mx = BatchNormLayer(D=out_f, name=prefix_name + '/bottleneck_v1/conv3/BatchNorm', **bn_params)(mx)
-
-    sx = ConvLayer(kw=1, kh=1, in_f=in_f, out_f=out_f, stride=stride, activation=None,
-                   use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + '/bottleneck_v1/shortcut/weights')(x)
-
-    sx = BatchNormLayer(D=out_f, name=prefix_name + '/bottleneck_v1/shortcut/BatchNorm', **bn_params)(sx)
-
-    x = SumLayer(name=num_block)([mx, sx])
+    x = SumLayer(name=prefix_name + str(num_block) + SUM_OPERATION)([mx,sx])
 
     return x
 
 
-def without_pointwise_IB(
-        x: MakiTensor,
+def ResNetIdentityBlock_woPointWiseV1(
+        x : mf.MakiTensor,
         block_id: int,
         unit_id: int,
         num_block=None,
         in_f=None,
         use_bias=False,
         activation=tf.nn.relu,
-        bn_params={},
-        kernel_init=init.XavierGaussianInf()
-):
+        kernel_initializer=HE_INIT,
+        bn_params=None):
     """
+    Create ResNet block with skip connection and without pointwise operation in block,
+    This type of blocks in most cases are used in ResNet34, ResNet18
+
+    Were presented in first paper about ResNet (i.e. v1)
+
     Parameters
     ----------
-    x : MakiTensor
-        Input MakiTensor.
+    x : mf.MakiTensor
+        Input mf.MakiTensor.
     in_f : int
         Number of input feature maps. By default None (shape will be getted from tensor).
     activation : tensorflow function
@@ -212,124 +263,143 @@ def without_pointwise_IB(
         Unit of block (used in name of layers).
     num_block : int
         Number of sum operation (used in name of layers).
+    kernel_initializer : str
+        Name of type initialization for conv layers,
+        For more examples see: makiflow.layers.utils,
+        By default He initialization are used
     bn_params : dict
-        Parameters for BatchNormLayer. If empty all parameters will have default values.
+        Parameters for BatchNormLayer. If equal to None all parameters will have default valued.
 
     Returns
     ---------
-    x : MakiTensor
-        Output MakiTensor.
+    x : mf.MakiTensor
+        Output mf.MakiTensor.
+
     """
+    if bn_params is None:
+        bn_params = get_batchnorm_params()
 
-    prefix_name = 'stage' + str(block_id) + '_unit' + str(unit_id) + '_'
-
-    if num_block is None:
-        num_block = prefix_name + '/sum_operation'
-    else:
-        num_block = 'add_' + str(num_block)
+    prefix_name = PREFIX_NAME_BLOCK_WOP.format(block_id, unit_id)
 
     if in_f is None:
-        in_f = x.shape[-1]
+        in_f = x.shape()[-1]
 
-    mx = BatchNormLayer(D=in_f, name=prefix_name + 'bn1', **bn_params)(x)
+    # BN -> ACT -> ZERO_PADDING -> CONV, first block
+    mx = BatchNormLayer(D=in_f, name=BN.format(prefix_name, 1), **bn_params)(x)
+    mx = ActivationLayer(activation=activation, name=ACTIVATION.format(prefix_name, 1))(mx)
+    mx = ZeroPaddingLayer(padding=[[1,1],[1,1]], name=ZERO_PADDING.format(prefix_name, 1))(mx)
+    mx = ConvLayer(
+        kw=3, kh=3, in_f=in_f, out_f=in_f, activation=None,
+        padding='VALID', use_bias=use_bias, name=CONV.format(prefix_name, 1),
+        kernel_initializer=kernel_initializer
+    )(mx)
 
-    mx = ActivationLayer(activation=activation, name=prefix_name + 'activation_1')(mx)
+    # BN -> ACT -> ZERO_PADDING -> CONV, second block
+    mx = BatchNormLayer(D=in_f, name=BN.format(prefix_name, 2), **bn_params)(mx)
+    mx = ActivationLayer(activation=activation, name=ACTIVATION.format(prefix_name, 2))(mx)
+    mx = ZeroPaddingLayer(padding=[[1,1],[1,1]], name=ZERO_PADDING.format(prefix_name, 2))(mx)
+    mx = ConvLayer(
+        kw=3, kh=3, in_f=in_f, out_f=in_f, activation=None,
+        padding='VALID', use_bias=use_bias, name=CONV.format(prefix_name, 2),
+        kernel_initializer=kernel_initializer
+    )(mx)
 
-    mx = ZeroPaddingLayer(padding=[[1, 1], [1, 1]], name=prefix_name + 'zero_pad_1')(mx)
-
-    mx = ConvLayer(kw=3, kh=3, in_f=in_f, out_f=in_f, activation=None,
-                   padding='VALID', use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + 'conv1')(mx)
-
-    mx = BatchNormLayer(D=in_f, name=prefix_name + 'bn2', **bn_params)(mx)
-
-    mx = ActivationLayer(activation=activation, name=prefix_name + 'activation_2')(mx)
-
-    mx = ZeroPaddingLayer(padding=[[1, 1], [1, 1]], name=prefix_name + 'zero_pad_2')(mx)
-
-    mx = ConvLayer(kw=3, kh=3, in_f=in_f, out_f=in_f, activation=None,
-                   padding='VALID', use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + 'conv2')(mx)
-
-    x = SumLayer(name=num_block)([mx, x])
+    x = SumLayer(name=prefix_name + SUM_OPERATION + str(num_block))([mx,x])
 
     return x
 
 
-def without_pointwise_CB(
-        x: MakiTensor,
+def ResNetConvBlock_woPointWiseV1(
+        x : mf.MakiTensor,
         block_id: int,
         unit_id: int,
-        num_block=None,
-        in_f=None,
-        use_bias=False,
+        num_block: int,
         activation=tf.nn.relu,
+        use_bias=False,
         stride=2,
+        in_f=None,
         out_f=None,
-        bn_params={},
-        kernel_init=init.XavierGaussianInf()
-):
+        kernel_initializer=InitConvKernel.HE,
+        bn_params=None):
     """
+    Create ResNet block with skip connection using certain `stride`
+    And without point wise convolutions (i.e. convs with 1x1 kernel),
+    in most cases `stride` equal to 2 (and by default in out case)
+
+    Were presented in first paper about ResNet (i.e. v1)
+
     Parameters
     ----------
-    x : MakiTensor
-        Input MakiTensor.
-    in_f : int
-        Number of input feature maps. By default is None (shape will be getted from tensor).
-    out_f : int
-        Number of output feature maps. By default is None which means out_f = 2 * in_f.
+    x : mf.MakiTensor
+        Input mf.MakiTensor.
+    block_id : int
+        Number of block (used in name of layers).
+    unit_id : int
+        Unit of block (used in name of layers).
+    num_block : int
+        Number of sum operation (used in name of layers).
     activation : tensorflow function
         The function of activation. By default tf.nn.relu.
     use_bias : bool
         Use bias on layers or not.
-    block_id : int
-        Number of block (used in name of layers).
-    unit_id : int
-        Unit of block (used in name of layers).
-    num_block : int
-        Number of sum operation (used in name of layers).
+    stride : int
+        Stride for this block, by defualt equal to 2
+    in_f : int
+        Number of input feature maps. By default is None (shape will be getted from tensor).
+    out_f : int
+        Number of output feature maps. By default is None which means out_f = 2 * in_f.
+    kernel_initializer : str
+        Name of type initialization for conv layers,
+        For more examples see: makiflow.layers.utils,
+        By default He initialization are used
     bn_params : dict
-        Parameters for BatchNormLayer. If empty all parameters will have default valued.
+        Parameters for BatchNormLayer. If equal to None all parameters will have default valued.
 
     Returns
     ---------
-    x : MakiTensor
-        Output MakiTensor.
-    """
-    prefix_name = 'stage' + str(block_id) + '_unit' + str(unit_id) + '_'
+    x : mf.MakiTensor
+        Output mf.MakiTensor.
 
-    if num_block is None:
-        num_block = prefix_name + '/sum_operation'
-    else:
-        num_block = 'add_' + str(num_block)
+    """
+    if bn_params is None:
+        bn_params = get_batchnorm_params()
+
+    prefix_name = PREFIX_NAME_BLOCK_WOP.format(block_id, unit_id)
 
     if in_f is None:
-        in_f = x.shape[-1]
-
+        in_f = x.shape()[-1]
     if out_f is None:
-        out_f = int(2 * in_f)
+        out_f = int(2*in_f)
 
-    x = BatchNormLayer(D=in_f, name=prefix_name + 'bn1', **bn_params)(x)
-    x = ActivationLayer(activation=activation, name=prefix_name + 'activation_1')(x)
+    # BatchNorm + activation layer before main ConvBlock
+    x = BatchNormLayer(D=in_f, name=BN.format(prefix_name, 1), **bn_params)(x)
+    x = ActivationLayer(activation=activation, name=ACTIVATION.format(prefix_name, 1))(x)
 
-    mx = ZeroPaddingLayer(padding=[[1, 1], [1, 1]], name=prefix_name + 'zero_pad_1')(x)
+    # Main branch
+    # Zero_padding -> Conv -> BN -> Activation -> Zero_padding -> Conv
+    mx = ZeroPaddingLayer(padding=[[1,1],[1,1]], name=ZERO_PADDING.format(prefix_name, 1))(x)
+    mx = ConvLayer(
+        kw=3, kh=3, in_f=in_f, out_f=out_f, activation=None, stride=stride,
+        padding='VALID', use_bias=use_bias, name=CONV.format(prefix_name, 1),
+        kernel_initializer=kernel_initializer
+    )(mx)
 
-    mx = ConvLayer(kw=3, kh=3, in_f=in_f, out_f=out_f, activation=None, stride=stride,
-                   padding='VALID', use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + 'conv1')(mx)
-
-    mx = BatchNormLayer(D=out_f, name=prefix_name + 'bn2', **bn_params)(mx)
-    mx = ActivationLayer(activation=activation, name=prefix_name + 'activation_2')(mx)
-
-    mx = ZeroPaddingLayer(padding=[[1, 1], [1, 1]], name=prefix_name + 'zero_pad_2')(mx)
-    mx = ConvLayer(kw=3, kh=3, in_f=out_f, out_f=out_f, activation=None,
-                   padding='VALID', use_bias=use_bias, kernel_initializer=kernel_init,
-                   name=prefix_name + 'conv2')(mx)
-
-    sx = ConvLayer(kw=1, kh=1, in_f=in_f, out_f=out_f, stride=stride,
-                   padding='VALID', activation=None, kernel_initializer=kernel_init,
-                   use_bias=use_bias, name=prefix_name + 'sc/conv')(x)
-
-    x = SumLayer(name=num_block)([mx, sx])
+    mx = BatchNormLayer(D=out_f, name=BN.format(prefix_name, 2), **bn_params)(mx)
+    mx = ActivationLayer(activation=activation, name=ACTIVATION.format(prefix_name, 2))(mx)
+    mx = ZeroPaddingLayer(padding=[[1,1],[1,1]], name=ZERO_PADDING.format(prefix_name, 2))(mx)
+    mx = ConvLayer(
+        kw=3, kh=3, in_f=out_f, out_f=out_f, activation=None,
+        padding='VALID', use_bias=use_bias, name=CONV.format(prefix_name, 2),
+        kernel_initializer=kernel_initializer
+    )(mx)
+                                                                                
+    # Skip branch
+    sx = ConvLayer(
+        kw=1, kh=1, in_f=in_f, out_f=out_f, stride=stride,
+        padding='VALID', activation=None, use_bias=use_bias, name=SCIP_BRANCH.format(prefix_name),
+        kernel_initializer=kernel_initializer
+    )(x)
+                                                                               
+    x = SumLayer(name=prefix_name + SUM_OPERATION + str(num_block))([mx, sx])
 
     return x
