@@ -139,7 +139,7 @@ def binary_masks_reader(gen, n_classes, image_shape):
 
 
 class BinaryMaskReader:
-    def __init__(self, n_classes: int, image_shape: tuple, class_priority=None, class_id_offset=1, class_ind_offset=0):
+    def __init__(self, n_classes: int, class_priority=None, class_id_offset=1, class_ind_offset=0):
         """
         Reads binary masks from the mask folder and aggregates them into a label tensor.
         By default all the masks are being aggregated into a tensor of labels of
@@ -153,8 +153,6 @@ class BinaryMaskReader:
         ----------
         n_classes : int
             Number of classes in the data.
-        image_shape : tuple
-            (Heights, Width).
         class_priority : arraylike, optional
             Used to merge binary masks into a single-channel multiclass mask.
             First comes class with the highest priority.
@@ -184,7 +182,6 @@ class BinaryMaskReader:
             - ...
         """
         self.n_classes = n_classes
-        self.image_shape = image_shape
         self.class_priority = class_priority
         self.class_id_offset = class_id_offset
         self.class_ind_offset = class_ind_offset
@@ -207,9 +204,9 @@ class BinaryMaskReader:
         mask = self.mask_cache.get(folder_path)
         if mask is not None:
             return mask
-
+        image_shape = np.squeeze(mask.shape)
         # Load individual binary masks into a tensor of masks
-        label_tensor = np.zeros(shape=(*self.image_shape, self.n_classes), dtype='int32')
+        label_tensor = np.zeros(shape=(*image_shape, self.n_classes), dtype='int32')
         for binary_mask_path in glob(join(folder_path, '*')):
             filename = binary_mask_path.split('/')[-1]
             class_id = int(filename.split('.')[0])
@@ -228,8 +225,10 @@ class BinaryMaskReader:
         self.mask_cache[folder_path] = label_tensor
         return label_tensor
 
-    def aggregate_merge(self, masks):
-        final_mask = np.zeros(shape=self.image_shape, dtype='int32')
+    def aggregate_merge(self, masks) -> np.ndarray:
+        assert len(masks) != 0, "Number of masks - 0. Something went wrong"
+        image_shape = np.squeeze(masks[0].shape)
+        final_mask = np.zeros(shape=image_shape, dtype='int32')
         # Start with the lowest priority class
         for class_ind in reversed(self.class_priority):
             layer = masks[..., class_ind - self.class_id_offset]
