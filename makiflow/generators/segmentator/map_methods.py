@@ -108,7 +108,7 @@ class LoadDataMethod(MapMethod):
 
 class ResizePostMethod(PostMapMethod):
     def __init__(self, image_size=None, mask_size=None, image_resize_method=tf.image.ResizeMethod.BILINEAR,
-                 mask_resize_method=tf.image.ResizeMethod.NEAREST_NEIGHBOR):
+                 mask_resize_method=tf.image.ResizeMethod.NEAREST_NEIGHBOR, expand_dims_mask: bool = False):
         """
         Resizes the image and the mask accordingly to `image_size` and `mask_size`.
         Parameters
@@ -127,6 +127,7 @@ class ResizePostMethod(PostMapMethod):
         self.mask_size = mask_size
         self.image_resize_method = image_resize_method
         self.mask_resize_method = mask_resize_method
+        self.expand_dims_mask = expand_dims_mask
 
     def load_data(self, data_paths):
         if self._parent_method is not None:
@@ -136,6 +137,9 @@ class ResizePostMethod(PostMapMethod):
 
         img = element[SegmentIterator.IMAGE]
         mask = element[SegmentIterator.MASK]
+
+        if self.expand_dims_mask:
+            mask = tf.expand_dims(mask, axis=-1)
 
         if self.image_size is not None:
             img = tf.image.resize(images=img, size=self.image_size, method=self.image_resize_method)
