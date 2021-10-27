@@ -147,6 +147,9 @@ class ResizePostMethod(PostMapMethod):
         if self.mask_size is not None:
             mask = tf.image.resize(images=mask, size=self.mask_size, method=self.mask_resize_method)
 
+        if self.expand_dims_mask:
+            mask = mask[..., 0]
+        
         return {
             SegmentIterator.IMAGE: img,
             SegmentIterator.MASK: mask
