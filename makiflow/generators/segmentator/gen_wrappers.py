@@ -230,7 +230,7 @@ class BinaryMaskReader:
 
     def aggregate_merge(self, masks) -> np.ndarray:
         assert len(masks) != 0, "Number of masks - 0. Something went wrong"
-        image_shape = np.squeeze(masks[0].shape)
+        image_shape = np.squeeze(masks.shape)
         final_mask = np.zeros(shape=image_shape, dtype='int32')
         # Start with the lowest priority class
         for class_ind in reversed(self.class_priority):
