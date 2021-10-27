@@ -139,7 +139,7 @@ def binary_masks_reader(gen, n_classes, image_shape):
 
 
 class BinaryMaskReader:
-    def __init__(self, n_classes: int, image_shape: tuple, class_priority=None):
+    def __init__(self, n_classes: int, image_shape: tuple, class_priority=None, class_id_offset=1, class_ind_offset=0):
         """
         Reads binary masks from the mask folder and aggregates them into a label tensor.
         By default all the masks are being aggregated into a tensor of labels of
@@ -158,6 +158,13 @@ class BinaryMaskReader:
         class_priority : arraylike, optional
             Used to merge binary masks into a single-channel multiclass mask.
             First comes class with the highest priority.
+        class_id_offset : int
+            Equal to the minimal class id that can be encountered in a mask folder. Default: 1.
+        class_ind_offset : int
+            Used during masks aggregation (creation of a multiclass flat mask). The class ind in the flat mask
+            is calculated as class_priority[i] + class_ind_offset.
+            If the minimal class id that can be encountered in a mask folder is 0, then set it to 1.
+            If the minimal class id that can be encountered in a mask folder is 1, then set it to 0.
 
         Notes
         -----
@@ -179,6 +186,8 @@ class BinaryMaskReader:
         self.n_classes = n_classes
         self.image_shape = image_shape
         self.class_priority = class_priority
+        self.class_id_offset = class_id_offset
+        self.class_ind_offset = class_ind_offset
         self.path_generator = None
         self.image_cache = {}
         self.mask_cache = {}
@@ -204,11 +213,13 @@ class BinaryMaskReader:
         for binary_mask_path in glob(join(folder_path, '*')):
             filename = binary_mask_path.split('/')[-1]
             class_id = int(filename.split('.')[0])
-            assert class_id != 0, 'Encountered class 0. Since 0 is reserved for the background, ' \
-                                  'class names (filenames) must start from 1.'
             binary_mask = cv2.imread(binary_mask_path)
             assert binary_mask is not None, f'Could not load mask with path={binary_mask_path}'
-            label_tensor[..., class_id - 1] = binary_mask[..., 0]
+            assert class_id - self.class_id_offset >= 0, f'Found a mask with class_id={class_id} that is less than' \
+                                                         f'class_id_offset={self.class_id_offset}. Make sure to set ' \
+                                                         f'class_id_offset to the minimal possible class_id that can ' \
+                                                         f'be found in a folder for a mask.'
+            label_tensor[..., class_id - self.class_id_offset] = binary_mask[..., 0]
 
         # Merge all binary masks into a single-layer multiclass mask if needed
         if self.class_priority:
@@ -221,9 +232,9 @@ class BinaryMaskReader:
         final_mask = np.zeros(shape=self.image_shape, dtype='int32')
         # Start with the lowest priority class
         for class_ind in reversed(self.class_priority):
-            layer = masks[..., class_ind - 1]
+            layer = masks[..., class_ind - self.class_id_offset]
             untouched_area = (layer == 0).astype('int32')
-            final_mask = final_mask * untouched_area + layer * class_ind
+            final_mask = final_mask * untouched_area + layer * (class_ind + self.class_ind_offset)
         return final_mask
 
     def __call__(self, path_generator):
