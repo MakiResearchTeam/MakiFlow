@@ -139,7 +139,7 @@ def binary_masks_reader(gen, n_classes, image_shape):
 
 
 class BinaryMaskReader:
-    def __init__(self, n_classes: int, class_priority=None, class_id_offset=1, class_ind_offset=0):
+    def __init__(self, n_classes: int, class_priority=None, class_id_offset=1, class_ind_offset=0, use_image_shape=True):
         """
         Reads binary masks from the mask folder and aggregates them into a label tensor.
         By default all the masks are being aggregated into a tensor of labels of
@@ -163,6 +163,8 @@ class BinaryMaskReader:
             is calculated as class_priority[i] + class_ind_offset.
             If the minimal class id that can be encountered in a mask folder is 0, then set it to 1.
             If the minimal class id that can be encountered in a mask folder is 1, then set it to 0.
+        use_image_shape : bool
+            Whether to use shape of an image to determine the shape of its mask.
 
         Notes
         -----
@@ -185,6 +187,7 @@ class BinaryMaskReader:
         self.class_priority = class_priority
         self.class_id_offset = class_id_offset
         self.class_ind_offset = class_ind_offset
+        self.use_image_shape = use_image_shape
         self.path_generator = None
         self.image_cache = {}
         self.mask_cache = {}
@@ -200,20 +203,20 @@ class BinaryMaskReader:
         self.image_cache[path] = image
         return image
 
-    def load_mask(self, folder_path):
+    def load_mask(self, folder_path, mask_shape=None):
         mask = self.mask_cache.get(folder_path)
         if mask is not None:
             return mask
+
         # Load individual binary masks into a tensor of masks
         label_tensor = None
+        if mask_shape:
+            label_tensor = np.zeros(shape=(*mask_shape, self.n_classes), dtype='int32')
+
         for binary_mask_path in glob(join(folder_path, '*')):
             filename = binary_mask_path.split('/')[-1]
             class_id = int(filename.split('.')[0])
             binary_mask = cv2.imread(binary_mask_path)
-
-            if label_tensor is None:
-                image_shape = binary_mask.shape[:-1]
-                label_tensor = np.zeros(shape=(*image_shape, self.n_classes), dtype='int32')
             assert binary_mask is not None, f'Could not load mask with path={binary_mask_path}'
             assert class_id - self.class_id_offset >= 0, f'Found a mask with class_id={class_id} that is less than' \
                                                          f'class_id_offset={self.class_id_offset}. Make sure to set ' \
@@ -248,7 +251,12 @@ class BinaryMaskReader:
         image_path = data_paths[SegmentPathGenerator.IMAGE]
         mask_folder_path = data_paths[SegmentPathGenerator.MASK]
         image = self.load_image(image_path)
-        mask = self.load_mask(mask_folder_path)
+
+        mask_shape = None
+        if self.use_image_shape:
+            mask_shape = image.shape[:2]
+        mask = self.load_mask(mask_folder_path, mask_shape=mask_shape)
+
         return {
             SegmentPathGenerator.IMAGE: image,
             SegmentPathGenerator.MASK: mask

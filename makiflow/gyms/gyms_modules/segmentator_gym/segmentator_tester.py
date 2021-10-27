@@ -29,7 +29,6 @@ import cv2
 import numpy as np
 
 
-
 class SegmentatorTester(TesterBase):
     TEST_IMAGE = 'test_image'
     TRAIN_IMAGE = 'train_image'
