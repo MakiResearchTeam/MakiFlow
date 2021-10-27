@@ -262,6 +262,7 @@ class ImageMaskCrop:
 
     def __call__(self, gen):
         self.gen = gen
+        return self
 
     def crop(self, image, mask):
         """
