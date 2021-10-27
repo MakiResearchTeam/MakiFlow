@@ -24,6 +24,7 @@ class FocalTrainer(ClassificatorTrainer):
     TYPE = 'FocalTrainer'
     GAMMA = 'gamma'
     NORM_BY_POS = 'norm_by_pos'
+    SCALE = 'scale'
 
     FOCAL_LOSS = 'FOCAL_LOSS'
 
@@ -38,11 +39,13 @@ class FocalTrainer(ClassificatorTrainer):
     def set_params(self, params):
         self.set_gamma(params[FocalTrainer.GAMMA])
         self.set_norm_by_pos(params[FocalTrainer.NORM_BY_POS])
+        self.set_scale(params.get(FocalTrainer.SCALE, 1.0))
 
     def _init(self):
         super()._init()
         self._focal_gamma = 2.0
         self._normalize_by_positives = False
+        self._scale = 1.0
 
     def set_gamma(self, gamma):
         """
@@ -61,6 +64,10 @@ class FocalTrainer(ClassificatorTrainer):
         Enables loss normalization by the number of positive samples in the batch.
         """
         self._normalize_by_positives = True
+
+    def set_scale(self, scale):
+        assert scale > 0.0, f'Scale must be positive, but received {scale}'
+        self._scale = scale
 
     def set_norm_by_pos(self, norm_by_pos: bool):
         self._normalize_by_positives = norm_by_pos
@@ -87,6 +94,8 @@ class FocalTrainer(ClassificatorTrainer):
 
         if not self._normalize_by_positives:
             focal_loss = focal_loss / float(super().get_batch_size())
+
+        focal_loss = focal_loss * self._scale
 
         super().track_loss(focal_loss, FocalTrainer.FOCAL_LOSS)
         return focal_loss
