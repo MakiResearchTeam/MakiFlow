@@ -328,7 +328,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
         self._class_priority = self._config.get(SegmentatorTesterWMaskV2.CLASS_PRIORITY)
         assert self._class_priority is not None, "class_priority parameter has not" \
                                                  " been provided in the configuration file."
-        super()._init()
+        self._init()
 
     def _init_train_images(self):
         if not isinstance(self._config[SegmentatorTesterWMaskV2.TRAIN_IMAGE], list):
@@ -403,10 +403,14 @@ class SegmentatorTesterWMaskV2(TesterBase):
 
         labels = np.zeros((h, w, n_classes), dtype='int32')
 
-        for i in range(len(self._config[SegmentatorTesterWMaskV2.CLASSES_NAMES])):
-            single_label = cv2.imread(os.path.join(path_mask_folder, f'{i+1}.bmp'))
+        for p_mask in glob.glob(os.path.join(path_mask_folder, '*')):
+            filename = p_mask.split('/')[-1]
+            class_id = int(filename.split('.')[0])
+            if class_id == 99:
+                class_id = 13
+            single_label = cv2.imread(p_mask)
             if single_label is not None:
-                _, labels[..., i] = super()._preprocess(single_label, mask_preprocess=True)
+                _, labels[..., class_id] = self._preprocess(single_label, mask_preprocess=True)
 
         labels = self.__aggregate_merge(labels, (h, w))
         return labels
@@ -415,9 +419,13 @@ class SegmentatorTesterWMaskV2(TesterBase):
         final_mask = np.zeros(shape=mask_shape, dtype='int32')
         # Start with the lowest priority class
         for class_ind in reversed(self._class_priority):
-            layer = masks_tensor[..., class_ind - 1]
+            if class_ind == 99:
+                indx = 13
+            else:
+                indx = class_ind - 1
+            layer = masks_tensor[..., indx]
             untouched_area = (layer == 0).astype('int32')
-            final_mask = final_mask * untouched_area + layer * class_ind
+            final_mask = final_mask * untouched_area + layer * (class_ind + 1)
         return final_mask
 
 

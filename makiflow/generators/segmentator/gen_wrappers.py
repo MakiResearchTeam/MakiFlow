@@ -222,7 +222,11 @@ class BinaryMaskReader:
                                                          f'class_id_offset={self.class_id_offset}. Make sure to set ' \
                                                          f'class_id_offset to the minimal possible class_id that can ' \
                                                          f'be found in a folder for a mask.'
-            label_tensor[..., class_id - self.class_id_offset] = binary_mask[..., 0]
+            if class_id == 99:
+                indx = 13
+            else:
+                indx = class_id - self.class_id_offset
+            label_tensor[..., indx] = binary_mask[..., 0]
 
         # Merge all binary masks into a single-layer multiclass mask if needed
         if self.class_priority:
@@ -236,7 +240,11 @@ class BinaryMaskReader:
         final_mask = np.zeros(shape=masks.shape[:-1], dtype='int32')
         # Start with the lowest priority class
         for class_ind in reversed(self.class_priority):
-            layer = masks[..., class_ind - self.class_id_offset]
+            if class_ind == 99:
+                indx = 13
+            else:
+                indx = class_ind - self.class_id_offset
+            layer = masks[..., indx]
             untouched_area = (layer == 0).astype('int32')
             final_mask = final_mask * untouched_area + layer * (class_ind + self.class_ind_offset)
         return final_mask
