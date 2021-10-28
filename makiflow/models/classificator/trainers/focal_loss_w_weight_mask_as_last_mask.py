@@ -83,14 +83,14 @@ class FocalLossWweightsMaskAsLastMaskTrainer(ClassificatorTrainer):
 
         num_positives = None
         if self._normalize_by_positives:
-            positives = tf.cast(tf.not_equal(dont_care_and_background_reg, 0), tf.float32) # [BATCH_SIZE, ...]
+            positives = tf.cast(tf.not_equal(zero_region, 0), tf.float32) # [BATCH_SIZE, ...]
             positives_dim_n = len(positives.get_shape())
             axis = list(range(1, positives_dim_n))
             num_positives = tf.reduce_sum(positives, axis=axis)  # [BATCH_SIZE, N_POSITIVES]
         #labels = labels * dont_care_and_background_reg # Zero masked zones as background
         focal_loss = Loss.focal_loss(
-            logits=logits,
-            labels=labels,
+            logits=logits * tf.cast(w_mask, dtype=tf.float32),
+            labels=labels * tf.cast(w_mask, dtype=tf.float32),
             num_classes=num_classes,
             num_positives=num_positives,
             focal_gamma=self._focal_gamma,
