@@ -67,69 +67,11 @@ class SegmentatorTesterWMaskV2(TesterBase):
         # Train images
         self._init_train_images()
         self.add_scalar(SegmentatorTesterWMaskV2.ITERATION_COUNTER)
+        self._thr_hold = self._config.get(SegmentatorTesterWMaskV2.THREASH_HOLD, SegmentatorTesterWMaskV2.THREASHOLD_DEFAULT)
 
-    def _init_train_images(self):
-        if not isinstance(self._config[SegmentatorTesterWMaskV2.TRAIN_IMAGE], list):
-            train_images_path = [self._config[SegmentatorTesterWMaskV2.TRAIN_IMAGE]]
-        else:
-            train_images_path = self._config[SegmentatorTesterWMaskV2.TRAIN_IMAGE]
-
-        self._train_masks_path = self._config[self.TRAIN_MASK]
-        self._norm_images_train = []
-        self._train_images = []
-        self._train_masks_np = []
-        self._names_train = []
-
-        for i in range(len(train_images_path)):
-            # Image
-            norm_img, orig_img = self._preprocess(train_images_path[i])
-            self._norm_images_train.append(
-                norm_img
-            )
-            self._train_images.append(orig_img.astype(np.uint8))
-            n_images = 2
-            # Mask
-            if self._train_masks_path is not None and len(self._train_masks_path) > i:
-                _, orig_mask = self._preprocess(self._train_masks_path[i], mask_preprocess=True)
-                self._train_masks_np.append(orig_mask.astype(np.uint8))
-                n_images += 1
-
-            self._names_train.append(SegmentatorTesterWMaskV2.TRAIN_N.format(i))
-            self.add_image(self._names_train[-1], n_images=n_images)
-
-    def _init_test_images(self):
-        self._test_masks_path = self._config[self.TEST_MASK]
-        if not isinstance(self._config[SegmentatorTesterWMaskV2.TEST_IMAGE], list):
-            test_images_path = [self._config[SegmentatorTesterWMaskV2.TEST_IMAGE]]
-        else:
-            test_images_path = self._config[SegmentatorTesterWMaskV2.TEST_IMAGE]
-
-        self._test_norm_images = []
-        self._test_images = []
-        self._test_mask_np = []
-        self._names_test = []
-
-        for i, single_path in enumerate(test_images_path):
-            # Image
-            norm_img, orig_img = self._preprocess(single_path)
-            self._test_norm_images.append(
-                norm_img
-            )
-            self._test_images.append(orig_img.astype(np.uint8))
-            n_images = 2
-            # Mask
-            if self._test_masks_path is not None and len(self._test_masks_path) > i:
-                _, orig_mask = self._preprocess(self._test_masks_path[i], mask_preprocess=True)
-                self._test_mask_np.append(orig_mask.astype(np.uint8))
-                n_images += 1
-
-            self._names_test.append(SegmentatorTesterWMaskV2.TEST_N.format(i))
-            # Image + orig mask (if was given) + prediction
-            self.add_image(self._names_test[-1], n_images=n_images)
-        if self._test_masks_path is not None:
-            # Add confuse matrix image
-            self._names_test += [self.CONFUSE_MATRIX]
-            self.add_image(self._names_test[-1])
+        self._class_priority = self._config.get(SegmentatorTesterWMaskV2.CLASS_PRIORITY)
+        assert self._class_priority is not None, "class_priority parameter has not" \
+                                                 " been provided in the configuration file."
 
     def evaluate(self, model, iteration, path_save_res):
         dict_summary_to_tb = {SegmentatorTesterWMaskV2.ITERATION_COUNTER: iteration}
@@ -321,14 +263,6 @@ class SegmentatorTesterWMaskV2(TesterBase):
             y_label='Dice',
             save_path=f'{path_to_save}/dices.png'
         )
-
-    def _init(self):
-        self._thr_hold = self._config.get(SegmentatorTesterWMaskV2.THREASH_HOLD, SegmentatorTesterWMaskV2.THREASHOLD_DEFAULT)
-
-        self._class_priority = self._config.get(SegmentatorTesterWMaskV2.CLASS_PRIORITY)
-        assert self._class_priority is not None, "class_priority parameter has not" \
-                                                 " been provided in the configuration file."
-        self._init()
 
     def _init_train_images(self):
         if not isinstance(self._config[SegmentatorTesterWMaskV2.TRAIN_IMAGE], list):
