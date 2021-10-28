@@ -231,13 +231,15 @@ class SegmentatorTesterWMaskV2(TesterBase):
         print('preds: ', predictions.shape)
         predictions = predictions.argmax(axis=3)
         print('preds after argmax: ', predictions.shape)
+        print('preds before slice max: ', labels.max(), ' min: ', labels.min())
         predictions = predictions[good_regions]
         print('max: ', predictions.max(), ' min: ', predictions.min())
         predictions = one_hot(predictions, depth=num_classes)
         print('shape preds: ', predictions.shape)
+        print('label before slice max: ', labels.max(), ' min: ', labels.min())
         labels = labels[good_regions]
         print('labels: ', labels.shape)
-        print('max: ', labels.max(), ' min: ', labels.min())
+        print('label max: ', labels.max(), ' min: ', labels.min())
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=False, num_classes=num_classes)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
