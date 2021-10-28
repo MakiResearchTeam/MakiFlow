@@ -90,7 +90,7 @@ class FocalLossWweightsMaskAsLastMaskTrainer(ClassificatorTrainer):
         #labels = labels * dont_care_and_background_reg # Zero masked zones as background
         focal_loss = Loss.focal_loss(
             logits=logits * tf.cast(w_mask, dtype=tf.float32),
-            labels=labels * tf.cast(w_mask, dtype=tf.float32),
+            labels=labels * w_mask,
             num_classes=num_classes,
             num_positives=num_positives,
             focal_gamma=self._focal_gamma,
