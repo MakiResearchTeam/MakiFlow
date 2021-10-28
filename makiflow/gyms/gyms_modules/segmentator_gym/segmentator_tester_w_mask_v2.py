@@ -228,19 +228,10 @@ class SegmentatorTesterWMaskV2(TesterBase):
 
         num_classes = predictions.shape[-1]
         batch_size = len(predictions)
-        print('num_classes: ', num_classes)
-        print('preds: ', predictions.shape)
         predictions = predictions.argmax(axis=3)
-        print('preds after argmax: ', predictions.shape)
-        print('preds before slice max: ', predictions.max(), ' min: ', predictions.min())
         predictions = predictions[good_regions]
-        print('max: ', predictions.max(), ' min: ', predictions.min())
         predictions = one_hot(predictions, depth=num_classes)
-        print('shape preds: ', predictions.shape)
-        print('label before slice max: ', labels.max(), ' min: ', labels.min())
         labels = labels[good_regions]
-        print('labels: ', labels.shape)
-        print('label max: ', labels.max(), ' min: ', labels.min())
 
         predictions = predictions.reshape(batch_size, -1, num_classes)
         labels = labels.reshape(batch_size, -1)
