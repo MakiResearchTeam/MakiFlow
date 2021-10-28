@@ -221,7 +221,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
         """
         print('Computing V-Dice...')
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
-        good_regions = (labels != 99).astype(np.float32)
+        good_regions = labels != 99
         predictions = predictions[good_regions]
         labels = labels[good_regions]
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
