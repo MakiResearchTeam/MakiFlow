@@ -20,6 +20,7 @@ import os
 from makiflow.tools.preprocess import preprocess_input
 from makiflow.metrics import categorical_dice_coeff
 from makiflow.tools.test_visualizer import TestVisualizer
+from makiflow.metrics.utils import one_hot
 from sklearn.metrics import f1_score
 import pandas as pd
 
@@ -222,9 +223,14 @@ class SegmentatorTesterWMaskV2(TesterBase):
         print('Computing V-Dice...')
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
         good_regions = labels != 99
+
+        num_classes = predictions.shape[-1]
+        predictions = predictions.argmax(axis=3)
         predictions = predictions[good_regions]
+        predictions = one_hot(predictions, depth=num_classes)
+
         labels = labels[good_regions]
-        v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=True)
+        v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=False)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
 
