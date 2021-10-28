@@ -25,7 +25,6 @@ import pandas as pd
 
 from makiflow.gyms.core import TesterBase
 from makiflow.gyms.gyms_modules.gyms_collector import GymCollector, SEGMENTATION, TESTER
-from makiflow.gyms.gyms_modules.segmentator_gym import SegmentatorTesterWMaskV2
 from makiflow.gyms.gyms_modules.segmentator_gym.utils import draw_heatmap
 from makiflow.metrics import confusion_mat
 import cv2
