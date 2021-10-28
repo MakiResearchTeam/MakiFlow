@@ -77,7 +77,7 @@ class FocalLossWweightsMaskAsLastMaskTrainer(ClassificatorTrainer):
         labels = super().get_labels()
         num_classes = super().get_num_classes()
 
-        w_mask = tf.cast(labels != self._indx_weight_mask, dtype=tf.float32)
+        w_mask = tf.cast(labels != self._indx_weight_mask, dtype=tf.int32)
         num_w_mask_elem = tf.cast(tf.equal(w_mask, 0), tf.float32)
 
         num_positives = None

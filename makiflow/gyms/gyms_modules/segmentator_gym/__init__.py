@@ -19,5 +19,5 @@ from .assembler import ModelAssemblerSegmentator
 from .segmentator_tester import SegmentatorTester
 from .segmentator_binary_tester import SegmentatorBinaryTester
 from .segmentator_tester_v2 import SegmentatorTesterV2
-
+from .segmentator_tester_w_mask_v2 import SegmentatorTesterWMaskV2
 
