@@ -63,11 +63,9 @@ def categorical_dice_coeff(P, L, use_argmax=False, ind_norm=True, num_classes = 
     class_dices = np.zeros(num_classes)
     class_counts = np.zeros(num_classes) + EPSILON  # Smoothing to avoid division by zero
     for i in range(batch_sz):
-        print(i)
         sample_actual = L[i]
         sample_pred = P[i]
         for j in range(num_classes):
-            print(j)
             sub_actual = (sample_actual[:] == j).astype(np.int32)
             sub_confs = sample_pred[:, j]
             if np.sum(sub_actual) == 0 and np.sum(sub_confs) == 0:
