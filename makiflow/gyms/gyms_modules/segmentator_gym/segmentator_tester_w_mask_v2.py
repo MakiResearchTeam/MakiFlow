@@ -232,7 +232,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
         predictions = one_hot(predictions, depth=num_classes)
 
         labels = labels[good_regions]
-        v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=False)
+        v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=False, num_classes=num_classes)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
 
