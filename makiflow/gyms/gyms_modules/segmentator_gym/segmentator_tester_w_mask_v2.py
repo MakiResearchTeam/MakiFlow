@@ -64,6 +64,8 @@ class SegmentatorTesterWMaskV2(TesterBase):
         self.dices_for_each_class = {SegmentatorTesterWMaskV2.V_DICE: []}
         self.add_scalar(SegmentatorTesterWMaskV2.PREFIX_CLASSES.format(SegmentatorTesterWMaskV2.V_DICE))
         for class_name in self._config[SegmentatorTesterWMaskV2.CLASSES_NAMES]:
+            if int(class_name) == 99:
+                continue
             self.dices_for_each_class[class_name] = []
             self.add_scalar(SegmentatorTesterWMaskV2.PREFIX_CLASSES.format(class_name))
         # Test images
@@ -238,6 +240,8 @@ class SegmentatorTesterWMaskV2(TesterBase):
         self.dices_for_each_class[SegmentatorTesterWMaskV2.V_DICE] += [v_dice_val]
 
         for i, class_name in enumerate(self._config[SegmentatorTesterWMaskV2.CLASSES_NAMES]):
+            if int(class_name) == 99:
+                continue
             self.dices_for_each_class[class_name] += [dices[i]]
             res_dices_dict[SegmentatorTesterWMaskV2.PREFIX_CLASSES.format(class_name)] = dices[i]
             print(f'{class_name}: {dices[i]}')
