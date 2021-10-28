@@ -55,6 +55,9 @@ class SegmentatorTesterWMaskV2(TesterBase):
     _CENTRAL_SIZE = 600
 
     def _init(self):
+        self._class_priority = self._config.get(SegmentatorTesterWMaskV2.CLASS_PRIORITY)
+        assert self._class_priority is not None, "class_priority parameter has not" \
+                                                 " been provided in the configuration file."
         # Add sublists for each class
         self.add_scalar(SegmentatorTesterWMaskV2.F1_SCORE)
         self.dices_for_each_class = {SegmentatorTesterWMaskV2.V_DICE: []}
@@ -68,10 +71,6 @@ class SegmentatorTesterWMaskV2(TesterBase):
         self._init_train_images()
         self.add_scalar(SegmentatorTesterWMaskV2.ITERATION_COUNTER)
         self._thr_hold = self._config.get(SegmentatorTesterWMaskV2.THREASH_HOLD, SegmentatorTesterWMaskV2.THREASHOLD_DEFAULT)
-
-        self._class_priority = self._config.get(SegmentatorTesterWMaskV2.CLASS_PRIORITY)
-        assert self._class_priority is not None, "class_priority parameter has not" \
-                                                 " been provided in the configuration file."
 
     def evaluate(self, model, iteration, path_save_res):
         dict_summary_to_tb = {SegmentatorTesterWMaskV2.ITERATION_COUNTER: iteration}
