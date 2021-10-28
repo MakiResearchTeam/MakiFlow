@@ -95,7 +95,7 @@ class FocalLossWweightsMaskAsLastMaskTrainer(ClassificatorTrainer):
             focal_gamma=self._focal_gamma,
             raw_tensor=True
         )
-        focal_loss = tf.reduce_sum(focal_loss * w_mask) # Apply weight on certain regions
+        focal_loss = tf.reduce_sum(focal_loss * tf.cast(w_mask, dtype=tf.float32)) # Apply weight on certain regions
 
         if not self._normalize_by_positives:
             focal_loss = focal_loss / float(super().get_batch_size())
