@@ -244,9 +244,10 @@ class BinaryMaskReader:
                 indx = 13
             else:
                 indx = class_ind - self.class_id_offset
+                class_ind += self.class_ind_offset
             layer = masks[..., indx]
             untouched_area = (layer == 0).astype('int32')
-            final_mask = final_mask * untouched_area + layer * (class_ind + self.class_ind_offset)
+            final_mask = final_mask * untouched_area + layer * class_ind
         return final_mask
 
     def __call__(self, path_generator):
