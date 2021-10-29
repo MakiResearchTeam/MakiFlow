@@ -228,6 +228,8 @@ def confusion_mat(
         p = p.reshape(-1)
         l = l.reshape(-1)
 
+    assert len(p) == len(l), f'labels and preds shape are not equal, label_shape={p.shape}, pred_shape={l.shape}'
+
     mat = np.asarray(confusion_matrix(l, p), dtype=np.float32)
     del p
     del l

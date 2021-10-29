@@ -258,7 +258,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
         conf_mat_path = os.path.join(save_folder,  f'mat.png')
         print('Computing confusion matrix...')
         confusion_mat(
-            predictions, labels, use_argmax_p=False, to_flatten=True,
+            predictions, labels, use_argmax_p=True, to_flatten=True,
             save_path=conf_mat_path, dpi=175
         )
         # Read img and convert it to rgb
