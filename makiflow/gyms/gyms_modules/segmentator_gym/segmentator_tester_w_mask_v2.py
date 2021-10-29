@@ -65,7 +65,9 @@ class SegmentatorTesterWMaskV2(TesterBase):
         self.add_scalar(SegmentatorTesterWMaskV2.PREFIX_CLASSES.format(SegmentatorTesterWMaskV2.V_DICE))
         for class_name in self._config[SegmentatorTesterWMaskV2.CLASSES_NAMES]:
             if int(class_name) == 99:
-                continue
+                class_name = str(13)
+            else:
+                class_name = str(int(class_name) - 1)
             self.dices_for_each_class[class_name] = []
             self.add_scalar(SegmentatorTesterWMaskV2.PREFIX_CLASSES.format(class_name))
         # Test images
@@ -228,7 +230,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
 
         num_classes = predictions.shape[-1]
         batch_size = len(predictions)
-        predictions = predictions.argmax(axis=3)
+        predictions = predictions.argmax(axis=-1)
         predictions = predictions[good_regions]
         predictions = one_hot(predictions, depth=num_classes)
         labels = labels[good_regions]
@@ -244,7 +246,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
 
         for i, class_name in enumerate(self._config[SegmentatorTesterWMaskV2.CLASSES_NAMES]):
             if int(class_name) == 99:
-                continue
+                class_name = str(i)
             self.dices_for_each_class[class_name] += [dices[i]]
             res_dices_dict[SegmentatorTesterWMaskV2.PREFIX_CLASSES.format(class_name)] = dices[i]
             print(f'{class_name}: {dices[i]}')
@@ -256,7 +258,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
         conf_mat_path = os.path.join(save_folder,  f'mat.png')
         print('Computing confusion matrix...')
         confusion_mat(
-            predictions, labels, use_argmax_p=True, to_flatten=True,
+            predictions, labels, use_argmax_p=False, to_flatten=True,
             save_path=conf_mat_path, dpi=175
         )
         # Read img and convert it to rgb
