@@ -77,8 +77,8 @@ class FocalLossWweightsMaskAsLastMaskTrainer(ClassificatorTrainer):
         labels = super().get_labels()
         num_classes = super().get_num_classes()
 
-        w_mask = tf.cast(labels != self._indx_weight_mask, dtype=tf.int32)
-        zero_region = tf.cast(labels != 0, dtype=tf.int32)
+        w_mask = tf.cast(tf.not_equal(labels, self._indx_weight_mask), dtype=tf.int32)
+        zero_region = tf.cast(tf.not_equal(labels, 0), dtype=tf.int32)
         dont_care_and_background_reg = w_mask * zero_region
 
         num_positives = None
@@ -87,9 +87,8 @@ class FocalLossWweightsMaskAsLastMaskTrainer(ClassificatorTrainer):
             positives_dim_n = len(positives.get_shape())
             axis = list(range(1, positives_dim_n))
             num_positives = tf.reduce_sum(positives, axis=axis)  # [BATCH_SIZE, N_POSITIVES]
-        #labels = labels * dont_care_and_background_reg # Zero masked zones as background
         focal_loss = Loss.focal_loss(
-            logits=logits * tf.cast(w_mask, dtype=tf.float32),
+            logits=logits * tf.expand_dims(tf.cast(w_mask, dtype=tf.float32), axis=-1),
             labels=labels * w_mask,
             num_classes=num_classes,
             num_positives=num_positives,
