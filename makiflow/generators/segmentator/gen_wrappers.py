@@ -210,8 +210,6 @@ class BinaryMaskReader:
 
         # Load individual binary masks into a tensor of masks
         label_tensor = None
-        if mask_shape:
-            label_tensor = np.zeros(shape=(*mask_shape, self.n_classes), dtype='int32')
 
         for binary_mask_path in glob(join(folder_path, '*')):
             filename = binary_mask_path.split('/')[-1]
@@ -226,6 +224,10 @@ class BinaryMaskReader:
                 indx = 13
             else:
                 indx = class_id - self.class_id_offset
+
+            if label_tensor is None:
+                label_tensor = np.zeros(shape=(*binary_mask.shape[:-1], self.n_classes), dtype='int32')
+
             label_tensor[..., indx] = binary_mask[..., 0]
 
         # Merge all binary masks into a single-layer multiclass mask if needed

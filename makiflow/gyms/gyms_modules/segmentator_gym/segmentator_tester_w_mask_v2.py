@@ -368,7 +368,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
             if class_ind == 99:
                 indx = 13
             else:
-                indx = class_ind - 1
+                indx = class_ind
                 class_ind += 1
             layer = masks_tensor[..., indx]
             untouched_area = (layer == 0).astype('int32')

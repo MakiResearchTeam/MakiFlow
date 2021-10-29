@@ -83,7 +83,7 @@ class FocalLossWweightsMaskAsLastMaskTrainer(ClassificatorTrainer):
 
         num_positives = None
         if self._normalize_by_positives:
-            positives = tf.cast(tf.not_equal(zero_region, 0), tf.float32) # [BATCH_SIZE, ...]
+            positives = tf.cast(tf.not_equal(dont_care_and_background_reg, 0), tf.float32) # [BATCH_SIZE, ...]
             positives_dim_n = len(positives.get_shape())
             axis = list(range(1, positives_dim_n))
             num_positives = tf.reduce_sum(positives, axis=axis)  # [BATCH_SIZE, N_POSITIVES]
