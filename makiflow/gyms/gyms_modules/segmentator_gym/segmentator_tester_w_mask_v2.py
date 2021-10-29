@@ -244,7 +244,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
 
         for i, class_name in enumerate(self._config[SegmentatorTesterWMaskV2.CLASSES_NAMES]):
             if int(class_name) == 99:
-                continue
+                class_name = '14'
             self.dices_for_each_class[class_name] += [dices[i]]
             res_dices_dict[SegmentatorTesterWMaskV2.PREFIX_CLASSES.format(class_name)] = dices[i]
             print(f'{class_name}: {dices[i]}')
