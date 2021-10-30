@@ -181,11 +181,13 @@ class SegmentatorTesterWMaskV3(TesterBase):
 
         num_classes = predictions.shape[-1]
         batch_size = len(predictions)
-        predictions = (predictions * good_regions).argmax(axis=-1)
+        # Zero bad pixels
+        predictions = (predictions * np.expand_dims(good_regions, axis=-1)).argmax(axis=-1)
         predictions = one_hot(predictions, depth=num_classes)
         predictions = predictions.reshape(batch_size, -1, num_classes)
         labels = labels.reshape(batch_size, -1)
 
+        # Remove bad pixels
         good_regions = labels != 99
         predictions = predictions[good_regions]
         labels = labels[good_regions]
