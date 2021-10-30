@@ -180,17 +180,18 @@ class SegmentatorTesterWMaskV3(TesterBase):
         good_regions = labels != 99
 
         num_classes = predictions.shape[-1]
-        print('num_classes=',num_classes)
         batch_size = len(predictions)
-        print('bs=', batch_size)
-        predictions = predictions.argmax(axis=-1)
-        predictions = predictions[good_regions]
+        predictions = (predictions * good_regions).argmax(axis=-1)
         predictions = one_hot(predictions, depth=num_classes)
-        labels = labels[good_regions]
-        print('predictions after one hot=', predictions.shape)
-        print('labels=', labels.shape)
         predictions = predictions.reshape(batch_size, -1, num_classes)
         labels = labels.reshape(batch_size, -1)
+
+        good_regions = labels != 99
+        predictions = predictions[good_regions]
+        labels = labels[good_regions]
+        predictions = predictions.reshape(batch_size, -1, num_classes)
+        labels = labels.reshape(batch_size, -1)
+
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=False, num_classes=num_classes)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
