@@ -117,7 +117,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
         labels = np.array(self._test_mask_np).astype(np.uint8)
         print('Labels are ready with shape as: ', labels.shape)
         print('Len preds: ', len(all_pred), ' shape single element: ', all_pred[0].shape)
-        pred_np = np.stack(all_pred[:len(labels)], axis=0).astype(np.float32, copy=False)
+        pred_np = np.asarray(all_pred[:len(labels)], dtype=np.float32)
         print('Preds are ready with shape as: ', pred_np.shape)
         mat_img, res_dices_dict = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
         dict_summary_to_tb.update({ self._names_test[-1]: np.expand_dims(mat_img.astype(np.uint8), axis=0) })
@@ -180,12 +180,15 @@ class SegmentatorTesterWMaskV3(TesterBase):
         good_regions = labels != 99
 
         num_classes = predictions.shape[-1]
+        print('num_classes=',num_classes)
         batch_size = len(predictions)
+        print('bs=', batch_size)
         predictions = predictions.argmax(axis=-1)
         predictions = predictions[good_regions]
         predictions = one_hot(predictions, depth=num_classes)
         labels = labels[good_regions]
-
+        print('predictions after one hot=', predictions.shape)
+        print('labels=', labels.shape)
         predictions = predictions.reshape(batch_size, -1, num_classes)
         labels = labels.reshape(batch_size, -1)
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=False, num_classes=num_classes)
@@ -249,10 +252,8 @@ class SegmentatorTesterWMaskV3(TesterBase):
             norm_img, orig_img = self._preprocess(single_path, use_resize=False)
             orig_mask = self._preprocess_masks(self._test_masks_path[i])
             orig_h, orig_w = orig_img.shape[:2]
-            print('ooriginal shape: ', orig_img.shape)
             w_steps = orig_w // W_CROP
             h_steps = orig_h // H_CROP
-            print('w steps: ', w_steps, ' h steps: ', h_steps)
             crop_i = 0
             # Cut images into patches
             for w_i in range(w_steps):
