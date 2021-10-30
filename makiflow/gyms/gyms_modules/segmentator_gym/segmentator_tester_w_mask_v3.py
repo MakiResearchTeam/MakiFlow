@@ -192,6 +192,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
         # For each image
         good_regions = labels != 99
         preds_list = []
+        preds_argmax_list = []
         labels_list = []
         for i in range(batch_size):
             good_regions_s = good_regions[i]
@@ -202,6 +203,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
             label_s = label_s[good_regions_s]
             preds_list.append(preds_s)
             labels_list.append(label_s)
+            preds_argmax_list.append(preds_s.argmax(axis=-1))
 
         v_dice_val, dices = categorical_dice_coeff(preds_list, labels_list, use_argmax=False, num_classes=num_classes)
         str_to_save_vdice = "V-DICE:\n"
@@ -224,7 +226,8 @@ class SegmentatorTesterWMaskV3(TesterBase):
         conf_mat_path = os.path.join(save_folder,  f'mat.png')
         print('Computing confusion matrix...')
         confusion_mat(
-            np.asarray(preds_list), np.asarray(labels_list), use_argmax_p=True, to_flatten=True,
+            np.asarray(preds_argmax_list, dtype=np.uint8), np.asarray(labels_list, dtype=np.uint8),
+            use_argmax_p=False, to_flatten=True,
             save_path=conf_mat_path, dpi=175
         )
         # Read img and convert it to rgb
