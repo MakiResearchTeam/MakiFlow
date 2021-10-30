@@ -263,7 +263,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
                        h_i * H_CROP: (h_i + 1) * H_CROP,
                        w_i * W_CROP: (w_i + 1) * W_CROP
                     ]
-
+                    print('!!!!!!!!!!!!!!!! path norm shape: ', single_patch_norm.shape, ' resize to: ', MODEL_INPUT_SIZE)
                     single_patch_norm = cv2.resize(single_patch_norm, MODEL_INPUT_SIZE, interpolation=cv2.INTER_LINEAR)
                     single_patch_image = cv2.resize(single_patch_image, MODEL_INPUT_SIZE, interpolation=cv2.INTER_LINEAR)
                     single_patch_mask = cv2.resize(single_patch_mask, MODEL_INPUT_SIZE, interpolation=cv2.INTER_NEAREST)
