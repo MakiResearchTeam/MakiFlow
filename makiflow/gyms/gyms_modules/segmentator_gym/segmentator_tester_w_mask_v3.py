@@ -124,7 +124,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
         dict_summary_to_tb.update(res_dices_dict)
         # f1 score
         labels = np.array(self._test_mask_np).astype(np.uint8)
-        pred_np = np.argmax(np.stack(all_pred[:len(labels)], axis=0), axis=-1).astype(np.uint8, copy=False)
+        pred_np = np.argmax(np.asarray(all_pred[:len(labels)], dtype=np.float32), axis=-1).astype(np.uint8, copy=False)
         f1_score_np = f1_score(labels.reshape(-1), pred_np.reshape(-1), average='micro')
         dict_summary_to_tb.update({ SegmentatorTesterWMaskV3.F1_SCORE: f1_score_np})
 
@@ -224,7 +224,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
         conf_mat_path = os.path.join(save_folder,  f'mat.png')
         print('Computing confusion matrix...')
         confusion_mat(
-            predictions, labels, use_argmax_p=True, to_flatten=True,
+            np.asarray(preds_list), np.asarray(labels_list), use_argmax_p=True, to_flatten=True,
             save_path=conf_mat_path, dpi=175
         )
         # Read img and convert it to rgb
