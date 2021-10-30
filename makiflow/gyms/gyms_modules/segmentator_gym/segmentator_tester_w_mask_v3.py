@@ -243,7 +243,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
             # Image
             norm_img, orig_img = self._preprocess(single_path, use_resize=False)
             orig_mask = self._preprocess_masks(self._test_masks_path[i])
-            orig_w, orig_h = orig_img.shape[:2]
+            orig_h, orig_w = orig_img.shape[:2]
             print('ooriginal shape: ', orig_img.shape)
             w_steps = orig_w // W_CROP
             h_steps = orig_h // H_CROP
