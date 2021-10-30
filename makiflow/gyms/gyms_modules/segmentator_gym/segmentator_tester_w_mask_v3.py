@@ -183,6 +183,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
         batch_size = len(predictions)
         # Zero bad pixels
         predictions = (predictions * np.expand_dims(good_regions, axis=-1)).argmax(axis=-1)
+        predictions = predictions.reshape(-1)
         predictions = one_hot(predictions, depth=num_classes)
         predictions = predictions.reshape(batch_size, -1, num_classes)
         labels = labels.reshape(batch_size, -1)
