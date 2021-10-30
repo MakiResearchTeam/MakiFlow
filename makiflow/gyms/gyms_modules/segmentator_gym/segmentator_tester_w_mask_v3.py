@@ -116,14 +116,15 @@ class SegmentatorTesterWMaskV3(TesterBase):
         print('Start calculate v-dice')
         labels = np.array(self._test_mask_np).astype(np.uint8)
         print('Labels are ready with shape as: ', labels.shape)
-        pred_np = np.stack(all_pred[:len(labels)], axis=0).astype(np.float32)
+        print('Len preds: ', len(all_pred), ' shape single element: ', all_pred[0].shape)
+        pred_np = np.stack(all_pred[:len(labels)], axis=0).astype(np.float32, copy=False)
         print('Preds are ready with shape as: ', pred_np.shape)
         mat_img, res_dices_dict = self._v_dice_calc_and_confuse_m(pred_np, labels, path_save_res)
         dict_summary_to_tb.update({ self._names_test[-1]: np.expand_dims(mat_img.astype(np.uint8), axis=0) })
         dict_summary_to_tb.update(res_dices_dict)
         # f1 score
         labels = np.array(self._test_mask_np).astype(np.uint8)
-        pred_np = np.argmax(np.stack(all_pred[:len(labels)], axis=0), axis=-1).astype(np.uint8)
+        pred_np = np.argmax(np.stack(all_pred[:len(labels)], axis=0), axis=-1).astype(np.uint8, copy=False)
         f1_score_np = f1_score(labels.reshape(-1), pred_np.reshape(-1), average='micro')
         dict_summary_to_tb.update({ SegmentatorTesterWMaskV3.F1_SCORE: f1_score_np})
 
