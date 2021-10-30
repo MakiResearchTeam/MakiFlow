@@ -95,6 +95,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
         for i, (single_norm_train, single_train, single_mask_np) in enumerate(
                 zip(self._test_norm_images, self._test_images, self._test_mask_np)
         ):
+            print(f'{i+1} / {len(self._test_images)}')
             # If original masks were provided
             prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
             all_pred.append(prediction)
@@ -265,7 +266,6 @@ class SegmentatorTesterWMaskV3(TesterBase):
                        h_i * H_CROP: (h_i + 1) * H_CROP,
                        w_i * W_CROP: (w_i + 1) * W_CROP
                     ]
-                    print('!!!!!!!!!!!!!!!! path norm shape: ', single_patch_norm.shape, ' resize to: ', MODEL_INPUT_SIZE)
                     single_patch_norm = cv2.resize(single_patch_norm, MODEL_INPUT_SIZE, interpolation=cv2.INTER_LINEAR)
                     single_patch_image = cv2.resize(single_patch_image, MODEL_INPUT_SIZE, interpolation=cv2.INTER_LINEAR)
                     single_patch_mask = cv2.resize(single_patch_mask, MODEL_INPUT_SIZE, interpolation=cv2.INTER_NEAREST)
@@ -280,7 +280,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
             self._test_norm_images += normed_images_list
             self._test_images += images_list
             self._test_mask_np += masks_list
-        
+
         if self._test_masks_path is not None:
             # Add confuse matrix image
             self._names_test += [self.CONFUSE_MATRIX]
