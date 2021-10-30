@@ -277,6 +277,10 @@ class SegmentatorTesterWMaskV3(TesterBase):
                     # Image + orig mask (if was given) + prediction
                     self.add_image(self._names_test[-1], n_images=3)
                     crop_i += 1
+            self._test_norm_images += normed_images_list
+            self._test_images += images_list
+            self._test_mask_np += masks_list
+        
         if self._test_masks_path is not None:
             # Add confuse matrix image
             self._names_test += [self.CONFUSE_MATRIX]
