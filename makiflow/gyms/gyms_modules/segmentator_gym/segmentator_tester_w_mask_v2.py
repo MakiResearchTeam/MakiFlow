@@ -177,7 +177,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
                     }
                 )
 
-    def _preprocess(self, data, mask_preprocess=False):
+    def _preprocess(self, data, mask_preprocess=False, use_resize=True):
         if isinstance(data, str):
             image = cv2.imread(data)
             if image is None:
@@ -187,7 +187,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
         else:
             image = data
 
-        if self._resize_to is not None:
+        if self._resize_to is not None and use_resize:
             new_h, new_w = self._resize_to
             if mask_preprocess:
                 image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
@@ -350,6 +350,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
         n_classes = len(self._config[SegmentatorTesterWMaskV2.CLASSES_NAMES])
 
         labels = np.zeros((h, w, n_classes), dtype='int32')
+        original_labels = []
 
         for p_mask in glob.glob(os.path.join(path_mask_folder, '*')):
             filename = p_mask.split('/')[-1]
@@ -359,6 +360,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
             single_label = cv2.imread(p_mask)
             if single_label is not None:
                 _, labels[..., class_id] = self._preprocess(single_label, mask_preprocess=True)
+                original_labels
 
         labels = self.__aggregate_merge(labels, (h, w))
         return labels
