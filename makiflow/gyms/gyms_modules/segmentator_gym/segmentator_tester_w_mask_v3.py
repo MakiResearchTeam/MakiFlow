@@ -226,7 +226,8 @@ class SegmentatorTesterWMaskV3(TesterBase):
         conf_mat_path = os.path.join(save_folder,  f'mat.png')
         print('Computing confusion matrix...')
         confusion_mat(
-            np.asarray(preds_argmax_list, dtype=np.uint8), np.asarray(labels_list, dtype=np.uint8),
+            np.asarray(np.concatenate([elem.reshape(-1) for elem in preds_argmax_list], axis=0), dtype=np.uint8),
+            np.asarray(np.concatenate([elem.reshape(-1) for elem in labels_list      ], axis=0), dtype=np.uint8),
             use_argmax_p=False, to_flatten=True,
             save_path=conf_mat_path, dpi=175
         )
