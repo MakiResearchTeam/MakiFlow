@@ -189,13 +189,21 @@ class SegmentatorTesterWMaskV3(TesterBase):
         labels = labels.reshape(batch_size, -1)
 
         # Remove bad pixels
+        # For each image
         good_regions = labels != 99
-        predictions = predictions[good_regions]
-        labels = labels[good_regions]
-        predictions = predictions.reshape(batch_size, -1, num_classes)
-        labels = labels.reshape(batch_size, -1)
+        preds_list = []
+        labels_list = []
+        for i in range(batch_size):
+            good_regions_s = good_regions[i]
+            preds_s = predictions[i]
+            label_s = labels[i]
+            # Slice
+            preds_s = preds_s[good_regions_s]
+            label_s = label_s[good_regions_s]
+            preds_list.append(preds_s)
+            labels_list.append(label_s)
 
-        v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=False, num_classes=num_classes)
+        v_dice_val, dices = categorical_dice_coeff(preds_list, labels_list, use_argmax=False, num_classes=num_classes)
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
 
