@@ -205,7 +205,10 @@ class SegmentatorTesterWMaskV3(TesterBase):
             labels_list.append(label_s)
             preds_argmax_list.append(preds_s.argmax(axis=-1))
 
-        v_dice_val, dices = categorical_dice_coeff(preds_list, labels_list, use_argmax=False, num_classes=num_classes)
+        v_dice_val, dices = categorical_dice_coeff(
+            preds_list, labels_list, use_argmax=False,
+            num_classes=num_classes, reshape=False
+        )
         str_to_save_vdice = "V-DICE:\n"
         print('V-Dice:', v_dice_val)
 

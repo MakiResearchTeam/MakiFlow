@@ -31,7 +31,7 @@ def binary_dice(predicted, actual):
     return (2 * num + EPSILON) / (den + EPSILON)
 
 
-def categorical_dice_coeff(P, L, use_argmax=False, ind_norm=True, num_classes = None):
+def categorical_dice_coeff(P, L, use_argmax=False, ind_norm=True, num_classes=None, reshape=True):
     """
     Calculates V-Dice for give predictions and labels.
     WARNING! THIS IMPLIES SEGMENTATION CONTEXT.
@@ -57,8 +57,9 @@ def categorical_dice_coeff(P, L, use_argmax=False, ind_norm=True, num_classes = 
         P = P.argmax(axis=3)
         P = P.reshape(-1)
         P = one_hot(P, depth=num_classes)
-    #P = P.reshape(batch_sz, -1, num_classes)
-    #L = L.reshape(batch_sz, -1)
+    if reshape:
+        P = P.reshape(batch_sz, -1, num_classes)
+        L = L.reshape(batch_sz, -1)
 
     class_dices = np.zeros(num_classes)
     class_counts = np.zeros(num_classes) + EPSILON  # Smoothing to avoid division by zero
