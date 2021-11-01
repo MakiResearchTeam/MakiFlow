@@ -364,7 +364,7 @@ def random_gen(dist):
     np.random.shuffle(sample_data)
     it = 0
     while True:
-        if it == num_it - 1:
+        if it == num_it:
             np.random.shuffle(sample_data)
             it = 0
 
