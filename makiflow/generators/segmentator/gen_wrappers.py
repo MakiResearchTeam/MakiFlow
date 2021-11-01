@@ -210,8 +210,6 @@ class BinaryMaskReader:
 
         # Load individual binary masks into a tensor of masks
         label_tensor = None
-        if mask_shape:
-            label_tensor = np.zeros(shape=(*mask_shape, self.n_classes), dtype='int32')
 
         for binary_mask_path in glob(join(folder_path, '*')):
             filename = binary_mask_path.split('/')[-1]
@@ -222,7 +220,15 @@ class BinaryMaskReader:
                                                          f'class_id_offset={self.class_id_offset}. Make sure to set ' \
                                                          f'class_id_offset to the minimal possible class_id that can ' \
                                                          f'be found in a folder for a mask.'
-            label_tensor[..., class_id - self.class_id_offset] = binary_mask[..., 0]
+            if class_id == 99:
+                indx = 13
+            else:
+                indx = class_id - self.class_id_offset
+
+            if label_tensor is None:
+                label_tensor = np.zeros(shape=(*binary_mask.shape[:-1], self.n_classes), dtype='int32')
+
+            label_tensor[..., indx] = binary_mask[..., 0]
 
         # Merge all binary masks into a single-layer multiclass mask if needed
         if self.class_priority:
@@ -236,9 +242,14 @@ class BinaryMaskReader:
         final_mask = np.zeros(shape=masks.shape[:-1], dtype='int32')
         # Start with the lowest priority class
         for class_ind in reversed(self.class_priority):
-            layer = masks[..., class_ind - self.class_id_offset]
+            if class_ind == 99:
+                indx = 13
+            else:
+                indx = class_ind - self.class_id_offset
+                class_ind += self.class_ind_offset
+            layer = masks[..., indx]
             untouched_area = (layer == 0).astype('int32')
-            final_mask = final_mask * untouched_area + layer * (class_ind + self.class_ind_offset)
+            final_mask = final_mask * untouched_area + layer * class_ind
         return final_mask
 
     def __call__(self, path_generator):
