@@ -342,3 +342,31 @@ def apply_transformation_batched(
 
     return transformed_image
 
+
+def random_gen(dist):
+    """
+    Makes a generator that yields numbers in range [0, len(dist)) in accordance with the dist.
+
+    Parameters
+    ----------
+    dist : np.ndarray
+        Distribution.
+    Returns
+    -------
+    generator
+    """
+    alphas = np.round(dist / dist.min()).astype('int32')
+    num_it = np.sum(alphas)
+    sample_data = []
+    for i in range(len(alphas)):
+        sample_data += [i] * int(alphas[i])
+    sample_data = np.array(sample_data)
+    np.random.shuffle(sample_data)
+    it = 0
+    while True:
+        if it == num_it - 1:
+            np.random.shuffle(sample_data)
+            it = 0
+
+        yield sample_data[it]
+        it += 1

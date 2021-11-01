@@ -195,3 +195,60 @@ class DistributionBasedPathGen(SegmentPathGenerator):
             groupid = np.random.choice(self._groupids, p=self._groupid_distribution)
             yield next(self._group_generators[groupid])
             iteration_counter += 1
+
+
+class DistributionBasedPathGenV2(SegmentPathGenerator):
+    def __init__(self, image_mask_dict, groupid_image_dict, groupid_prob_dict):
+        """
+        Yields paths based off of a give distribution.
+
+        Parameters
+        ----------
+        image_mask_dict : dict
+            Contains pairs { image_path: masks_folder_path }.
+        groupid_image_dict : dict
+            Contains pairs { groupid: [image_path] }, where `groupid` value starts from 0.
+            Example: { 0: ['0.bmp', '1.bmp], 1: ['2.bmp', '3.bmp'] }.
+        groupid_prob_dict : dict
+            Contains pairs { groupid: prob }, where `prob` is a probability of selecting images from
+            `groupid` group.
+        update_period : int
+            Every `update_period` iterations all the lists in `groupid_image_dict` are being shuffled.
+        """
+        self._init_group_generator(groupid_prob_dict)
+        self._image_mask_dict = image_mask_dict
+        self._groupid_image_dict = groupid_image_dict
+        self._group_generators = {}
+        for group_id, group_images in self._groupid_image_dict.items():
+            self._group_generators[group_id] = self.make_imagepath_gen(group_images)
+
+    def _init_group_generator(self, groupid_prob_dict):
+        self._groupids = []
+        groupid_distribution = []
+        for groupid, prob in groupid_prob_dict.items():
+            self._groupids.append(groupid)
+            groupid_distribution.append(prob)
+        groupid_distribution = np.array(groupid_distribution)
+        from .utils import random_gen
+        self.groupid_gen = random_gen(groupid_distribution)
+
+    def make_imagepath_gen(self, image_paths):
+        index = 0
+        while True:
+            image_path = image_paths[index]
+            yield {
+                SegmentPathGenerator.IMAGE: image_path,
+                SegmentPathGenerator.MASK: self._image_mask_dict[image_path]
+            }
+            index += 1
+            if index == len(image_paths):
+                index = 0
+                image_paths = shuffle(image_paths)
+
+    def next_element(self):
+        it = 0
+        while True:
+            group_ind = next(self.groupid_gen)
+            group_id = self._groupids[group_ind]
+            yield next(self._group_generators[group_id])
+            it += 1
