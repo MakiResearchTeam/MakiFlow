@@ -33,6 +33,7 @@ import numpy as np
 
 W_CROP, H_CROP = 900, 900
 MODEL_INPUT_SIZE = (1024, 1024)
+CLASS_99_MAP_TO = 11 # 13
 
 
 class SegmentatorTesterWMaskV3(TesterBase):
@@ -323,7 +324,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
             filename = p_mask.split('/')[-1]
             class_id = int(filename.split('.')[0])
             if class_id == 99:
-                class_id = 13
+                class_id = CLASS_99_MAP_TO
             single_label = cv2.imread(p_mask)
             if single_label is not None:
                 _, labels[..., class_id] = self._preprocess(single_label, mask_preprocess=True, use_resize=False)
@@ -336,7 +337,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
         # Start with the lowest priority class
         for class_ind in reversed(self._class_priority):
             if class_ind == 99:
-                indx = 13
+                indx = CLASS_99_MAP_TO
             else:
                 indx = class_ind
                 class_ind += 1

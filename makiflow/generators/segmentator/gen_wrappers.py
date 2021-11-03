@@ -138,6 +138,9 @@ def binary_masks_reader(gen, n_classes, image_shape):
         }
 
 
+CLASS_99_MAP_TO = 11 # 13
+
+
 class BinaryMaskReader:
     def __init__(self, n_classes: int, class_priority=None, class_id_offset=1, class_ind_offset=0, use_image_shape=True):
         """
@@ -221,7 +224,7 @@ class BinaryMaskReader:
                                                          f'class_id_offset to the minimal possible class_id that can ' \
                                                          f'be found in a folder for a mask.'
             if class_id == 99:
-                indx = 13
+                indx = CLASS_99_MAP_TO
             else:
                 indx = class_id - self.class_id_offset
 
@@ -243,7 +246,7 @@ class BinaryMaskReader:
         # Start with the lowest priority class
         for class_ind in reversed(self.class_priority):
             if class_ind == 99:
-                indx = 13
+                indx = CLASS_99_MAP_TO
             else:
                 indx = class_ind - self.class_id_offset
                 class_ind += self.class_ind_offset
