@@ -318,32 +318,40 @@ class SegmentatorTesterWMaskV3(TesterBase):
         n_classes = len(self._class_priority)
 
         labels = np.zeros((h, w, n_classes), dtype='int32')
-        original_labels = []
+        marked_zone = None
 
+        present_classes = []
         for p_mask in glob.glob(os.path.join(path_mask_folder, '*')):
             filename = p_mask.split('/')[-1]
             class_id = int(filename.split('.')[0])
             if class_id == 99:
-                class_id = CLASS_99_MAP_TO
+                marked_zone = cv2.imread(p_mask)
+                marked_zone = self._preprocess(marked_zone, mask_preprocess=True, use_resize=False)
+                continue
+            present_classes.append(class_id)
             single_label = cv2.imread(p_mask)
             if single_label is not None:
                 _, labels[..., class_id] = self._preprocess(single_label, mask_preprocess=True, use_resize=False)
 
-        labels = self.__aggregate_merge(labels, (h, w))
+        labels = self.__aggregate_merge(labels, (h, w), present_classes, marked_zone)
         return labels
 
-    def __aggregate_merge(self, masks_tensor, mask_shape):
+    def __aggregate_merge(self, masks_tensor, mask_shape, present_classes, marked_zone):
         final_mask = np.zeros(shape=mask_shape, dtype='int32')
         # Start with the lowest priority class
         for class_ind in reversed(self._class_priority):
-            if class_ind == 99:
-                indx = CLASS_99_MAP_TO
-            else:
-                indx = class_ind
-                class_ind += 1
+            if class_ind not in present_classes:
+                continue
+            indx = class_ind
+            class_ind += 1
             layer = masks_tensor[..., indx]
             untouched_area = (layer == 0).astype('int32')
             final_mask = final_mask * untouched_area + layer * class_ind
+
+        if marked_zone is not None:
+            untouched_area = (marked_zone == 0).astype('int32')
+            final_mask = final_mask * untouched_area + marked_zone * 99
+
         return final_mask
 
 
