@@ -315,7 +315,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
         first_img = cv2.imread(glob.glob(os.path.join(path_mask_folder, '*.bmp'))[0])
         h, w = first_img.shape[:2]
 
-        n_classes = len(self._config[SegmentatorTesterWMaskV3.CLASSES_NAMES])
+        n_classes = len(self._class_priority)
 
         labels = np.zeros((h, w, n_classes), dtype='int32')
         original_labels = []
