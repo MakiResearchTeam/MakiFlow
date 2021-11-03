@@ -71,7 +71,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
             if int(class_name) == 99:
                 continue
             else:
-                class_name = str(int(class_name) - 1)
+                class_name = str(class_name)
             self.dices_for_each_class[class_name] = []
             self.add_scalar(SegmentatorTesterWMaskV3.PREFIX_CLASSES.format(class_name))
         # Test images
