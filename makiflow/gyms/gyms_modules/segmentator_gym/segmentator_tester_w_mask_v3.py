@@ -326,7 +326,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
             class_id = int(filename.split('.')[0])
             if class_id == 99:
                 marked_zone = cv2.imread(p_mask)
-                marked_zone = self._preprocess(marked_zone, mask_preprocess=True, use_resize=False)
+                _, marked_zone = self._preprocess(marked_zone, mask_preprocess=True, use_resize=False)
                 continue
             present_classes.append(class_id)
             single_label = cv2.imread(p_mask)
