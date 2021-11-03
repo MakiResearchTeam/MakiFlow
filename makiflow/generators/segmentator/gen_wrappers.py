@@ -138,7 +138,7 @@ def binary_masks_reader(gen, n_classes, image_shape):
         }
 
 
-CLASS_99_MAP_TO = 11 # 13
+CLASS_99_MAP_TO = 10 # 13
 
 
 class BinaryMaskReader:

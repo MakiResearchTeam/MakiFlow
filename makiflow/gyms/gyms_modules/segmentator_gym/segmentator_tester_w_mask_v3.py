@@ -33,7 +33,7 @@ import numpy as np
 
 W_CROP, H_CROP = 900, 900
 MODEL_INPUT_SIZE = (1024, 1024)
-CLASS_99_MAP_TO = 11 # 13
+CLASS_99_MAP_TO = 10 # 13
 
 
 class SegmentatorTesterWMaskV3(TesterBase):
