@@ -341,7 +341,6 @@ class SegmentatorTesterWMaskV3(TesterBase):
             else:
                 indx = class_ind
                 class_ind += 1
-            print('class_ind:', class_ind, ' to ', ' indx:', indx)
             layer = masks_tensor[..., indx]
             untouched_area = (layer == 0).astype('int32')
             final_mask = final_mask * untouched_area + layer * class_ind
