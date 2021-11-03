@@ -69,7 +69,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
         self.add_scalar(SegmentatorTesterWMaskV3.PREFIX_CLASSES.format(SegmentatorTesterWMaskV3.V_DICE))
         for class_name in self._config[SegmentatorTesterWMaskV3.CLASSES_NAMES]:
             if int(class_name) == 99:
-                class_name = str(13)
+                continue
             else:
                 class_name = str(int(class_name) - 1)
             self.dices_for_each_class[class_name] = []
@@ -218,7 +218,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
 
         for i, class_name in enumerate(self._config[SegmentatorTesterWMaskV3.CLASSES_NAMES]):
             if int(class_name) == 99:
-                class_name = str(i)
+                continue
             self.dices_for_each_class[class_name] += [dices[i]]
             res_dices_dict[SegmentatorTesterWMaskV3.PREFIX_CLASSES.format(class_name)] = dices[i]
             print(f'{class_name}: {dices[i]}')
