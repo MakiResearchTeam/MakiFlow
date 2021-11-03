@@ -226,7 +226,7 @@ class BinaryMaskReaderV2:
                                                          f'class_id_offset to the minimal possible class_id that can ' \
                                                          f'be found in a folder for a mask.'
             if class_id == 99:
-                marked_zone = binary_mask
+                marked_zone = binary_mask[..., 0]
                 continue
             present_classes.append(class_id)
             indx = class_id - self.class_id_offset
