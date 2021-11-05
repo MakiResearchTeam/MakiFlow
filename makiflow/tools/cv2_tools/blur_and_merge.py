@@ -15,10 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .assembler import ModelAssemblerSegmentator
-from .segmentator_tester import SegmentatorTester
-from .segmentator_binary_tester import SegmentatorBinaryTester
-from .segmentator_tester_v2 import SegmentatorTesterV2
-from .segmentator_tester_w_mask_v2 import SegmentatorTesterWMaskV2
-from .segmentator_tester_w_mask_v3 import SegmentatorTesterWMaskV3
-from .segmentator_tester_w_mask_v4 import SegmentatorTesterWMaskV4
+import cv2
+import numpy as np
+
+SIGMA_X = 30.0
+
+
+def apply_op_blur_and_merge(data, sigmaX=SIGMA_X) -> np.ndarray:
+    return cv2.addWeighted(data, 4, cv2.GaussianBlur(data, (0, 0), SIGMA_X), -4, 128)
+
