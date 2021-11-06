@@ -22,3 +22,4 @@ from .segmentator_tester_v2 import SegmentatorTesterV2
 from .segmentator_tester_w_mask_v2 import SegmentatorTesterWMaskV2
 from .segmentator_tester_w_mask_v3 import SegmentatorTesterWMaskV3
 from .segmentator_tester_w_mask_v4 import SegmentatorTesterWMaskV4
+from .segmentator_tester_w_mask_norm_bright_v5 import SegmentatorTesterWMaskNormBrightV5

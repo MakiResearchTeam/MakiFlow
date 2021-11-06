@@ -16,3 +16,4 @@
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
 from .blur_and_merge import apply_op_blur_and_merge
+from .norm_bright import apply_op_norm_bright
