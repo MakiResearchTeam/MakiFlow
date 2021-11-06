@@ -216,7 +216,7 @@ class SegmentatorTesterWMaskNormBrightV5(TesterBase):
             preds_list, labels_list, use_argmax=False,
             num_classes=num_classes, reshape=False
         )
-        str_to_save_vdice = "V-DICE:\n"
+        str_to_save_vdice = f"V-DICE: {v_dice_val}\n"
         print('V-Dice:', v_dice_val)
 
         res_dices_dict = {SegmentatorTesterWMaskNormBrightV5.PREFIX_CLASSES.format(SegmentatorTesterWMaskNormBrightV5.V_DICE): v_dice_val}

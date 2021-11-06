@@ -238,7 +238,7 @@ class SegmentatorTesterWMaskV2(TesterBase):
         predictions = predictions.reshape(batch_size, -1, num_classes)
         labels = labels.reshape(batch_size, -1)
         v_dice_val, dices = categorical_dice_coeff(predictions, labels, use_argmax=False, num_classes=num_classes)
-        str_to_save_vdice = "V-DICE:\n"
+        str_to_save_vdice = f"V-DICE: {v_dice_val}\n"
         print('V-Dice:', v_dice_val)
 
         res_dices_dict = {SegmentatorTesterWMaskV2.PREFIX_CLASSES.format(SegmentatorTesterWMaskV2.V_DICE): v_dice_val}

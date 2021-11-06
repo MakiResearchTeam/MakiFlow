@@ -219,7 +219,7 @@ class SegmentatorBinaryTester(SegmentatorTester):
         print('Computing V-Dice...')
         # COMPUTE DICE AND CREATE CONFUSION MATRIX
         v_dice_val, dices = bin_categorical_dice_coeff(predictions, labels, use_argmax=True)
-        str_to_save_vdice = "V-DICE:\n"
+        str_to_save_vdice = f"V-DICE: {v_dice_val}\n"
         print('V-Dice:', v_dice_val)
 
         res_dices_dict = {SegmentatorBinaryTester.PREFIX_CLASSES.format(SegmentatorBinaryTester.V_DICE): v_dice_val}

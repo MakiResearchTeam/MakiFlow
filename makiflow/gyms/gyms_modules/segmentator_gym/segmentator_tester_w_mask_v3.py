@@ -210,7 +210,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
             preds_list, labels_list, use_argmax=False,
             num_classes=num_classes, reshape=False
         )
-        str_to_save_vdice = "V-DICE:\n"
+        str_to_save_vdice = f"V-DICE: {v_dice_val}\n"
         print('V-Dice:', v_dice_val)
 
         res_dices_dict = {SegmentatorTesterWMaskV3.PREFIX_CLASSES.format(SegmentatorTesterWMaskV3.V_DICE): v_dice_val}
