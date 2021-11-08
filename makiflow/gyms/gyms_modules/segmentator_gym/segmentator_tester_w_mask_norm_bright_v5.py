@@ -159,12 +159,12 @@ class SegmentatorTesterWMaskNormBrightV5(TesterBase):
 
         orig_img = image.copy()
         image = apply_op_norm_bright(image)
-        if self._norm_mode is not None:
+        if self._norm_mode is not None and not mask_preprocess:
             image = preprocess_input(
                     image.astype(np.float32, copy=False),
                     mode=self._norm_mode
             )
-        elif self._norm_div is not None or self._norm_shift is not None:
+        elif self._norm_div is not None or self._norm_shift is not None and not mask_preprocess:
             image = image.astype(np.float32, copy=False)
             if self._norm_div is not None:
                 image /= self._norm_div
