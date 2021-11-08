@@ -198,7 +198,7 @@ class DistributionBasedPathGen(SegmentPathGenerator):
 
 
 class DistributionBasedPathGenV2(SegmentPathGenerator):
-    def __init__(self, image_mask_dict, groupid_image_dict, groupid_prob_dict):
+    def __init__(self, image_mask_dict, groupid_image_dict, groupid_prob_dict, use_alpha=False):
         """
         Yields paths based off of a give distribution.
 
@@ -212,17 +212,18 @@ class DistributionBasedPathGenV2(SegmentPathGenerator):
         groupid_prob_dict : dict
             Contains pairs { groupid: prob }, where `prob` is a probability of selecting images from
             `groupid` group.
-        update_period : int
-            Every `update_period` iterations all the lists in `groupid_image_dict` are being shuffled.
+        use_alpha : bool
+            If True, it is assumed that `groupid_prob_dict` contains alpha values - number of data samples
+            in a corresponding binary group.
         """
-        self._init_group_generator(groupid_prob_dict)
+        self._init_group_generator(groupid_prob_dict, use_alpha)
         self._image_mask_dict = image_mask_dict
         self._groupid_image_dict = groupid_image_dict
         self._group_generators = {}
         for group_id, group_images in self._groupid_image_dict.items():
             self._group_generators[group_id] = self.make_imagepath_gen(group_images)
 
-    def _init_group_generator(self, groupid_prob_dict):
+    def _init_group_generator(self, groupid_prob_dict, use_alpha):
         self._groupids = []
         groupid_distribution = []
         for groupid, prob in groupid_prob_dict.items():
@@ -230,7 +231,7 @@ class DistributionBasedPathGenV2(SegmentPathGenerator):
             groupid_distribution.append(prob)
         groupid_distribution = np.array(groupid_distribution)
         from .utils import random_gen
-        self.groupid_gen = random_gen(groupid_distribution)
+        self.groupid_gen = random_gen(groupid_distribution, use_alpha)
 
     def make_imagepath_gen(self, image_paths):
         index = 0

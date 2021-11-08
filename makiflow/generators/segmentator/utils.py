@@ -343,7 +343,7 @@ def apply_transformation_batched(
     return transformed_image
 
 
-def random_gen(dist):
+def random_gen(dist, uses_alpha=False):
     """
     Makes a generator that yields numbers in range [0, len(dist)) in accordance with the dist.
 
@@ -351,11 +351,16 @@ def random_gen(dist):
     ----------
     dist : np.ndarray
         Distribution.
+    uses_alpha : bool
+        If True, it is assumed that `dist` array contains alpha - numbers of samples in a corresponding binary group.
     Returns
     -------
     generator
     """
-    alphas = np.round(dist / dist.min()).astype('int32')
+    if uses_alpha:
+        alphas = dist
+    else:
+        alphas = np.round(dist / dist.min()).astype('int32')
     num_it = np.sum(alphas)
     sample_data = []
     for i in range(len(alphas)):
