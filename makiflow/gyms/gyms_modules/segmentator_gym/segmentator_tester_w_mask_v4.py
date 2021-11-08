@@ -24,6 +24,7 @@ from makiflow.metrics.utils import one_hot
 from sklearn.metrics import f1_score
 import pandas as pd
 
+from makiflow.tools.image_tools import apply_op_blur_and_merge
 from makiflow.gyms.core import TesterBase
 from makiflow.gyms.gyms_modules.gyms_collector import GymCollector, SEGMENTATION, TESTER
 from makiflow.gyms.gyms_modules.segmentator_gym.utils import draw_heatmap
@@ -35,8 +36,13 @@ W_CROP, H_CROP = 900, 900
 MODEL_INPUT_SIZE = (1024, 1024)
 CLASS_99_MAP_TO = 10 # 13
 
+SIGMA_X = 30.0
 
-class SegmentatorTesterWMaskV3(TesterBase):
+# Add new preprocess
+# For images
+
+
+class SegmentatorTesterWMaskV4(TesterBase):
     TEST_IMAGE = 'test_image'
     TRAIN_IMAGE = 'train_image'
     TEST_MASK = 'test_mask'
@@ -60,28 +66,28 @@ class SegmentatorTesterWMaskV3(TesterBase):
     _CENTRAL_SIZE = 600
 
     def _init(self):
-        self._class_priority = self._config.get(SegmentatorTesterWMaskV3.CLASS_PRIORITY)
+        self._class_priority = self._config.get(SegmentatorTesterWMaskV4.CLASS_PRIORITY)
         assert self._class_priority is not None, "class_priority parameter has not" \
                                                  " been provided in the configuration file."
         # Add sublists for each class
-        self.add_scalar(SegmentatorTesterWMaskV3.F1_SCORE)
-        self.dices_for_each_class = {SegmentatorTesterWMaskV3.V_DICE: []}
-        self.add_scalar(SegmentatorTesterWMaskV3.PREFIX_CLASSES.format(SegmentatorTesterWMaskV3.V_DICE))
-        for class_name in self._config[SegmentatorTesterWMaskV3.CLASSES_NAMES]:
+        self.add_scalar(SegmentatorTesterWMaskV4.F1_SCORE)
+        self.dices_for_each_class = {SegmentatorTesterWMaskV4.V_DICE: []}
+        self.add_scalar(SegmentatorTesterWMaskV4.PREFIX_CLASSES.format(SegmentatorTesterWMaskV4.V_DICE))
+        for class_name in self._config[SegmentatorTesterWMaskV4.CLASSES_NAMES]:
             if int(class_name) == 99:
                 continue
             else:
                 class_name = str(class_name)
             self.dices_for_each_class[class_name] = []
-            self.add_scalar(SegmentatorTesterWMaskV3.PREFIX_CLASSES.format(class_name))
+            self.add_scalar(SegmentatorTesterWMaskV4.PREFIX_CLASSES.format(class_name))
         # Test images
         self._init_test_images()
         # Train images
-        self.add_scalar(SegmentatorTesterWMaskV3.ITERATION_COUNTER)
-        self._thr_hold = self._config.get(SegmentatorTesterWMaskV3.THREASH_HOLD, SegmentatorTesterWMaskV3.THREASHOLD_DEFAULT)
+        self.add_scalar(SegmentatorTesterWMaskV4.ITERATION_COUNTER)
+        self._thr_hold = self._config.get(SegmentatorTesterWMaskV4.THREASH_HOLD, SegmentatorTesterWMaskV4.THREASHOLD_DEFAULT)
 
     def evaluate(self, model, iteration, path_save_res):
-        dict_summary_to_tb = {SegmentatorTesterWMaskV3.ITERATION_COUNTER: iteration}
+        dict_summary_to_tb = {SegmentatorTesterWMaskV4.ITERATION_COUNTER: iteration}
         # Draw test images
         # Write heatmap,paf and image itself for each image in `_test_images`
         self._get_test_tb_data(model, dict_summary_to_tb, path_save_res)
@@ -127,14 +133,14 @@ class SegmentatorTesterWMaskV3(TesterBase):
         labels = np.array(self._test_mask_np).astype(np.uint8)
         pred_np = np.argmax(np.asarray(all_pred[:len(labels)], dtype=np.float32), axis=-1).astype(np.uint8, copy=False)
         f1_score_np = f1_score(labels.reshape(-1), pred_np.reshape(-1), average='micro')
-        dict_summary_to_tb.update({ SegmentatorTesterWMaskV3.F1_SCORE: f1_score_np})
+        dict_summary_to_tb.update({ SegmentatorTesterWMaskV4.F1_SCORE: f1_score_np})
 
     def _preprocess(self, data, mask_preprocess=False, use_resize=True):
         if isinstance(data, str):
             image = cv2.imread(data)
             if image is None:
                 raise TypeError(
-                    SegmentatorTesterWMaskV3._EXCEPTION_IMAGE_WAS_NOT_FOUND.format(data)
+                    SegmentatorTesterWMaskV4._EXCEPTION_IMAGE_WAS_NOT_FOUND.format(data)
                 )
         else:
             image = data
@@ -152,7 +158,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         orig_img = image.copy()
-
+        image = apply_op_blur_and_merge(image)
         if self._norm_mode is not None:
             image = preprocess_input(
                     image.astype(np.float32, copy=False),
@@ -213,18 +219,18 @@ class SegmentatorTesterWMaskV3(TesterBase):
         str_to_save_vdice = f"V-DICE: {v_dice_val}\n"
         print('V-Dice:', v_dice_val)
 
-        res_dices_dict = {SegmentatorTesterWMaskV3.PREFIX_CLASSES.format(SegmentatorTesterWMaskV3.V_DICE): v_dice_val}
-        self.dices_for_each_class[SegmentatorTesterWMaskV3.V_DICE] += [v_dice_val]
+        res_dices_dict = {SegmentatorTesterWMaskV4.PREFIX_CLASSES.format(SegmentatorTesterWMaskV4.V_DICE): v_dice_val}
+        self.dices_for_each_class[SegmentatorTesterWMaskV4.V_DICE] += [v_dice_val]
 
-        for i, class_name in enumerate(self._config[SegmentatorTesterWMaskV3.CLASSES_NAMES]):
+        for i, class_name in enumerate(self._config[SegmentatorTesterWMaskV4.CLASSES_NAMES]):
             if int(class_name) == 99:
                 continue
             self.dices_for_each_class[class_name] += [dices[i]]
-            res_dices_dict[SegmentatorTesterWMaskV3.PREFIX_CLASSES.format(class_name)] = dices[i]
+            res_dices_dict[SegmentatorTesterWMaskV4.PREFIX_CLASSES.format(class_name)] = dices[i]
             print(f'{class_name}: {dices[i]}')
             str_to_save_vdice += f'{class_name}: {dices[i]}\n'
 
-        with open(os.path.join(save_folder, SegmentatorTesterWMaskV3.VDICE_TXT), 'w') as fp:
+        with open(os.path.join(save_folder, SegmentatorTesterWMaskV4.VDICE_TXT), 'w') as fp:
             fp.write(str_to_save_vdice)
         # Compute and save matrix
         conf_mat_path = os.path.join(save_folder,  f'mat.png')
@@ -254,10 +260,10 @@ class SegmentatorTesterWMaskV3(TesterBase):
 
     def _init_test_images(self):
         self._test_masks_path = self._config[self.TEST_MASK]
-        if not isinstance(self._config[SegmentatorTesterWMaskV3.TEST_IMAGE], list):
-            test_images_path = [self._config[SegmentatorTesterWMaskV3.TEST_IMAGE]]
+        if not isinstance(self._config[SegmentatorTesterWMaskV4.TEST_IMAGE], list):
+            test_images_path = [self._config[SegmentatorTesterWMaskV4.TEST_IMAGE]]
         else:
-            test_images_path = self._config[SegmentatorTesterWMaskV3.TEST_IMAGE]
+            test_images_path = self._config[SegmentatorTesterWMaskV4.TEST_IMAGE]
 
         self._test_norm_images = []
         self._test_images = []
@@ -298,7 +304,7 @@ class SegmentatorTesterWMaskV3(TesterBase):
                     normed_images_list.append(single_patch_norm)
                     images_list.append(single_patch_image.astype(np.uint8))
                     masks_list.append(single_patch_mask.astype(np.uint8))
-                    self._names_test.append(SegmentatorTesterWMaskV3.TEST_N.format(i, crop_i))
+                    self._names_test.append(SegmentatorTesterWMaskV4.TEST_N.format(i, crop_i))
                     # Image + orig mask (if was given) + prediction
                     self.add_image(self._names_test[-1], n_images=3)
                     crop_i += 1
@@ -355,4 +361,4 @@ class SegmentatorTesterWMaskV3(TesterBase):
         return final_mask
 
 
-GymCollector.update_collector(SEGMENTATION, TESTER, SegmentatorTesterWMaskV3)
+GymCollector.update_collector(SEGMENTATION, TESTER, SegmentatorTesterWMaskV4)

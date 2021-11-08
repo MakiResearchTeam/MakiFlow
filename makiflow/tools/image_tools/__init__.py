@@ -15,11 +15,5 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
 
-from .assembler import ModelAssemblerSegmentator
-from .segmentator_tester import SegmentatorTester
-from .segmentator_binary_tester import SegmentatorBinaryTester
-from .segmentator_tester_v2 import SegmentatorTesterV2
-from .segmentator_tester_w_mask_v2 import SegmentatorTesterWMaskV2
-from .segmentator_tester_w_mask_v3 import SegmentatorTesterWMaskV3
-from .segmentator_tester_w_mask_v4 import SegmentatorTesterWMaskV4
-from .segmentator_tester_w_mask_norm_bright_v5 import SegmentatorTesterWMaskNormBrightV5
+from .blur_and_merge import apply_op_blur_and_merge
+from .norm_bright import apply_op_norm_bright

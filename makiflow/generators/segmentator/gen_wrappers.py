@@ -21,6 +21,7 @@ from os.path import join
 
 from .pathgenerator import SegmentPathGenerator
 from makiflow.augmentation.segmentation.augment_ops import ElasticAugment
+from makiflow.tools.image_tools import apply_op_blur_and_merge, apply_op_norm_bright
 
 
 def data_reader_wrapper(gen, use_bgr2rgb=False) -> dict:
@@ -69,6 +70,26 @@ def data_resize_wrapper(gen, resize_to: tuple):
                 (resize_to[1], resize_to[0]),
                 interpolation=cv2.INTER_NEAREST
             ).astype(np.int32, copy=False)
+        }
+
+
+def data_blur_and_merge_wrapper(gen):
+    while True:
+        data_dict = next(gen)
+        image, mask = (data_dict[SegmentPathGenerator.IMAGE], data_dict[SegmentPathGenerator.MASK])
+        yield {
+            SegmentPathGenerator.IMAGE: apply_op_blur_and_merge(image).astype(np.float32, copy=False),
+            SegmentPathGenerator.MASK: mask
+        }
+
+
+def data_norm_bright(gen):
+    while True:
+        data_dict = next(gen)
+        image, mask = (data_dict[SegmentPathGenerator.IMAGE], data_dict[SegmentPathGenerator.MASK])
+        yield {
+            SegmentPathGenerator.IMAGE: apply_op_norm_bright(image).astype(np.float32, copy=False),
+            SegmentPathGenerator.MASK: mask
         }
 
 
