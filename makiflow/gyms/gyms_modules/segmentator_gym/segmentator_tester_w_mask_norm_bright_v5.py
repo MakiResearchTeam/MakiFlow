@@ -99,26 +99,67 @@ class SegmentatorTesterWMaskNormBrightV5(TesterBase):
 
     def _get_test_tb_data(self, model, dict_summary_to_tb, path_save_res):
         all_pred = []
+        input_data_batch = []
+        train_batch = []
+        mask_batch = []
+        indx_batch = []
         for i, (single_norm_train, single_train, single_mask_np) in enumerate(
                 zip(self._test_norm_images, self._test_images, self._test_mask_np)
         ):
             print(f'{i+1} / {len(self._test_images)}')
+            input_data_batch.append(single_norm_train)
+            train_batch.append(single_train)
+            mask_batch.append(single_mask_np)
+            indx_batch.append(i)
+            if len(input_data_batch) == model.get_batch_size():
+                # If original masks were provided
+                prediction_batch = model.predict(np.stack(input_data_batch, axis=0))
+                for prediction_b_i, single_train_b_i, single_mask_np_b_i, indx_b in zip(
+                        prediction_batch, train_batch,
+                        mask_batch, indx_batch):
+                    all_pred.append(prediction_b_i)
+                    # [..., num_classes]
+                    prediction_argmax = np.argmax(prediction_b_i, axis=-1)
+                    dict_summary_to_tb.update(
+                        {
+                            self._names_test[indx_b]: np.stack(
+                                [
+                                    single_train_b_i,
+                                    draw_heatmap(single_mask_np_b_i, self._names_test[indx_b] + '_truth'),
+                                    draw_heatmap(prediction_argmax, self._names_test[indx_b])
+                                ]
+                            ).astype(np.uint8)
+                        }
+                    )
+
+                input_data_batch = []
+                train_batch = []
+                mask_batch = []
+        # Process left data
+        if len(input_data_batch) != 0:
+            left_samples = len(input_data_batch)
+            copy_samples = model.get_batch_size() - left_samples
+            input_data_batch += [input_data_batch[-1]] * copy_samples
             # If original masks were provided
-            prediction = model.predict(np.stack([single_norm_train] * model.get_batch_size(), axis=0))[0]
-            all_pred.append(prediction)
-            # [..., num_classes]
-            prediction_argmax = np.argmax(prediction, axis=-1)
-            dict_summary_to_tb.update(
-                {
-                    self._names_test[i]: np.stack(
-                        [
-                            single_train,
-                            draw_heatmap(single_mask_np, self._names_test[i] + '_truth'),
-                            draw_heatmap(prediction_argmax, self._names_test[i])
-                        ]
-                    ).astype(np.uint8)
-                }
-            )
+            prediction_batch = model.predict(np.stack(input_data_batch, axis=0))[:left_samples]
+            for prediction_b_i, single_train_b_i, single_mask_np_b_i, indx_b in zip(
+                    prediction_batch, train_batch,
+                    mask_batch, indx_batch):
+                all_pred.append(prediction_b_i)
+                # [..., num_classes]
+                prediction_argmax = np.argmax(prediction_b_i, axis=-1)
+                dict_summary_to_tb.update(
+                    {
+                        self._names_test[indx_b]: np.stack(
+                            [
+                                single_train_b_i,
+                                draw_heatmap(single_mask_np_b_i, self._names_test[indx_b] + '_truth'),
+                                draw_heatmap(prediction_argmax, self._names_test[indx_b])
+                            ]
+                        ).astype(np.uint8)
+                    }
+                )
+
         # Confuse matrix
         print('Start calculate v-dice')
         labels = np.array(self._test_mask_np).astype(np.uint8)
@@ -159,12 +200,12 @@ class SegmentatorTesterWMaskNormBrightV5(TesterBase):
 
         orig_img = image.copy()
         image = apply_op_norm_bright(image)
-        if self._norm_mode is not None:
+        if self._norm_mode is not None and not mask_preprocess:
             image = preprocess_input(
                     image.astype(np.float32, copy=False),
                     mode=self._norm_mode
             )
-        elif self._norm_div is not None or self._norm_shift is not None:
+        elif (self._norm_div is not None or self._norm_shift is not None) and not mask_preprocess:
             image = image.astype(np.float32, copy=False)
             if self._norm_div is not None:
                 image /= self._norm_div

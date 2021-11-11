@@ -156,6 +156,49 @@ class ResizePostMethod(PostMapMethod):
         }
 
 
+class NormalizeShiftDividePostMethod(PostMapMethod):
+    def __init__(self, shift=127.5, divider=127.5, use_float64=False):
+        """
+        Normalizes the image by dividing it by the `divider`.
+        Parameters
+        ----------
+        shift : float
+            The number to shift the image by.
+        divider : float or int
+            The number to divide the image by.
+        use_float64 : bool
+            Set to True if you want the image to be converted to float64 during normalization.
+            It is used for getting more accurate division result during normalization.
+        """
+        super().__init__()
+        self.use_float64 = use_float64
+        if use_float64:
+            self.divider = tf.constant(divider, dtype=tf.float64)
+            self.shift = tf.constant(shift, dtype=tf.float64)
+        else:
+            self.divider = tf.constant(divider, dtype=tf.float32)
+            self.shift = tf.constant(shift, dtype=tf.float32)
+
+    def load_data(self, data_paths):
+        if self._parent_method is not None:
+            element = self._parent_method.load_data(data_paths)
+        else:
+            element = data_paths
+        img = element[SegmentIterator.IMAGE]
+
+        if self.use_float64:
+            img = tf.cast(img, dtype=tf.float64)
+            img = tf.subtract(img, self.shift, name='shift_image')
+            img = tf.divide(img, self.divider, name='divide_image')
+            img = tf.cast(img, dtype=tf.float32)
+        else:
+            img = tf.subtract(img, self.shift, name='shift_image')
+            img = tf.divide(img, self.divider, name='divide_image')
+
+        element[SegmentIterator.IMAGE] = img
+        return element
+
+
 class NormalizePostMethod(PostMapMethod):
     def __init__(self, divider=255, use_float64=False):
         """
