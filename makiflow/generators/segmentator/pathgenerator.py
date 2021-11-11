@@ -237,7 +237,6 @@ class DistributionBasedPathGenV2(SegmentPathGenerator):
         index = 0
         while True:
             image_path = image_paths[index]
-            print('Sampled image path:', image_path)
             yield {
                 SegmentPathGenerator.IMAGE: image_path,
                 SegmentPathGenerator.MASK: self._image_mask_dict[image_path]
@@ -251,8 +250,6 @@ class DistributionBasedPathGenV2(SegmentPathGenerator):
         it = 0
         while True:
             group_ind = next(self.groupid_gen)
-            print('Sampled group index:', group_ind)
             group_id = self._groupids[group_ind]
-            print('Corresponding group id:', group_id)
             yield next(self._group_generators[group_id])
             it += 1
