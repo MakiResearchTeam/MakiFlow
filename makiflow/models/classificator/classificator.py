@@ -44,7 +44,7 @@ class Classificator(ClassificatorInterface):
         input_tensor_name = model_info[Classificator.INPUT]
         model_name = model_info[Classificator.NAME]
 
-        inputs_outputs = MakiBuilder.restore_graph([output_tensor_name], graph_info)
+        inputs_outputs = MakiBuilder.restore_graph([output_tensor_name], graph_info, input_layer=input_tensor)
         out_x = inputs_outputs[output_tensor_name]
         in_x = inputs_outputs[input_tensor_name]
         print('Model is restored!')
